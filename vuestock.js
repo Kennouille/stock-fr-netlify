@@ -436,14 +436,13 @@ class CanvasManager {
             return;
         }
 
-        // ✅ AJOUTEZ CETTE VÉRIFICATION
+        // ✅ Autoriser le déplacement avec les outils "move" et "select"
         if (this.currentTool !== 'move' && this.currentTool !== 'select') {
-            // Ne pas permettre le déplacement si l'outil n'est pas actif
             return;
         }
 
         // Sinon, déplacement normal
-        this.isDragging = true;
+        this.isDragging = true; // ← Première fois
         this.currentRack = rack;
         this.currentElement = element;
         this.dragStartX = e.clientX - rack.position_x;
@@ -451,6 +450,7 @@ class CanvasManager {
 
         // Sélectionner l'étagère
         this.selectRack(rack, element);
+        // this.isDragging = true; ← ❌ SUPPRIMEZ CETTE LIGNE (doublon)
 
         // Ajouter les événements globaux
         document.addEventListener('mousemove', this.handleMouseMove);
