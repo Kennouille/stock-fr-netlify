@@ -21,7 +21,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || '{}');
 
     const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uZ2dneWJheWpvb3FremJodnF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY2MTU3NDgsImV4cCI6MjA0MjE5MTc0OH0.lnOqnq1AwN41g4xJ5O9oNIPBQqXYJkSrRhJ3osXtcsk';
+    const supabaseKey = process.env.SUPABASE_KEY;
 
     const payload = {
       rack_code: body.code,
@@ -41,25 +41,27 @@ exports.handler = async (event) => {
           'Content-Type': 'application/json',
           'apikey': supabaseKey,
           'Authorization': `Bearer ${supabaseKey}`,
-          'Prefer': 'return=representation' // 🔹 renvoyer le rack créé
+          'Prefer': 'return=representation'
         },
         body: JSON.stringify(payload)
       });
 
-      const result = await response.json();
-      console.log('Supabase result:', result);
+      const text = await response.text(); // <- texte brut
+      console.log('Supabase raw response:', response.status, text);
+
+      const result = text ? JSON.parse(text) : null;
 
       if (!response.ok) {
-        return { statusCode: 500, body: JSON.stringify({ success: false, result }) };
+        return { statusCode: 500, body: JSON.stringify({ success: false, result: text }) };
       }
 
-      // 🔹 Renvoie le rack créé
       return { statusCode: 200, body: JSON.stringify({ success: true, data: result[0] }) };
 
     } catch (error) {
       console.error('Supabase error:', error);
       return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
+
 }
 
 
