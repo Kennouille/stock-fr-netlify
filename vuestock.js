@@ -677,7 +677,7 @@ class CanvasManager {
     }
 
     updatePropertiesPanel(rack) {
-        const panel = document.getElementById('propertiesPanel'); // une seule déclaration
+        const panel = document.getElementById('propertiesPanel');
         if (!panel || !rack) return;
 
         panel.innerHTML = `
@@ -708,7 +708,7 @@ class CanvasManager {
             </button>
         `;
 
-        // Événement pour changer la couleur
+        // ✅ Événements directs (pas de délégation empilée)
         const colorInput = panel.querySelector('.property-color');
         if (colorInput) {
             colorInput.addEventListener('change', (e) => {
@@ -721,7 +721,6 @@ class CanvasManager {
             });
         }
 
-        // Événement pour voir les étages
         const viewBtn = panel.querySelector('.view-rack-btn');
         if (viewBtn) {
             viewBtn.addEventListener('click', () => {
@@ -731,17 +730,15 @@ class CanvasManager {
             });
         }
 
-        // Événement pour supprimer (delegation)
-        panel.addEventListener('click', (e) => {
-            const rackId = e.target.closest('[data-rack-id]')?.dataset.rackId;
-            if (!rackId) return;
-
-            if (e.target.closest('.delete-rack-btn')) {
+        // ✅ Événement direct pour le bouton supprimer (une seule fois)
+        const deleteBtn = panel.querySelector('.delete-rack-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
                 if (confirm('Supprimer cette étagère et tous ses étages/emplacements ?')) {
-                    this.deleteRack(rackId);
+                    this.deleteRack(rack.id);
                 }
-            }
-        });
+            });
+        }
     }
 
 
@@ -878,6 +875,12 @@ class CanvasManager {
                 const selectTool = document.querySelector('[data-tool="select"]');
                 if (selectTool) {
                     selectTool.click();
+                }
+            }
+
+            if (this.currentTool === 'delete' && this.selectedRack) {
+                if (confirm('Supprimer cette étagère et tous ses étages/emplacements ?')) {
+                    this.deleteRack(this.selectedRack.id);
                 }
             }
         });
