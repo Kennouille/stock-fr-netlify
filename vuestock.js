@@ -106,6 +106,12 @@ class ApiManager {
 // ===== CLASSE CANVAS MANAGER =====
 class CanvasManager {
     constructor(canvasId, overlayId) {
+        this.startRackDrag = this.startRackDrag.bind(this);
+        this.selectRack = this.selectRack.bind(this);
+        this.dragRack = this.dragRack.bind(this);
+        this.startResize = this.startResize.bind(this);
+        this.startRotation = this.startRotation.bind(this);
+
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.overlay = document.getElementById(overlayId);
@@ -901,7 +907,7 @@ class VueStock {
             if (result.success) {
                 // Créer l'objet rack avec l'ID de la base
                 const newRack = {
-                    id: result.id,
+                    id: result.id || `rack_${Date.now()}`,
                     code: rackData.code,
                     name: rackData.name || `Étagère ${rackData.code}`,
                     position_x: rackData.x || rackData.position_x || 100,
