@@ -639,9 +639,9 @@ class CanvasManager {
 
         clearTimeout(this.saveTimeout);
         this.saveTimeout = setTimeout(() => {
-            // NE PAS envoyer l'ID si c'est juste pour la position/dimensions
-            // Créer un payload avec seulement ce qui a changé
+            // CORRECTION : Toujours envoyer l'ID pour une mise à jour
             const payload = {
+                id: this.selectedRack.id, // <-- AJOUTER CE LÀ !
                 position_x: this.selectedRack.position_x,
                 position_y: this.selectedRack.position_y,
                 rotation: this.selectedRack.rotation || 0,
@@ -650,18 +650,24 @@ class CanvasManager {
                 color: this.selectedRack.color
             };
 
-            // Si vous voulez quand même mettre à jour, il faut l'ID
-            // Mais votre fonction doit gérer PATCH
-            payload.id = this.selectedRack.id;
+            // Si l'étagère a un code/nom, les inclure aussi
+            if (this.selectedRack.code) {
+                payload.code = this.selectedRack.code;
+            }
+            if (this.selectedRack.name) {
+                payload.name = this.selectedRack.name;
+            }
+
+            console.log('💾 Auto-saving rack with ID:', this.selectedRack.id);
 
             window.vueStock.api.saveRack(payload)
-                .then(() => {
-                    console.log('💾 Modifications sauvegardées');
+                .then((result) => {
+                    console.log('✅ Auto-save successful:', result);
                 })
                 .catch(err => {
-                    console.error('❌ Erreur sauvegarde:', err);
+                    console.error('❌ Erreur auto-save:', err);
                 });
-        }, 1000); // Augmenter à 1s pour moins d'appels
+        }, 1000); // 1 seconde après la dernière modification
     }
 
     updatePropertiesPanel(rack) {
@@ -1101,9 +1107,6 @@ class VueStock {
         console.log('🟢 [VueStock.addRack] Called with:', rackData);
 
         try {
-            // NE PAS envoyer l'ID pour une nouvelle étagère
-            // Si rackData.id existe, c'est une mise à jour
-            // Sinon, c'est une création
             const payload = {
                 code: rackData.code,
                 name: rackData.name || `Étagère ${rackData.code}`,
@@ -1114,11 +1117,6 @@ class VueStock {
                 depth: rackData.depth,
                 color: rackData.color
             };
-
-            // Seulement ajouter l'ID si on veut mettre à jour une étagère existante
-            if (rackData.id) {
-                payload.id = rackData.id;
-            }
 
             console.log('🟢 Payload pour API:', payload);
 
@@ -1138,31 +1136,30 @@ class VueStock {
                     levels: []
                 };
 
-                // Si c'est une nouvelle étagère, l'ajouter au tableau
-                if (!rackData.id) {
+                // CORRECTION : Vérifier si l'étagère existe déjà
+                const existingIndex = this.racks.findIndex(r => r.id === newRack.id);
+                if (existingIndex === -1) {
+                    // Nouvelle étagère
                     this.racks.push(newRack);
                 } else {
-                    // Si c'est une mise à jour, remplacer l'ancienne
-                    const index = this.racks.findIndex(r => r.id === rackData.id);
-                    if (index !== -1) {
-                        this.racks[index] = newRack;
-                    }
+                    // Mise à jour
+                    this.racks[existingIndex] = newRack;
                 }
 
-                // Dessiner sur le canvas si on est en vue plan
+                // Dessiner sur le canvas UNE SEULE FOIS
                 if (this.currentView === 'plan' && this.canvasManager) {
                     // Supprimer l'ancien élément si existe
-                    const oldElement = document.querySelector(`[data-rack-id="${rackData.id}"]`);
+                    const oldElement = document.querySelector(`[data-rack-id="${newRack.id}"]`);
                     if (oldElement) {
                         oldElement.remove();
                     }
 
-                    // Ajouter le nouvel élément
+                    // Ajouter le nouvel élément UNE FOIS
                     this.canvasManager.addRackToCanvas(newRack);
                 }
 
                 this.updateStats();
-                this.showNotification(`Étagère ${newRack.code} ${rackData.id ? 'mise à jour' : 'créée'}`);
+                this.showNotification(`Étagère ${newRack.code} créée`);
 
                 return newRack;
             }
