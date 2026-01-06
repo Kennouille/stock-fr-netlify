@@ -1,55 +1,25 @@
 // vuestock-api.js
 exports.handler = async (event) => {
-  // vuestock-api.js - Ajoutez ce test en haut de la fonction handler
-    if (action === 'test') {
-      console.log('🔍 Testing Supabase connection...');
-      console.log('SUPABASE_KEY exists:', !!process.env.SUPABASE_KEY);
-      console.log('SUPABASE_KEY first chars:', process.env.SUPABASE_KEY ? process.env.SUPABASE_KEY.substring(0, 10) + '...' : 'null');
+  console.log('🟢 FUNCTION CALLED - Event:', JSON.stringify(event, null, 2));
 
-      try {
-        const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
-        const supabaseKey = process.env.SUPABASE_KEY;
+  // Récupérer les paramètres de requête
+  const queryParams = event.queryStringParameters || {};
+  const { action } = queryParams;
 
-        const testResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?limit=1`, {
-          headers: {
-            'apikey': supabaseKey,
-            'Authorization': `Bearer ${supabaseKey}`
-          }
-        });
-
-        const text = await testResponse.text();
-
-        return {
-          statusCode: 200,
-          body: JSON.stringify({
-            success: true,
-            test: {
-              supabaseKeyExists: !!supabaseKey,
-              testRequestStatus: testResponse.status,
-              testResponse: text.substring(0, 200)
-            }
-          })
-        };
-      } catch (error) {
-        return {
-          statusCode: 500,
-          body: JSON.stringify({
-            success: false,
-            error: error.message
-          })
-        };
-      }
-    }
-
-  console.log('🟢 FUNCTION CALLED:', event.queryStringParameters);
-  const { action } = event.queryStringParameters || {};
+  console.log('🟢 Action demandée:', action);
 
   // Vérifiez que SUPABASE_KEY existe
   const supabaseKey = process.env.SUPABASE_KEY;
+  console.log('🟢 SUPABASE_KEY existe:', !!supabaseKey);
+
   if (!supabaseKey) {
     console.error('❌ SUPABASE_KEY is not set');
     return {
       statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({
         success: false,
         error: 'Supabase key not configured'
@@ -57,23 +27,146 @@ exports.handler = async (event) => {
     };
   }
 
+  // Gérer les différentes actions
   if (action === 'ping') {
+    console.log('🟢 Ping action');
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, message: 'Function works (no DB for now)' })
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        success: true,
+        message: 'Function works (no DB for now)',
+        timestamp: new Date().toISOString()
+      })
     };
+  }
+
+  if (action === 'test') {
+    console.log('🔍 Testing Supabase connection...');
+    console.log('SUPABASE_KEY length:', supabaseKey ? supabaseKey.length : 0);
+
+    try {
+      const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+
+      // Tester une requête simple à Supabase
+      const testResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?limit=1`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      });
+
+      const text = await testResponse.text();
+      console.log('Test response status:', testResponse.status);
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: true,
+          test: {
+            supabaseKeyExists: !!supabaseKey,
+            supabaseKeyLength: supabaseKey ? supabaseKey.length : 0,
+            testRequestStatus: testResponse.status,
+            testResponse: text.substring(0, 500)
+          }
+        })
+      };
+    } catch (error) {
+      console.error('Test error:', error);
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: error.message
+        })
+      };
+    }
   }
 
   if (action === 'get-config') {
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ success: true, data: [] })
-    };
+    console.log('🟢 get-config action');
+    try {
+      const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+
+      const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?select=*`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Supabase error in get-config:', response.status, errorText);
+        throw new Error(`Supabase error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log(`🟢 Retrieved ${data.length} racks from Supabase`);
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: true,
+          data: data,
+          count: data.length
+        })
+      };
+
+    } catch (error) {
+      console.error('❌ Error in get-config:', error);
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: error.message
+        })
+      };
+    }
   }
 
   if (action === 'save-rack') {
+    console.log('🟢 save-rack action');
+
     try {
-      const body = JSON.parse(event.body || '{}');
+      // Parser le body
+      let body;
+      try {
+        body = JSON.parse(event.body || '{}');
+      } catch (parseError) {
+        console.error('❌ Error parsing body:', parseError);
+        return {
+          statusCode: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          },
+          body: JSON.stringify({
+            success: false,
+            error: 'Invalid JSON body'
+          })
+        };
+      }
+
       console.log('📦 Received rack data:', body);
 
       const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
@@ -103,12 +196,17 @@ exports.handler = async (event) => {
       });
 
       const text = await response.text();
-      console.log('📥 Supabase response:', response.status, text);
+      console.log('📥 Supabase response status:', response.status);
+      console.log('📥 Supabase response text:', text);
 
       if (!response.ok) {
         console.error('❌ Supabase error:', text);
         return {
           statusCode: response.status || 500,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          },
           body: JSON.stringify({
             success: false,
             error: `Supabase error: ${text}`
@@ -126,6 +224,10 @@ exports.handler = async (event) => {
 
       return {
         statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
         body: JSON.stringify({
           success: true,
           data: Array.isArray(result) ? result[0] : result
@@ -133,23 +235,33 @@ exports.handler = async (event) => {
       };
 
     } catch (error) {
-      console.error('❌ Server error:', error);
+      console.error('❌ Server error in save-rack:', error);
       return {
         statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
         body: JSON.stringify({
           success: false,
           error: error.message,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+          stack: error.stack
         })
       };
     }
   }
 
+  // Si aucune action reconnue
+  console.log('⚠️ Unknown action:', action);
   return {
     statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
     body: JSON.stringify({
       success: true,
-      message: `Action ${action || 'undefined'} simulée`
+      message: `Action ${action || 'undefined'} not implemented yet`
     })
   };
 };
