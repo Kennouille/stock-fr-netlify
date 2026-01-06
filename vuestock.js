@@ -106,17 +106,74 @@ class ApiManager {
 // ===== CLASSE CANVAS MANAGER =====
 class CanvasManager {
     constructor(canvasId, overlayId) {
-        // Bind correctement les méthodes
-        this.handleMouseMove = this.handleMouseMove.bind(this);
-        this.handleMouseUp = this.handleMouseUp.bind(this);
-        this.startRackDrag = this.startRackDrag.bind(this);
-        this.selectRack = this.selectRack.bind(this);
-        this.dragRack = this.dragRack.bind(this);
-        this.startResize = this.startResize.bind(this);
-        this.startRotation = this.startRotation.bind(this);
-        this.handleResize = this.handleResize.bind(this);
-        this.handleRotation = this.handleRotation.bind(this);
+        // Utiliser des fonctions fléchées pour conserver le contexte
+        this.drawGrid = () => {
+            if (!this.ctx || !this.canvas) return;
 
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+            const width = this.canvas.width;
+            const height = this.canvas.height;
+            const gridSize = this.gridSize * this.scale;
+
+            // Calculer les positions de départ avec l'offset
+            const startX = -this.offsetX % gridSize;
+            const startY = -this.offsetY % gridSize;
+
+            // Dessiner la grille
+            this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+            this.ctx.lineWidth = 1;
+
+            // Lignes verticales
+            for (let x = startX; x < width; x += gridSize) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, 0);
+                this.ctx.lineTo(x, height);
+                this.ctx.stroke();
+            }
+
+            // Lignes horizontales
+            for (let y = startY; y < height; y += gridSize) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, y);
+                this.ctx.lineTo(width, y);
+                this.ctx.stroke();
+            }
+
+            // Points de grille tous les 4 carreaux
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            for (let x = startX; x < width; x += gridSize * 4) {
+                for (let y = startY; y < height; y += gridSize * 4) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 2, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            }
+
+            // Mettre à jour les coordonnées affichées
+            this.updateCoordinatesDisplay();
+        };
+
+        this.updateCoordinatesDisplay = () => {
+            const coordsElement = document.getElementById('mouseCoords');
+            const scaleElement = document.getElementById('scaleDisplay');
+
+            if (coordsElement) {
+                const gridX = Math.round(this.gridX / this.gridSize);
+                const gridY = Math.round(this.gridY / this.gridSize);
+                coordsElement.textContent = `X: ${gridX}, Y: ${gridY}`;
+            }
+
+            if (scaleElement) {
+                scaleElement.textContent = `${Math.round(this.scale * 100)}%`;
+            }
+        };
+
+        // CORRECTION : Supprimez les autres définitions de méthodes ici
+        // Ne gardez que drawGrid et updateCoordinatesDisplay dans le constructeur
+        // Les autres méthodes seront définies normalement après le constructeur
+
+        // Initialiser le reste
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.overlay = document.getElementById(overlayId);
@@ -164,14 +221,12 @@ class CanvasManager {
         this.ctx.imageSmoothingQuality = 'high';
     }
 
-    // === NOUVELLE MÉTHODE : Nettoyer les événements ===
+    // === CORRECTION : Définir ces méthodes UNIQUEMENT ici ===
     cleanupEvents() {
         document.removeEventListener('mousemove', this.handleMouseMove);
         document.removeEventListener('mouseup', this.handleMouseUp);
         document.removeEventListener('mousemove', this.handleResize);
-        document.removeEventListener('mouseup', this.handleMouseUp);
         document.removeEventListener('mousemove', this.handleRotation);
-        document.removeEventListener('mouseup', this.handleMouseUp);
     }
 
     handleMouseMove(e) {
