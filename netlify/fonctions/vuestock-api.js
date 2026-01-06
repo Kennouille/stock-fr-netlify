@@ -1,4 +1,3 @@
-// Nouvelle approche sans pg
 exports.handler = async (event) => {
   const { action } = event.queryStringParameters || {};
 
@@ -22,8 +21,27 @@ exports.handler = async (event) => {
     };
   }
 
+  if (action === 'save-rack') {
+    // Simulation de sauvegarde
+    const body = JSON.parse(event.body || '{}');
+    console.log('Saving rack:', body);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        success: true,
+        id: Date.now(),
+        message: 'Étagère sauvegardée (simulation)'
+      })
+    };
+  }
+
+  // Pour toutes les autres actions
   return {
-    statusCode: 400,
-    body: JSON.stringify({ error: 'Action non reconnue' })
+    statusCode: 200,
+    body: JSON.stringify({
+      success: true,
+      message: `Action ${action} simulée`
+    })
   };
 };
