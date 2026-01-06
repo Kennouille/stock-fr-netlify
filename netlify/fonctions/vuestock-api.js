@@ -38,7 +38,19 @@ exports.handler = async (event) => {
             'apikey': supabaseKey,
             'Authorization': `Bearer ${supabaseKey}`
           },
-          body: JSON.stringify(body)
+          const payload = {
+              rack_code: body.code,
+              display_name: body.name,
+              position_x: body.position_x,
+              position_y: body.position_y,
+              rotation: body.rotation,
+              width: body.width,
+              depth: body.depth,
+              color: body.color
+            };
+
+            body: JSON.stringify(payload)
+
         });
 
         console.log('Supabase response status:', response.status);
