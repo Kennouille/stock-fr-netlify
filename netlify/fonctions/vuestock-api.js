@@ -1,11 +1,10 @@
-// vuestock-api.js
+// vuestock-api.js - Version finale
 exports.handler = async (event) => {
   // D'abord, initialiser toutes les variables
   const queryParams = event.queryStringParameters || {};
   const action = queryParams.action;
 
   console.log('🟢 FUNCTION CALLED - Action:', action);
-  console.log('🟢 Query params:', queryParams);
 
   // Vérifier la clé Supabase
   const supabaseKey = process.env.SUPABASE_KEY;
@@ -38,50 +37,6 @@ exports.handler = async (event) => {
         timestamp: new Date().toISOString()
       })
     };
-  }
-
-  if (action === 'test') {
-    try {
-      const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
-
-      const testResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?limit=1`, {
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`
-        }
-      });
-
-      const text = await testResponse.text();
-
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({
-          success: true,
-          test: {
-            supabaseKeyExists: true,
-            supabaseKeyLength: supabaseKey.length,
-            testRequestStatus: testResponse.status,
-            testResponse: text.substring(0, 500)
-          }
-        })
-      };
-    } catch (error) {
-      return {
-        statusCode: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({
-          success: false,
-          error: error.message
-        })
-      };
-    }
   }
 
   if (action === 'get-config') {
@@ -134,15 +89,30 @@ exports.handler = async (event) => {
       // Parser le body
       let body = {};
       if (event.body) {
-        body = JSON.parse(event.body);
+        try {
+          body = JSON.parse(event.body);
+        } catch (e) {
+          return {
+            statusCode: 400,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*'
+            },
+            body: JSON.stringify({
+              success: false,
+              error: 'Invalid JSON body'
+            })
+          };
+        }
       }
 
       console.log('📦 Body parsed:', body);
 
       const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
 
+      // Préparer le payload
       const payload = {
-        rack_code: body.code,
+        rack_code: body.code || `RACK_${Date.now()}`,
         display_name: body.name || `Étagère ${body.code}`,
         position_x: body.position_x || body.x || 100,
         position_y: body.position_y || body.y || 100,
@@ -152,26 +122,60 @@ exports.handler = async (event) => {
         color: body.color || '#4a90e2'
       };
 
-      console.log('📤 Payload for Supabase:', payload);
+      // Si l'étagère a un ID, c'est une mise à jour
+      // Sinon, c'est une création
+      const hasId = body.id && body.id !== undefined;
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(payload)
-      });
+      let response;
+      let url = `${supabaseUrl}/rest/v1/w_vuestock_racks`;
 
-      const text = await response.text();
+      if (hasId) {
+        console.log(`📝 Mise à jour de l'étagère ID: ${body.id}`);
+        url += `?id=eq.${body.id}`;
 
-      if (!response.ok) {
-        throw new Error(`Supabase error: ${response.status} - ${text}`);
+        response = await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        console.log('➕ Création d\'une nouvelle étagère');
+
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(payload)
+        });
       }
 
-      const result = JSON.parse(text);
+      const text = await response.text();
+      console.log('📥 Supabase response status:', response.status);
+
+      if (!response.ok) {
+        console.error('❌ Supabase error details:', text);
+        throw new Error(`Supabase error: ${response.status}`);
+      }
+
+      let result;
+      try {
+        result = text ? JSON.parse(text) : null;
+      } catch (e) {
+        console.error('❌ Error parsing JSON:', e);
+        result = { raw: text };
+      }
+
+      // Formater la réponse
+      const responseData = Array.isArray(result) ? result[0] : result;
 
       return {
         statusCode: 200,
@@ -181,12 +185,13 @@ exports.handler = async (event) => {
         },
         body: JSON.stringify({
           success: true,
-          data: result[0]
+          data: responseData,
+          operation: hasId ? 'updated' : 'created'
         })
       };
 
     } catch (error) {
-      console.error('❌ Error in save-rack:', error);
+      console.error('❌ Server error in save-rack:', error);
       return {
         statusCode: 500,
         headers: {

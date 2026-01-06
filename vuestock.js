@@ -383,6 +383,23 @@ class CanvasManager {
         element.style.top = `${newY}px`;
 
         this.updatePropertiesPanel(rack);
+
+        // Sauvegarder automatiquement la position
+        if (window.vueStock && rack.id) {
+            // Attendre un peu pour éviter trop d'appels API
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = setTimeout(() => {
+                window.vueStock.api.saveRack({
+                    id: rack.id,
+                    position_x: newX,
+                    position_y: newY
+                }).then(() => {
+                    console.log('📍 Position sauvegardée');
+                }).catch(err => {
+                    console.error('❌ Erreur sauvegarde position:', err);
+                });
+            }, 1000); // Sauvegarde après 1 seconde d'inactivité
+        }
     }
 
     startResize(e, rack, element, handle) {
@@ -931,25 +948,37 @@ class VueStock {
 
     // ===== GESTION DES ÉTAGÈRES =====
     async addRack(rackData) {
+        console.log('🟢 [VueStock.addRack] Called with:', rackData);
+
         try {
-            // Envoyer à l'API
-            const result = await this.api.saveRack({
+            // NE PAS envoyer l'ID pour une nouvelle étagère
+            // Si rackData.id existe, c'est une mise à jour
+            // Sinon, c'est une création
+            const payload = {
                 code: rackData.code,
-                name: rackData.name,
+                name: rackData.name || `Étagère ${rackData.code}`,
                 position_x: rackData.x || rackData.position_x,
                 position_y: rackData.y || rackData.position_y,
                 rotation: rackData.rotation || 0,
                 width: rackData.width,
                 depth: rackData.depth,
                 color: rackData.color
-            });
+            };
+
+            // Seulement ajouter l'ID si on veut mettre à jour une étagère existante
+            if (rackData.id) {
+                payload.id = rackData.id;
+            }
+
+            console.log('🟢 Payload pour API:', payload);
+
+            const result = await this.api.saveRack(payload);
 
             if (result.success && result.data) {
-                // Utiliser directement la data renvoyée par l'API
                 const newRack = {
                     id: result.data.id,
-                    code: result.data.rack_code,
-                    name: result.data.display_name,
+                    code: result.data.rack_code || result.data.code,
+                    name: result.data.display_name || result.data.name,
                     position_x: result.data.position_x,
                     position_y: result.data.position_y,
                     rotation: result.data.rotation,
@@ -959,25 +988,40 @@ class VueStock {
                     levels: []
                 };
 
-                this.racks.push(newRack);
+                // Si c'est une nouvelle étagère, l'ajouter au tableau
+                if (!rackData.id) {
+                    this.racks.push(newRack);
+                } else {
+                    // Si c'est une mise à jour, remplacer l'ancienne
+                    const index = this.racks.findIndex(r => r.id === rackData.id);
+                    if (index !== -1) {
+                        this.racks[index] = newRack;
+                    }
+                }
 
-                // Dessiner sur le canvas
-                if (this.canvasManager) {
+                // Dessiner sur le canvas si on est en vue plan
+                if (this.currentView === 'plan' && this.canvasManager) {
+                    // Supprimer l'ancien élément si existe
+                    const oldElement = document.querySelector(`[data-rack-id="${rackData.id}"]`);
+                    if (oldElement) {
+                        oldElement.remove();
+                    }
+
+                    // Ajouter le nouvel élément
                     this.canvasManager.addRackToCanvas(newRack);
                 }
 
                 this.updateStats();
-                this.showNotification(`Étagère ${newRack.code} sauvegardée`);
+                this.showNotification(`Étagère ${newRack.code} ${rackData.id ? 'mise à jour' : 'créée'}`);
 
                 return newRack;
             }
 
         } catch (error) {
-            console.error('Erreur lors de la sauvegarde:', error);
+            console.error('❌ Erreur lors de la sauvegarde:', error);
             this.showNotification('Erreur: ' + error.message, 'error');
         }
     }
-
 
     drawRackOnCanvas(rack) {
         // Au lieu de créer manuellement l'élément, utiliser CanvasManager
@@ -1560,22 +1604,35 @@ class VueStock {
         this.showLoader(true);
 
         try {
-            // Sauvegarder toutes les étagères
+            // Sauvegarder uniquement si nécessaire
+            // Ici, vous pouvez décider de sauvegarder les modifications
+            // ou simplement ne rien faire car chaque étagère est sauvegardée individuellement
+
+            // Option : Sauvegarder toutes les étagères modifiées
+            let savedCount = 0;
+
             for (const rack of this.racks) {
-                await this.api.saveRack({
-                    id: rack.id,
-                    code: rack.code,
-                    name: rack.name,
-                    position_x: rack.position_x,
-                    position_y: rack.position_y,
-                    rotation: rack.rotation || 0,
-                    width: rack.width,
-                    depth: rack.depth,
-                    color: rack.color
-                });
+                // Vérifier si l'étagère a été modifiée
+                // Pour simplifier, on sauvegarde tout
+                try {
+                    await this.api.saveRack({
+                        id: rack.id, // Inclure l'ID pour mise à jour
+                        code: rack.code,
+                        name: rack.name,
+                        position_x: rack.position_x,
+                        position_y: rack.position_y,
+                        rotation: rack.rotation || 0,
+                        width: rack.width,
+                        depth: rack.depth,
+                        color: rack.color
+                    });
+                    savedCount++;
+                } catch (error) {
+                    console.error(`Erreur pour étagère ${rack.code}:`, error);
+                }
             }
 
-            this.showNotification('Configuration sauvegardée avec succès');
+            this.showNotification(`${savedCount} étagère(s) sauvegardée(s)`);
 
         } catch (error) {
             console.error('Erreur de sauvegarde:', error);
