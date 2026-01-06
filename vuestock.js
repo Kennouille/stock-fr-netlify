@@ -82,6 +82,7 @@ class ApiManager {
     }
 
     async deleteRack(rackId) {
+        // ✅ L'ID doit être dans l'URL, pas dans le body
         return await this.request(`${this.endpoints.deleteRack}&rackId=${rackId}`, 'DELETE');
     }
 
@@ -425,6 +426,15 @@ class CanvasManager {
     }
 
     startRackDrag(e, rack, element) {
+        // ✅ AJOUTEZ CECI EN PREMIER
+        // Si l'outil delete est actif, supprimer directement
+        if (this.currentTool === 'delete') {
+            if (confirm('Supprimer cette étagère et tous ses étages/emplacements ?')) {
+                this.deleteRack(rack.id);
+            }
+            return; // Ne pas continuer
+        }
+
         // Vérifier si on clique sur une poignée
         const handle = e.target.closest('.rack-handle, .rotate-handle');
         if (handle) {
@@ -436,7 +446,7 @@ class CanvasManager {
             return;
         }
 
-        // ✅ Autoriser le déplacement avec les outils "move" et "select"
+        // Autoriser le déplacement avec les outils "move" et "select"
         if (this.currentTool !== 'move' && this.currentTool !== 'select') {
             return;
         }
@@ -744,10 +754,9 @@ class CanvasManager {
 
     async deleteRack(rackId) {
         try {
-            // Supprimer via l'API
+            // ✅ CORRECTION : Passer l'ID dans l'URL, pas dans le body
             if (window.vueStock?.api) {
-                // Créez d'abord l'endpoint delete-rack dans vuestock-api.js
-                await window.vueStock.api.request('/.netlify/functions/vuestock-api?action=delete-rack', 'DELETE', { id: rackId });
+                await window.vueStock.api.deleteRack(rackId);
             }
 
             // Supprimer du DOM
