@@ -309,30 +309,29 @@ class CanvasManager {
     }
 
     selectRack(rack, element) {
-        console.log('🟢 [CanvasManager] selectRack called for:', rack.id);
+        console.log('🟢 selectRack for:', rack.id);
 
-        // Désélectionner tout
+        // 1. Désélectionner seulement les autres
         document.querySelectorAll('.rack-on-plan').forEach(el => {
-            el.classList.remove('selected');
-            el.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
-                h.style.display = 'none';
-            });
+            if (el !== element) {
+                el.classList.remove('selected');
+                el.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
+                    h.style.display = 'none';
+                });
+            }
         });
 
-        // Sélectionner cette étagère
+        // 2. Sélectionner celle-ci
         element.classList.add('selected');
         this.selectedRack = rack;
-        console.log('🟢 Rack selected, adding handles');
 
-        // Afficher les poignées
+        // 3. MONTRER les poignées de CETTE étagère
         element.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
             h.style.display = 'block';
+            console.log('🟢 Showing handle:', h.className);
         });
 
-        // Mettre à jour le panneau de propriétés
         this.updatePropertiesPanel(rack);
-
-        console.log('🟢 Selection complete');
     }
 
     startRackDrag(e, rack, element) {
