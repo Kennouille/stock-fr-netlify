@@ -944,18 +944,18 @@ class VueStock {
                 color: rackData.color
             });
 
-            if (result.success) {
-                // Créer l'objet rack avec l'ID de la base
+            if (result.success && result.data) {
+                // Utiliser directement la data renvoyée par l'API
                 const newRack = {
-                    id: result.id || `rack_${Date.now()}`,
-                    code: rackData.code,
-                    name: rackData.name || `Étagère ${rackData.code}`,
-                    position_x: rackData.x || rackData.position_x || 100,
-                    position_y: rackData.y || rackData.position_y || 100,
-                    rotation: rackData.rotation || 0,
-                    width: rackData.width || 3,
-                    depth: rackData.depth || 2,
-                    color: rackData.color || '#4a90e2',
+                    id: result.data.id,
+                    code: result.data.rack_code,
+                    name: result.data.display_name,
+                    position_x: result.data.position_x,
+                    position_y: result.data.position_y,
+                    rotation: result.data.rotation,
+                    width: result.data.width,
+                    depth: result.data.depth,
+                    color: result.data.color,
                     levels: []
                 };
 
@@ -966,10 +966,7 @@ class VueStock {
                     this.canvasManager.addRackToCanvas(newRack);
                 }
 
-                // Mettre à jour les statistiques
                 this.updateStats();
-
-                // Afficher notification
                 this.showNotification(`Étagère ${newRack.code} sauvegardée`);
 
                 return newRack;
@@ -980,6 +977,7 @@ class VueStock {
             this.showNotification('Erreur: ' + error.message, 'error');
         }
     }
+
 
     drawRackOnCanvas(rack) {
         // Au lieu de créer manuellement l'élément, utiliser CanvasManager
@@ -1270,41 +1268,46 @@ class VueStock {
     }
 
     displayRacksFromAPI() {
-        // Nettoyer le canvas
+    // Nettoyer le canvas
         const overlay = document.getElementById('planOverlay');
         if (overlay) overlay.innerHTML = '';
 
-        // Ajouter chaque étagère au canvas
+        // Tableau temporaire pour éviter doublons
+        const racksMap = {};
+
         this.racks.forEach(rack => {
-            // Convertir les données API en format interne
+            // Normaliser les données API
             const rackData = {
                 id: rack.id,
-                code: rack.rack_code,
-                name: rack.display_name,
-                position_x: rack.position_x,
-                position_y: rack.position_y,
-                rotation: rack.rotation,
-                width: rack.width,
-                depth: rack.depth,
-                color: rack.color,
+                code: rack.rack_code || rack.code,
+                name: rack.display_name || rack.name,
+                position_x: rack.position_x || 100,
+                position_y: rack.position_y || 100,
+                rotation: rack.rotation || 0,
+                width: rack.width || 3,
+                depth: rack.depth || 2,
+                color: rack.color || '#4a90e2',
                 levels: rack.levels || []
             };
 
-            // Ajouter au tableau interne
-            const existingIndex = this.racks.findIndex(r => r.id === rack.id);
-            if (existingIndex === -1) {
-                this.racks.push(rackData);
-            }
+            // Éviter les doublons via id
+            if (!racksMap[rackData.id]) {
+                racksMap[rackData.id] = rackData;
 
-            // Afficher sur le canvas
-            if (this.canvasManager) {
-                this.canvasManager.addRackToCanvas(rackData);
+                // Ajouter au canvas
+                if (this.canvasManager) {
+                    this.canvasManager.addRackToCanvas(rackData);
+                }
             }
         });
 
-        // Mettre à jour les statistiques
+        // Remplacer le tableau interne par la version unique
+        this.racks = Object.values(racksMap);
+
+        // Mettre à jour les stats
         this.updateStats();
     }
+
 
     showLoader(show) {
         const loader = document.getElementById('loaderOverlay');
@@ -1442,7 +1445,7 @@ class VueStock {
         });
 
         // Sauvegarder
-        document.getElementById('saveRackModal')?.addEventListener('click', () => {
+        document.getElementById('saveRackModal')?.addEventListener('click', async () => {
             const code = document.getElementById('modalRackCode').value.trim();
             const name = document.getElementById('modalRackName').value.trim();
             const width = parseInt(document.getElementById('modalRackWidth').value);
@@ -1454,15 +1457,14 @@ class VueStock {
                 return;
             }
 
-            // Vérifier si le code existe déjà
             const codeExists = this.racks.some(r => r.code === code);
             if (codeExists) {
                 this.showNotification(`Le code ${code} existe déjà`, 'error');
                 return;
             }
 
-            // Créer l'étagère
-            const newRack = this.addRack({
+            // Création de l'étagère
+            const newRack = await this.addRack({
                 code,
                 name: name || `Étagère ${code}`,
                 x: 100 + (this.racks.length * 150),
@@ -1473,10 +1475,10 @@ class VueStock {
             });
 
             // Fermer le modal
-            overlay.classList.remove('active');
+            document.getElementById('modalOverlay').classList.remove('active');
 
             // Ajouter au canvas si on est en vue plan
-            if (this.currentView === 'plan' && this.canvasManager) {
+            if (this.currentView === 'plan' && this.canvasManager && newRack) {
                 this.canvasManager.addRackToCanvas(newRack);
             }
         });
