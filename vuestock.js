@@ -979,12 +979,6 @@ class VueStock {
     init() {
         console.log('VueStock initialisé');
 
-        if (this.currentView === 'plan') {
-            setTimeout(() => {
-                this.initCanvas();
-            }, 100);
-        }
-
         // Initialisation des événements
         this.initEvents();
 
