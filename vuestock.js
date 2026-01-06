@@ -726,14 +726,19 @@ class CanvasManager {
         }
 
         // Événement pour supprimer
-        const deleteBtn = panel.querySelector('.delete-rack-btn');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', () => {
+        const panel = document.getElementById('propertiesPanel');
+        panel.addEventListener('click', (e) => {
+            const rackId = e.target.closest('[data-rack-id]')?.dataset.rackId;
+            if (!rackId) return;
+
+            // Supprimer
+            if (e.target.closest('.delete-rack-btn')) {
                 if (confirm('Supprimer cette étagère et tous ses étages/emplacements ?')) {
-                    this.deleteRack(rack.id);
+                    this.deleteRack(rackId);
                 }
-            });
-        }
+            }
+        });
+
     }
 
     async deleteRack(rackId) {
