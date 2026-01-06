@@ -31,6 +31,7 @@ class ApiManager {
         };
     }
 
+
     async request(endpoint, method = 'GET', data = null) {
         const url = `${this.baseUrl}${endpoint}`;
         console.log('📡 API Call:', url, method, data);
