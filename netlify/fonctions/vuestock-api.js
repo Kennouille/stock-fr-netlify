@@ -1,4 +1,6 @@
 exports.handler = async (event) => {
+  console.log('🟢 FUNCTION CALLED:', event.queryStringParameters);
+
   const { action } = event.queryStringParameters || {};
 
   if (action === 'ping') {
@@ -23,31 +25,42 @@ exports.handler = async (event) => {
 
   if (action === 'save-rack') {
       const body = JSON.parse(event.body || '{}');
+      console.log('Saving to Supabase:', body);
 
-      // Envoyer à Supabase REST API
       const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uZ2dneWJheWpvb3FremJodnF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY2MTU3NDgsImV4cCI6MjA0MjE5MTc0OH0.lnOqnq1AwN41g4xJ5O9oNIPBQqXYJkSrRhJ3osXtcsk'; // Trouvez dans Supabase → Settings → API
+      const supabaseKey = 'votre-cle';
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`
-        },
-        body: JSON.stringify(body)
-      });
+      try {
+        const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify(body)
+        });
 
-      const result = await response.json();
+        console.log('Supabase response status:', response.status);
+        const result = await response.json();
+        console.log('Supabase result:', result);
 
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          success: true,
-          id: result.id,
-          message: 'Étagère sauvegardée dans Supabase'
-        })
-      };
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            success: response.ok,
+            id: result.id || Date.now(),
+            message: response.ok ? 'Sauvegardé' : 'Erreur Supabase'
+          })
+        };
+
+      } catch (error) {
+        console.error('Supabase error:', error);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: error.message })
+        };
+      }
     }
 
   // Pour toutes les autres actions
