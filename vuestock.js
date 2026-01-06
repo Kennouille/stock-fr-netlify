@@ -106,18 +106,23 @@ class ApiManager {
 // ===== CLASSE CANVAS MANAGER =====
 class CanvasManager {
     constructor(canvasId, overlayId) {
+        // Bind correctement les méthodes
+        this.handleMouseMove = this.handleMouseMove.bind(this);
+        this.handleMouseUp = this.handleMouseUp.bind(this);
         this.startRackDrag = this.startRackDrag.bind(this);
         this.selectRack = this.selectRack.bind(this);
         this.dragRack = this.dragRack.bind(this);
         this.startResize = this.startResize.bind(this);
         this.startRotation = this.startRotation.bind(this);
+        this.handleResize = this.handleResize.bind(this);
+        this.handleRotation = this.handleRotation.bind(this);
 
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.overlay = document.getElementById(overlayId);
 
         // Configuration
-        this.gridSize = 40; // Taille de la grille en pixels
+        this.gridSize = 40;
         this.scale = 1;
         this.offsetX = 0;
         this.offsetY = 0;
@@ -135,151 +140,190 @@ class CanvasManager {
         this.gridX = 0;
         this.gridY = 0;
 
+        // Variables pour le drag/resize/rotate
+        this.currentRack = null;
+        this.currentElement = null;
+        this.resizeHandle = null;
+        this.resizeStartData = null;
+        this.rotateStartData = null;
+
+        // Sauvegarde automatique
+        this.saveTimeout = null;
+
         // Initialisation
         this.initCanvas();
         this.drawGrid();
         this.initEvents();
-
-        // Racks sur le canvas
         this.racks = [];
     }
 
     initCanvas() {
-        // Ajuster la taille du canvas
         this.canvas.width = this.canvas.offsetWidth;
         this.canvas.height = this.canvas.offsetHeight;
-
-        // Initialiser le contexte
         this.ctx.imageSmoothingEnabled = true;
         this.ctx.imageSmoothingQuality = 'high';
     }
 
-    drawGrid() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // === NOUVELLE MÉTHODE : Nettoyer les événements ===
+    cleanupEvents() {
+        document.removeEventListener('mousemove', this.handleMouseMove);
+        document.removeEventListener('mouseup', this.handleMouseUp);
+        document.removeEventListener('mousemove', this.handleResize);
+        document.removeEventListener('mouseup', this.handleMouseUp);
+        document.removeEventListener('mousemove', this.handleRotation);
+        document.removeEventListener('mouseup', this.handleMouseUp);
+    }
 
-        const width = this.canvas.width;
-        const height = this.canvas.height;
-        const gridSize = this.gridSize * this.scale;
-
-        // Calculer les positions de départ avec l'offset
-        const startX = -this.offsetX % gridSize;
-        const startY = -this.offsetY % gridSize;
-
-        // Dessiner la grille
-        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-        this.ctx.lineWidth = 1;
-
-        // Lignes verticales
-        for (let x = startX; x < width; x += gridSize) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, height);
-            this.ctx.stroke();
+    handleMouseMove(e) {
+        if (this.isDragging && this.currentRack && this.currentElement) {
+            this.dragRack(e);
         }
+    }
 
-        // Lignes horizontales
-        for (let y = startY; y < height; y += gridSize) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(width, y);
-            this.ctx.stroke();
-        }
+    handleMouseUp() {
+        if (this.isDragging) {
+            this.isDragging = false;
+            this.currentRack = null;
+            this.currentElement = null;
+            this.cleanupEvents();
 
-        // Points de grille tous les 4 carreaux
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-        for (let x = startX; x < width; x += gridSize * 4) {
-            for (let y = startY; y < height; y += gridSize * 4) {
-                this.ctx.beginPath();
-                this.ctx.arc(x, y, 2, 0, Math.PI * 2);
-                this.ctx.fill();
+            // Sauvegarder la position finale
+            if (this.selectedRack && this.saveTimeout) {
+                clearTimeout(this.saveTimeout);
+                this.saveAutoPosition();
             }
         }
 
-        // Mettre à jour les coordonnées affichées
-        this.updateCoordinatesDisplay();
-    }
+        if (this.isResizing) {
+            this.isResizing = false;
+            this.resizeHandle = null;
+            this.resizeStartData = null;
+            this.cleanupEvents();
 
-    updateCoordinatesDisplay() {
-        const coordsElement = document.getElementById('mouseCoords');
-        const scaleElement = document.getElementById('scaleDisplay');
-
-        if (coordsElement) {
-            const gridX = Math.round(this.gridX / this.gridSize);
-            const gridY = Math.round(this.gridY / this.gridSize);
-            coordsElement.textContent = `X: ${gridX}, Y: ${gridY}`;
+            // Sauvegarder les dimensions
+            if (this.selectedRack) {
+                this.saveAutoPosition();
+            }
         }
 
-        if (scaleElement) {
-            scaleElement.textContent = `${Math.round(this.scale * 100)}%`;
+        if (this.isRotating) {
+            this.isRotating = false;
+            this.rotateStartData = null;
+            this.cleanupEvents();
+
+            // Sauvegarder la rotation
+            if (this.selectedRack) {
+                this.saveAutoPosition();
+            }
         }
     }
 
+    // === CORRECTION DE LA MÉTHODE addRackToCanvas ===
     addRackToCanvas(rack) {
         console.log('🟢 [CanvasManager] addRackToCanvas called for rack:', rack.id, rack.code);
+
+        // Vérifier si l'étagère existe déjà
+        const existingElement = this.overlay.querySelector(`[data-rack-id="${rack.id}"]`);
+        if (existingElement) {
+            console.log('⚠️ Rack already exists, removing old one');
+            existingElement.remove();
+            this.racks = this.racks.filter(item => item.rack.id !== rack.id);
+        }
 
         // Créer l'élément DOM pour l'étagère
         const rackElement = document.createElement('div');
         rackElement.className = 'rack-on-plan';
         rackElement.dataset.rackId = rack.id;
+        rackElement.style.position = 'absolute';
         rackElement.style.left = `${rack.position_x}px`;
         rackElement.style.top = `${rack.position_y}px`;
         rackElement.style.width = `${rack.width * this.gridSize}px`;
         rackElement.style.height = `${rack.depth * this.gridSize}px`;
         rackElement.style.backgroundColor = rack.color || '#4a90e2';
+        rackElement.style.border = '2px solid #333';
+        rackElement.style.borderRadius = '4px';
         rackElement.style.transform = rack.rotation ? `rotate(${rack.rotation}deg)` : '';
+        rackElement.style.transformOrigin = 'center center';
         rackElement.style.cursor = 'move';
+        rackElement.style.zIndex = '10';
         rackElement.textContent = rack.code;
+        rackElement.style.display = 'flex';
+        rackElement.style.alignItems = 'center';
+        rackElement.style.justifyContent = 'center';
+        rackElement.style.color = '#fff';
+        rackElement.style.fontWeight = 'bold';
+        rackElement.style.userSelect = 'none';
 
         console.log('🟢 Rack element created, adding to DOM');
 
-        // Ajouter les poignées de redimensionnement (uniquement si sélectionné)
+        // Ajouter les poignées
         this.addRackHandles(rackElement, rack);
 
-        // Événements avec logging
+        // Événements
         rackElement.addEventListener('mousedown', (e) => {
-            console.log('🟢 mousedown event triggered on rack', rack.id);
+            console.log('🟢 mousedown on rack', rack.id);
             this.startRackDrag(e, rack, rackElement);
         });
 
         rackElement.addEventListener('click', (e) => {
-            console.log('🟢 click event triggered on rack', rack.id);
+            console.log('🟢 click on rack', rack.id);
             e.stopPropagation();
             e.preventDefault();
             this.selectRack(rack, rackElement);
         });
 
-        // FORCER l'affichage des poignées au début
-        setTimeout(() => {
-            console.log('🟢 Auto-selecting rack for testing');
-            this.selectRack(rack, rackElement);
-        }, 100);
-
         this.overlay.appendChild(rackElement);
         this.racks.push({ rack, element: rackElement });
+
+        // Auto-sélection pour les nouvelles étagères seulement
+        if (!rack.id || rack.id.toString().includes('new')) {
+            setTimeout(() => {
+                this.selectRack(rack, rackElement);
+            }, 100);
+        }
 
         console.log('🟢 Rack added to canvas. Total racks:', this.racks.length);
     }
 
-    addRackHandles(rackElement, rack) {  // ← Ajoutez rack en paramètre
+    // === CORRECTION DE LA MÉTHODE addRackHandles ===
+    addRackHandles(rackElement, rack) {
+        // Supprimer les anciennes poignées si elles existent
+        const oldHandles = rackElement.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions');
+        oldHandles.forEach(handle => handle.remove());
+
         // Poignées de redimensionnement
         const handles = [
-            { class: 'handle-nw', cursor: 'nw-resize' },
-            { class: 'handle-ne', cursor: 'ne-resize' },
-            { class: 'handle-sw', cursor: 'sw-resize' },
-            { class: 'handle-se', cursor: 'se-resize' }
+            { class: 'handle-nw', cursor: 'nw-resize', top: '0', left: '0' },
+            { class: 'handle-ne', cursor: 'ne-resize', top: '0', right: '0' },
+            { class: 'handle-sw', cursor: 'sw-resize', bottom: '0', left: '0' },
+            { class: 'handle-se', cursor: 'se-resize', bottom: '0', right: '0' }
         ];
 
         handles.forEach(handle => {
             const handleEl = document.createElement('div');
             handleEl.className = `rack-handle ${handle.class}`;
+            handleEl.style.position = 'absolute';
+            handleEl.style.width = '12px';
+            handleEl.style.height = '12px';
+            handleEl.style.backgroundColor = '#fff';
+            handleEl.style.border = '2px solid #333';
+            handleEl.style.borderRadius = '2px';
             handleEl.style.cursor = handle.cursor;
+            handleEl.style.zIndex = '20';
 
-            // Événement DIRECT sans this.racks
+            // Position
+            if (handle.top) handleEl.style.top = handle.top;
+            if (handle.bottom) handleEl.style.bottom = handle.bottom;
+            if (handle.left) handleEl.style.left = handle.left;
+            if (handle.right) handleEl.style.right = handle.right;
+
+            handleEl.style.display = 'none'; // Caché par défaut
+
             handleEl.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 console.log('🟢 Handle mousedown:', handle.class);
-                this.startResize(e, rack, rackElement, handleEl); // ← Utilise rack du paramètre
+                this.startResize(e, rack, rackElement, handleEl);
             });
 
             rackElement.appendChild(handleEl);
@@ -289,12 +333,28 @@ class CanvasManager {
         const rotateHandle = document.createElement('div');
         rotateHandle.className = 'rotate-handle';
         rotateHandle.innerHTML = '⟳';
+        rotateHandle.style.position = 'absolute';
+        rotateHandle.style.top = '-25px';
+        rotateHandle.style.left = '50%';
+        rotateHandle.style.transform = 'translateX(-50%)';
+        rotateHandle.style.width = '20px';
+        rotateHandle.style.height = '20px';
+        rotateHandle.style.backgroundColor = '#fff';
+        rotateHandle.style.border = '2px solid #333';
+        rotateHandle.style.borderRadius = '50%';
+        rotateHandle.style.cursor = 'grab';
+        rotateHandle.style.display = 'flex';
+        rotateHandle.style.alignItems = 'center';
+        rotateHandle.style.justifyContent = 'center';
+        rotateHandle.style.fontSize = '12px';
+        rotateHandle.style.zIndex = '20';
+        rotateHandle.style.display = 'none'; // Caché par défaut
 
         rotateHandle.addEventListener('mousedown', (e) => {
             e.stopPropagation();
             e.preventDefault();
             console.log('🟢 Rotate handle mousedown');
-            this.startRotation(e, rack, rackElement); // ← Utilise rack du paramètre
+            this.startRotation(e, rack, rackElement);
         });
 
         rackElement.appendChild(rotateHandle);
@@ -302,45 +362,30 @@ class CanvasManager {
         // Dimensions
         const dimensions = document.createElement('div');
         dimensions.className = 'rack-dimensions';
+        dimensions.style.position = 'absolute';
+        dimensions.style.bottom = '-25px';
+        dimensions.style.left = '50%';
+        dimensions.style.transform = 'translateX(-50%)';
+        dimensions.style.fontSize = '12px';
+        dimensions.style.color = '#666';
+        dimensions.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+        dimensions.style.padding = '2px 6px';
+        dimensions.style.borderRadius = '3px';
+        dimensions.style.zIndex = '15';
+        dimensions.style.display = 'none'; // Caché par défaut
+
         const width = parseInt(rackElement.style.width) / this.gridSize;
         const depth = parseInt(rackElement.style.height) / this.gridSize;
         dimensions.textContent = `${width}×${depth}`;
         rackElement.appendChild(dimensions);
     }
 
-    selectRack(rack, element) {
-        console.log('🟢 selectRack for:', rack.id);
-
-        // 1. Désélectionner seulement les autres
-        document.querySelectorAll('.rack-on-plan').forEach(el => {
-            if (el !== element) {
-                el.classList.remove('selected');
-                el.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
-                    h.style.display = 'none';
-                });
-            }
-        });
-
-        // 2. Sélectionner celle-ci
-        element.classList.add('selected');
-        this.selectedRack = rack;
-
-        // 3. MONTRER les poignées de CETTE étagère
-        element.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
-            h.style.display = 'block';
-            console.log('🟢 Showing handle:', h.className);
-        });
-
-        this.updatePropertiesPanel(rack);
-    }
-
+    // === CORRECTION DE LA MÉTHODE startRackDrag ===
     startRackDrag(e, rack, element) {
         console.log('🟢 startRackDrag called, target:', e.target.className);
 
-
         // Vérifier si on clique sur une poignée
         const handle = e.target.closest('.rack-handle, .rotate-handle');
-
         if (handle) {
             if (handle.classList.contains('rotate-handle')) {
                 this.startRotation(e, rack, element);
@@ -352,18 +397,22 @@ class CanvasManager {
 
         // Sinon, déplacement normal
         this.isDragging = true;
+        this.currentRack = rack;
+        this.currentElement = element;
         this.dragStartX = e.clientX - rack.position_x;
         this.dragStartY = e.clientY - rack.position_y;
 
-        document.addEventListener('mousemove', this.dragRack.bind(this, rack, element));
-        document.addEventListener('mouseup', () => {
-            this.isDragging = false;
-            document.removeEventListener('mousemove', this.dragRack.bind(this, rack, element));
-        });
+        // Sélectionner l'étagère
+        this.selectRack(rack, element);
+
+        // Ajouter les événements globaux
+        document.addEventListener('mousemove', this.handleMouseMove);
+        document.addEventListener('mouseup', this.handleMouseUp);
     }
 
-    dragRack(rack, element, e) {
-        if (!this.isDragging) return;
+    // === CORRECTION DE LA MÉTHODE dragRack ===
+    dragRack(e) {
+        if (!this.isDragging || !this.currentRack || !this.currentElement) return;
 
         let newX = e.clientX - this.dragStartX;
         let newY = e.clientY - this.dragStartY;
@@ -373,189 +422,247 @@ class CanvasManager {
         newY = Math.round(newY / this.gridSize) * this.gridSize;
 
         // Limites du canvas
-        newX = Math.max(0, Math.min(newX, this.canvas.width - (rack.width * this.gridSize)));
-        newY = Math.max(0, Math.min(newY, this.canvas.height - (rack.depth * this.gridSize)));
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        const rackWidth = this.currentRack.width * this.gridSize;
+        const rackHeight = this.currentRack.depth * this.gridSize;
+
+        newX = Math.max(0, Math.min(newX, canvasWidth - rackWidth));
+        newY = Math.max(0, Math.min(newY, canvasHeight - rackHeight));
 
         // Mettre à jour
-        rack.position_x = newX;
-        rack.position_y = newY;
-        element.style.left = `${newX}px`;
-        element.style.top = `${newY}px`;
+        this.currentRack.position_x = newX;
+        this.currentRack.position_y = newY;
+        this.currentElement.style.left = `${newX}px`;
+        this.currentElement.style.top = `${newY}px`;
 
-        this.updatePropertiesPanel(rack);
-
-        // Sauvegarder automatiquement la position
-        if (window.vueStock && rack.id) {
-            // Attendre un peu pour éviter trop d'appels API
-            clearTimeout(this.saveTimeout);
-            this.saveTimeout = setTimeout(() => {
-                window.vueStock.api.saveRack({
-                    id: rack.id,
-                    position_x: newX,
-                    position_y: newY
-                }).then(() => {
-                    console.log('📍 Position sauvegardée');
-                }).catch(err => {
-                    console.error('❌ Erreur sauvegarde position:', err);
-                });
-            }, 1000); // Sauvegarde après 1 seconde d'inactivité
-        }
+        this.updatePropertiesPanel(this.currentRack);
     }
 
+    // === NOUVELLE MÉTHODE POUR SAUVEGARDE AUTO ===
+    saveAutoPosition() {
+        if (!this.selectedRack || !window.vueStock) return;
+
+        clearTimeout(this.saveTimeout);
+        this.saveTimeout = setTimeout(() => {
+            window.vueStock.api.saveRack({
+                id: this.selectedRack.id,
+                position_x: this.selectedRack.position_x,
+                position_y: this.selectedRack.position_y,
+                rotation: this.selectedRack.rotation || 0,
+                width: this.selectedRack.width,
+                depth: this.selectedRack.depth,
+                color: this.selectedRack.color
+            }).then(() => {
+                console.log('💾 Position/dimensions sauvegardées');
+            }).catch(err => {
+                console.error('❌ Erreur sauvegarde:', err);
+            });
+        }, 500);
+    }
+
+    // === CORRECTION DE LA MÉTHODE startResize ===
     startResize(e, rack, element, handle) {
         e.stopPropagation();
         this.isResizing = true;
+        this.currentRack = rack;
+        this.currentElement = element;
+        this.resizeHandle = handle;
 
-        const startWidth = rack.width;
-        const startHeight = rack.depth;
-        const startX = rack.position_x;
-        const startY = rack.position_y;
-        const mouseStartX = e.clientX;
-        const mouseStartY = e.clientY;
-
-        const handleType = handle.className.replace('rack-handle ', '');
-
-        const resize = (e) => {
-            if (!this.isResizing) return;
-
-            const deltaX = e.clientX - mouseStartX;
-            const deltaY = e.clientY - mouseStartY;
-
-            let newWidth = startWidth;
-            let newHeight = startHeight;
-            let newX = startX;
-            let newY = startY;
-
-            // Calcul selon la poignée utilisée
-            const gridDeltaX = Math.round(deltaX / this.gridSize);
-            const gridDeltaY = Math.round(deltaY / this.gridSize);
-
-            switch(handleType) {
-                case 'handle-se':
-                    newWidth = Math.max(1, startWidth + gridDeltaX);
-                    newHeight = Math.max(1, startHeight + gridDeltaY);
-                    break;
-                case 'handle-sw':
-                    newWidth = Math.max(1, startWidth - gridDeltaX);
-                    newHeight = Math.max(1, startHeight + gridDeltaY);
-                    newX = startX + (gridDeltaX * this.gridSize);
-                    break;
-                case 'handle-ne':
-                    newWidth = Math.max(1, startWidth + gridDeltaX);
-                    newHeight = Math.max(1, startHeight - gridDeltaY);
-                    newY = startY + (gridDeltaY * this.gridSize);
-                    break;
-                case 'handle-nw':
-                    newWidth = Math.max(1, startWidth - gridDeltaX);
-                    newHeight = Math.max(1, startHeight - gridDeltaY);
-                    newX = startX + (gridDeltaX * this.gridSize);
-                    newY = startY + (gridDeltaY * this.gridSize);
-                    break;
-            }
-
-            // Mettre à jour
-            rack.width = newWidth;
-            rack.depth = newHeight;
-            rack.position_x = newX;
-            rack.position_y = newY;
-
-            element.style.width = `${newWidth * this.gridSize}px`;
-            element.style.height = `${newHeight * this.gridSize}px`;
-            element.style.left = `${newX}px`;
-            element.style.top = `${newY}px`;
-
-            // Mettre à jour l'affichage des dimensions
-            const dims = element.querySelector('.rack-dimensions');
-            if (dims) {
-                dims.textContent = `${newWidth}×${newHeight}`;
-            }
-
-            this.updatePropertiesPanel(rack);
+        this.resizeStartData = {
+            width: rack.width,
+            height: rack.depth,
+            x: rack.position_x,
+            y: rack.position_y,
+            mouseX: e.clientX,
+            mouseY: e.clientY
         };
 
-        document.addEventListener('mousemove', resize);
-        document.addEventListener('mouseup', () => {
-            this.isResizing = false;
-            document.removeEventListener('mousemove', resize);
-        });
+        // Ajouter les événements globaux
+        document.addEventListener('mousemove', this.handleResize);
+        document.addEventListener('mouseup', this.handleMouseUp);
     }
 
+    handleResize(e) {
+        if (!this.isResizing || !this.resizeStartData || !this.currentRack || !this.currentElement) return;
+
+        const deltaX = e.clientX - this.resizeStartData.mouseX;
+        const deltaY = e.clientY - this.resizeStartData.mouseY;
+
+        let newWidth = this.resizeStartData.width;
+        let newHeight = this.resizeStartData.height;
+        let newX = this.resizeStartData.x;
+        let newY = this.resizeStartData.y;
+
+        // Calcul selon la poignée utilisée
+        const gridDeltaX = Math.round(deltaX / this.gridSize);
+        const gridDeltaY = Math.round(deltaY / this.gridSize);
+
+        const handleType = this.resizeHandle.className.replace('rack-handle ', '');
+
+        switch(handleType) {
+            case 'handle-se':
+                newWidth = Math.max(1, this.resizeStartData.width + gridDeltaX);
+                newHeight = Math.max(1, this.resizeStartData.height + gridDeltaY);
+                break;
+            case 'handle-sw':
+                newWidth = Math.max(1, this.resizeStartData.width - gridDeltaX);
+                newHeight = Math.max(1, this.resizeStartData.height + gridDeltaY);
+                newX = this.resizeStartData.x + (gridDeltaX * this.gridSize);
+                break;
+            case 'handle-ne':
+                newWidth = Math.max(1, this.resizeStartData.width + gridDeltaX);
+                newHeight = Math.max(1, this.resizeStartData.height - gridDeltaY);
+                newY = this.resizeStartData.y + (gridDeltaY * this.gridSize);
+                break;
+            case 'handle-nw':
+                newWidth = Math.max(1, this.resizeStartData.width - gridDeltaX);
+                newHeight = Math.max(1, this.resizeStartData.height - gridDeltaY);
+                newX = this.resizeStartData.x + (gridDeltaX * this.gridSize);
+                newY = this.resizeStartData.y + (gridDeltaY * this.gridSize);
+                break;
+        }
+
+        // Limites
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        const rackWidth = newWidth * this.gridSize;
+        const rackHeight = newHeight * this.gridSize;
+
+        if (newX < 0) newX = 0;
+        if (newY < 0) newY = 0;
+        if (newX + rackWidth > canvasWidth) newX = canvasWidth - rackWidth;
+        if (newY + rackHeight > canvasHeight) newY = canvasHeight - rackHeight;
+
+        // Mettre à jour
+        this.currentRack.width = newWidth;
+        this.currentRack.depth = newHeight;
+        this.currentRack.position_x = newX;
+        this.currentRack.position_y = newY;
+
+        this.currentElement.style.width = `${newWidth * this.gridSize}px`;
+        this.currentElement.style.height = `${newHeight * this.gridSize}px`;
+        this.currentElement.style.left = `${newX}px`;
+        this.currentElement.style.top = `${newY}px`;
+
+        // Mettre à jour l'affichage des dimensions
+        const dims = this.currentElement.querySelector('.rack-dimensions');
+        if (dims) {
+            dims.textContent = `${newWidth}×${newHeight}`;
+        }
+
+        this.updatePropertiesPanel(this.currentRack);
+    }
+
+    // === CORRECTION DE LA MÉTHODE startRotation ===
     startRotation(e, rack, element) {
         e.stopPropagation();
         this.isRotating = true;
+        this.currentRack = rack;
+        this.currentElement = element;
 
         const rect = element.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-
-        const startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-        const startRotation = rack.rotation || 0;
-
-        const rotate = (e) => {
-            if (!this.isRotating) return;
-
-            const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-            const deltaAngle = (currentAngle - startAngle) * (180 / Math.PI);
-            let newRotation = (startRotation + deltaAngle) % 360;
-
-            if (newRotation < 0) newRotation += 360;
-
-            // Snap à 15 degrés
-            newRotation = Math.round(newRotation / 15) * 15;
-
-            rack.rotation = newRotation;
-            element.style.transform = `rotate(${newRotation}deg)`;
-
-            this.updatePropertiesPanel(rack);
+        this.rotateStartData = {
+            centerX: rect.left + rect.width / 2,
+            centerY: rect.top + rect.height / 2,
+            startAngle: Math.atan2(e.clientY - (rect.top + rect.height / 2), e.clientX - (rect.left + rect.width / 2)),
+            startRotation: rack.rotation || 0
         };
 
-        document.addEventListener('mousemove', rotate);
-        document.addEventListener('mouseup', () => {
-            this.isRotating = false;
-            document.removeEventListener('mousemove', rotate);
-        });
+        // Ajouter les événements globaux
+        document.addEventListener('mousemove', this.handleRotation);
+        document.addEventListener('mouseup', this.handleMouseUp);
     }
 
-    updatePropertiesPanel(rack) {
-      const panel = document.getElementById('propertiesPanel');
-      if (!panel || !rack) return;
+    handleRotation(e) {
+        if (!this.isRotating || !this.rotateStartData || !this.currentRack || !this.currentElement) return;
 
-      panel.innerHTML = `
-        <h4>Étagère ${rack.code}</h4>
-        <div class="property-group">
-          <div class="property">
-            <span class="property-label">Position:</span>
-            <span class="property-value">${Math.round(rack.position_x / this.gridSize)}, ${Math.round(rack.position_y / this.gridSize)}</span>
-          </div>
-          <div class="property">
-            <span class="property-label">Dimensions:</span>
-            <span class="property-value">${rack.width} × ${rack.depth} cases</span>
-          </div>
-          <div class="property">
-            <span class="property-label">Rotation:</span>
-            <span class="property-value">${rack.rotation || 0}°</span>
-          </div>
-          <div class="property">
-            <span class="property-label">Couleur:</span>
-            <input type="color" value="${rack.color || '#4a90e2'}" class="property-color" data-rack-id="${rack.id}">
-          </div>
-        </div>
-        <button class="btn btn-sm btn-block view-rack-btn" data-rack-id="${rack.id}">
-          <i class="fas fa-eye"></i> Voir les étages
-        </button>
-        <button class="btn btn-sm btn-danger btn-block delete-rack-btn" data-rack-id="${rack.id}">
-          <i class="fas fa-trash"></i> Supprimer
-        </button>
-      `;
+        const currentAngle = Math.atan2(
+            e.clientY - this.rotateStartData.centerY,
+            e.clientX - this.rotateStartData.centerX
+        );
+        const deltaAngle = (currentAngle - this.rotateStartData.startAngle) * (180 / Math.PI);
+        let newRotation = (this.rotateStartData.startRotation + deltaAngle) % 360;
+
+        if (newRotation < 0) newRotation += 360;
+
+        // Snap à 15 degrés
+        newRotation = Math.round(newRotation / 15) * 15;
+
+        this.currentRack.rotation = newRotation;
+        this.currentElement.style.transform = `rotate(${newRotation}deg)`;
+
+        this.updatePropertiesPanel(this.currentRack);
+    }
+
+    // === CORRECTION DE LA MÉTHODE selectRack ===
+    selectRack(rack, element) {
+        console.log('🟢 selectRack for:', rack.id);
+
+        // 1. Désélectionner toutes les autres
+        document.querySelectorAll('.rack-on-plan').forEach(el => {
+            el.classList.remove('selected');
+            el.style.zIndex = '10';
+            el.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
+                h.style.display = 'none';
+            });
+        });
+
+        // 2. Sélectionner celle-ci
+        element.classList.add('selected');
+        element.style.zIndex = '20';
+        this.selectedRack = rack;
+
+        // 3. MONTRER les poignées de CETTE étagère
+        element.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
+            h.style.display = 'block';
+        });
+
+        this.updatePropertiesPanel(rack);
+    }
+
+    // === CORRECTION DE LA MÉTHODE updatePropertiesPanel ===
+    updatePropertiesPanel(rack) {
+        const panel = document.getElementById('propertiesPanel');
+        if (!panel || !rack) return;
+
+        panel.innerHTML = `
+            <h4>Étagère ${rack.code}</h4>
+            <div class="property-group">
+                <div class="property">
+                    <span class="property-label">Position:</span>
+                    <span class="property-value">${Math.round(rack.position_x / this.gridSize)}, ${Math.round(rack.position_y / this.gridSize)}</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">Dimensions:</span>
+                    <span class="property-value">${rack.width} × ${rack.depth} cases</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">Rotation:</span>
+                    <span class="property-value">${rack.rotation || 0}°</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">Couleur:</span>
+                    <input type="color" value="${rack.color || '#4a90e2'}" class="property-color" data-rack-id="${rack.id}">
+                </div>
+            </div>
+            <button class="btn btn-sm btn-block view-rack-btn" data-rack-id="${rack.id}">
+                <i class="fas fa-eye"></i> Voir les étages
+            </button>
+            <button class="btn btn-sm btn-danger btn-block delete-rack-btn" data-rack-id="${rack.id}">
+                <i class="fas fa-trash"></i> Supprimer
+            </button>
+        `;
 
         // Événement pour changer la couleur
         const colorInput = panel.querySelector('.property-color');
         if (colorInput) {
             colorInput.addEventListener('change', (e) => {
                 rack.color = e.target.value;
-                const element = document.querySelector(`[data-rack-id="${rack.id}"]`);
+                const element = this.overlay.querySelector(`[data-rack-id="${rack.id}"]`);
                 if (element) {
                     element.style.backgroundColor = rack.color;
+                    this.saveAutoPosition();
                 }
             });
         }
@@ -574,22 +681,23 @@ class CanvasManager {
         const deleteBtn = panel.querySelector('.delete-rack-btn');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => {
-                this.deleteRack(rack.id);
+                if (confirm('Supprimer cette étagère et tous ses étages/emplacements ?')) {
+                    this.deleteRack(rack.id);
+                }
             });
         }
     }
 
+    // === CORRECTION DE LA MÉTHODE deleteRack ===
     async deleteRack(rackId) {
-        if (!confirm('Supprimer cette étagère et tous ses étages/emplacements ?')) return;
-
         try {
             // Supprimer via l'API
             if (window.vueStock?.api) {
-                await window.vueStock.api.deleteRack(rackId);
+                await window.vueStock.api.request('/.netlify/functions/vuestock-api?action=delete-rack', 'DELETE', { id: rackId });
             }
 
             // Supprimer du DOM
-            const element = document.querySelector(`[data-rack-id="${rackId}"]`);
+            const element = this.overlay.querySelector(`[data-rack-id="${rackId}"]`);
             if (element) {
                 element.remove();
             }
@@ -616,11 +724,11 @@ class CanvasManager {
                 window.vueStock.updateStats();
             }
 
-            this.showNotification('Étagère supprimée');
+            console.log('🗑️ Étagère supprimée:', rackId);
 
         } catch (error) {
             console.error('Erreur lors de la suppression:', error);
-            this.showNotification('Erreur: ' + error.message, 'error');
+            alert('Erreur: ' + error.message);
         }
     }
 

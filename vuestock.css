@@ -920,3 +920,59 @@ canvas {
 }
 
 .rack-handle, .rotate-handle { pointer-events: all; }
+
+.rack-on-plan {
+    position: absolute !important;
+    border: 2px solid #333 !important;
+    border-radius: 4px !important;
+    box-sizing: border-box !important;
+    transition: transform 0.1s ease !important;
+    user-select: none !important;
+}
+
+.rack-on-plan.selected {
+    border-color: #007bff !important;
+    border-width: 3px !important;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5) !important;
+}
+
+.rack-handle {
+    position: absolute !important;
+    width: 12px !important;
+    height: 12px !important;
+    background-color: #fff !important;
+    border: 2px solid #007bff !important;
+    border-radius: 2px !important;
+    z-index: 20 !important;
+}
+
+.rotate-handle {
+    position: absolute !important;
+    top: -25px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 20px !important;
+    height: 20px !important;
+    background-color: #fff !important;
+    border: 2px solid #007bff !important;
+    border-radius: 50% !important;
+    cursor: grab !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 12px !important;
+    z-index: 20 !important;
+}
+
+.rack-dimensions {
+    position: absolute !important;
+    bottom: -25px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 12px !important;
+    color: #666 !important;
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    padding: 2px 6px !important;
+    border-radius: 3px !important;
+    z-index: 15 !important;
+}
