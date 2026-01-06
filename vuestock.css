@@ -918,3 +918,5 @@ canvas {
     pointer-events: none;
     z-index: 1000;
 }
+
+.rack-handle, .rotate-handle { pointer-events: all; }
