@@ -436,6 +436,12 @@ class CanvasManager {
             return;
         }
 
+        // ✅ AJOUTEZ CETTE VÉRIFICATION
+        if (this.currentTool !== 'move' && this.currentTool !== 'select') {
+            // Ne pas permettre le déplacement si l'outil n'est pas actif
+            return;
+        }
+
         // Sinon, déplacement normal
         this.isDragging = true;
         this.currentRack = rack;
