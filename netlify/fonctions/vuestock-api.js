@@ -1,8 +1,10 @@
+// vuestock-api.js
 exports.handler = async (event) => {
   console.log('🟢 FUNCTION CALLED:', event.queryStringParameters);
 
   const { action } = event.queryStringParameters || {};
 
+  // Ping simple
   if (action === 'ping') {
     return {
       statusCode: 200,
@@ -13,6 +15,7 @@ exports.handler = async (event) => {
     };
   }
 
+  // Retour de config vide pour VueStock
   if (action === 'get-config') {
     return {
       statusCode: 200,
@@ -23,6 +26,7 @@ exports.handler = async (event) => {
     };
   }
 
+  // Sauvegarde d'un rack
   if (action === 'save-rack') {
     const body = JSON.parse(event.body || '{}');
     console.log('Saving to Supabase:', body);
@@ -30,6 +34,7 @@ exports.handler = async (event) => {
     const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uZ2dneWJheWpvb3FremJodnF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY2MTU3NDgsImV4cCI6MjA0MjE5MTc0OH0.lnOqnq1AwN41g4xJ5O9oNIPBQqXYJkSrRhJ3osXtcsk';
 
+    // 🔹 Crée l'objet payload avant le fetch
     const payload = {
       rack_code: body.code,
       display_name: body.name,
@@ -52,20 +57,15 @@ exports.handler = async (event) => {
         body: JSON.stringify(payload)
       });
 
-      console.log('Supabase response status:', response.status);
-      const text = await response.text();
-      console.log('Supabase raw response:', text);
-
-      let result;
-      try {
-        result = JSON.parse(text);
-      } catch(e) {
-        console.error('Erreur parsing JSON:', e);
-      }
+      const result = await response.json();
+      console.log('Supabase result:', result);
 
       return {
         statusCode: response.status === 201 ? 200 : 500,
-        body: JSON.stringify({ success: response.status === 201, result })
+        body: JSON.stringify({
+          success: response.status === 201,
+          result
+        })
       };
 
     } catch (error) {
@@ -75,14 +75,14 @@ exports.handler = async (event) => {
         body: JSON.stringify({ error: error.message })
       };
     }
+  }
 
-
-  // Pour toutes les autres actions
+  // Action inconnue
   return {
     statusCode: 200,
     body: JSON.stringify({
       success: true,
-      message: `Action ${action} simulée`
+      message: `Action ${action || 'undefined'} simulée`
     })
   };
 };
