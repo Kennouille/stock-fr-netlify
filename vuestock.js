@@ -106,74 +106,22 @@ class ApiManager {
 // ===== CLASSE CANVAS MANAGER =====
 class CanvasManager {
     constructor(canvasId, overlayId) {
-        // Utiliser des fonctions fléchées pour conserver le contexte
-        this.drawGrid = () => {
-            if (!this.ctx || !this.canvas) return;
+        // Bind explicite de TOUTES les méthodes
+        this.drawGrid = this.drawGrid.bind(this);
+        this.updateCoordinatesDisplay = this.updateCoordinatesDisplay.bind(this);
+        this.handleMouseMove = this.handleMouseMove.bind(this);
+        this.handleMouseUp = this.handleMouseUp.bind(this);
+        this.cleanupEvents = this.cleanupEvents.bind(this);
+        this.startRackDrag = this.startRackDrag.bind(this);
+        this.dragRack = this.dragRack.bind(this);
+        this.selectRack = this.selectRack.bind(this);
+        this.startResize = this.startResize.bind(this);
+        this.startRotation = this.startRotation.bind(this);
+        this.handleResize = this.handleResize.bind(this);
+        this.handleRotation = this.handleRotation.bind(this);
+        this.saveAutoPosition = this.saveAutoPosition.bind(this);
 
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-            const width = this.canvas.width;
-            const height = this.canvas.height;
-            const gridSize = this.gridSize * this.scale;
-
-            // Calculer les positions de départ avec l'offset
-            const startX = -this.offsetX % gridSize;
-            const startY = -this.offsetY % gridSize;
-
-            // Dessiner la grille
-            this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-            this.ctx.lineWidth = 1;
-
-            // Lignes verticales
-            for (let x = startX; x < width; x += gridSize) {
-                this.ctx.beginPath();
-                this.ctx.moveTo(x, 0);
-                this.ctx.lineTo(x, height);
-                this.ctx.stroke();
-            }
-
-            // Lignes horizontales
-            for (let y = startY; y < height; y += gridSize) {
-                this.ctx.beginPath();
-                this.ctx.moveTo(0, y);
-                this.ctx.lineTo(width, y);
-                this.ctx.stroke();
-            }
-
-            // Points de grille tous les 4 carreaux
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-            for (let x = startX; x < width; x += gridSize * 4) {
-                for (let y = startY; y < height; y += gridSize * 4) {
-                    this.ctx.beginPath();
-                    this.ctx.arc(x, y, 2, 0, Math.PI * 2);
-                    this.ctx.fill();
-                }
-            }
-
-            // Mettre à jour les coordonnées affichées
-            this.updateCoordinatesDisplay();
-        };
-
-        this.updateCoordinatesDisplay = () => {
-            const coordsElement = document.getElementById('mouseCoords');
-            const scaleElement = document.getElementById('scaleDisplay');
-
-            if (coordsElement) {
-                const gridX = Math.round(this.gridX / this.gridSize);
-                const gridY = Math.round(this.gridY / this.gridSize);
-                coordsElement.textContent = `X: ${gridX}, Y: ${gridY}`;
-            }
-
-            if (scaleElement) {
-                scaleElement.textContent = `${Math.round(this.scale * 100)}%`;
-            }
-        };
-
-        // CORRECTION : Supprimez les autres définitions de méthodes ici
-        // Ne gardez que drawGrid et updateCoordinatesDisplay dans le constructeur
-        // Les autres méthodes seront définies normalement après le constructeur
-
-        // Initialiser le reste
+        // Initialiser les propriétés
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.overlay = document.getElementById(overlayId);
@@ -206,12 +154,75 @@ class CanvasManager {
 
         // Sauvegarde automatique
         this.saveTimeout = null;
+        this.racks = [];
 
         // Initialisation
         this.initCanvas();
         this.drawGrid();
         this.initEvents();
-        this.racks = [];
+    }
+
+    // === MÉTHODES ===
+    drawGrid() {
+        if (!this.ctx || !this.canvas) return;
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        const gridSize = this.gridSize * this.scale;
+
+        // Calculer les positions de départ avec l'offset
+        const startX = -this.offsetX % gridSize;
+        const startY = -this.offsetY % gridSize;
+
+        // Dessiner la grille
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+        this.ctx.lineWidth = 1;
+
+        // Lignes verticales
+        for (let x = startX; x < width; x += gridSize) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, 0);
+            this.ctx.lineTo(x, height);
+            this.ctx.stroke();
+        }
+
+        // Lignes horizontales
+        for (let y = startY; y < height; y += gridSize) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, y);
+            this.ctx.lineTo(width, y);
+            this.ctx.stroke();
+        }
+
+        // Points de grille tous les 4 carreaux
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        for (let x = startX; x < width; x += gridSize * 4) {
+            for (let y = startY; y < height; y += gridSize * 4) {
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+        }
+
+        // Mettre à jour les coordonnées affichées
+        this.updateCoordinatesDisplay();
+    }
+
+    updateCoordinatesDisplay() {
+        const coordsElement = document.getElementById('mouseCoords');
+        const scaleElement = document.getElementById('scaleDisplay');
+
+        if (coordsElement) {
+            const gridX = Math.round(this.gridX / this.gridSize);
+            const gridY = Math.round(this.gridY / this.gridSize);
+            coordsElement.textContent = `X: ${gridX}, Y: ${gridY}`;
+        }
+
+        if (scaleElement) {
+            scaleElement.textContent = `${Math.round(this.scale * 100)}%`;
+        }
     }
 
     initCanvas() {
@@ -221,7 +232,6 @@ class CanvasManager {
         this.ctx.imageSmoothingQuality = 'high';
     }
 
-    // === CORRECTION : Définir ces méthodes UNIQUEMENT ici ===
     cleanupEvents() {
         document.removeEventListener('mousemove', this.handleMouseMove);
         document.removeEventListener('mouseup', this.handleMouseUp);
@@ -236,15 +246,14 @@ class CanvasManager {
     }
 
     handleMouseUp() {
+        this.cleanupEvents();
+
         if (this.isDragging) {
             this.isDragging = false;
             this.currentRack = null;
             this.currentElement = null;
-            this.cleanupEvents();
 
-            // Sauvegarder la position finale
-            if (this.selectedRack && this.saveTimeout) {
-                clearTimeout(this.saveTimeout);
+            if (this.selectedRack) {
                 this.saveAutoPosition();
             }
         }
@@ -253,9 +262,7 @@ class CanvasManager {
             this.isResizing = false;
             this.resizeHandle = null;
             this.resizeStartData = null;
-            this.cleanupEvents();
 
-            // Sauvegarder les dimensions
             if (this.selectedRack) {
                 this.saveAutoPosition();
             }
@@ -264,28 +271,25 @@ class CanvasManager {
         if (this.isRotating) {
             this.isRotating = false;
             this.rotateStartData = null;
-            this.cleanupEvents();
 
-            // Sauvegarder la rotation
             if (this.selectedRack) {
                 this.saveAutoPosition();
             }
         }
     }
 
-    // === CORRECTION DE LA MÉTHODE addRackToCanvas ===
+    // === MÉTHODES POUR LES ÉTAGÈRES ===
     addRackToCanvas(rack) {
         console.log('🟢 [CanvasManager] addRackToCanvas called for rack:', rack.id, rack.code);
 
         // Vérifier si l'étagère existe déjà
         const existingElement = this.overlay.querySelector(`[data-rack-id="${rack.id}"]`);
         if (existingElement) {
-            console.log('⚠️ Rack already exists, removing old one');
             existingElement.remove();
             this.racks = this.racks.filter(item => item.rack.id !== rack.id);
         }
 
-        // Créer l'élément DOM pour l'étagère
+        // Créer l'élément DOM
         const rackElement = document.createElement('div');
         rackElement.className = 'rack-on-plan';
         rackElement.dataset.rackId = rack.id;
@@ -309,43 +313,31 @@ class CanvasManager {
         rackElement.style.fontWeight = 'bold';
         rackElement.style.userSelect = 'none';
 
-        console.log('🟢 Rack element created, adding to DOM');
-
         // Ajouter les poignées
         this.addRackHandles(rackElement, rack);
 
         // Événements
         rackElement.addEventListener('mousedown', (e) => {
-            console.log('🟢 mousedown on rack', rack.id);
             this.startRackDrag(e, rack, rackElement);
         });
 
         rackElement.addEventListener('click', (e) => {
-            console.log('🟢 click on rack', rack.id);
             e.stopPropagation();
-            e.preventDefault();
             this.selectRack(rack, rackElement);
         });
 
         this.overlay.appendChild(rackElement);
         this.racks.push({ rack, element: rackElement });
 
-        // Auto-sélection pour les nouvelles étagères seulement
+        // Auto-sélection pour les nouvelles étagères
         if (!rack.id || rack.id.toString().includes('new')) {
             setTimeout(() => {
                 this.selectRack(rack, rackElement);
             }, 100);
         }
-
-        console.log('🟢 Rack added to canvas. Total racks:', this.racks.length);
     }
 
-    // === CORRECTION DE LA MÉTHODE addRackHandles ===
     addRackHandles(rackElement, rack) {
-        // Supprimer les anciennes poignées si elles existent
-        const oldHandles = rackElement.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions');
-        oldHandles.forEach(handle => handle.remove());
-
         // Poignées de redimensionnement
         const handles = [
             { class: 'handle-nw', cursor: 'nw-resize', top: '0', left: '0' },
@@ -361,23 +353,21 @@ class CanvasManager {
             handleEl.style.width = '12px';
             handleEl.style.height = '12px';
             handleEl.style.backgroundColor = '#fff';
-            handleEl.style.border = '2px solid #333';
+            handleEl.style.border = '2px solid #007bff';
             handleEl.style.borderRadius = '2px';
             handleEl.style.cursor = handle.cursor;
             handleEl.style.zIndex = '20';
 
-            // Position
             if (handle.top) handleEl.style.top = handle.top;
             if (handle.bottom) handleEl.style.bottom = handle.bottom;
             if (handle.left) handleEl.style.left = handle.left;
             if (handle.right) handleEl.style.right = handle.right;
 
-            handleEl.style.display = 'none'; // Caché par défaut
+            handleEl.style.display = 'none';
 
             handleEl.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                console.log('🟢 Handle mousedown:', handle.class);
                 this.startResize(e, rack, rackElement, handleEl);
             });
 
@@ -395,7 +385,7 @@ class CanvasManager {
         rotateHandle.style.width = '20px';
         rotateHandle.style.height = '20px';
         rotateHandle.style.backgroundColor = '#fff';
-        rotateHandle.style.border = '2px solid #333';
+        rotateHandle.style.border = '2px solid #007bff';
         rotateHandle.style.borderRadius = '50%';
         rotateHandle.style.cursor = 'grab';
         rotateHandle.style.display = 'flex';
@@ -403,12 +393,11 @@ class CanvasManager {
         rotateHandle.style.justifyContent = 'center';
         rotateHandle.style.fontSize = '12px';
         rotateHandle.style.zIndex = '20';
-        rotateHandle.style.display = 'none'; // Caché par défaut
+        rotateHandle.style.display = 'none';
 
         rotateHandle.addEventListener('mousedown', (e) => {
             e.stopPropagation();
             e.preventDefault();
-            console.log('🟢 Rotate handle mousedown');
             this.startRotation(e, rack, rackElement);
         });
 
@@ -427,18 +416,15 @@ class CanvasManager {
         dimensions.style.padding = '2px 6px';
         dimensions.style.borderRadius = '3px';
         dimensions.style.zIndex = '15';
-        dimensions.style.display = 'none'; // Caché par défaut
+        dimensions.style.display = 'none';
 
-        const width = parseInt(rackElement.style.width) / this.gridSize;
-        const depth = parseInt(rackElement.style.height) / this.gridSize;
+        const width = rack.width;
+        const depth = rack.depth;
         dimensions.textContent = `${width}×${depth}`;
         rackElement.appendChild(dimensions);
     }
 
-    // === CORRECTION DE LA MÉTHODE startRackDrag ===
     startRackDrag(e, rack, element) {
-        console.log('🟢 startRackDrag called, target:', e.target.className);
-
         // Vérifier si on clique sur une poignée
         const handle = e.target.closest('.rack-handle, .rotate-handle');
         if (handle) {
@@ -465,7 +451,6 @@ class CanvasManager {
         document.addEventListener('mouseup', this.handleMouseUp);
     }
 
-    // === CORRECTION DE LA MÉTHODE dragRack ===
     dragRack(e) {
         if (!this.isDragging || !this.currentRack || !this.currentElement) return;
 
@@ -494,29 +479,29 @@ class CanvasManager {
         this.updatePropertiesPanel(this.currentRack);
     }
 
-    // === NOUVELLE MÉTHODE POUR SAUVEGARDE AUTO ===
-    saveAutoPosition() {
-        if (!this.selectedRack || !window.vueStock) return;
-
-        clearTimeout(this.saveTimeout);
-        this.saveTimeout = setTimeout(() => {
-            window.vueStock.api.saveRack({
-                id: this.selectedRack.id,
-                position_x: this.selectedRack.position_x,
-                position_y: this.selectedRack.position_y,
-                rotation: this.selectedRack.rotation || 0,
-                width: this.selectedRack.width,
-                depth: this.selectedRack.depth,
-                color: this.selectedRack.color
-            }).then(() => {
-                console.log('💾 Position/dimensions sauvegardées');
-            }).catch(err => {
-                console.error('❌ Erreur sauvegarde:', err);
+    selectRack(rack, element) {
+        // Désélectionner toutes les autres
+        document.querySelectorAll('.rack-on-plan').forEach(el => {
+            el.classList.remove('selected');
+            el.style.zIndex = '10';
+            el.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
+                h.style.display = 'none';
             });
-        }, 500);
+        });
+
+        // Sélectionner celle-ci
+        element.classList.add('selected');
+        element.style.zIndex = '20';
+        this.selectedRack = rack;
+
+        // Montrer les poignées
+        element.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
+            h.style.display = 'block';
+        });
+
+        this.updatePropertiesPanel(rack);
     }
 
-    // === CORRECTION DE LA MÉTHODE startResize ===
     startResize(e, rack, element, handle) {
         e.stopPropagation();
         this.isResizing = true;
@@ -609,7 +594,6 @@ class CanvasManager {
         this.updatePropertiesPanel(this.currentRack);
     }
 
-    // === CORRECTION DE LA MÉTHODE startRotation ===
     startRotation(e, rack, element) {
         e.stopPropagation();
         this.isRotating = true;
@@ -650,33 +634,27 @@ class CanvasManager {
         this.updatePropertiesPanel(this.currentRack);
     }
 
-    // === CORRECTION DE LA MÉTHODE selectRack ===
-    selectRack(rack, element) {
-        console.log('🟢 selectRack for:', rack.id);
+    saveAutoPosition() {
+        if (!this.selectedRack || !window.vueStock) return;
 
-        // 1. Désélectionner toutes les autres
-        document.querySelectorAll('.rack-on-plan').forEach(el => {
-            el.classList.remove('selected');
-            el.style.zIndex = '10';
-            el.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
-                h.style.display = 'none';
+        clearTimeout(this.saveTimeout);
+        this.saveTimeout = setTimeout(() => {
+            window.vueStock.api.saveRack({
+                id: this.selectedRack.id,
+                position_x: this.selectedRack.position_x,
+                position_y: this.selectedRack.position_y,
+                rotation: this.selectedRack.rotation || 0,
+                width: this.selectedRack.width,
+                depth: this.selectedRack.depth,
+                color: this.selectedRack.color
+            }).then(() => {
+                console.log('💾 Modifications sauvegardées');
+            }).catch(err => {
+                console.error('❌ Erreur sauvegarde:', err);
             });
-        });
-
-        // 2. Sélectionner celle-ci
-        element.classList.add('selected');
-        element.style.zIndex = '20';
-        this.selectedRack = rack;
-
-        // 3. MONTRER les poignées de CETTE étagère
-        element.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
-            h.style.display = 'block';
-        });
-
-        this.updatePropertiesPanel(rack);
+        }, 500);
     }
 
-    // === CORRECTION DE LA MÉTHODE updatePropertiesPanel ===
     updatePropertiesPanel(rack) {
         const panel = document.getElementById('propertiesPanel');
         if (!panel || !rack) return;
@@ -743,11 +721,11 @@ class CanvasManager {
         }
     }
 
-    // === CORRECTION DE LA MÉTHODE deleteRack ===
     async deleteRack(rackId) {
         try {
             // Supprimer via l'API
             if (window.vueStock?.api) {
+                // Créez d'abord l'endpoint delete-rack dans vuestock-api.js
                 await window.vueStock.api.request('/.netlify/functions/vuestock-api?action=delete-rack', 'DELETE', { id: rackId });
             }
 
