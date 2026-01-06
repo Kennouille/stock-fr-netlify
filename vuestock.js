@@ -460,36 +460,36 @@ class CanvasManager {
     }
 
     updatePropertiesPanel(rack) {
-        const panel = document.getElementById('propertiesPanel');
-        if (!panel || !rack) return;
+      const panel = document.getElementById('propertiesPanel');
+      if (!panel || !rack) return;
 
-        panel.innerHTML = `
-            <h4>Étagère ${rack.code}</h4>
-            <div class="property-group">
-                <div class="property">
-                    <span class="property-label">Position:</span>
-                    <span class="property-value">${Math.round(rack.position_x / this.gridSize)}, ${Math.round(rack.position_y / this.gridSize)}</span>
-                </div>
-                <div class="property">
-                    <span class="property-label">Dimensions:</span>
-                    <span class="property-value">${rack.width} × ${rack.depth} cases</span>
-                </div>
-                <div class="property">
-                    <span class="property-label">Rotation:</span>
-                    <span class="property-value">${rack.rotation || 0}°</span>
-                </div>
-                <div class="property">
-                    <span class="property-label">Couleur:</span>
-                    <input type="color" value="${rack.color}" class="property-color" data-rack-id="${rack.id}">
-                </div>
-            </div>
-            <button class="btn btn-sm btn-block view-rack-btn" data-rack-id="${rack.id}">
-                <i class="fas fa-eye"></i> Voir les étages
-            </button>
-            <button class="btn btn-sm btn-danger btn-block delete-rack-btn" data-rack-id="${rack.id}">
-                <i class="fas fa-trash"></i> Supprimer
-            </button>
-        `;
+      panel.innerHTML = `
+        <h4>Étagère ${rack.code}</h4>
+        <div class="property-group">
+          <div class="property">
+            <span class="property-label">Position:</span>
+            <span class="property-value">${Math.round(rack.position_x / this.gridSize)}, ${Math.round(rack.position_y / this.gridSize)}</span>
+          </div>
+          <div class="property">
+            <span class="property-label">Dimensions:</span>
+            <span class="property-value">${rack.width} × ${rack.depth} cases</span>
+          </div>
+          <div class="property">
+            <span class="property-label">Rotation:</span>
+            <span class="property-value">${rack.rotation || 0}°</span>
+          </div>
+          <div class="property">
+            <span class="property-label">Couleur:</span>
+            <input type="color" value="${rack.color || '#4a90e2'}" class="property-color" data-rack-id="${rack.id}">
+          </div>
+        </div>
+        <button class="btn btn-sm btn-block view-rack-btn" data-rack-id="${rack.id}">
+          <i class="fas fa-eye"></i> Voir les étages
+        </button>
+        <button class="btn btn-sm btn-danger btn-block delete-rack-btn" data-rack-id="${rack.id}">
+          <i class="fas fa-trash"></i> Supprimer
+        </button>
+      `;
 
         // Événement pour changer la couleur
         const colorInput = panel.querySelector('.property-color');
