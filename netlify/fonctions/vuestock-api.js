@@ -53,12 +53,19 @@ exports.handler = async (event) => {
       });
 
       console.log('Supabase response status:', response.status);
-      const result = await response.json();
-      console.log('Supabase result:', result);
+      const text = await response.text();
+      console.log('Supabase raw response:', text);
+
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch(e) {
+        console.error('Erreur parsing JSON:', e);
+      }
 
       return {
-        statusCode: 200,
-        body: JSON.stringify({ success: true, result })
+        statusCode: response.status === 201 ? 200 : 500,
+        body: JSON.stringify({ success: response.status === 201, result })
       };
 
     } catch (error) {
@@ -68,7 +75,7 @@ exports.handler = async (event) => {
         body: JSON.stringify({ error: error.message })
       };
     }
-  }
+
 
   // Pour toutes les autres actions
   return {
