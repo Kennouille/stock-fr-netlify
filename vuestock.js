@@ -671,7 +671,7 @@ class CanvasManager {
     }
 
     updatePropertiesPanel(rack) {
-        const panel = document.getElementById('propertiesPanel');
+        const panel = document.getElementById('propertiesPanel'); // une seule déclaration
         if (!panel || !rack) return;
 
         panel.innerHTML = `
@@ -725,21 +725,19 @@ class CanvasManager {
             });
         }
 
-        // Événement pour supprimer
-        const panel = document.getElementById('propertiesPanel');
+        // Événement pour supprimer (delegation)
         panel.addEventListener('click', (e) => {
             const rackId = e.target.closest('[data-rack-id]')?.dataset.rackId;
             if (!rackId) return;
 
-            // Supprimer
             if (e.target.closest('.delete-rack-btn')) {
                 if (confirm('Supprimer cette étagère et tous ses étages/emplacements ?')) {
                     this.deleteRack(rackId);
                 }
             }
         });
-
     }
+
 
     async deleteRack(rackId) {
         try {
