@@ -21,7 +21,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || '{}');
 
     const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
-    const supabaseKey = 'TA_CLE_SUPABASE_ICI';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uZ2dneWJheWpvb3FremJodnF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY2MTU3NDgsImV4cCI6MjA0MjE5MTc0OH0.lnOqnq1AwN41g4xJ5O9oNIPBQqXYJkSrRhJ3osXtcsk';
 
     const payload = {
       rack_code: body.code,
