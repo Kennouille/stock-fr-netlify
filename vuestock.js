@@ -273,6 +273,20 @@ class CanvasManager {
             const handleEl = document.createElement('div');
             handleEl.className = `rack-handle ${handle.class}`;
             handleEl.style.cursor = handle.cursor;
+
+            // AJOUTER L'ÉVÉNEMENT
+            handleEl.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                console.log('🟢 Handle mousedown:', handle.class);
+
+                // Trouver le rack associé
+                const rack = this.racks.find(r => r.element === rackElement)?.rack;
+                if (rack) {
+                    this.startResize(e, rack, rackElement, handleEl);
+                }
+            });
+
             rackElement.appendChild(handleEl);
         });
 
@@ -280,6 +294,19 @@ class CanvasManager {
         const rotateHandle = document.createElement('div');
         rotateHandle.className = 'rotate-handle';
         rotateHandle.innerHTML = '⟳';
+
+        // AJOUTER L'ÉVÉNEMENT
+        rotateHandle.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            console.log('🟢 Rotate handle mousedown');
+
+            const rack = this.racks.find(r => r.element === rackElement)?.rack;
+            if (rack) {
+                this.startRotation(e, rack, rackElement);
+            }
+        });
+
         rackElement.appendChild(rotateHandle);
 
         // Dimensions affichées
