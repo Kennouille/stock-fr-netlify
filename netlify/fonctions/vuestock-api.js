@@ -197,62 +197,60 @@ exports.handler = async (event) => {
         }
     }
 
-  if (action === 'delete-rack') {
-    try {
-        let body = {};
-        if (event.body) {
-            body = JSON.parse(event.body);
-        }
+      if (action === 'delete-rack') {
+        try {
+            // ✅ CORRECTION : Récupérer l'ID depuis les query params
+            const rackId = queryParams.rackId;
 
-        if (!body.id) {
-            throw new Error('ID is required for deletion');
-        }
-
-        const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
-
-        console.log('🗑️ Deleting rack with ID:', body.id);
-
-        const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?id=eq.${body.id}`, {
-            method: 'DELETE',
-            headers: {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`
+            if (!rackId) {
+                throw new Error('rackId is required for deletion');
             }
-        });
 
-        const text = await response.text();
+            const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
 
-        if (!response.ok) {
-            throw new Error(`Supabase error: ${response.status} - ${text}`);
+            console.log('🗑️ Deleting rack with ID:', rackId);
+
+            const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?id=eq.${rackId}`, {
+                method: 'DELETE',
+                headers: {
+                    'apikey': supabaseKey,
+                    'Authorization': `Bearer ${supabaseKey}`
+                }
+            });
+
+            const text = await response.text();
+
+            if (!response.ok) {
+                throw new Error(`Supabase error: ${response.status} - ${text}`);
+            }
+
+            return {
+                statusCode: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    success: true,
+                    message: 'Rack deleted successfully'
+                })
+            };
+
+        } catch (error) {
+            console.error('❌ Error in delete-rack:', error);
+            return {
+                statusCode: 500,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    success: false,
+                    error: error.message
+                })
+            };
         }
-
-        return {
-            statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            body: JSON.stringify({
-                success: true,
-                message: 'Rack deleted successfully'
-            })
-        };
-
-    } catch (error) {
-        console.error('❌ Error in delete-rack:', error);
-        return {
-            statusCode: 500,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            body: JSON.stringify({
-                success: false,
-                error: error.message
-            })
-        };
     }
-  }
 
   // Si aucune action reconnue
   return {
