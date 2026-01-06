@@ -1,0 +1,2683 @@
+// ===== IMPORTS =====
+import { supabase } from './supabaseClient.js';
+
+// ===== ÉTATS GLOBAUX =====
+let state = {
+    user: null,
+    projects: [],
+    archivedProjects: [],
+    articles: [],
+    reservations: [],
+    users: [],
+    currentTab: 'projects',
+    filters: {
+        status: '',
+        manager: '',
+        sortBy: 'created_at'
+    },
+    currentProject: null,
+    currentModal: null,
+    charts: {}
+};
+
+// ===== ÉLÉMENTS DOM =====
+const elements = {
+    // Overlay de chargement
+    loadingOverlay: document.getElementById('loadingOverlay'),
+
+    // Header
+    usernameDisplay: document.getElementById('usernameDisplay'),
+    logoutBtn: document.getElementById('logoutBtn'),
+
+    // Statistiques
+    activeProjectsCount: document.getElementById('activeProjectsCount'),
+    totalReservedItems: document.getElementById('totalReservedItems'),
+    reservedValue: document.getElementById('reservedValue'),
+    activeUsersCount: document.getElementById('activeUsersCount'),
+
+    // Boutons header
+    newProjectBtn: document.getElementById('newProjectBtn'),
+    exportProjectsBtn: document.getElementById('exportProjectsBtn'),
+    showArchivedBtn: document.getElementById('showArchivedBtn'),
+
+    // Onglets
+    tabBtns: document.querySelectorAll('.tab-btn'),
+    tabContents: document.querySelectorAll('.tab-content'),
+    archivedTabCount: document.getElementById('archivedTabCount'),
+
+    // Recherche
+    searchProjects: document.getElementById('searchProjects'),
+    searchBtn: document.getElementById('searchBtn'),
+
+    // Filtres
+    filterStatus: document.getElementById('filterStatus'),
+    filterManager: document.getElementById('filterManager'),
+    sortBy: document.getElementById('sortBy'),
+    clearFiltersBtn: document.getElementById('clearFiltersBtn'),
+
+    // Grid projets
+    projectsGrid: document.getElementById('projectsGrid'),
+    archivedProjectsGrid: document.getElementById('archivedProjectsGrid'),
+
+    // Statistiques
+    analyticsPeriod: document.getElementById('analyticsPeriod'),
+    reservationsChart: document.getElementById('reservationsChart'),
+    statusChart: document.getElementById('statusChart'),
+    topManagersList: document.getElementById('topManagersList'),
+    topArticlesList: document.getElementById('topArticlesList'),
+
+    // Modals
+    newProjectModal: document.getElementById('newProjectModal'),
+    projectDetailsModal: document.getElementById('projectDetailsModal'),
+    addReservationModal: document.getElementById('addReservationModal'),
+    releaseStockModal: document.getElementById('releaseStockModal'),
+    closeModalBtns: document.querySelectorAll('.close-modal'),
+
+    // Modal nouveau projet
+    newProjectForm: document.getElementById('newProjectForm'),
+    projectName: document.getElementById('projectName'),
+    projectNumber: document.getElementById('projectNumber'),
+    projectDescription: document.getElementById('projectDescription'),
+    projectManager: document.getElementById('projectManager'),
+    projectEndDate: document.getElementById('projectEndDate'),
+    projectBudget: document.getElementById('projectBudget'),
+    projectError: document.getElementById('projectError'),
+    projectErrorText: document.getElementById('projectErrorText'),
+
+    // Modal détails projet
+    projectDetailsName: document.getElementById('projectDetailsName'),
+    projectDetailsNumber: document.getElementById('projectDetailsNumber'),
+    projectDetailsStatus: document.getElementById('projectDetailsStatus'),
+    projectDetailsItemsCount: document.getElementById('projectDetailsItemsCount'),
+    projectDetailsTotalValue: document.getElementById('projectDetailsTotalValue'),
+    projectDetailsDaysLeft: document.getElementById('projectDetailsDaysLeft'),
+    projectDetailsDescription: document.getElementById('projectDetailsDescription'),
+    projectDetailsCreatedAt: document.getElementById('projectDetailsCreatedAt'),
+    projectDetailsEndDate: document.getElementById('projectDetailsEndDate'),
+    projectDetailsUpdatedAt: document.getElementById('projectDetailsUpdatedAt'),
+    projectDetailsManager: document.getElementById('projectDetailsManager'),
+    projectDetailsBudget: document.getElementById('projectDetailsBudget'),
+
+    // Tabs détails
+    projectTabBtns: document.querySelectorAll('.project-tab-btn'),
+    projectInfoTab: document.getElementById('projectInfoTab'),
+    projectReservationsTab: document.getElementById('projectReservationsTab'),
+    projectHistoryTab: document.getElementById('projectHistoryTab'),
+    projectReservationsCount: document.getElementById('projectReservationsCount'),
+    projectReservationsBody: document.getElementById('projectReservationsBody'),
+    projectHistoryList: document.getElementById('projectHistoryList'),
+
+    // Actions détails
+    addReservationToProjectBtn: document.getElementById('addReservationToProjectBtn'),
+    releaseAllProjectItemsBtn: document.getElementById('releaseAllProjectItemsBtn'),
+    archiveProjectBtn: document.getElementById('archiveProjectBtn'),
+    editProjectBtn: document.getElementById('editProjectBtn'),
+    exportProjectBtn: document.getElementById('exportProjectBtn'),
+
+    // Modal ajout réservation
+    reservationArticle: document.getElementById('reservationArticle'),
+    reservationQuantity: document.getElementById('reservationQuantity'),
+    reservationQuantityMinus: document.getElementById('reservationQuantityMinus'),
+    reservationQuantityPlus: document.getElementById('reservationQuantityPlus'),
+    reservationAvailableStock: document.getElementById('reservationAvailableStock'),
+    reservationAlreadyReserved: document.getElementById('reservationAlreadyReserved'),
+    reservationComment: document.getElementById('reservationComment'),
+    reservationError: document.getElementById('reservationError'),
+    reservationErrorText: document.getElementById('reservationErrorText'),
+    confirmAddReservationBtn: document.getElementById('confirmAddReservationBtn'),
+
+    // Modal libération stock
+    releaseItemsCount: document.getElementById('releaseItemsCount'),
+    releaseReason: document.getElementById('releaseReason'),
+    releaseComment: document.getElementById('releaseComment'),
+    releaseError: document.getElementById('releaseError'),
+    releaseErrorText: document.getElementById('releaseErrorText'),
+    confirmReleaseBtn: document.getElementById('confirmReleaseBtn')
+};
+
+// ===== AUTHENTIFICATION =====
+async function checkAuth() {
+    try {
+        const userJson = sessionStorage.getItem('current_user');
+
+        if (!userJson) {
+            window.location.href = 'connexion.html';
+            return false;
+        }
+
+        state.user = JSON.parse(userJson);
+
+        // Mettre à jour l'interface
+        elements.usernameDisplay.textContent = state.user.username || state.user.email;
+
+        // CORRECTION : Vérifier les permissions pour les projets
+        // Soit l'utilisateur est admin, soit il a la permission 'projets'
+        const hasProjectPermission = state.user.isAdmin || state.user.permissions?.projets || state.user.permissions?.admin;
+
+        if (!hasProjectPermission) {
+            alert('Accès réservé aux utilisateurs avec la permission "Projets"');
+            window.location.href = 'accueil.html';
+            return false;
+        }
+
+        return true;
+
+    } catch (error) {
+        console.error('Erreur d\'authentification:', error);
+        sessionStorage.removeItem('current_user');
+        window.location.href = 'connexion.html';
+        return false;
+    }
+}
+
+function logout() {
+    if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+        return;
+    }
+
+    sessionStorage.removeItem('current_user');
+    sessionStorage.removeItem('supabase_token');
+    window.location.href = 'connexion.html';
+}
+
+// ===== FONCTIONS UTILITAIRES =====
+function showLoading() {
+    elements.loadingOverlay.style.display = 'flex';
+}
+
+function hideLoading() {
+    elements.loadingOverlay.style.display = 'none';
+}
+
+function showAlert(message, type = 'info') {
+    // Créer une alerte temporaire
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert-message ${type}`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+
+    // Ajouter au début du main-content
+    const mainContent = document.querySelector('.main-content');
+    mainContent.insertBefore(alertDiv, mainContent.firstChild);
+
+    // Supprimer après 5 secondes
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    } catch (e) {
+        return 'N/A';
+    }
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        return 'N/A';
+    }
+}
+
+function calculateDaysBetween(startDate, endDate) {
+    try {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end - start);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    } catch (e) {
+        return 0;
+    }
+}
+
+function calculateDaysLeft(endDate) {
+    try {
+        const end = new Date(endDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (end < today) return 0; // Déjà terminé
+
+        const diffTime = end - today;
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    } catch (e) {
+        return 0;
+    }
+}
+
+function getProjectStatus(project) {
+    if (project.archived) return 'archived';
+
+    const daysLeft = calculateDaysLeft(project.date_fin_prevue);
+
+    if (daysLeft <= 0) return 'overdue';
+    if (daysLeft <= 7) return 'ending';
+    return 'active';
+}
+
+// ===== FONCTIONS SUPABASE =====
+async function fetchProjects() {
+    try {
+        showLoading();
+
+        const { data, error } = await supabase
+            .from('w_projets')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        state.projects = data || [];
+        state.archivedProjects = state.projects.filter(p => p.archived);
+        state.projects = state.projects.filter(p => !p.archived);
+
+        updateStatistics();
+        updateProjectsDisplay();
+        updateArchivedProjectsDisplay();
+        populateManagerFilter();
+
+    } catch (error) {
+        console.error('Erreur chargement projets:', error);
+        showAlert('Erreur lors du chargement des projets', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function fetchArticles() {
+    try {
+        const { data, error } = await supabase
+            .from('w_articles')
+            .select('*')
+            .order('nom');
+
+        if (error) throw error;
+
+        state.articles = data || [];
+        populateArticleSelect();
+
+    } catch (error) {
+        console.error('Erreur chargement articles:', error);
+    }
+}
+
+async function fetchReservations() {
+    try {
+        const { data, error } = await supabase
+            .from('w_reservations_actives')
+            .select('*');
+
+        if (error) throw error;
+
+        state.reservations = data || [];
+
+    } catch (error) {
+        console.error('Erreur chargement réservations:', error);
+    }
+}
+
+async function fetchUsers() {
+    try {
+        const { data, error } = await supabase
+            .from('w_users')
+            .select('id, username, permissions')  // Seulement les colonnes qui existent
+            .order('username');
+
+        if (error) throw error;
+
+        state.users = data || [];
+
+    } catch (error) {
+        console.error('Erreur chargement utilisateurs:', error);
+    }
+}
+
+async function createProject(projectData) {
+    try {
+        const { data, error } = await supabase
+            .from('w_projets')
+            .insert([{
+                nom: projectData.nom,
+                numero: projectData.numero,
+                description: projectData.description,
+                responsable: projectData.responsable,
+                date_fin_prevue: projectData.date_fin_prevue,
+                budget: projectData.budget,
+                created_at: new Date().toISOString(),
+                created_by: state.user.id
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return data;
+    } catch (error) {
+        console.error('Erreur création projet:', error);
+        throw error;
+    }
+}
+
+async function updateProject(projectId, projectData) {
+    try {
+        const { data, error } = await supabase
+            .from('w_projets')
+            .update({
+                nom: projectData.nom,
+                description: projectData.description,
+                responsable: projectData.responsable,
+                date_fin_prevue: projectData.date_fin_prevue,
+                budget: projectData.budget,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', projectId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return data;
+    } catch (error) {
+        console.error('Erreur mise à jour projet:', error);
+        throw error;
+    }
+}
+
+async function archiveProject(projectId) {
+    try {
+        const { data, error } = await supabase
+            .from('w_projets')
+            .update({
+                archived: true,
+                archived_at: new Date().toISOString(),
+                archived_by: state.user.id
+            })
+            .eq('id', projectId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return data;
+    } catch (error) {
+        console.error('Erreur archivage projet:', error);
+        throw error;
+    }
+}
+
+async function unarchiveProject(projectId) {
+    try {
+        const { data, error } = await supabase
+            .from('w_projets')
+            .update({
+                archived: false,
+                archived_at: null,
+                archived_by: null
+            })
+            .eq('id', projectId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return data;
+    } catch (error) {
+        console.error('Erreur désarchivage projet:', error);
+        throw error;
+    }
+}
+
+async function createReservation(reservationData) {
+    try {
+        // Calculer la date de fin (par défaut 30 jours)
+        const today = new Date();
+        const endDate = new Date(today);
+        endDate.setDate(today.getDate() + 30);
+
+        const { data, error } = await supabase
+            .from('w_reservations_actives')
+            .insert([{
+                id_article: reservationData.articleId,
+                id_projet: reservationData.projectId,
+                id_user: state.user.id,
+                quantite: reservationData.quantity,
+                date_fin: endDate.toISOString(),
+                commentaire: reservationData.comment,
+                created_at: new Date().toISOString()
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return data;
+    } catch (error) {
+        console.error('Erreur création réservation:', error);
+        throw error;
+    }
+}
+
+async function releaseReservation(reservationId, comment = '') {
+    try {
+        const { error } = await supabase
+            .from('w_reservations_actives')
+            .delete()
+            .eq('id', reservationId);
+
+        if (error) throw error;
+
+        return true;
+    } catch (error) {
+        console.error('Erreur libération réservation:', error);
+        throw error;
+    }
+}
+
+// ===== FONCTIONS SUPABASE =====
+async function getProjectReservations(projectId) {
+    try {
+        const project = state.projects.find(p => p.id === projectId) ||
+                       state.archivedProjects.find(p => p.id === projectId);
+
+        if (!project) return { sorties: [], reservations: [] };
+
+        console.log('Recherche pour projet:', project.nom);
+
+        // 1. RÉCUPÉRER LES SORTIES (par projet_id)
+        const { data: sorties, error: sortiesError } = await supabase
+            .from('w_mouvements')
+            .select(`
+                *,
+                article:article_id (nom, numero, code_barre, prix_unitaire),
+                utilisateur:utilisateur_id (username)
+            `)
+            .eq('projet_id', projectId)  // Colonne projet_id
+            .eq('type', 'sortie')
+            .order('created_at', { ascending: false });
+
+        if (sortiesError) {
+            console.error('Erreur récupération sorties par ID:', sortiesError);
+            // Essayer avec le nom
+            const { data: sortiesByName, error: sortiesByNameError } = await supabase
+                .from('w_mouvements')
+                .select(`
+                    *,
+                    article:article_id (nom, numero, code_barre, prix_unitaire),
+                    utilisateur:utilisateur_id (username)
+                `)
+                .eq('projet', project.nom)
+                .eq('type', 'sortie')
+                .order('created_at', { ascending: false });
+
+            if (sortiesByNameError) {
+                console.error('Erreur récupération sorties par nom:', sortiesByNameError);
+                throw sortiesByNameError;
+            }
+
+            return {
+                sorties: sortiesByName || [],
+                reservations: []
+            };
+        }
+
+        // 2. RÉCUPÉRER LES RÉSERVATIONS (utilise created_at au lieu de date_reservation)
+        const { data: reservations, error: reservationsError } = await supabase
+            .from('w_reservations_actives')
+            .select(`
+                *,
+                w_articles (
+                    nom,
+                    numero,
+                    code_barre,
+                    prix_unitaire
+                ),
+                w_users (
+                    username
+                )
+            `)
+            .eq('projet_id', projectId)
+            .order('created_at', { ascending: false });  // CHANGÉ : date_reservation → created_at
+
+        if (reservationsError) {
+            console.error('Erreur récupération réservations:', reservationsError);
+            throw reservationsError;
+        }
+
+        return {
+            sorties: sorties || [],
+            reservations: reservations || []
+        };
+
+    } catch (error) {
+        console.error('Erreur chargement données projet:', error);
+        return { sorties: [], reservations: [] };
+    }
+}
+
+async function getProjectHistory(projectId) {
+    try {
+        const project = state.projects.find(p => p.id === projectId) ||
+                       state.archivedProjects.find(p => p.id === projectId);
+
+        if (!project) return [];
+
+        // ESCAPER le nom du projet pour éviter les problèmes
+        const nomProjetEchappe = project.nom.replace(/'/g, "''");
+
+        const { data, error } = await supabase
+            .from('w_mouvements')
+            .select('*')
+            .or(`projet_id.eq.${projectId},projet.eq.${nomProjetEchappe}`)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        if (error) throw error;
+
+        return data || [];
+
+    } catch (error) {
+        console.error('Erreur chargement historique projet:', error);
+        return [];
+    }
+}
+
+// ===== MISE À JOUR DE L'AFFICHAGE =====
+function updateStatistics() {
+    // Compter les projets actifs
+    elements.activeProjectsCount.textContent = state.projects.length;
+    elements.archivedTabCount.textContent = state.archivedProjects.length;
+
+    // Calculer le total des articles réservés
+    let totalItems = 0;
+    let totalValue = 0;
+
+    state.projects.forEach(project => {
+        const projectReservations = state.reservations.filter(r => r.id_projet === project.id);
+        totalItems += projectReservations.reduce((sum, r) => sum + r.quantite, 0);
+
+        projectReservations.forEach(reservation => {
+            const article = state.articles.find(a => a.id === reservation.id_article);
+            if (article && article.prix_unitaire) {
+                totalValue += article.prix_unitaire * reservation.quantite;
+            }
+        });
+    });
+
+    elements.totalReservedItems.textContent = totalItems;
+    elements.reservedValue.textContent = `${totalValue.toFixed(2)} €`;
+
+    // Compter les utilisateurs uniques avec des réservations
+    const uniqueUsers = new Set(
+        state.reservations.map(r => r.id_user).filter(Boolean)
+    );
+    elements.activeUsersCount.textContent = uniqueUsers.size;
+}
+
+function updateProjectsDisplay() {
+    // Filtrer les projets
+    let filteredProjects = [...state.projects];
+
+    // Filtre par statut
+    if (state.filters.status) {
+        filteredProjects = filteredProjects.filter(project => {
+            const status = getProjectStatus(project);
+            return status === state.filters.status;
+        });
+    }
+
+    // Filtre par responsable
+    if (state.filters.manager) {
+        filteredProjects = filteredProjects.filter(project =>
+            project.responsable === state.filters.manager
+        );
+    }
+
+    // Recherche texte
+    if (elements.searchProjects.value.trim()) {
+        const searchTerm = elements.searchProjects.value.toLowerCase().trim();
+        filteredProjects = filteredProjects.filter(project => {
+            const searchableText = [
+                project.nom || '',
+                project.numero || '',
+                project.description || '',
+                project.responsable || ''
+            ].join(' ').toLowerCase();
+
+            return searchableText.includes(searchTerm);
+        });
+    }
+
+    // Trier
+    filteredProjects.sort((a, b) => {
+        switch (state.filters.sortBy) {
+            case 'name':
+                return (a.nom || '').localeCompare(b.nom || '');
+            case 'end_date':
+                return new Date(a.date_fin_prevue || 0) - new Date(b.date_fin_prevue || 0);
+            case 'items_count':
+                const countA = state.reservations.filter(r => r.id_projet === a.id).length;
+                const countB = state.reservations.filter(r => r.id_projet === b.id).length;
+                return countB - countA;
+            default: // created_at
+                return new Date(b.created_at) - new Date(a.created_at);
+        }
+    });
+
+    if (filteredProjects.length === 0) {
+        elements.projectsGrid.innerHTML = `
+            <div class="no-projects">
+                <i class="fas fa-project-diagram"></i>
+                <p>Aucun projet trouvé</p>
+                <button id="createFirstProjectBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i> Créer un premier projet
+                </button>
+            </div>
+        `;
+
+        document.getElementById('createFirstProjectBtn')?.addEventListener('click', () => {
+            showModal(elements.newProjectModal);
+        });
+
+        return;
+    }
+
+    let html = '';
+    filteredProjects.forEach(project => {
+        const projectReservations = state.reservations.filter(r => r.id_projet === project.id);
+        const itemsCount = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
+        const status = getProjectStatus(project);
+        const daysLeft = calculateDaysLeft(project.date_fin_prevue);
+
+        html += `
+            <div class="project-card" data-id="${project.id}">
+                <div class="project-card-header">
+                    <div>
+                        <div class="project-name">${project.nom}</div>
+                        <div class="project-number">${project.numero || 'Sans numéro'}</div>
+                    </div>
+
+                </div>
+
+                <div class="project-description">
+                    ${project.description || 'Aucune description'}
+                </div>
+
+                <div class="project-meta">
+                    <div class="project-meta-item">
+                        <span class="project-meta-value">${itemsCount}</span>
+                        <span class="project-meta-label">Articles</span>
+                    </div>
+                    <div class="project-meta-item">
+                        <span class="project-meta-value">${daysLeft}</span>
+                        <span class="project-meta-label">Jours restants</span>
+                    </div>
+                    <div class="project-meta-item">
+                        <span class="project-meta-value">${projectReservations.length}</span>
+                        <span class="project-meta-label">Réservations</span>
+                    </div>
+                </div>
+
+                <div class="project-info">
+                    <div class="project-info-item">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Responsable : ${project.responsable || 'Non défini'}</span>
+                    </div>
+                    <div class="project-info-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>Créé le : ${formatDate(project.created_at)}</span>
+                    </div>
+                    ${project.date_fin_prevue ? `
+                    <div class="project-info-item">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Fin prévue : ${formatDate(project.date_fin_prevue)}</span>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="project-actions">
+                    <button class="btn-primary btn-small view-project-details" data-id="${project.id}">
+                        <i class="fas fa-eye"></i> Détails
+                    </button>
+                    ${status === 'archived' ? `
+                    <button class="btn-secondary btn-small unarchive-project" data-id="${project.id}">
+                        <i class="fas fa-box-open"></i> Désarchiver
+                    </button>
+                    ` : `
+                    <button class="btn-secondary btn-small archive-project" data-id="${project.id}">
+                        <i class="fas fa-archive"></i> Archiver
+                    </button>
+                    `}
+                </div>
+            </div>
+        `;
+    });
+
+    elements.projectsGrid.innerHTML = html;
+
+    // Ajouter les événements
+    document.querySelectorAll('.view-project-details').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const projectId = this.dataset.id;
+            showProjectDetails(projectId);
+        });
+    });
+
+    document.querySelectorAll('.archive-project').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const projectId = this.dataset.id;
+            archiveProjectAction(projectId);
+        });
+    });
+
+    document.querySelectorAll('.unarchive-project').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const projectId = this.dataset.id;
+            unarchiveProjectAction(projectId);
+        });
+    });
+}
+
+function updateArchivedProjectsDisplay() {
+    if (state.archivedProjects.length === 0) {
+        elements.archivedProjectsGrid.innerHTML = `
+            <div class="no-projects">
+                <i class="fas fa-archive"></i>
+                <p>Aucun projet archivé</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    state.archivedProjects.forEach(project => {
+        const projectReservations = state.reservations.filter(r => r.id_projet === project.id);
+        const itemsCount = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
+
+        html += `
+            <div class="project-card archived" data-id="${project.id}">
+                <div class="project-card-header">
+                    <div>
+                        <div class="project-name">${project.nom}</div>
+                        <div class="project-number">${project.numero || 'Sans numéro'}</div>
+                    </div>
+                    <span class="project-status archived">
+                        Archivé
+                    </span>
+                </div>
+
+                <div class="project-description">
+                    ${project.description || 'Aucune description'}
+                </div>
+
+                <div class="project-meta">
+                    <div class="project-meta-item">
+                        <span class="project-meta-value">${itemsCount}</span>
+                        <span class="project-meta-label">Articles</span>
+                    </div>
+                    <div class="project-meta-item">
+                        <span class="project-meta-value">${formatDate(project.archived_at)}</span>
+                        <span class="project-meta-label">Archivé le</span>
+                    </div>
+                </div>
+
+                <div class="project-info">
+                    <div class="project-info-item">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Responsable : ${project.responsable || 'Non défini'}</span>
+                    </div>
+                    <div class="project-info-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>Créé le : ${formatDate(project.created_at)}</span>
+                    </div>
+                </div>
+
+                <div class="project-actions">
+                    <button class="btn-primary btn-small view-project-details" data-id="${project.id}">
+                        <i class="fas fa-eye"></i> Détails
+                    </button>
+                    <button class="btn-secondary btn-small unarchive-project" data-id="${project.id}">
+                        <i class="fas fa-box-open"></i> Désarchiver
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    elements.archivedProjectsGrid.innerHTML = html;
+}
+
+function populateManagerFilter() {
+    const managers = [...new Set(state.projects.map(p => p.responsable).filter(Boolean))];
+
+    let html = '<option value="">Tous les responsables</option>';
+    managers.forEach(manager => {
+        html += `<option value="${manager}">${manager}</option>`;
+    });
+
+    elements.filterManager.innerHTML = html;
+    elements.filterManager.value = state.filters.manager;
+}
+
+function populateArticleSelect() {
+    let html = '<option value="">Sélectionnez un article</option>';
+    state.articles.forEach(article => {
+        html += `<option value="${article.id}">${article.nom} (${article.code || article.numero})</option>`;
+    });
+
+    elements.reservationArticle.innerHTML = html;
+}
+
+// ===== GESTION DES MODALS =====
+function showModal(modalElement) {
+    hideModal();
+    modalElement.style.display = 'flex';
+    state.currentModal = modalElement;
+}
+
+function hideModal() {
+    if (state.currentModal) {
+        state.currentModal.style.display = 'none';
+        state.currentModal = null;
+    }
+}
+
+// ===== DÉTAILS DU PROJET =====
+async function showProjectDetails(projectId) {
+    try {
+        showLoading();
+
+        const project = [...state.projects, ...state.archivedProjects].find(p => p.id === projectId);
+        if (!project) {
+            showAlert('Projet non trouvé', 'error');
+            return;
+        }
+
+        state.currentProject = project;
+
+        // Récupérer les données du projet
+        const projectData = await getProjectReservations(projectId);
+        const projectHistory = await getProjectHistory(projectId);
+
+        const sorties = projectData.sorties;
+        const reservations = projectData.reservations;
+
+        // Calculer les statistiques SÉPARÉES
+        // 1. Articles SORTIS (déjà utilisés)
+        const itemsSortis = sorties.reduce((sum, s) => sum + s.quantite, 0);
+        const valeurSortis = sorties.reduce((sum, s) => {
+            const article = s.article;
+            if (article?.prix_unitaire) {
+                return sum + (article.prix_unitaire * s.quantite);
+            }
+            return sum;
+        }, 0);
+
+        // 2. Articles RÉSERVÉS (pas encore utilisés)
+        const itemsReserves = reservations.reduce((sum, r) => sum + r.quantite, 0);
+        const valeurReserves = reservations.reduce((sum, r) => {
+            const article = r.w_articles;
+            if (article?.prix_unitaire) {
+                return sum + (article.prix_unitaire * r.quantite);
+            }
+            return sum;
+        }, 0);
+
+        // 3. Totaux généraux
+        const itemsTotaux = itemsSortis + itemsReserves;
+        const valeurTotale = valeurSortis + valeurReserves;
+
+        const daysLeft = calculateDaysLeft(project.date_fin_prevue);
+        const status = getProjectStatus(project);
+
+        // Mettre à jour l'en-tête avec les bonnes statistiques
+        elements.projectDetailsName.textContent = project.nom;
+        elements.projectDetailsNumber.textContent = project.numero || 'Sans numéro';
+        elements.projectDetailsStatus.textContent = status === 'active' ? 'Actif' :
+                                                  status === 'ending' ? 'Bientôt terminé' :
+                                                  status === 'overdue' ? 'En retard' : 'Archivé';
+        elements.projectDetailsStatus.className = `project-status ${status}`;
+
+        // Afficher seulement les SORTIES dans le compteur principal (ce qui est facturé)
+        document.getElementById('projectDetailsItemsUsed').textContent = itemsSortis;
+        document.getElementById('projectDetailsValueUsed').textContent = `${valeurSortis.toFixed(2)} €`;
+        document.getElementById('projectDetailsItemsReserved').textContent = itemsReserves;
+        document.getElementById('projectDetailsValueReserved').textContent = `${valeurReserves.toFixed(2)} €`;
+        elements.projectDetailsDaysLeft.textContent = daysLeft;
+
+        // Mettre à jour les informations
+        elements.projectDetailsDescription.textContent = project.description || 'Pas de description';
+        elements.projectDetailsCreatedAt.textContent = formatDateTime(project.created_at);
+        elements.projectDetailsEndDate.textContent = project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'Non définie';
+        elements.projectDetailsUpdatedAt.textContent = project.updated_at ? formatDateTime(project.updated_at) : 'Jamais';
+        elements.projectDetailsManager.textContent = project.responsable || 'Non défini';
+        elements.projectDetailsBudget.textContent = project.budget ? `${project.budget} €` : 'Non défini';
+
+        // Mettre à jour l'affichage des articles
+        updateProjectReservations(sorties, reservations);
+        elements.projectReservationsCount.textContent = sorties.length + reservations.length;
+
+        // Mettre à jour l'historique
+        updateProjectHistory(projectHistory);
+
+        // Mettre à jour les infos supplémentaires (à ajouter dans votre HTML)
+        updateReservationStats(itemsReserves, valeurReserves, itemsSortis, valeurSortis);
+
+        // Configurer les boutons
+        elements.archiveProjectBtn.style.display = project.archived ? 'none' : 'block';
+        elements.archiveProjectBtn.textContent = project.archived ? 'Désarchiver' : 'Archiver';
+
+        showModal(elements.projectDetailsModal);
+
+    } catch (error) {
+        console.error('Erreur affichage détails projet:', error);
+        showAlert('Erreur lors du chargement des détails', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Fonction pour mettre à jour les statistiques supplémentaires
+function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, valeurSortis) {
+    // Créer ou mettre à jour un élément HTML pour afficher les stats détaillées
+    const statsContainer = document.getElementById('projectDetailsStats') ||
+                          document.querySelector('.project-stats-container');
+
+    if (!statsContainer) {
+        // Si l'élément n'existe pas, le créer
+        const detailsContent = document.querySelector('.project-details-content');
+        if (detailsContent) {
+            const statsHtml = `
+                <div class="project-stats-container">
+                    <div class="project-stats-grid">
+                        <div class="stat-card sortie">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${itemsSortis}</div>
+                                <div class="stat-label">Articles utilisés</div>
+                                <div class="stat-amount">${valeurSortis.toFixed(2)} €</div>
+                            </div>
+                        </div>
+                        <div class="stat-card reservation">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${itemsReserves}</div>
+                                <div class="stat-label">Articles réservés</div>
+                                <div class="stat-amount">${valeurReserves.toFixed(2)} €</div>
+                            </div>
+                        </div>
+                        <div class="stat-card total">
+                            <div class="stat-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${itemsSortis + itemsReserves}</div>
+                                <div class="stat-label">Total articles</div>
+                                <div class="stat-amount">${(valeurSortis + valeurReserves).toFixed(2)} €</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            detailsContent.insertAdjacentHTML('afterbegin', statsHtml);
+        }
+    } else {
+        // Mettre à jour les valeurs
+        const sortieValue = statsContainer.querySelector('.stat-card.sortie .stat-value');
+        const sortieAmount = statsContainer.querySelector('.stat-card.sortie .stat-amount');
+        const reserveValue = statsContainer.querySelector('.stat-card.reservation .stat-value');
+        const reserveAmount = statsContainer.querySelector('.stat-card.reservation .stat-amount');
+        const totalValue = statsContainer.querySelector('.stat-card.total .stat-value');
+        const totalAmount = statsContainer.querySelector('.stat-card.total .stat-amount');
+
+        if (sortieValue) sortieValue.textContent = itemsSortis;
+        if (sortieAmount) sortieAmount.textContent = `${valeurSortis.toFixed(2)} €`;
+        if (reserveValue) reserveValue.textContent = itemsReserves;
+        if (reserveAmount) reserveAmount.textContent = `${valeurReserves.toFixed(2)} €`;
+        if (totalValue) totalValue.textContent = itemsSortis + itemsReserves;
+        if (totalAmount) totalAmount.textContent = `${(valeurSortis + valeurReserves).toFixed(2)} €`;
+    }
+}
+
+function updateProjectReservations(sorties, reservations) {
+    const allItems = [...sorties, ...reservations];
+
+    if (allItems.length === 0) {
+        elements.projectReservationsBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="loading-row">
+                    <i class="fas fa-info-circle"></i> Aucun article pour ce projet
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    let html = '';
+
+    // Afficher les SORTIES (déjà utilisées)
+    if (sorties.length > 0) {
+        html += `
+            <tr>
+                <td colspan="7" class="section-header">
+                    <i class="fas fa-check-circle text-success"></i> Articles utilisés (sorties)
+                </td>
+            </tr>
+        `;
+
+        sorties.forEach(sortie => {
+            const valeurTotale = sortie.article?.prix_unitaire ?
+                (sortie.article.prix_unitaire * sortie.quantite).toFixed(2) : '0.00';
+
+            html += `
+                <tr data-id="${sortie.id}" class="sortie-row">
+                    <td>
+                        <div class="article-info">
+                            <strong>${sortie.article?.nom || 'Article inconnu'}</strong>
+                            <small>${sortie.article?.numero || ''}</small>
+                        </div>
+                    </td>
+                    <td>${sortie.article?.numero || 'N/A'}</td>
+                    <td>
+                        <span class="quantity-badge sortie">
+                            -${sortie.quantite}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="date-info">
+                            ${formatDate(sortie.created_at)}
+                            <small>${formatDateTime(sortie.created_at).split(' ')[1] || ''}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="price-info">
+                            ${sortie.article?.prix_unitaire ?
+                                `${sortie.article.prix_unitaire.toFixed(2)} €` :
+                                'Prix N/A'}
+                            <small>Total: ${valeurTotale} €</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="user-info">
+                            ${sortie.utilisateur?.username || 'Utilisateur inconnu'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-small view-details"
+                                    data-id="${sortie.id}"
+                                    data-type="sortie"
+                                    title="Voir les détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // Afficher les RÉSERVATIONS (pas encore utilisées)
+    if (reservations.length > 0) {
+        html += `
+            <tr>
+                <td colspan="7" class="section-header reservation-header">
+                    <i class="fas fa-clock text-warning"></i> Articles réservés (non utilisés)
+                </td>
+            </tr>
+        `;
+
+        reservations.forEach(reservation => {
+            const article = reservation.w_articles;
+            const valeurTotale = article?.prix_unitaire ?
+                (article.prix_unitaire * reservation.quantite).toFixed(2) : '0.00';
+            const daysLeft = calculateDaysLeft(reservation.date_fin);
+
+            html += `
+                <tr data-id="${reservation.id}" class="reservation-row">
+                    <td>
+                        <div class="article-info">
+                            <strong>${article?.nom || 'Article inconnu'}</strong>
+                            <small>${article?.numero || ''}</small>
+                        </div>
+                    </td>
+                    <td>${article?.numero || 'N/A'}</td>
+                    <td>
+                        <span class="quantity-badge reservation">
+                            ${reservation.quantite}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="date-info">
+                            ${formatDate(reservation.date_reservation)}
+                            <small>${formatDateTime(reservation.created_at).split(' ')[1] || ''}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="price-info">
+                            ${article?.prix_unitaire ?
+                                `${article.prix_unitaire.toFixed(2)} €` :
+                                'Prix N/A'}
+                            <small>Total: ${valeurTotale} €</small>
+                            <br>
+                            <span class="badge ${daysLeft <= 0 ? 'danger' : daysLeft <= 7 ? 'warning' : 'info'}">
+                                ${formatDate(reservation.date_fin)}
+                                ${daysLeft <= 0 ? ' (Expiré)' : daysLeft <= 7 ? ` (${daysLeft}j)` : ''}
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="user-info">
+                            ${reservation.w_users?.username || 'Utilisateur inconnu'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-small view-details"
+                                    data-id="${reservation.id}"
+                                    data-type="reservation"
+                                    title="Voir les détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn-small release-reservation"
+                                    data-id="${reservation.id}"
+                                    title="Libérer la réservation">
+                                <i class="fas fa-unlock"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    elements.projectReservationsBody.innerHTML = html;
+
+    // Ajouter les événements pour les boutons
+    document.querySelectorAll('.view-details').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.id;
+            const itemType = this.dataset.type;
+            showItemDetails(itemId, itemType, sorties, reservations);
+        });
+    });
+
+    document.querySelectorAll('.release-reservation').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const reservationId = this.dataset.id;
+            const reservation = reservations.find(r => r.id === reservationId);
+
+            if (reservation) {
+                const article = reservation.w_articles;
+                const articleName = article?.nom || 'Article inconnu';
+
+                if (confirm(`Libérer la réservation de ${reservation.quantite} ${articleName} ?`)) {
+                    try {
+                        showLoading();
+
+                        const { error } = await supabase
+                            .from('w_reservations_actives')
+                            .delete()
+                            .eq('id', reservationId);
+
+                        if (error) throw error;
+
+                        showAlert('Réservation libérée avec succès', 'success');
+
+                        // Recharger les détails du projet
+                        await showProjectDetails(state.currentProject.id);
+
+                    } catch (error) {
+                        console.error('Erreur libération réservation:', error);
+                        showAlert('Erreur lors de la libération de la réservation', 'error');
+                    } finally {
+                        hideLoading();
+                    }
+                }
+            }
+        });
+    });
+}
+
+// Fonction pour afficher les détails d'un item
+function showItemDetails(itemId, itemType, sorties, reservations) {
+    let item;
+
+    if (itemType === 'sortie') {
+        item = sorties.find(s => s.id === itemId);
+    } else {
+        item = reservations.find(r => r.id === itemId);
+    }
+
+    if (!item) return;
+
+    const isSortie = itemType === 'sortie';
+    const article = isSortie ? item.article : item.w_articles;
+    const user = isSortie ? item.utilisateur : item.w_users;
+
+    const modalHtml = `
+        <div class="modal-overlay" style="display: flex;">
+            <div class="modal" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-info-circle"></i> Détails</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="detail-section">
+                        <h4><i class="fas fa-box"></i> Article</h4>
+                        <div class="detail-item">
+                            <span class="detail-label">Nom :</span>
+                            <span class="detail-value">${article?.nom || 'Non spécifié'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Numéro :</span>
+                            <span class="detail-value">${article?.numero || 'Non spécifié'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Code-barre :</span>
+                            <span class="detail-value">${article?.code_barre || 'Non spécifié'}</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h4><i class="fas ${isSortie ? 'fa-check-circle' : 'fa-clock'}"></i> ${isSortie ? 'Sortie' : 'Réservation'}</h4>
+                        <div class="detail-item">
+                            <span class="detail-label">Type :</span>
+                            <span class="detail-value badge ${isSortie ? 'sortie' : 'reservation'}">
+                                ${isSortie ? 'Sortie effectuée' : 'Réservation active'}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Quantité :</span>
+                            <span class="detail-value">${isSortie ? '-' : ''}${item.quantite}</span>
+                        </div>
+                        ${article?.prix_unitaire ? `
+                        <div class="detail-item">
+                            <span class="detail-label">Prix unitaire :</span>
+                            <span class="detail-value">${article.prix_unitaire.toFixed(2)} €</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Valeur totale :</span>
+                            <span class="detail-value" style="font-weight: bold;">
+                                ${(article.prix_unitaire * item.quantite).toFixed(2)} €
+                            </span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-item">
+                            <span class="detail-label">Date :</span>
+                            <span class="detail-value">${formatDateTime(item.created_at)}</span>
+                        </div>
+                        ${!isSortie ? `
+                        <div class="detail-item">
+                            <span class="detail-label">Date de fin :</span>
+                            <span class="detail-value">${formatDate(item.date_fin)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="detail-section">
+                        <h4><i class="fas fa-user"></i> Responsable</h4>
+                        <div class="detail-item">
+                            <span class="detail-label">Utilisateur :</span>
+                            <span class="detail-value">${user?.username || 'Non spécifié'}</span>
+                        </div>
+                        ${user?.email ? `
+                        <div class="detail-item">
+                            <span class="detail-label">Email :</span>
+                            <span class="detail-value">${user.email}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    ${item.commentaire ? `
+                    <div class="detail-section">
+                        <h4><i class="fas fa-comment"></i> Commentaire</h4>
+                        <div class="detail-comment">
+                            ${item.commentaire}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary close-details-modal">
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+
+    const modal = modalContainer.querySelector('.modal-overlay');
+
+    // Gérer la fermeture
+    modal.querySelector('.close-modal').addEventListener('click', () => {
+        modal.remove();
+    });
+
+    modal.querySelector('.close-details-modal').addEventListener('click', () => {
+        modal.remove();
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// Fonction helper pour éditer une réservation
+async function editReservation(reservationId) {
+    try {
+        // Récupérer la réservation
+        const { data: reservation, error } = await supabase
+            .from('w_reservations_actives')
+            .select(`
+                *,
+                w_articles (
+                    nom,
+                    code,
+                    prix_unitaire,
+                    quantite_disponible
+                )
+            `)
+            .eq('id', reservationId)
+            .single();
+
+        if (error) throw error;
+
+        if (!reservation) {
+            showAlert('Réservation non trouvée', 'error');
+            return;
+        }
+
+        // Créer un modal d'édition
+        const modalHtml = `
+            <div class="modal-overlay" id="editReservationModal" style="display: flex;">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-edit"></i> Modifier la réservation</h3>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Article :</label>
+                            <input type="text"
+                                   value="${reservation.w_articles?.nom || ''}"
+                                   class="form-input"
+                                   disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editQuantity">
+                                <i class="fas fa-boxes"></i> Quantité *
+                            </label>
+                            <div class="quantity-input-group">
+                                <button type="button" class="quantity-btn minus" id="editQuantityMinus">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number"
+                                       id="editQuantity"
+                                       min="1"
+                                       max="${reservation.w_articles?.quantite_disponible + reservation.quantite || 100}"
+                                       value="${reservation.quantite}"
+                                       class="form-input quantity">
+                                <button type="button" class="quantity-btn plus" id="editQuantityPlus">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="quantity-info">
+                                <span>Stock disponible : <strong>${reservation.w_articles?.quantite_disponible + reservation.quantite || 0}</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editDateFin">
+                                <i class="fas fa-calendar"></i> Date de fin *
+                            </label>
+                            <input type="date"
+                                   id="editDateFin"
+                                   value="${reservation.date_fin.split('T')[0]}"
+                                   class="form-input"
+                                   required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editComment">
+                                <i class="fas fa-comment"></i> Commentaire
+                            </label>
+                            <textarea id="editComment"
+                                      rows="3"
+                                      class="form-textarea">${reservation.commentaire || ''}</textarea>
+                        </div>
+
+                        <div class="error-message" id="editReservationError" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="editReservationErrorText"></span>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button id="confirmEditReservationBtn" class="btn-primary">
+                                <i class="fas fa-save"></i> Enregistrer
+                            </button>
+                            <button type="button" class="btn-secondary close-edit-modal">
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Ajouter le modal au DOM
+        const modalContainer = document.createElement('div');
+        modalContainer.innerHTML = modalHtml;
+        document.body.appendChild(modalContainer);
+
+        const modal = document.getElementById('editReservationModal');
+
+        // Gérer la fermeture
+        modal.querySelector('.close-modal').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.querySelector('.close-edit-modal').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+
+        // Gérer les boutons de quantité
+        modal.querySelector('#editQuantityMinus').addEventListener('click', () => {
+            const input = modal.querySelector('#editQuantity');
+            let value = parseInt(input.value) || 1;
+            if (value > 1) {
+                input.value = value - 1;
+            }
+        });
+
+        modal.querySelector('#editQuantityPlus').addEventListener('click', () => {
+            const input = modal.querySelector('#editQuantity');
+            const max = parseInt(input.max) || 100;
+            let value = parseInt(input.value) || 1;
+            if (value < max) {
+                input.value = value + 1;
+            }
+        });
+
+        // Gérer l'enregistrement
+        modal.querySelector('#confirmEditReservationBtn').addEventListener('click', async () => {
+            const quantity = parseInt(modal.querySelector('#editQuantity').value);
+            const dateFin = modal.querySelector('#editDateFin').value;
+            const comment = modal.querySelector('#editComment').value.trim();
+
+            // Validation
+            if (!quantity || quantity < 1) {
+                modal.querySelector('#editReservationErrorText').textContent = 'La quantité doit être au moins de 1';
+                modal.querySelector('#editReservationError').style.display = 'flex';
+                return;
+            }
+
+            if (!dateFin) {
+                modal.querySelector('#editReservationErrorText').textContent = 'La date de fin est obligatoire';
+                modal.querySelector('#editReservationError').style.display = 'flex';
+                return;
+            }
+
+            try {
+                showLoading();
+
+                // Mettre à jour la réservation
+                const { error: updateError } = await supabase
+                    .from('w_reservations_actives')
+                    .update({
+                        quantite: quantity,
+                        date_fin: dateFin + 'T23:59:59',
+                        commentaire: comment,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', reservationId);
+
+                if (updateError) throw updateError;
+
+                showAlert('Réservation modifiée avec succès', 'success');
+
+                // Recharger les données
+                await fetchReservations();
+
+                // Recharger les détails du projet si ouvert
+                if (state.currentProject) {
+                    await showProjectDetails(state.currentProject.id);
+                }
+
+                // Fermer le modal
+                modal.remove();
+
+            } catch (error) {
+                console.error('Erreur modification réservation:', error);
+                modal.querySelector('#editReservationErrorText').textContent = error.message || 'Erreur lors de la modification';
+                modal.querySelector('#editReservationError').style.display = 'flex';
+            } finally {
+                hideLoading();
+            }
+        });
+
+    } catch (error) {
+        console.error('Erreur préparation édition réservation:', error);
+        showAlert('Erreur lors de la préparation de l\'édition', 'error');
+    }
+}
+
+function updateProjectHistory(historyItems) {
+    if (historyItems.length === 0) {
+        elements.projectHistoryList.innerHTML = `
+            <div class="empty-history">
+                <i class="fas fa-history"></i>
+                <p>Aucun historique disponible</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    historyItems.forEach(item => {
+        html += `
+            <div class="history-item">
+                <div class="history-icon">
+                    <i class="fas fa-${item.type === 'reservation' ? 'plus-circle' :
+                                      item.type === 'release' ? 'minus-circle' :
+                                      item.type === 'project_update' ? 'edit' :
+                                      'history'}"></i>
+                </div>
+                <div class="history-content">
+                    <div class="history-header">
+                        <span class="history-title">${item.titre || 'Action'}</span>
+                        <span class="history-date">${formatDateTime(item.created_at)}</span>
+                    </div>
+                    <div class="history-description">${item.description || ''}</div>
+                    ${item.details ? `<div class="history-details">${item.details}</div>` : ''}
+                    ${item.utilisateur ? `<div class="history-user"><i class="fas fa-user"></i> ${item.utilisateur}</div>` : ''}
+                </div>
+            </div>
+        `;
+    });
+
+    elements.projectHistoryList.innerHTML = html;
+}
+
+// ===== GESTION DES ONGLETS =====
+function switchTab(tabName) {
+    state.currentTab = tabName;
+
+    // Mettre à jour les boutons d'onglets
+    elements.tabBtns.forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Mettre à jour les contenus d'onglets
+    elements.tabContents.forEach(content => {
+        if (content.id === tabName + 'Tab') {
+            content.classList.add('active');
+        } else {
+            content.classList.remove('active');
+        }
+    });
+
+    // Charger les statistiques si onglet analytics
+    if (tabName === 'analytics') {
+        loadAnalytics();
+    }
+}
+
+function switchProjectTab(tabName) {
+    // Mettre à jour les boutons d'onglets du projet
+    elements.projectTabBtns.forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Mettre à jour les contenus d'onglets du projet
+    const tabs = ['info', 'reservations', 'history'];
+    tabs.forEach(tab => {
+        const element = document.getElementById(`project${tab.charAt(0).toUpperCase() + tab.slice(1)}Tab`);
+        if (element) {
+            if (tab === tabName) {
+                element.classList.add('active');
+            } else {
+                element.classList.remove('active');
+            }
+        }
+    });
+}
+
+// ===== GESTION DES FILTRES =====
+function applyFilters() {
+    updateProjectsDisplay();
+}
+
+function clearFilters() {
+    state.filters = {
+        status: '',
+        manager: '',
+        sortBy: 'created_at'
+    };
+
+    elements.filterStatus.value = '';
+    elements.filterManager.value = '';
+    elements.sortBy.value = 'created_at';
+    elements.searchProjects.value = '';
+
+    applyFilters();
+}
+
+// ===== CRÉATION DE PROJET =====
+async function createProjectAction() {
+    try {
+        const projectData = {
+            nom: elements.projectName.value.trim(),
+            numero: elements.projectNumber.value.trim(),
+            description: elements.projectDescription.value.trim(),
+            responsable: elements.projectManager.value.trim(),
+            date_fin_prevue: elements.projectEndDate.value || null,
+            budget: elements.projectBudget.value ? parseFloat(elements.projectBudget.value) : null
+        };
+
+        // Validation
+        if (!projectData.nom || !projectData.numero || !projectData.responsable) {
+            elements.projectErrorText.textContent = 'Veuillez remplir tous les champs obligatoires';
+            elements.projectError.style.display = 'flex';
+            return;
+        }
+
+        // Vérifier si le numéro existe déjà
+        const existingProject = state.projects.find(p => p.numero === projectData.numero);
+        if (existingProject) {
+            elements.projectErrorText.textContent = 'Ce numéro de projet existe déjà';
+            elements.projectError.style.display = 'flex';
+            return;
+        }
+
+        showLoading();
+        const newProject = await createProject(projectData);
+
+        // Ajouter aux projets
+        state.projects.unshift(newProject);
+
+        // Mettre à jour l'affichage
+        updateProjectsDisplay();
+        updateStatistics();
+        populateManagerFilter();
+
+        // Fermer le modal et réinitialiser le formulaire
+        hideModal();
+        elements.newProjectForm.reset();
+        elements.projectError.style.display = 'none';
+
+        showAlert('Projet créé avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur création projet:', error);
+        elements.projectErrorText.textContent = error.message || 'Erreur lors de la création du projet';
+        elements.projectError.style.display = 'flex';
+    } finally {
+        hideLoading();
+    }
+}
+
+// ===== ARCHIVAGE/DÉSARCHIVAGE =====
+async function archiveProjectAction(projectId) {
+    if (!confirm('Archiver ce projet ? Le projet n\'apparaîtra plus dans les projets actifs.')) {
+        return;
+    }
+
+    try {
+        showLoading();
+        const archivedProject = await archiveProject(projectId);
+
+        // Mettre à jour les listes
+        const index = state.projects.findIndex(p => p.id === projectId);
+        if (index !== -1) {
+            state.projects.splice(index, 1);
+            state.archivedProjects.unshift(archivedProject);
+        }
+
+        // Mettre à jour l'affichage
+        updateProjectsDisplay();
+        updateArchivedProjectsDisplay();
+        updateStatistics();
+
+        // Si on est dans les détails, fermer le modal
+        if (state.currentProject?.id === projectId) {
+            hideModal();
+        }
+
+        showAlert('Projet archivé avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur archivage projet:', error);
+        showAlert('Erreur lors de l\'archivage du projet', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function unarchiveProjectAction(projectId) {
+    if (!confirm('Désarchiver ce projet ? Le projet réapparaîtra dans les projets actifs.')) {
+        return;
+    }
+
+    try {
+        showLoading();
+        const unarchivedProject = await unarchiveProject(projectId);
+
+        // Mettre à jour les listes
+        const index = state.archivedProjects.findIndex(p => p.id === projectId);
+        if (index !== -1) {
+            state.archivedProjects.splice(index, 1);
+            state.projects.unshift(unarchivedProject);
+        }
+
+        // Mettre à jour l'affichage
+        updateProjectsDisplay();
+        updateArchivedProjectsDisplay();
+        updateStatistics();
+
+        showAlert('Projet désarchivé avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur désarchivage projet:', error);
+        showAlert('Erreur lors du désarchivage du projet', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// ===== GESTION DES RÉSERVATIONS =====
+async function addReservationToProject() {
+    if (!state.currentProject) return;
+
+    // Réinitialiser le modal
+    elements.reservationArticle.value = '';
+    elements.reservationQuantity.value = '1';
+    elements.reservationComment.value = '';
+    elements.reservationError.style.display = 'none';
+    elements.reservationAvailableStock.textContent = '0';
+    elements.reservationAlreadyReserved.textContent = '0';
+
+    // Peupler la liste des articles
+    populateArticleSelect();
+
+    showModal(elements.addReservationModal);
+}
+
+async function updateReservationStockInfo(articleId) {
+    if (!articleId || !state.currentProject) return;
+
+    try {
+        // Récupérer le stock total disponible
+        const article = state.articles.find(a => a.id === articleId);
+        if (article) {
+            elements.reservationAvailableStock.textContent = article.quantite_disponible || 0;
+        }
+
+        // Récupérer le nombre déjà réservé pour ce projet
+        const projectReservations = state.reservations.filter(r =>
+            r.id_projet === state.currentProject.id && r.id_article === articleId
+        );
+        const alreadyReserved = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
+        elements.reservationAlreadyReserved.textContent = alreadyReserved;
+
+        // Mettre à jour la quantité max
+        const availableStock = article?.quantite_disponible || 0;
+        const currentQuantity = parseInt(elements.reservationQuantity.value) || 1;
+
+        if (currentQuantity > availableStock) {
+            elements.reservationQuantity.value = Math.max(1, availableStock);
+        }
+
+    } catch (error) {
+        console.error('Erreur mise à jour info stock:', error);
+    }
+}
+
+async function confirmAddReservation() {
+    try {
+        const articleId = elements.reservationArticle.value;
+        const quantity = parseInt(elements.reservationQuantity.value);
+        const comment = elements.reservationComment.value.trim();
+
+        // Validation
+        if (!articleId) {
+            elements.reservationErrorText.textContent = 'Veuillez sélectionner un article';
+            elements.reservationError.style.display = 'flex';
+            return;
+        }
+
+        if (!quantity || quantity < 1) {
+            elements.reservationErrorText.textContent = 'La quantité doit être au moins de 1';
+            elements.reservationError.style.display = 'flex';
+            return;
+        }
+
+        // Vérifier le stock disponible
+        const article = state.articles.find(a => a.id === articleId);
+        if (!article || (article.quantite_disponible || 0) < quantity) {
+            elements.reservationErrorText.textContent = 'Stock insuffisant';
+            elements.reservationError.style.display = 'flex';
+            return;
+        }
+
+        showLoading();
+
+        const reservationData = {
+            articleId: articleId,
+            projectId: state.currentProject.id,
+            quantity: quantity,
+            comment: comment
+        };
+
+        const newReservation = await createReservation(reservationData);
+
+        // Ajouter à la liste des réservations
+        state.reservations.push(newReservation);
+
+        // Recharger les détails du projet
+        await showProjectDetails(state.currentProject.id);
+
+        // Mettre à jour les statistiques
+        updateStatistics();
+
+        // Fermer le modal
+        hideModal();
+
+        showAlert('Réservation ajoutée avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur ajout réservation:', error);
+        elements.reservationErrorText.textContent = error.message || 'Erreur lors de l\'ajout de la réservation';
+        elements.reservationError.style.display = 'flex';
+    } finally {
+        hideLoading();
+    }
+}
+
+async function releaseAllProjectItems() {
+    if (!state.currentProject) return;
+
+    // Récupérer les réservations du projet
+    const projectReservations = state.reservations.filter(r => r.id_projet === state.currentProject.id);
+
+    if (projectReservations.length === 0) {
+        showAlert('Aucune réservation à libérer pour ce projet', 'info');
+        return;
+    }
+
+    // Mettre à jour le compteur dans le modal
+    elements.releaseItemsCount.textContent = projectReservations.length;
+    elements.releaseReason.value = '';
+    elements.releaseComment.value = '';
+    elements.releaseError.style.display = 'none';
+
+    showModal(elements.releaseStockModal);
+}
+
+async function confirmReleaseAll() {
+    try {
+        const reason = elements.releaseReason.value;
+        const comment = elements.releaseComment.value.trim();
+
+        if (!reason) {
+            elements.releaseErrorText.textContent = 'Veuillez sélectionner une raison';
+            elements.releaseError.style.display = 'flex';
+            return;
+        }
+
+        if (!confirm(`Êtes-vous sûr de vouloir libérer toutes les réservations de ce projet ? (${elements.releaseItemsCount.textContent} réservation(s))`)) {
+            return;
+        }
+
+        showLoading();
+
+        // Récupérer les réservations du projet
+        const projectReservations = state.reservations.filter(r => r.id_projet === state.currentProject.id);
+
+        // Libérer chaque réservation
+        for (const reservation of projectReservations) {
+            try {
+                await releaseReservation(reservation.id, `Libération globale: ${reason} - ${comment}`);
+            } catch (error) {
+                console.error(`Erreur libération réservation ${reservation.id}:`, error);
+            }
+        }
+
+        // Mettre à jour les données
+        await fetchReservations();
+
+        // Recharger les détails du projet
+        await showProjectDetails(state.currentProject.id);
+
+        // Mettre à jour les statistiques
+        updateStatistics();
+
+        // Fermer le modal
+        hideModal();
+
+        showAlert('Toutes les réservations ont été libérées', 'success');
+
+    } catch (error) {
+        console.error('Erreur libération globale:', error);
+        elements.releaseErrorText.textContent = error.message || 'Erreur lors de la libération du stock';
+        elements.releaseError.style.display = 'flex';
+    } finally {
+        hideLoading();
+    }
+}
+
+// ===== STATISTIQUES ET GRAPHIQUES =====
+function loadAnalytics() {
+    // Mettre à jour les listes
+    updateTopManagers();
+    updateTopArticles();
+
+    // Créer les graphiques si nécessaire
+    if (!state.charts.reservationsChart) {
+        createReservationsChart();
+    }
+    if (!state.charts.statusChart) {
+        createStatusChart();
+    }
+
+    // Mettre à jour les graphiques
+    updateCharts();
+}
+
+function createReservationsChart() {
+    const ctx = elements.reservationsChart.getContext('2d');
+    state.charts.reservationsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Nouvelles réservations',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createStatusChart() {
+    const ctx = elements.statusChart.getContext('2d');
+    state.charts.statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Actifs', 'Bientôt terminé', 'En retard', 'Archivés'],
+            datasets: [{
+                data: [0, 0, 0, 0],
+                backgroundColor: [
+                    'rgb(40, 167, 69)',
+                    'rgb(255, 193, 7)',
+                    'rgb(220, 53, 69)',
+                    'rgb(108, 117, 125)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function updateCharts() {
+    if (!state.charts.reservationsChart || !state.charts.statusChart) return;
+
+    // Mettre à jour le graphique de statut
+    const activeCount = state.projects.filter(p => getProjectStatus(p) === 'active').length;
+    const endingCount = state.projects.filter(p => getProjectStatus(p) === 'ending').length;
+    const overdueCount = state.projects.filter(p => getProjectStatus(p) === 'overdue').length;
+    const archivedCount = state.archivedProjects.length;
+
+    state.charts.statusChart.data.datasets[0].data = [activeCount, endingCount, overdueCount, archivedCount];
+    state.charts.statusChart.update();
+
+    // Mettre à jour le graphique des réservations (données factices pour l'exemple)
+    const period = parseInt(elements.analyticsPeriod.value) || 30;
+    const labels = [];
+    const data = [];
+
+    // Générer des données pour les X derniers jours
+    for (let i = period; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        labels.push(date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }));
+
+        // Données factices - à remplacer par des données réelles
+        data.push(Math.floor(Math.random() * 10) + 1);
+    }
+
+    state.charts.reservationsChart.data.labels = labels;
+    state.charts.reservationsChart.data.datasets[0].data = data;
+    state.charts.reservationsChart.update();
+}
+
+function updateTopManagers() {
+    const managerStats = {};
+
+    state.projects.forEach(project => {
+        if (project.responsable) {
+            if (!managerStats[project.responsable]) {
+                managerStats[project.responsable] = {
+                    count: 0,
+                    items: 0
+                };
+            }
+            managerStats[project.responsable].count++;
+
+            // Compter les articles du projet
+            const projectItems = state.reservations.filter(r => r.id_projet === project.id)
+                .reduce((sum, r) => sum + r.quantite, 0);
+            managerStats[project.responsable].items += projectItems;
+        }
+    });
+
+    const sortedManagers = Object.entries(managerStats)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 5);
+
+    let html = '';
+    if (sortedManagers.length === 0) {
+        html = '<div class="empty-list">Aucun responsable</div>';
+    } else {
+        sortedManagers.forEach(([manager, stats], index) => {
+            html += `
+                <div class="top-item ${index < 3 ? 'top' : ''}">
+                    <div class="top-item-header">
+                        <span class="top-item-rank">#${index + 1}</span>
+                        <span class="top-item-name">${manager}</span>
+                    </div>
+                    <div class="top-item-stats">
+                        <span class="stat"><i class="fas fa-project-diagram"></i> ${stats.count} projet(s)</span>
+                        <span class="stat"><i class="fas fa-box"></i> ${stats.items} article(s)</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    elements.topManagersList.innerHTML = html;
+}
+
+function updateTopArticles() {
+    const articleStats = {};
+
+    state.reservations.forEach(reservation => {
+        const article = state.articles.find(a => a.id === reservation.id_article);
+        if (article) {
+            const articleKey = article.nom;
+            if (!articleStats[articleKey]) {
+                articleStats[articleKey] = {
+                    name: article.nom,
+                    code: article.code || article.numero,
+                    count: 0,
+                    quantity: 0
+                };
+            }
+            articleStats[articleKey].count++;
+            articleStats[articleKey].quantity += reservation.quantite;
+        }
+    });
+
+    const sortedArticles = Object.values(articleStats)
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 5);
+
+    let html = '';
+    if (sortedArticles.length === 0) {
+        html = '<div class="empty-list">Aucune réservation</div>';
+    } else {
+        sortedArticles.forEach((article, index) => {
+            html += `
+                <div class="top-item ${index < 3 ? 'top' : ''}">
+                    <div class="top-item-header">
+                        <span class="top-item-rank">#${index + 1}</span>
+                        <span class="top-item-name">${article.name}</span>
+                    </div>
+                    <div class="top-item-stats">
+                        <span class="stat"><i class="fas fa-hashtag"></i> ${article.code}</span>
+                        <span class="stat"><i class="fas fa-box"></i> ${article.quantity} unité(s)</span>
+                        <span class="stat"><i class="fas fa-sync-alt"></i> ${article.count} réservation(s)</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    elements.topArticlesList.innerHTML = html;
+}
+
+// ===== ÉVÉNEMENTS =====
+function setupEventListeners() {
+    // Déconnexion
+    elements.logoutBtn.addEventListener('click', logout);
+
+    // Onglets principaux
+    elements.tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tab = this.dataset.tab;
+            switchTab(tab);
+        });
+    });
+
+    // Onglets détails projet
+    elements.projectTabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tab = this.dataset.tab;
+            switchProjectTab(tab);
+        });
+    });
+
+    // Fermeture des modals
+    elements.closeModalBtns.forEach(btn => {
+        btn.addEventListener('click', hideModal);
+    });
+
+    // Clic en dehors des modals pour fermer
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+    });
+
+    // Boutons header
+    elements.newProjectBtn.addEventListener('click', () => {
+        showModal(elements.newProjectModal);
+    });
+
+    elements.showArchivedBtn.addEventListener('click', () => {
+        switchTab('archived');
+    });
+
+    elements.exportProjectsBtn.addEventListener('click', exportProjects);
+
+    // Filtres
+    elements.filterStatus.addEventListener('change', function() {
+        state.filters.status = this.value;
+        applyFilters();
+    });
+
+    elements.filterManager.addEventListener('change', function() {
+        state.filters.manager = this.value;
+        applyFilters();
+    });
+
+    elements.sortBy.addEventListener('change', function() {
+        state.filters.sortBy = this.value;
+        applyFilters();
+    });
+
+    elements.searchProjects.addEventListener('input', applyFilters);
+    elements.searchBtn.addEventListener('click', applyFilters);
+
+    elements.clearFiltersBtn.addEventListener('click', clearFilters);
+
+    // Formulaire nouveau projet
+    elements.newProjectForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        createProjectAction();
+    });
+
+    // Boutons détails projet
+    elements.addReservationToProjectBtn.addEventListener('click', addReservationToProject);
+    elements.releaseAllProjectItemsBtn.addEventListener('click', releaseAllProjectItems);
+    elements.archiveProjectBtn.addEventListener('click', function() {
+        if (state.currentProject) {
+            if (state.currentProject.archived) {
+                unarchiveProjectAction(state.currentProject.id);
+            } else {
+                archiveProjectAction(state.currentProject.id);
+            }
+        }
+    });
+
+    elements.editProjectBtn.addEventListener('click', editProject);
+    elements.exportProjectBtn.addEventListener('click', exportProjectDetails);
+
+    // Modal réservation
+    elements.reservationArticle.addEventListener('change', function() {
+        updateReservationStockInfo(this.value);
+    });
+
+    elements.reservationQuantity.addEventListener('input', function() {
+        const articleId = elements.reservationArticle.value;
+        if (articleId) {
+            const article = state.articles.find(a => a.id === articleId);
+            const maxQuantity = article?.quantite_disponible || 0;
+            const currentQuantity = parseInt(this.value) || 1;
+
+            if (currentQuantity > maxQuantity) {
+                this.value = Math.max(1, maxQuantity);
+            }
+        }
+    });
+
+    elements.reservationQuantityMinus.addEventListener('click', function() {
+        const input = elements.reservationQuantity;
+        let value = parseInt(input.value) || 1;
+        if (value > 1) {
+            input.value = value - 1;
+        }
+    });
+
+    elements.reservationQuantityPlus.addEventListener('click', function() {
+        const input = elements.reservationQuantity;
+        let value = parseInt(input.value) || 1;
+        const articleId = elements.reservationArticle.value;
+
+        if (articleId) {
+            const article = state.articles.find(a => a.id === articleId);
+            const maxQuantity = article?.quantite_disponible || 0;
+
+            if (value < maxQuantity) {
+                input.value = value + 1;
+            }
+        } else {
+            input.value = value + 1;
+        }
+    });
+
+    elements.confirmAddReservationBtn.addEventListener('click', confirmAddReservation);
+
+    // Modal libération stock
+    elements.confirmReleaseBtn.addEventListener('click', confirmReleaseAll);
+
+    // Période statistiques
+    elements.analyticsPeriod.addEventListener('change', updateCharts);
+
+    // Échappement pour fermer les modals
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && state.currentModal) {
+            hideModal();
+        }
+    });
+}
+
+// ===== FONCTIONS D'EXPORT =====
+async function exportProjects() {
+    try {
+        showLoading();
+
+        // Préparer les données
+        let data = [];
+
+        if (state.currentTab === 'projects') {
+            data = state.projects.map(project => {
+                const projectReservations = state.reservations.filter(r => r.id_projet === project.id);
+                const itemsCount = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
+                const status = getProjectStatus(project);
+
+                return {
+                    'Nom': project.nom,
+                    'Numéro': project.numero || '',
+                    'Description': project.description || '',
+                    'Responsable': project.responsable || '',
+                    'Date création': formatDate(project.created_at),
+                    'Date fin prévue': project.date_fin_prevue ? formatDate(project.date_fin_prevue) : '',
+                    'Budget': project.budget || '',
+
+                    'Articles réservés': itemsCount,
+                    'Nombre réservations': projectReservations.length
+                };
+            });
+        } else if (state.currentTab === 'archived') {
+            data = state.archivedProjects.map(project => {
+                const projectReservations = state.reservations.filter(r => r.id_projet === project.id);
+                const itemsCount = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
+
+                return {
+                    'Nom': project.nom,
+                    'Numéro': project.numero || '',
+                    'Description': project.description || '',
+                    'Responsable': project.responsable || '',
+                    'Date création': formatDate(project.created_at),
+                    'Date archivage': project.archived_at ? formatDate(project.archived_at) : '',
+                    'Budget': project.budget || '',
+                    'Articles réservés': itemsCount,
+                    'Nombre réservations': projectReservations.length
+                };
+            });
+        }
+
+        // Convertir en CSV
+        const headers = Object.keys(data[0] || {});
+        const csvContent = [
+            headers.join(','),
+            ...data.map(row => headers.map(header => {
+                const cell = row[header] || '';
+                return `"${cell.toString().replace(/"/g, '""')}"`;
+            }).join(','))
+        ].join('\n');
+
+        // Télécharger
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `projets_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showAlert('Export réalisé avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur export:', error);
+        showAlert('Erreur lors de l\'export', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function exportProjectDetails() {
+    if (!state.currentProject) return;
+
+    try {
+        showLoading();
+
+        // Récupérer les données complètes
+        const projectReservations = await getProjectReservations(state.currentProject.id);
+        const projectHistory = await getProjectHistory(state.currentProject.id);
+
+        // Préparer les données
+        const projectData = {
+            'Nom': state.currentProject.nom,
+            'Numéro': state.currentProject.numero || '',
+            'Description': state.currentProject.description || '',
+            'Responsable': state.currentProject.responsable || '',
+            'Date création': formatDateTime(state.currentProject.created_at),
+            'Date fin prévue': state.currentProject.date_fin_prevue ? formatDate(state.currentProject.date_fin_prevue) : '',
+            'Budget': state.currentProject.budget || '',
+            'Statut': state.currentProject.archived ? 'Archivé' : getProjectStatus(state.currentProject),
+            'Articles réservés': projectReservations.reduce((sum, r) => sum + r.quantite, 0),
+            'Valeur totale': projectReservations.reduce((sum, r) => {
+                const article = r.w_articles;
+                return sum + (article?.prix_unitaire || 0) * r.quantite;
+            }, 0)
+        };
+
+        // Créer le contenu
+        let content = `Détails du projet: ${state.currentProject.nom}\n`;
+        content += `Exporté le: ${new Date().toLocaleDateString('fr-FR')}\n\n`;
+
+        content += '=== INFORMATIONS DU PROJET ===\n';
+        Object.entries(projectData).forEach(([key, value]) => {
+            content += `${key}: ${value}\n`;
+        });
+
+        content += '\n=== RÉSERVATIONS ===\n';
+        if (projectReservations.length > 0) {
+            content += 'Article;Code;Quantité;Date réservation;Date fin;Utilisateur;Commentaire\n';
+            projectReservations.forEach(res => {
+                const article = res.w_articles;
+                const user = res.w_users;
+                content += `"${article?.nom || ''}";"${article?.code || ''}";${res.quantite};"${formatDate(res.created_at)}";"${formatDate(res.date_fin)}";"${user?.nom || ''}";"${res.commentaire || ''}"\n`;
+            });
+        } else {
+            content += 'Aucune réservation\n';
+        }
+
+        content += '\n=== HISTORIQUE ===\n';
+        if (projectHistory.length > 0) {
+            projectHistory.forEach(item => {
+                content += `${formatDateTime(item.created_at)} - ${item.titre || 'Action'}: ${item.description || ''}\n`;
+            });
+        } else {
+            content += 'Aucun historique\n';
+        }
+
+        // Télécharger
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `projet_${state.currentProject.numero || state.currentProject.id}_${new Date().toISOString().split('T')[0]}.txt`);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showAlert('Export réalisé avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur export projet:', error);
+        showAlert('Erreur lors de l\'export du projet', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// ===== ÉDITION DE PROJET =====
+async function editProject() {
+    if (!state.currentProject) return;
+
+    try {
+        // Pré-remplir le formulaire
+        elements.projectName.value = state.currentProject.nom;
+        elements.projectNumber.value = state.currentProject.numero || '';
+        elements.projectDescription.value = state.currentProject.description || '';
+        elements.projectManager.value = state.currentProject.responsable || '';
+        elements.projectEndDate.value = state.currentProject.date_fin_prevue ?
+            state.currentProject.date_fin_prevue.split('T')[0] : '';
+        elements.projectBudget.value = state.currentProject.budget || '';
+
+        // Changer le titre et le bouton
+        const modal = elements.newProjectModal;
+        const header = modal.querySelector('.modal-header h3');
+        const submitBtn = modal.querySelector('.btn-primary');
+
+        header.innerHTML = '<i class="fas fa-edit"></i> Modifier le projet';
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Enregistrer les modifications';
+
+        // Changer l'événement
+        modal.querySelector('form').onsubmit = async function(e) {
+            e.preventDefault();
+            await updateProjectAction();
+        };
+
+        showModal(modal);
+
+    } catch (error) {
+        console.error('Erreur préparation édition:', error);
+        showAlert('Erreur lors de la préparation de l\'édition', 'error');
+    }
+}
+
+async function updateProjectAction() {
+    try {
+        const projectData = {
+            nom: elements.projectName.value.trim(),
+            numero: elements.projectNumber.value.trim(),
+            description: elements.projectDescription.value.trim(),
+            responsable: elements.projectManager.value.trim(),
+            date_fin_prevue: elements.projectEndDate.value || null,
+            budget: elements.projectBudget.value ? parseFloat(elements.projectBudget.value) : null
+        };
+
+        // Validation
+        if (!projectData.nom || !projectData.numero || !projectData.responsable) {
+            elements.projectErrorText.textContent = 'Veuillez remplir tous les champs obligatoires';
+            elements.projectError.style.display = 'flex';
+            return;
+        }
+
+        // Vérifier si le numéro existe déjà (sauf pour le projet en cours)
+        const existingProject = state.projects.find(p =>
+            p.numero === projectData.numero && p.id !== state.currentProject.id
+        );
+        if (existingProject) {
+            elements.projectErrorText.textContent = 'Ce numéro de projet existe déjà';
+            elements.projectError.style.display = 'flex';
+            return;
+        }
+
+        showLoading();
+        const updatedProject = await updateProject(state.currentProject.id, projectData);
+
+        // Mettre à jour les listes
+        const allProjects = [...state.projects, ...state.archivedProjects];
+        const projectIndex = allProjects.findIndex(p => p.id === state.currentProject.id);
+
+        if (projectIndex !== -1) {
+            allProjects[projectIndex] = updatedProject;
+
+            // Re-trier dans les bonnes listes
+            if (updatedProject.archived) {
+                state.archivedProjects = allProjects.filter(p => p.archived);
+                state.projects = allProjects.filter(p => !p.archived);
+            } else {
+                state.projects = allProjects.filter(p => !p.archived);
+                state.archivedProjects = allProjects.filter(p => p.archived);
+            }
+        }
+
+        // Mettre à jour l'affichage
+        updateProjectsDisplay();
+        updateArchivedProjectsDisplay();
+        populateManagerFilter();
+
+        // Recharger les détails si ouvert
+        if (elements.projectDetailsModal.style.display === 'flex') {
+            await showProjectDetails(updatedProject.id);
+        }
+
+        // Fermer le modal et réinitialiser
+        hideModal();
+        elements.newProjectForm.reset();
+        elements.projectError.style.display = 'none';
+
+        // Restaurer le formulaire original
+        const modal = elements.newProjectModal;
+        const header = modal.querySelector('.modal-header h3');
+        const submitBtn = modal.querySelector('.btn-primary');
+
+        header.innerHTML = '<i class="fas fa-plus-circle"></i> Nouveau projet';
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Créer le projet';
+
+        // Restaurer l'événement original
+        modal.querySelector('form').onsubmit = function(e) {
+            e.preventDefault();
+            createProjectAction();
+        };
+
+        showAlert('Projet modifié avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur modification projet:', error);
+        elements.projectErrorText.textContent = error.message || 'Erreur lors de la modification du projet';
+        elements.projectError.style.display = 'flex';
+    } finally {
+        hideLoading();
+    }
+}
+
+// ===== INITIALISATION =====
+async function init() {
+    try {
+        // Vérifier l'authentification
+        const isAuthenticated = await checkAuth();
+        if (!isAuthenticated) return;
+
+        // Initialiser les événements
+        setupEventListeners();
+
+        // Charger les données initiales
+        await Promise.all([
+            fetchProjects(),
+            fetchArticles(),
+            fetchReservations(),
+            fetchUsers()
+        ]);
+
+        // Masquer l'overlay de chargement
+        hideLoading();
+
+    } catch (error) {
+        console.error('Erreur initialisation:', error);
+        showAlert('Erreur lors du chargement de l\'application', 'error');
+        hideLoading();
+    }
+}
+
+// Démarrer l'application
+document.addEventListener('DOMContentLoaded', init);

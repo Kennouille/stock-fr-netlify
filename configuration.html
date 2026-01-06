@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration - Gestion Stock</title>
+    <link rel="stylesheet" href="configuration.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Overlay de chargement -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Chargement de la configuration...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-cog"></i> Configuration</h1>
+                <div class="header-info">
+                    <span class="back-link">
+                        <a href="accueil.html">
+                            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                        </a>
+                    </span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="usernameDisplay">...</span>
+                </span>
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenu principal -->
+        <main class="main-content">
+            <!-- Super Admin Section (seulement pour SuperAdmin) -->
+            <section id="superAdminSection" class="superadmin-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="fas fa-crown"></i> Super Administrateur</h2>
+                    <span class="badge superadmin-badge">SUPER ADMIN</span>
+                </div>
+
+                <div class="superadmin-card">
+                    <div class="superadmin-info">
+                        <div class="info-item">
+                            <label><i class="fas fa-user-secret"></i> Identifiant SuperAdmin</label>
+                            <div class="value-container">
+                                <span id="superadminUsername" class="hidden-value">**********</span>
+                                <button id="revealSuperadminBtn" class="btn-reveal">
+                                    <i class="fas fa-eye"></i> Révéler
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <label><i class="fas fa-key"></i> Code d'accès SuperAdmin</label>
+                            <div class="value-container">
+                                <span id="superadminCode" class="hidden-value">**********</span>
+                                <button id="revealCodeBtn" class="btn-reveal">
+                                    <i class="fas fa-eye"></i> Révéler
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="warning-box">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>
+                                <strong>Attention :</strong> Ces informations sont critiques.
+                                Ne les partagez avec personne. Vous seul pouvez les voir et les modifier.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="superadmin-actions">
+                        <h3><i class="fas fa-user-edit"></i> Modifier SuperAdmin</h3>
+
+                        <form id="updateSuperadminForm">
+                            <div class="form-group">
+                                <label for="newSuperadminUsername">
+                                    <i class="fas fa-user"></i> Nouvel identifiant
+                                </label>
+                                <input type="text"
+                                       id="newSuperadminUsername"
+                                       placeholder="Nouveau nom d'utilisateur"
+                                       class="form-input">
+                                <small class="form-help">
+                                    Doit contenir au moins 3 caractères
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="newSuperadminCode">
+                                    <i class="fas fa-lock"></i> Nouveau code
+                                </label>
+                                <input type="password"
+                                       id="newSuperadminCode"
+                                       placeholder="Nouveau code (6 chiffres)"
+                                       class="form-input">
+                                <small class="form-help">
+                                    6 chiffres exactement
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="confirmSuperadminCode">
+                                    <i class="fas fa-lock"></i> Confirmer le code
+                                </label>
+                                <input type="password"
+                                       id="confirmSuperadminCode"
+                                       placeholder="Confirmer le nouveau code"
+                                       class="form-input">
+                            </div>
+
+                            <div id="superadminError" class="error-message" style="display: none;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span id="superadminErrorText"></span>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-save"></i> Mettre à jour SuperAdmin
+                                </button>
+                                <button type="button" id="cancelUpdateBtn" class="btn-secondary">
+                                    Annuler
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gestion des utilisateurs -->
+            <section class="users-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-users"></i> Gestion des utilisateurs</h2>
+                    <div class="section-actions">
+                        <span class="users-count" id="usersCount">0 utilisateurs</span>
+                        <button id="refreshUsersBtn" class="btn-icon">
+                            <i class="fas fa-sync-alt"></i> Actualiser
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Formulaire d'ajout d'utilisateur -->
+                <div class="add-user-card">
+                    <h3><i class="fas fa-user-plus"></i> Ajouter un nouvel utilisateur</h3>
+
+                    <form id="addUserForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newUsername">
+                                    <i class="fas fa-user"></i> Nom d'utilisateur
+                                </label>
+                                <input type="text"
+                                       id="newUsername"
+                                       placeholder="ex: jean.dupont"
+                                       class="form-input"
+                                       required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="newPassword">
+                                    <i class="fas fa-lock"></i> Mot de passe
+                                </label>
+                                <input type="password"
+                                       id="newPassword"
+                                       placeholder="Mot de passe temporaire"
+                                       class="form-input"
+                                       required>
+                            </div>
+                        </div>
+
+                        <div class="permissions-grid">
+                            <h4><i class="fas fa-user-check"></i> Permissions</h4>
+
+                            <div class="permissions-list">
+                                <div class="permission-item">
+                                    <input type="checkbox" id="perm_accueil" checked disabled>
+                                    <label for="perm_accueil">
+                                        <i class="fas fa-home"></i>
+                                        <span>Accueil</span>
+                                        <small>Accès à la page principale</small>
+                                    </label>
+                                </div>
+
+                                <div class="permission-item">
+                                    <input type="checkbox" id="perm_config">
+                                    <label for="perm_config">
+                                        <i class="fas fa-cog"></i>
+                                        <span>Configuration</span>
+                                        <small>Gérer les utilisateurs (Admin)</small>
+                                    </label>
+                                </div>
+
+                                <div class="permission-item">
+                                    <input type="checkbox" id="perm_creation">
+                                    <label for="perm_creation">
+                                        <i class="fas fa-plus-circle"></i>
+                                        <span>Création article</span>
+                                        <small>Créer de nouveaux articles</small>
+                                    </label>
+                                </div>
+
+                                <div class="permission-item">
+                                    <input type="checkbox" id="perm_stats">
+                                    <label for="perm_stats">
+                                        <i class="fas fa-chart-bar"></i>
+                                        <span>Statistiques</span>
+                                        <small>Voir les rapports et stats</small>
+                                    </label>
+                                </div>
+
+                                <div class="permission-item">
+                                    <input type="checkbox" id="perm_historique">
+                                    <label for="perm_historique">
+                                        <i class="fas fa-history"></i>
+                                        <span>Historique</span>
+                                        <small>Consulter l'historique</small>
+                                    </label>
+                                </div>
+
+                                <div class="permission-item">
+                                    <input type="checkbox" id="perm_impression">
+                                    <label for="perm_impression">
+                                        <i class="fas fa-print"></i>
+                                        <span>Impression</span>
+                                        <small>Imprimer étiquettes et rapports</small>
+                                    </label>
+                                </div>
+
+                                <div class="permission-item">
+                                    <input type="checkbox" id="perm_gestion">
+                                    <label for="perm_gestion">
+                                        <i class="fas fa-box-open"></i>
+                                        <span>Gestion articles</span>
+                                        <small>Modifier/supprimer articles</small>
+                                    </label>
+                                </div>
+
+                                <div class="permission-item">
+                                    <input type="checkbox" id="perm_projets">
+                                    <label for="perm_projets">
+                                        <i class="fas fa-project-diagram"></i>
+                                        <span>Gestion projets</span>
+                                        <small>Créer/gérer les projets</small>
+                                    </label>
+                                </div>
+
+                                <div class="permission-item">
+                                    <input type="checkbox" id="perm_reservations">
+                                    <label for="perm_reservations">
+                                        <i class="fas fa-clipboard-list"></i>
+                                        <span>Réservations</span>
+                                        <small>Gérer les réservations</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="addUserError" class="error-message" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="addUserErrorText"></span>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-success">
+                                <i class="fas fa-user-plus"></i> Créer l'utilisateur
+                            </button>
+                            <button type="reset" class="btn-secondary">
+                                <i class="fas fa-eraser"></i> Réinitialiser
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Liste des utilisateurs -->
+                <div class="users-table-container">
+                    <div class="table-header">
+                        <h3><i class="fas fa-list"></i> Liste des utilisateurs</h3>
+                        <div class="table-actions">
+                            <input type="text"
+                                   id="searchUsersInput"
+                                   placeholder="Rechercher un utilisateur..."
+                                   class="search-input">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="usersTable" class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>Utilisateur</th>
+                                    <th>Permissions</th>
+                                    <th>Création</th>
+                                    <th>Dernière connexion</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- Rempli dynamiquement -->
+                                <tr>
+                                    <td colspan="5" class="loading-cell">
+                                        <i class="fas fa-spinner fa-spin"></i> Chargement des utilisateurs...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-footer">
+                        <div class="pagination-info">
+                            <span id="paginationInfo">Affiche 0-0 sur 0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Modal de modification d'utilisateur -->
+            <div id="editUserModal" class="modal-overlay" style="display: none;">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-user-edit"></i> Modifier l'utilisateur</h3>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editUserForm">
+                            <input type="hidden" id="editUserId">
+
+                            <div class="form-group">
+                                <label for="editUsername">
+                                    <i class="fas fa-user"></i> Nom d'utilisateur
+                                </label>
+                                <input type="text"
+                                       id="editUsername"
+                                       class="form-input"
+                                       required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="editPassword">
+                                    <i class="fas fa-lock"></i> Nouveau mot de passe
+                                </label>
+                                <input type="password"
+                                       id="editPassword"
+                                       placeholder="Laissez vide pour ne pas changer"
+                                       class="form-input">
+                                <small class="form-help">
+                                    Si vous changez le mot de passe, l'utilisateur devra se reconnecter
+                                </small>
+                            </div>
+
+                            <div class="permissions-grid">
+                                <h4>Permissions</h4>
+                                <div class="permissions-list" id="editPermissionsList">
+                                    <!-- Rempli dynamiquement -->
+                                </div>
+                            </div>
+
+                            <div id="editUserError" class="error-message" style="display: none;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span id="editUserErrorText"></span>
+                            </div>
+
+                            <div class="modal-actions">
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-save"></i> Enregistrer
+                                </button>
+                                <button type="button" class="btn-secondary close-modal">
+                                    Annuler
+                                </button>
+                                <button type="button" id="deleteUserBtn" class="btn-danger">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Système de gestion de stock • Configuration</p>
+            <p class="footer-info" id="lastSync"></p>
+        </footer>
+    </div>
+
+    <!-- Import des scripts -->
+    <script type="module" src="configuration.js"></script>
+</body>
+</html>

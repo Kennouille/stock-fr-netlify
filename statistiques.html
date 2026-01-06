@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques - Gestion Stock</title>
+    <link rel="stylesheet" href="statistiques.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+</head>
+<body>
+    <!-- Overlay de chargement -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Chargement des statistiques...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-chart-line"></i> Statistiques & Rapports</h1>
+                <div class="header-info">
+                    <span class="back-link">
+                        <a href="accueil.html">
+                            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                        </a>
+                    </span>
+                    <span class="divider">•</span>
+                    <span class="back-link">
+                        <a href="projets.html">
+                            <i class="fas fa-project-diagram"></i> Voir les projets
+                        </a>
+                    </span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="usernameDisplay">...</span>
+                </span>
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenu principal -->
+        <main class="main-content">
+            <!-- Section Filtres -->
+            <section class="filters-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-filter"></i> Filtres</h2>
+                    <button id="resetFiltersBtn" class="btn-secondary">
+                        <i class="fas fa-redo"></i> Réinitialiser
+                    </button>
+                </div>
+
+                <div class="filters-grid">
+                    <!-- Période -->
+                    <div class="filter-group">
+                        <label for="periodSelect">
+                            <i class="fas fa-calendar-alt"></i> Période
+                        </label>
+                        <select id="periodSelect" class="form-select">
+                            <option value="current_month">Mois en cours</option>
+                            <option value="last_month">Mois précédent</option>
+                            <option value="current_quarter">Trimestre en cours</option>
+                            <option value="last_quarter">Trimestre précédent</option>
+                            <option value="current_year">Année en cours</option>
+                            <option value="custom">Personnalisé</option>
+                        </select>
+                    </div>
+
+                    <!-- Date de début -->
+                    <div class="filter-group custom-date" style="display: none;">
+                        <label for="startDate">
+                            <i class="fas fa-calendar-day"></i> Date début
+                        </label>
+                        <input type="date" id="startDate" class="form-input">
+                    </div>
+
+                    <!-- Date de fin -->
+                    <div class="filter-group custom-date" style="display: none;">
+                        <label for="endDate">
+                            <i class="fas fa-calendar-check"></i> Date fin
+                        </label>
+                        <input type="date" id="endDate" class="form-input">
+                    </div>
+
+                    <!-- Filtre utilisateur -->
+                    <div class="filter-group">
+                        <label for="userFilter">
+                            <i class="fas fa-user"></i> Utilisateur
+                        </label>
+                        <select id="userFilter" class="form-select">
+                            <option value="">Tous les utilisateurs</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtre projet -->
+                    <div class="filter-group">
+                        <label for="projectFilter">
+                            <i class="fas fa-project-diagram"></i> Projet
+                        </label>
+                        <select id="projectFilter" class="form-select">
+                            <option value="">Tous les projets</option>
+                        </select>
+                    </div>
+
+                    <!-- Bouton appliquer -->
+                    <div class="filter-group filter-actions">
+                        <button id="applyFiltersBtn" class="btn-primary">
+                            <i class="fas fa-check-circle"></i> Appliquer les filtres
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Résumé période active -->
+                <div class="period-summary">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="periodInfo">Mois en cours : Octobre 2024</span>
+                </div>
+            </section>
+
+            <!-- Carte Valeur totale du stock -->
+            <section class="stats-section">
+                <div class="stat-card large">
+                    <div class="stat-card-header">
+                        <h3><i class="fas fa-euro-sign"></i> Valeur totale du stock</h3>
+                        <div class="stat-period-badge" id="stockValuePeriod"></div>
+                    </div>
+                    <div class="stat-card-content">
+                        <div class="main-stat">
+                            <span class="stat-value" id="totalStockValue">0 €</span>
+                            <span class="stat-change" id="stockValueChange">
+                                <i class="fas fa-caret-up"></i> 0%
+                            </span>
+                        </div>
+                        <div class="stat-comparison">
+                            vs période précédente : <span id="previousStockValue">0 €</span>
+                        </div>
+                        <div class="stat-breakdown">
+                            <div class="breakdown-item">
+                                <span class="label">Articles actifs :</span>
+                                <span class="value" id="activeArticlesCount">0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="label">Valeur moyenne :</span>
+                                <span class="value" id="averageArticleValue">0 €</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="label">Top catégorie :</span>
+                                <span class="value" id="topCategory">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Rapports -->
+            <section class="reports-section">
+                <!-- Tableau Articles avec stock et valeur -->
+                <div class="report-card">
+                    <div class="report-header">
+                        <h3><i class="fas fa-boxes"></i> Articles avec stock et valeur</h3>
+                        <div class="report-actions">
+                            <button class="btn-action export-table" data-table="stockValueTable">
+                                <i class="fas fa-file-export"></i> Exporter
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="stockValueTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Article</th>
+                                    <th>Code</th>
+                                    <th>Catégorie</th>
+                                    <th>Quantité</th>
+                                    <th>Stock min</th>
+                                    <th>Prix unitaire</th>
+                                    <th>Valeur totale</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stockValueBody">
+                                <!-- Rempli dynamiquement -->
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="6" style="text-align: right;">Total :</th>
+                                    <th id="stockValueTotal">0 €</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tableau Alertes stock minimum -->
+                <div class="report-card">
+                    <div class="report-header">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Alertes stock minimum</h3>
+                        <span class="alert-badge" id="lowStockCount">0</span>
+                    </div>
+                    <div class="table-container">
+                        <table id="lowStockTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Article</th>
+                                    <th>Code</th>
+                                    <th>Stock actuel</th>
+                                    <th>Stock minimum</th>
+                                    <th>Différence</th>
+                                    <th>État</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lowStockBody">
+                                <!-- Rempli dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tableau Ruptures de stock -->
+                <div class="report-card">
+                    <div class="report-header">
+                        <h3><i class="fas fa-times-circle"></i> Ruptures de stock</h3>
+                        <span class="alert-badge danger" id="outOfStockCount">0</span>
+                    </div>
+                    <div class="table-container">
+                        <table id="outOfStockTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Article</th>
+                                    <th>Code</th>
+                                    <th>Dernière sortie</th>
+                                    <th>Quantité manquante</th>
+                                    <th>Dernière commande</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="outOfStockBody">
+                                <!-- Rempli dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tableau Articles les plus réservés -->
+                <div class="report-card">
+                    <div class="report-header">
+                        <h3><i class="fas fa-chart-bar"></i> Articles les plus réservés</h3>
+                        <div class="report-actions">
+                            <select id="topArticlesPeriod" class="form-select small">
+                                <option value="7">7 derniers jours</option>
+                                <option value="30" selected>30 derniers jours</option>
+                                <option value="90">90 derniers jours</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="topArticlesTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Article</th>
+                                    <th>Nombre de réservations</th>
+                                    <th>Quantité totale</th>
+                                    <th>Utilisateurs uniques</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topArticlesBody">
+                                <!-- Rempli dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tableau Statistiques par catégorie -->
+                <div class="report-card">
+                    <div class="report-header">
+                        <h3><i class="fas fa-chart-pie"></i> Statistiques par catégorie</h3>
+                    </div>
+                    <div class="table-container">
+                        <table id="categoriesTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Catégorie</th>
+                                    <th>Nombre d'articles</th>
+                                    <th>Stock total</th>
+                                    <th>Valeur totale</th>
+                                    <th>% du total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoriesBody">
+                                <!-- Rempli dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Actions bottom -->
+            <section class="actions-section">
+                <div class="actions-buttons">
+                    <button id="exportPdfBtn" class="btn-export">
+                        <i class="fas fa-file-pdf"></i> Exporter ce rapport (PDF)
+                    </button>
+                    <button id="exportExcelBtn" class="btn-primary">
+                        <i class="fas fa-file-excel"></i> Exporter données (Excel)
+                    </button>
+                    <button id="refreshBtn" class="btn-secondary">
+                        <i class="fas fa-sync-alt"></i> Actualiser
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Système de gestion de stock • Statistiques & Rapports</p>
+            <p class="footer-info">Dernière mise à jour : <span id="lastUpdateTime">-</span></p>
+        </footer>
+    </div>
+
+    <!-- Import des scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script type="module" src="statistiques.js"></script>
+</body>
+</html>

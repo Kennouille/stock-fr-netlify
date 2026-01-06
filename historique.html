@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique - Gestion Stock</title>
+    <link rel="stylesheet" href="historique.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <!-- Overlay de chargement -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Chargement de l'historique...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-history"></i> Historique des mouvements</h1>
+                <div class="header-info">
+                    <span class="back-link">
+                        <a href="accueil.html">
+                            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                        </a>
+                    </span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="usernameDisplay">...</span>
+                </span>
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenu principal -->
+        <main class="main-content">
+            <!-- Section filtres -->
+            <section class="filters-section">
+                <div class="filters-header">
+                    <h2><i class="fas fa-filter"></i> Filtres de recherche</h2>
+                    <div class="filters-stats">
+                        <span id="movementsCount">0</span> mouvements
+                    </div>
+                </div>
+
+                <div class="filters-grid">
+                    <!-- Filtre rapide -->
+                    <div class="filter-card">
+                        <h3><i class="fas fa-search"></i> Recherche rapide</h3>
+                        <div class="search-container">
+                            <input type="text"
+                                   id="quickSearch"
+                                   placeholder="Rechercher par article, utilisateur, projet..."
+                                   class="search-input">
+                            <button id="clearSearchBtn" class="btn-clear" title="Effacer la recherche">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtres période -->
+                    <div class="filter-card">
+                        <h3><i class="fas fa-calendar-alt"></i> Période</h3>
+                        <div class="period-filters">
+                            <div class="period-buttons">
+                                <button class="period-btn active" data-period="today">Aujourd'hui</button>
+                                <button class="period-btn" data-period="week">7 derniers jours</button>
+                                <button class="period-btn" data-period="month">30 derniers jours</button>
+                                <button class="period-btn" data-period="quarter">3 derniers mois</button>
+                                <button class="period-btn" data-period="all">Tout</button>
+                            </div>
+                            <div class="custom-period">
+                                <div class="date-inputs">
+                                    <div class="date-input">
+                                        <label for="startDate">Du :</label>
+                                        <input type="date" id="startDate" class="date-picker">
+                                    </div>
+                                    <div class="date-input">
+                                        <label for="endDate">Au :</label>
+                                        <input type="date" id="endDate" class="date-picker">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtres avancés -->
+                    <div class="filter-card">
+                        <h3><i class="fas fa-sliders-h"></i> Filtres avancés</h3>
+                        <div class="advanced-filters">
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label for="filterType">Type de mouvement</label>
+                                    <select id="filterType" class="filter-select">
+                                        <option value="">Tous les types</option>
+                                        <option value="entree">Entrées</option>
+                                        <option value="sortie">Sorties</option>
+                                        <option value="reservation">Réservations</option>
+                                        <option value="liberation">Libérations</option>
+                                        <option value="ajustement">Ajustements</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-group">
+                                    <label for="filterUser">Utilisateur</label>
+                                    <select id="filterUser" class="filter-select">
+                                        <option value="">Tous les utilisateurs</option>
+                                        <!-- Rempli dynamiquement -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label for="filterArticle">Article</label>
+                                    <select id="filterArticle" class="filter-select">
+                                        <option value="">Tous les articles</option>
+                                        <!-- Rempli dynamiquement -->
+                                    </select>
+                                </div>
+
+                                <div class="filter-group">
+                                    <label for="filterProject">Projet</label>
+                                    <select id="filterProject" class="filter-select">
+                                        <option value="">Tous les projets</option>
+                                        <option value="none">Sans projet</option>
+                                        <!-- Rempli dynamiquement -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions filtres -->
+                <div class="filter-actions">
+                    <button id="exportHistoryBtn" class="btn-export">
+                        <i class="fas fa-file-export"></i> Exporter l'historique
+                    </button>
+                </div>
+            </section>
+
+            <!-- Section statistiques -->
+            <section class="stats-section">
+                <h2><i class="fas fa-chart-pie"></i> Vue d'ensemble</h2>
+                <div class="stats-grid">
+                    <div class="stat-card total">
+                        <div class="stat-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Mouvements totaux</h3>
+                            <p class="stat-value" id="statTotalMovements">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card entries">
+                        <div class="stat-icon">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Entrées</h3>
+                            <p class="stat-value" id="statEntries">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card exits">
+                        <div class="stat-icon">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Sorties</h3>
+                            <p class="stat-value" id="statExits">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card reservations">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Réservations</h3>
+                            <p class="stat-value" id="statReservations">0</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section historique -->
+            <section class="history-section">
+                <div class="history-header">
+                    <h2><i class="fas fa-list"></i> Historique des mouvements</h2>
+                    <div class="view-toggle">
+                        <button id="tableViewBtn" class="view-btn active">
+                            <i class="fas fa-table"></i> Tableau
+                        </button>
+                        <button id="timelineViewBtn" class="view-btn">
+                            <i class="fas fa-stream"></i> Chronologie
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Vue tableau -->
+                <div id="tableView" class="view-container active">
+                    <div class="table-container">
+                        <table id="historyTable" class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Article</th>
+                                    <th>Quantité</th>
+                                    <th>Stock après</th>
+                                    <th>Projet</th>
+                                    <th>Utilisateur</th>
+                                    <th>Commentaire</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <!-- Rempli dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-footer">
+                        <div class="pagination-info">
+                            <span id="paginationText">Affichage 0-0 sur 0</span>
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="firstPageBtn" class="btn-pagination" disabled>
+                                <i class="fas fa-angle-double-left"></i>
+                            </button>
+                            <button id="prevPageBtn" class="btn-pagination" disabled>
+                                <i class="fas fa-angle-left"></i>
+                            </button>
+                            <span class="page-info">
+                                Page <span id="currentPage">1</span> sur <span id="totalPages">1</span>
+                            </span>
+                            <button id="nextPageBtn" class="btn-pagination" disabled>
+                                <i class="fas fa-angle-right"></i>
+                            </button>
+                            <button id="lastPageBtn" class="btn-pagination" disabled>
+                                <i class="fas fa-angle-double-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vue chronologie -->
+                <div id="timelineView" class="view-container">
+                    <div class="timeline-container">
+                        <div class="timeline" id="timeline">
+                            <!-- Rempli dynamiquement -->
+                            <div class="timeline-placeholder">
+                                <i class="fas fa-stream"></i>
+                                <p>Sélectionnez une période pour voir la chronologie</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dernières sorties -->
+                <div class="recent-section">
+                    <h3><i class="fas fa-clock"></i> 10 dernières sorties de stock</h3>
+                    <div class="recent-exits" id="recentExits">
+                        <!-- Rempli dynamiquement -->
+                        <div class="loading-recent">
+                            <i class="fas fa-spinner fa-spin"></i> Chargement...
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Système de gestion de stock • Historique</p>
+        </footer>
+    </div>
+
+    <!-- Modal détails mouvement -->
+    <div id="detailModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-info-circle"></i> Détails du mouvement</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="movement-details" id="movementDetails">
+                    <!-- Rempli dynamiquement -->
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-secondary close-modal">
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import des scripts -->
+    <script type="module" src="historique.js"></script>
+</body>
+</html>

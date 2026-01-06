@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LeVeL One – Animation 3D Lente</title>
+  <style>
+    html,body{height:100%;margin:0;background:#0b0b0d}
+    .wrap{display:flex;align-items:center;justify-content:center;height:100%}
+    .wrap svg{max-width:1200px;width:96vw;height:auto}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 1400 800" role="img" aria-label="Logo NeXeN Suite">
+      <defs>
+        <linearGradient id="champagneGold" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#c7b08a"/>
+          <stop offset="30%" stop-color="#f2e4c8"/>
+          <stop offset="60%" stop-color="#d8c092"/>
+          <stop offset="100%" stop-color="#ba9560"/>
+        </linearGradient>
+        <linearGradient id="silverGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#dfe2e6"/>
+          <stop offset="50%" stop-color="#b9bdc2"/>
+          <stop offset="100%" stop-color="#f7f7f7"/>
+        </linearGradient>
+        <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.35"/>
+        </filter>
+        <marker id="arrowHeadSmall" markerWidth="8" markerHeight="5" refX="5" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,5 z" fill="url(#champagneGold)"/>
+        </marker>
+        <style><![CDATA[
+          .bg { fill: #0b0b0d; }
+          .goldFill { fill: url(#champagneGold); filter: url(#softShadow); }
+          .goldStroke { stroke: url(#champagneGold); }
+          .silverFill { fill: url(#silverGrad); }
+          .slogan { fill: #c7cbd1; letter-spacing: 0.06em; }
+          .outline { paint-order: stroke; stroke: #141417; stroke-width: 2; }
+
+          .level { font-family: 'Cinzel', 'Trajan Pro', 'Times New Roman', serif; font-weight: 800; }
+          .one { font-family: 'Montserrat', 'Inter', 'Helvetica Neue', Arial, sans-serif; font-weight: 600; letter-spacing: 0.06em; }
+
+          /* Animation CSS pure - TOUT CENTRÉ SUR 425px 320px */
+          #rotGroup {
+            transform: scale(0.7);
+            transform-origin: 425px 320px;
+            animation: rotateGroup 10s infinite; /* ← Durée totale augmentée */
+          }
+
+          .letter-container {
+            fill: none;
+            stroke: none;
+            animation: rotateLetter 10s infinite; /* ← Durée totale augmentée */
+          }
+
+          .letter {
+            text-anchor: middle;
+            dominant-baseline: central;
+          }
+
+          #firstLContainer { transform-origin: 200px 320px; }
+          #secondEContainer { transform-origin: 310px 320px; }
+          #thirdVContainer { transform-origin: 420px 320px; }
+          #fourthEContainer { transform-origin: 530px 320px; }
+          #fifthLContainer { transform-origin: 640px 320px; }
+
+          /* Animation 3D très fluide avec 15 étapes par 180° */
+          @keyframes rotateGroup {
+            /* Position initiale - 0° pendant 2 secondes */
+            0%, 20% {
+              transform: scale(0.7) rotateY(0deg);
+            }
+            /* Rotation progressive vers 180° - 15 étapes (12° chacune) */
+            21% { transform: scale(0.7) rotateY(12deg); }
+            22.67% { transform: scale(0.7) rotateY(24deg); }
+            24.33% { transform: scale(0.7) rotateY(36deg); }
+            26% { transform: scale(0.7) rotateY(48deg); }
+            27.67% { transform: scale(0.7) rotateY(60deg); }
+            29.33% { transform: scale(0.7) rotateY(72deg); }
+            31% { transform: scale(0.7) rotateY(84deg); }
+            32.67% { transform: scale(0.7) rotateY(96deg); }
+            34.33% { transform: scale(0.7) rotateY(108deg); }
+            36% { transform: scale(0.7) rotateY(120deg); }
+            37.67% { transform: scale(0.7) rotateY(132deg); }
+            39.33% { transform: scale(0.7) rotateY(144deg); }
+            41% { transform: scale(0.7) rotateY(156deg); }
+            42.67% { transform: scale(0.7) rotateY(168deg); }
+            44.33%, 50% { transform: scale(0.7) rotateY(180deg); }
+            /* Pause à 180° - 2 secondes */
+            50.01%, 70% {
+              transform: scale(0.7) rotateY(180deg);
+            }
+            /* Rotation progressive vers 360° - 15 étapes (12° chacune) */
+            71% { transform: scale(0.7) rotateY(192deg); }
+            72.67% { transform: scale(0.7) rotateY(204deg); }
+            74.33% { transform: scale(0.7) rotateY(216deg); }
+            76% { transform: scale(0.7) rotateY(228deg); }
+            77.67% { transform: scale(0.7) rotateY(240deg); }
+            79.33% { transform: scale(0.7) rotateY(252deg); }
+            81% { transform: scale(0.7) rotateY(264deg); }
+            82.67% { transform: scale(0.7) rotateY(276deg); }
+            84.33% { transform: scale(0.7) rotateY(288deg); }
+            86% { transform: scale(0.7) rotateY(300deg); }
+            87.67% { transform: scale(0.7) rotateY(312deg); }
+            89.33% { transform: scale(0.7) rotateY(324deg); }
+            91% { transform: scale(0.7) rotateY(336deg); }
+            92.67% { transform: scale(0.7) rotateY(348deg); }
+            94.33%, 100% { transform: scale(0.7) rotateY(360deg); }
+          }
+
+          @keyframes rotateLetter {
+            /* Position initiale - 0° pendant 2 secondes */
+            0%, 20% {
+              transform: rotateY(0deg);
+            }
+            /* Rotation progressive vers 180° - 15 étapes (12° chacune) */
+            21% { transform: rotateY(12deg); }
+            22.67% { transform: rotateY(24deg); }
+            24.33% { transform: rotateY(36deg); }
+            26% { transform: rotateY(48deg); }
+            27.67% { transform: rotateY(60deg); }
+            29.33% { transform: rotateY(72deg); }
+            31% { transform: rotateY(84deg); }
+            32.67% { transform: rotateY(96deg); }
+            34.33% { transform: rotateY(108deg); }
+            36% { transform: rotateY(120deg); }
+            37.67% { transform: rotateY(132deg); }
+            39.33% { transform: rotateY(144deg); }
+            41% { transform: rotateY(156deg); }
+            42.67% { transform: rotateY(168deg); }
+            44.33%, 50% { transform: rotateY(180deg); }
+            /* Pause à 180° - 2 secondes */
+            50.01%, 70% {
+              transform: rotateY(180deg);
+            }
+            /* Rotation progressive vers 360° - 15 étapes (12° chacune) */
+            71% { transform: rotateY(192deg); }
+            72.67% { transform: rotateY(204deg); }
+            74.33% { transform: rotateY(216deg); }
+            76% { transform: rotateY(228deg); }
+            77.67% { transform: rotateY(240deg); }
+            79.33% { transform: rotateY(252deg); }
+            81% { transform: rotateY(264deg); }
+            82.67% { transform: rotateY(276deg); }
+            84.33% { transform: rotateY(288deg); }
+            86% { transform: rotateY(300deg); }
+            87.67% { transform: rotateY(312deg); }
+            89.33% { transform: rotateY(324deg); }
+            91% { transform: rotateY(336deg); }
+            92.67% { transform: rotateY(348deg); }
+            94.33%, 100% { transform: rotateY(360deg); }
+          }
+        ]]></style>
+      </defs>
+
+      <!-- Fond -->
+      <rect class="bg" x="0" y="0" width="1400" height="800" rx="28"/>
+
+      <!-- Groupe animé -->
+      <g id="rotGroup">
+        <!-- Lettres avec leurs rectangles -->
+        <g id="firstLContainer" class="letter-container">
+          <rect x="150" y="180" width="100" height="200" fill="none"/>
+          <text x="200" y="280" font-size="200" class="level goldFill outline letter">N</text>
+        </g>
+        <g id="secondEContainer" class="letter-container">
+          <rect x="260" y="180" width="100" height="200" fill="none"/>
+          <text x="310" y="280" font-size="160" class="level goldFill outline letter">E</text>
+        </g>
+        <g id="thirdVContainer" class="letter-container">
+          <rect x="370" y="180" width="100" height="200" fill="none"/>
+          <text x="420" y="280" font-size="200" class="level goldFill outline letter">X</text>
+        </g>
+        <g id="fourthEContainer" class="letter-container">
+          <rect x="480" y="180" width="100" height="200" fill="none"/>
+          <text x="530" y="280" font-size="160" class="level goldFill outline letter">E</text>
+        </g>
+        <g id="fifthLContainer" class="letter-container">
+          <rect x="590" y="180" width="100" height="200" fill="none"/>
+          <text x="640" y="280" font-size="200" class="level goldFill outline letter">N</text>
+        </g>
+
+        <!-- FLÈCHES RECENTRÉES sur 425px 320px -->
+        <path d="M 185.54 402.46 A 280 280 0 0 0 664.46 387.54"
+          fill="none" class="goldStroke" stroke-width="18" marker-end="url(#arrowHeadSmall)"/>
+
+        <path d="M 664.46 102.46 A 280 280 0 0 0 185.54 117.54"
+          fill="none" class="goldStroke" stroke-width="18" marker-end="url(#arrowHeadSmall)"/>
+      </g>
+
+      <!-- Texte fixe -->
+      <text x="620" y="400" font-size="96" class="one silverFill">Store</text>
+      <text x="640" y="580" font-size="36" text-anchor="middle" class="one slogan">Professional time made simple.</text>
+    </svg>
+  </div>
+</body>
+</html>

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Alertes - Gestion Stock</title>
+    <link rel="stylesheet" href="reservations.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Overlay de chargement -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Chargement des alertes...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-bell"></i> Gestion des Alertes</h1>
+                <div class="header-info">
+                    <span class="back-link">
+                        <a href="accueil.html">
+                            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                        </a>
+                    </span>
+                    <span class="divider">•</span>
+                    <span class="back-link">
+                        <a href="reservations.html">
+                            <i class="fas fa-clipboard-list"></i> Voir les réservations
+                        </a>
+                    </span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="usernameDisplay">...</span>
+                </span>
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenu principal -->
+        <main class="main-content">
+            <!-- Section en-tête -->
+            <section class="header-section">
+                <div class="header-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Alertes actives</h3>
+                            <p class="stat-value" id="activeAlerts">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon info">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Emails envoyés (7j)</h3>
+                            <p class="stat-value" id="emailsSent">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon total">
+                            <i class="fas fa-sms"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>SMS envoyés (7j)</h3>
+                            <p class="stat-value" id="smsSent">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon value">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Prochaine vérification</h3>
+                            <p class="stat-value" id="nextCheck">--:--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <button id="testEmailBtn" class="btn-primary">
+                        <i class="fas fa-envelope"></i> Tester l'email
+                    </button>
+                    <button id="testSmsBtn" class="btn-secondary">
+                        <i class="fas fa-sms"></i> Tester le SMS
+                    </button>
+                    <button id="saveSettingsBtn" class="btn-export">
+                        <i class="fas fa-save"></i> Sauvegarder
+                    </button>
+                </div>
+            </section>
+
+            <!-- Section onglets -->
+            <section class="tabs-section">
+                <div class="tabs-header">
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="configuration">
+                            <i class="fas fa-cog"></i> Configuration
+                        </button>
+                        <button class="tab-btn" data-tab="history">
+                            <i class="fas fa-history"></i> Historique
+                            <span class="tab-badge" id="historyTabCount">0</span>
+                        </button>
+                        <button class="tab-btn" data-tab="active">
+                            <i class="fas fa-bell"></i> Alertes actives
+                            <span class="tab-badge" id="activeTabCount">0</span>
+                        </button>
+                    </div>
+
+                    <div class="search-box">
+                        <input type="text"
+                               id="searchAlerts"
+                               placeholder="Rechercher une alerte..."
+                               class="search-input">
+                        <button id="searchBtn" class="btn-search">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Onglet Configuration -->
+                <div id="configurationTab" class="tab-content active">
+                    <div class="configuration-grid">
+                        <!-- Colonne gauche : Paramètres généraux -->
+                        <div class="config-column">
+                            <div class="config-section">
+                                <h3><i class="fas fa-sliders-h"></i> Paramètres généraux</h3>
+
+                                <div class="form-group">
+                                    <label for="alertEnabled">
+                                        <i class="fas fa-toggle-on"></i> Activer les alertes
+                                    </label>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" id="alertEnabled" class="toggle-input" checked>
+                                        <label for="alertEnabled" class="toggle-label"></label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="checkFrequency">
+                                        <i class="fas fa-sync-alt"></i> Fréquence de vérification
+                                    </label>
+                                    <select id="checkFrequency" class="form-select">
+                                        <option value="hourly">Toutes les heures</option>
+                                        <option value="daily" selected>Quotidienne</option>
+                                        <option value="twice_daily">2 fois par jour</option>
+                                        <option value="weekly">Hebdomadaire</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="checkTime">
+                                        <i class="fas fa-clock"></i> Heure de vérification
+                                    </label>
+                                    <input type="time" id="checkTime" class="form-input" value="08:00">
+                                </div>
+                            </div>
+
+                            <div class="config-section">
+                                <h3><i class="fas fa-box"></i> Seuils de stock</h3>
+
+                                <div class="form-group">
+                                    <label for="lowStockThreshold">
+                                        <i class="fas fa-exclamation-circle"></i> Seuil stock bas
+                                    </label>
+                                    <div class="input-with-unit">
+                                        <input type="number"
+                                               id="lowStockThreshold"
+                                               min="1"
+                                               value="10"
+                                               class="form-input">
+                                        <span class="input-unit">unités</span>
+                                    </div>
+                                    <small class="help-text">Alertes envoyées quand le stock est inférieur à cette valeur</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="criticalStockThreshold">
+                                        <i class="fas fa-skull-crossbones"></i> Seuil stock critique
+                                    </label>
+                                    <div class="input-with-unit">
+                                        <input type="number"
+                                               id="criticalStockThreshold"
+                                               min="0"
+                                               value="3"
+                                               class="form-input">
+                                        <span class="input-unit">unités</span>
+                                    </div>
+                                    <small class="help-text">Alertes urgentes quand le stock est inférieur à cette valeur</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Colonne droite : Notifications -->
+                        <div class="config-column">
+                            <div class="config-section">
+                                <h3><i class="fas fa-envelope"></i> Notifications par email</h3>
+
+                                <div class="form-group">
+                                    <label for="emailEnabled">
+                                        <i class="fas fa-toggle-on"></i> Activer les emails
+                                    </label>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" id="emailEnabled" class="toggle-input" checked>
+                                        <label for="emailEnabled" class="toggle-label"></label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="emailSubject">
+                                        <i class="fas fa-tag"></i> Sujet des emails
+                                    </label>
+                                    <input type="text"
+                                           id="emailSubject"
+                                           value="[Stock] Alerte niveau bas"
+                                           class="form-input">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="emailRecipients">
+                                        <i class="fas fa-users"></i> Destinataires
+                                    </label>
+                                    <div class="tags-input-container">
+                                        <div class="tags-input" id="emailTags">
+                                            <!-- Tags seront ajoutés dynamiquement -->
+                                        </div>
+                                        <input type="email"
+                                               id="emailInput"
+                                               placeholder="Ajouter un email..."
+                                               class="form-input">
+                                        <button type="button" id="addEmailBtn" class="btn-action btn-small">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <small class="help-text">Saisir un email et appuyer sur Entrée ou le bouton +</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="emailTemplate">
+                                        <i class="fas fa-file-alt"></i> Template d'email
+                                    </label>
+                                    <textarea id="emailTemplate"
+                                              rows="6"
+                                              class="form-textarea">Bonjour,
+
+Les articles suivants ont un stock bas :
+
+{{articles_list}}
+
+Merci de réapprovisionner au plus vite.
+
+Cordialement,
+Système de gestion de stock</textarea>
+                                </div>
+                            </div>
+
+                            <div class="config-section">
+                                <h3><i class="fas fa-sms"></i> Notifications par SMS</h3>
+
+                                <div class="form-group">
+                                    <label for="smsEnabled">
+                                        <i class="fas fa-toggle-on"></i> Activer les SMS
+                                    </label>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" id="smsEnabled" class="toggle-input">
+                                        <label for="smsEnabled" class="toggle-label"></label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="smsRecipients">
+                                        <i class="fas fa-phone"></i> Numéros de téléphone
+                                    </label>
+                                    <div class="tags-input-container">
+                                        <div class="tags-input" id="smsTags">
+                                            <!-- Tags seront ajoutés dynamiquement -->
+                                        </div>
+                                        <input type="tel"
+                                               id="smsInput"
+                                               placeholder="Ajouter un numéro..."
+                                               class="form-input"
+                                               pattern="[0-9]{10}">
+                                        <button type="button" id="addSmsBtn" class="btn-action btn-small">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <small class="help-text">Format : 0612345678 (10 chiffres)</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="smsProvider">
+                                        <i class="fas fa-server"></i> Fournisseur SMS
+                                    </label>
+                                    <select id="smsProvider" class="form-select">
+                                        <option value="">Sélectionner un fournisseur</option>
+                                        <option value="ovh">OVH</option>
+                                        <option value="twilio">Twilio</option>
+                                        <option value="other">Autre</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="smsTemplate">
+                                        <i class="fas fa-comment-sms"></i> Template SMS
+                                    </label>
+                                    <textarea id="smsTemplate"
+                                              rows="3"
+                                              class="form-textarea"
+                                              maxlength="160">Alerte stock : {{count}} article(s) en stock bas. Consulter le système.</textarea>
+                                    <small class="help-text">Limite : 160 caractères (<span id="smsCharCount">0</span>/160)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Onglet Historique -->
+                <div id="historyTab" class="tab-content">
+                    <div class="history-filters">
+                        <div class="filter-row">
+                            <div class="filter-group">
+                                <label for="historyTypeFilter">Type :</label>
+                                <select id="historyTypeFilter" class="filter-select">
+                                    <option value="">Tous les types</option>
+                                    <option value="email">Email</option>
+                                    <option value="sms">SMS</option>
+                                    <option value="system">Système</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="historyStatusFilter">Statut :</label>
+                                <select id="historyStatusFilter" class="filter-select">
+                                    <option value="">Tous les statuts</option>
+                                    <option value="sent">Envoyé</option>
+                                    <option value="failed">Échec</option>
+                                    <option value="pending">En attente</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="historyDateFrom">Du :</label>
+                                <input type="date" id="historyDateFrom" class="date-input">
+                            </div>
+                            <div class="filter-group">
+                                <label for="historyDateTo">Au :</label>
+                                <input type="date" id="historyDateTo" class="date-input">
+                            </div>
+                            <button id="applyHistoryFiltersBtn" class="btn-primary">
+                                <i class="fas fa-filter"></i> Appliquer
+                            </button>
+                            <button id="clearHistoryFiltersBtn" class="btn-secondary">
+                                <i class="fas fa-redo"></i> Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Destinataire</th>
+                                    <th>Contenu</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading-row">
+                                        <i class="fas fa-spinner fa-spin"></i> Chargement de l'historique...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-footer">
+                        <div class="pagination-info">
+                            <span id="historyPaginationInfo">Affichage 0-0 sur 0</span>
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="historyFirstPageBtn" class="btn-pagination" disabled>
+                                <i class="fas fa-angle-double-left"></i>
+                            </button>
+                            <button id="historyPrevPageBtn" class="btn-pagination" disabled>
+                                <i class="fas fa-angle-left"></i>
+                            </button>
+                            <span class="page-info">
+                                Page <span id="historyCurrentPage">1</span> sur <span id="historyTotalPages">1</span>
+                            </span>
+                            <button id="historyNextPageBtn" class="btn-pagination" disabled>
+                                <i class="fas fa-angle-right"></i>
+                            </button>
+                            <button id="historyLastPageBtn" class="btn-pagination" disabled>
+                                <i class="fas fa-angle-double-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Onglet Alertes actives -->
+                <div id="activeTab" class="tab-content">
+                    <div class="alerts-header">
+                        <div class="alerts-stats">
+                            <div class="alert-stat">
+                                <span class="stat-label">Stock bas</span>
+                                <span class="stat-value badge warning" id="lowStockCount">0</span>
+                            </div>
+                            <div class="alert-stat">
+                                <span class="stat-label">Stock critique</span>
+                                <span class="stat-value badge danger" id="criticalStockCount">0</span>
+                            </div>
+                            <div class="alert-stat">
+                                <span class="stat-label">Réservations expirées</span>
+                                <span class="stat-value badge expired" id="expiredReservationsCount">0</span>
+                            </div>
+                        </div>
+                        <div class="alerts-actions">
+                            <button id="sendAlertsNowBtn" class="btn-primary">
+                                <i class="fas fa-paper-plane"></i> Envoyer les alertes maintenant
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="alerts-tabs">
+                        <div class="alert-type-tabs">
+                            <button class="alert-tab-btn active" data-type="low_stock">
+                                <i class="fas fa-exclamation-triangle"></i> Stock bas
+                                <span class="alert-badge" id="lowStockBadge">0</span>
+                            </button>
+                            <button class="alert-tab-btn" data-type="critical_stock">
+                                <i class="fas fa-skull-crossbones"></i> Stock critique
+                                <span class="alert-badge" id="criticalStockBadge">0</span>
+                            </button>
+                            <button class="alert-tab-btn" data-type="expired_reservations">
+                                <i class="fas fa-clock"></i> Réservations expirées
+                                <span class="alert-badge" id="expiredReservationsBadge">0</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="alerts-table">
+                            <thead>
+                                <tr>
+                                    <th>Article</th>
+                                    <th>Code</th>
+                                    <th>Stock actuel</th>
+                                    <th>Seuil</th>
+                                    <th>Type</th>
+                                    <th>Dernière alerte</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activeAlertsBody">
+                                <tr>
+                                    <td colspan="7" class="loading-row">
+                                        <i class="fas fa-spinner fa-spin"></i> Chargement des alertes actives...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-footer">
+                        <div class="selection-info" id="alertsSelectionInfo" style="display: none;">
+                            <span id="alertsSelectedCount">0</span> alerte(s) sélectionnée(s)
+                        </div>
+                        <div class="table-actions">
+                            <button id="sendSelectedAlertsBtn" class="btn-action" disabled>
+                                <i class="fas fa-paper-plane"></i> Envoyer la sélection
+                            </button>
+                            <button id="ignoreSelectedAlertsBtn" class="btn-action" disabled>
+                                <i class="fas fa-eye-slash"></i> Ignorer
+                            </button>
+                            <button id="exportAlertsBtn" class="btn-action">
+                                <i class="fas fa-file-export"></i> Exporter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Système de gestion de stock • Gestion des alertes</p>
+        </footer>
+    </div>
+
+    <!-- Modal test email -->
+    <div id="testEmailModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-envelope"></i> Test d'envoi d'email</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="testEmailRecipient">
+                        <i class="fas fa-user"></i> Destinataire de test
+                    </label>
+                    <input type="email"
+                           id="testEmailRecipient"
+                           placeholder="email@exemple.com"
+                           class="form-input"
+                           value="">
+                </div>
+
+                <div class="form-group">
+                    <label for="testEmailMessage">
+                        <i class="fas fa-comment"></i> Message de test
+                    </label>
+                    <textarea id="testEmailMessage"
+                              rows="4"
+                              class="form-textarea">Ceci est un email de test du système d'alertes.
+
+Date: {{date}}
+Heure: {{time}}
+
+Si vous recevez ce message, le système d'envoi d'emails fonctionne correctement.</textarea>
+                </div>
+
+                <div id="testEmailResult" class="alert-message" style="display: none;">
+                    <!-- Résultat sera affiché ici -->
+                </div>
+
+                <div class="modal-actions">
+                    <button id="sendTestEmailBtn" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i> Envoyer l'email de test
+                    </button>
+                    <button type="button" class="btn-secondary close-modal">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal test SMS -->
+    <div id="testSmsModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-sms"></i> Test d'envoi de SMS</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="testSmsRecipient">
+                        <i class="fas fa-phone"></i> Numéro de test
+                    </label>
+                    <input type="tel"
+                           id="testSmsRecipient"
+                           placeholder="0612345678"
+                           class="form-input"
+                           pattern="[0-9]{10}"
+                           value="">
+                </div>
+
+                <div class="form-group">
+                    <label for="testSmsMessage">
+                        <i class="fas fa-comment-sms"></i> Message de test
+                    </label>
+                    <textarea id="testSmsMessage"
+                              rows="3"
+                              class="form-textarea"
+                              maxlength="160">Test système alertes : SMS fonctionnel. Date: {{date}} Heure: {{time}}</textarea>
+                    <small class="help-text">Limite : 160 caractères (<span id="testSmsCharCount">0</span>/160)</small>
+                </div>
+
+                <div id="testSmsResult" class="alert-message" style="display: none;">
+                    <!-- Résultat sera affiché ici -->
+                </div>
+
+                <div class="modal-actions">
+                    <button id="sendTestSmsBtn" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i> Envoyer le SMS de test
+                    </button>
+                    <button type="button" class="btn-secondary close-modal">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal détails alerte -->
+    <div id="alertDetailsModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-info-circle"></i> Détails de l'alerte</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert-full-details" id="alertFullDetails">
+                    <!-- Rempli dynamiquement -->
+                </div>
+
+                <div class="modal-actions">
+                    <button id="sendAlertNowBtn" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i> Renvoyer maintenant
+                    </button>
+                    <button id="ignoreAlertBtn" class="btn-secondary">
+                        <i class="fas fa-eye-slash"></i> Ignorer
+                    </button>
+                    <button type="button" class="btn-secondary close-modal">
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import des scripts -->
+    <script type="module" src="alertes.js"></script>
+</body>
+</html>

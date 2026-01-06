@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Création d'article - Gestion Stock</title>
+    <link rel="stylesheet" href="creation.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Overlay de chargement -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Chargement...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-plus-circle"></i> Création d'article</h1>
+                <div class="header-info">
+                    <span class="back-link">
+                        <a href="accueil.html">
+                            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                        </a>
+                    </span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="usernameDisplay">...</span>
+                </span>
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenu principal -->
+        <main class="main-content">
+            <!-- Formulaire de création -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h2><i class="fas fa-box-open"></i> Nouvel article</h2>
+                    <p class="form-subtitle">Remplissez tous les champs pour créer un nouvel article dans le stock</p>
+                </div>
+
+                <form id="creationForm">
+                    <!-- Section 1 : Identification -->
+                    <section class="form-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-fingerprint"></i> Identification</h3>
+                            <span class="section-badge">Obligatoire</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="articleName">
+                                    <i class="fas fa-tag"></i> Nom de l'article *
+                                </label>
+                                <input type="text"
+                                       id="articleName"
+                                       placeholder="Ex: Perceuse visseuse sans fil"
+                                       class="form-input"
+                                       required>
+                                <small class="form-help">
+                                    Nom complet et descriptif de l'article
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="articleNumber">
+                                    <i class="fas fa-hashtag"></i> Numéro d'article *
+                                </label>
+                                <div class="input-with-action">
+                                    <input type="text"
+                                           id="articleNumber"
+                                           placeholder="Ex: ART-001"
+                                           class="form-input"
+                                           required>
+                                    <button type="button" id="generateNumberBtn" class="btn-generate">
+                                        <i class="fas fa-magic"></i> Générer
+                                    </button>
+                                </div>
+                                <small class="form-help">
+                                    Identifiant unique - sera utilisé pour les recherches
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="articleDescription">
+                                <i class="fas fa-align-left"></i> Description / Caractéristiques
+                            </label>
+                            <textarea id="articleDescription"
+                                      rows="3"
+                                      placeholder="Décrivez l'article, ses caractéristiques techniques, dimensions, etc."
+                                      class="form-textarea"></textarea>
+                            <small class="form-help">
+                                Détails techniques importants pour l'identification
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="internalReference">
+                                <i class="fas fa-barcode"></i> Référence interne
+                            </label>
+                            <input type="text"
+                                   id="internalReference"
+                                   placeholder="Ex: REF-INTERNE-123"
+                                   class="form-input">
+                            <small class="form-help">
+                                Référence fournisseur ou interne supplémentaire
+                            </small>
+                        </div>
+                    </section>
+
+                    <!-- Section 2 : Photo -->
+                    <section class="form-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-camera"></i> Photo de l'article</h3>
+                            <span class="section-badge">Optionnel</span>
+                        </div>
+
+                        <div class="photo-upload-container">
+                            <div class="photo-preview" id="photoPreview">
+                                <div class="photo-placeholder">
+                                    <i class="fas fa-image"></i>
+                                    <p>Aucune photo sélectionnée</p>
+                                    <small>Cliquez pour ajouter une photo</small>
+                                </div>
+                                <img id="photoPreviewImg" style="display: none;">
+                            </div>
+
+                            <div class="photo-actions">
+                                <input type="file"
+                                       id="photoUpload"
+                                       accept="image/*"
+                                       style="display: none;">
+                                <button type="button" id="selectPhotoBtn" class="btn-photo">
+                                    <i class="fas fa-folder-open"></i> Choisir une photo
+                                </button>
+                                <button type="button" id="takePhotoBtn" class="btn-photo">
+                                    <i class="fas fa-camera"></i> Prendre une photo
+                                </button>
+                                <button type="button" id="removePhotoBtn" class="btn-photo btn-remove" style="display: none;">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </button>
+                            </div>
+
+                            <div class="photo-info">
+                                <p><i class="fas fa-info-circle"></i>
+                                    Formats acceptés : JPG, PNG, WebP (max 5MB)<br>
+                                    Taille recommandée : 800x800px
+                                </p>
+                            </div>
+                            <div id="compressionInfo" class="compression-info">
+                                <i class="fas fa-compress-alt"></i>
+                                <span>L'image sera automatiquement optimisée pour réduire sa taille</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Section 3 : Code-barre -->
+                    <section class="form-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-qrcode"></i> Code-barre</h3>
+                            <span class="section-badge">Obligatoire</span>
+                        </div>
+
+                        <div class="barcode-container">
+                            <div class="barcode-options">
+                                <div class="option-card" id="generateBarcodeOption">
+                                    <div class="option-header">
+                                        <input type="radio"
+                                               id="optionGenerate"
+                                               name="barcodeOption"
+                                               value="generate"
+                                               checked>
+                                        <label for="optionGenerate">
+                                            <i class="fas fa-bolt"></i>
+                                            <span>Générer automatiquement</span>
+                                        </label>
+                                    </div>
+                                    <div class="option-body">
+                                        <p>Un code-barre unique EAN-13 sera généré automatiquement</p>
+                                        <div class="option-actions">
+                                            <button type="button" id="generateBarcodeBtn" class="btn-generate">
+                                                <i class="fas fa-redo"></i> Générer maintenant
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="option-card" id="manualBarcodeOption">
+                                    <div class="option-header">
+                                        <input type="radio"
+                                               id="optionManual"
+                                               name="barcodeOption"
+                                               value="manual">
+                                        <label for="optionManual">
+                                            <i class="fas fa-keyboard"></i>
+                                            <span>Saisir manuellement</span>
+                                        </label>
+                                    </div>
+                                    <div class="option-body">
+                                        <p>Entrez un code-barre existant (EAN-13, 13 chiffres)</p>
+                                        <div class="option-actions">
+                                            <input type="text"
+                                                   id="manualBarcodeInput"
+                                                   placeholder="1234567890123"
+                                                   class="form-input"
+                                                   maxlength="13"
+                                                   disabled>
+                                            <button id="scanBarcodeBtn" class="scan-btn-sm" onclick="openBarcodeScannerPopup()">
+                                                <i class="fas fa-camera"></i> Scanner
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="barcode-preview-container">
+                                <h4><i class="fas fa-eye"></i> Aperçu du code-barre</h4>
+                                <div class="barcode-preview" id="barcodePreview">
+                                    <div class="barcode-placeholder">
+                                        <i class="fas fa-barcode"></i>
+                                        <p>Code-barre non généré</p>
+                                    </div>
+                                    <canvas id="barcodeCanvas" style="display: none;"></canvas>
+                                </div>
+                                <div class="barcode-info">
+                                    <p><strong>Code :</strong> <span id="barcodeValue">-</span></p>
+                                    <p><strong>Format :</strong> <span id="barcodeFormat">EAN-13</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Section 4 : Stock et prix -->
+                    <section class="form-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-chart-line"></i> Stock et prix</h3>
+                            <span class="section-badge">Obligatoire</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="initialQuantity">
+                                    <i class="fas fa-boxes"></i> Quantité initiale *
+                                </label>
+                                <input type="number"
+                                       id="initialQuantity"
+                                       min="0"
+                                       value="0"
+                                       class="form-input">
+                                <small class="form-help">
+                                    Nombre d'articles en stock à la création
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="minimumStock">
+                                    <i class="fas fa-exclamation-triangle"></i> Stock minimum *
+                                </label>
+                                <input type="number"
+                                       id="minimumStock"
+                                       min="1"
+                                       value="1"
+                                       class="form-input">
+                                <small class="form-help">
+                                    Alerte quand le stock atteint cette valeur
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="unitPrice">
+                                    <i class="fas fa-euro-sign"></i> Prix unitaire (€) *
+                                </label>
+                                <input type="number"
+                                       id="unitPrice"
+                                       min="0"
+                                       step="0.01"
+                                       value="0.00"
+                                       class="form-input">
+                                <small class="form-help">
+                                    Prix d'achat ou prix de revient
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="totalValue">
+                                    <i class="fas fa-calculator"></i> Valeur totale du stock
+                                </label>
+                                <div class="calculated-field">
+                                    <span id="totalValueDisplay">0.00 €</span>
+                                    <small class="form-help">
+                                        Calcul automatique : quantité × prix unitaire
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Section 5 : Emplacement (optionnel) -->
+                    <section class="form-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-map-marker-alt"></i> Emplacement</h3>
+                            <span class="section-badge">Optionnel</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="locationZone">
+                                    <i class="fas fa-warehouse"></i> Zone
+                                </label>
+                                <select id="locationZone" class="form-select">
+                                    <option value="">Sélectionnez une zone</option>
+                                    <option value="zone_a">Zone A - Outillage</option>
+                                    <option value="zone_b">Zone B - Quincaillerie</option>
+                                    <option value="zone_c">Zone C - Électricité</option>
+                                    <option value="zone_d">Zone D - Peinture</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="locationRack">
+                                    <i class="fas fa-th"></i> Rayon / Étagère
+                                </label>
+                                <input type="text"
+                                       id="locationRack"
+                                       placeholder="Ex: RAYON-3"
+                                       class="form-input">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="locationShelf">
+                                    <i class="fas fa-layer-group"></i> Étagère
+                                </label>
+                                <input type="text"
+                                       id="locationShelf"
+                                       placeholder="Ex: ÉTAGÈRE-2"
+                                       class="form-input">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="locationPosition">
+                                    <i class="fas fa-map-pin"></i> Position
+                                </label>
+                                <input type="text"
+                                       id="locationPosition"
+                                       placeholder="Ex: POS-45"
+                                       class="form-input">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Messages d'erreur/succès -->
+                    <div id="formError" class="error-message" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="formErrorText"></span>
+                    </div>
+
+                    <div id="formSuccess" class="success-message" style="display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="formSuccessText"></span>
+                    </div>
+
+                    <!-- Actions du formulaire -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary btn-large">
+                            <i class="fas fa-save"></i> Créer l'article
+                        </button>
+                        <button type="reset" class="btn-secondary">
+                            <i class="fas fa-eraser"></i> Réinitialiser
+                        </button>
+                        <a href="accueil.html" class="btn-secondary">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Résumé rapide -->
+            <aside class="summary-sidebar">
+                <div class="summary-card">
+                    <h3><i class="fas fa-clipboard-check"></i> Récapitulatif</h3>
+
+                    <div class="summary-item">
+                        <span class="summary-label">Nom :</span>
+                        <span id="summaryName" class="summary-value">-</span>
+                    </div>
+
+                    <div class="summary-item">
+                        <span class="summary-label">Numéro :</span>
+                        <span id="summaryNumber" class="summary-value">-</span>
+                    </div>
+
+                    <div class="summary-item">
+                        <span class="summary-label">Code-barre :</span>
+                        <span id="summaryBarcode" class="summary-value">-</span>
+                    </div>
+
+                    <div class="summary-item">
+                        <span class="summary-label">Stock initial :</span>
+                        <span id="summaryQuantity" class="summary-value">0</span>
+                    </div>
+
+                    <div class="summary-item">
+                        <span class="summary-label">Valeur :</span>
+                        <span id="summaryValue" class="summary-value">0.00 €</span>
+                    </div>
+
+                    <div class="summary-divider"></div>
+
+                    <div class="summary-tips">
+                        <h4><i class="fas fa-lightbulb"></i> Conseils</h4>
+                        <ul>
+                            <li>Vérifiez que le numéro d'article est unique</li>
+                            <li>Prenez une photo claire de l'article</li>
+                            <li>Notez bien l'emplacement pour retrouver l'article</li>
+                            <li>Le stock minimum déclenchera des alertes</li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Système de gestion de stock • Création d'article</p>
+        </footer>
+    </div>
+
+    <!-- Import des scripts -->
+    <!-- Note: JsBarcode est utilisé pour générer les codes-barres -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script type="module" src="creation.js"></script>
+</body>
+</html>

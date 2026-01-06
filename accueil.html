@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accueil - Gestion Stock</title>
+    <link rel="stylesheet" href="accueil.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
+</head>
+<body>
+    <!-- Overlay de chargement -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Chargement...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-boxes"></i> NeXeN Store Manager</h1>
+                <div class="user-role-badge" id="userRoleBadge">
+                    <span id="roleText">Chargement...</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="usernameDisplay">...</span>
+                </span>
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </header>
+
+        <!-- Section principale -->
+        <main class="main-content">
+            <!-- Section Actions rapides (tous les users) -->
+            <section class="actions-section">
+                <h2><i class="fas fa-bolt"></i> Actions rapides</h2>
+                <p class="section-subtitle">Opérations quotidiennes de gestion de stock</p>
+
+                <div class="actions-grid">
+                    <!-- Sortie de stock -->
+                    <div class="action-card" id="sortieCard">
+                        <div class="action-icon red">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <h3>Sortie de stock</h3>
+                        <p>Retirer des articles du stock pour un projet</p>
+                        <div class="action-options">
+                            <button class="option-btn" data-action="sortie" data-type="scan">
+                                <i class="fas fa-camera"></i> Scanner
+                            </button>
+                            <button class="option-btn" data-action="sortie" data-type="saisie">
+                                <i class="fas fa-keyboard"></i> Saisir
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Entrée de stock -->
+                    <div class="action-card" id="entreeCard">
+                        <div class="action-icon green">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <h3>Entrée de stock</h3>
+                        <p>Ajouter de nouveaux articles ou réapprovisionner</p>
+                        <div class="action-options">
+                            <button class="option-btn" data-action="entree" data-type="scan">
+                                <i class="fas fa-camera"></i> Scanner
+                            </button>
+                            <button class="option-btn" data-action="entree" data-type="saisie">
+                                <i class="fas fa-keyboard"></i> Saisir
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Réservation projet -->
+                    <div class="action-card" id="reservationCard">
+                        <div class="action-icon orange">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h3>Réservation projet</h3>
+                        <p>Réserver des articles pour un futur projet</p>
+                        <div class="action-options">
+                            <button class="option-btn" data-action="reservation" data-type="scan">
+                                <i class="fas fa-camera"></i> Scanner
+                            </button>
+                            <button class="option-btn" data-action="reservation" data-type="saisie">
+                                <i class="fas fa-keyboard"></i> Saisir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Recherche (tous les users) -->
+            <section class="search-section">
+                <h2><i class="fas fa-search"></i> Recherche d'articles</h2>
+
+                <div class="search-container">
+                    <div class="search-box">
+                        <div class="search-header">
+                            <i class="fas fa-qrcode"></i>
+                            <h3>Par nom ou numéro</h3>
+                        </div>
+                        <div class="search-input-group">
+                            <input type="text"
+                                   id="searchNomInput"
+                                   placeholder="Ex: perceuse, ART-001..."
+                                   class="search-input">
+                            <button id="searchNomBtn" class="search-btn">
+                                <i class="fas fa-search"></i> Rechercher
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="search-box">
+                        <div class="search-header">
+                            <i class="fas fa-barcode"></i>
+                            <h3>Par code-barre</h3>
+                        </div>
+                        <div class="search-input-group">
+                            <input type="text"
+                                   id="searchCodebarreInput"
+                                   placeholder="Scanner ou saisir code-barre"
+                                   class="search-input">
+                            <button id="searchCodebarreBtn" class="search-btn">
+                                <i class="fas fa-camera"></i> Scanner
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Admin (seulement pour les admins) -->
+            <section id="adminSection" class="admin-section">
+                <div class="admin-header">
+                    <h2><i class="fas fa-user-shield"></i> Administration</h2>
+                    <div class="admin-badges">
+                        <span class="badge admin-badge">ADMIN</span>
+                        <span class="badge permissions-badge" id="permissionsCount">0 permissions</span>
+                    </div>
+                </div>
+
+                <!-- Alertes en temps réel -->
+                <div class="admin-alerts">
+                    <div class="alert-card">
+                        <div class="alert-header">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Stock bas</h3>
+                            <button id="exportStockBasBtn" class="btn-small">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-loading" id="stockBasLoading">
+                                <i class="fas fa-spinner fa-spin"></i> Chargement...
+                            </div>
+                            <table id="tableStockBas" class="alert-table" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Article</th>
+                                        <th>Stock</th>
+                                        <th>Minimum</th>
+                                        <th>Diff</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyStockBas">
+                                    <!-- Rempli dynamiquement -->
+                                </tbody>
+                            </table>
+                            <div id="noStockBas" class="alert-empty" style="display: none;">
+                                <i class="fas fa-check-circle"></i>
+                                <p>Aucun article en stock bas</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert-card">
+                        <div class="alert-header">
+                            <h3><i class="fas fa-times-circle"></i> Rupture de stock</h3>
+                            <button id="exportRuptureBtn" class="btn-small">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-loading" id="ruptureLoading">
+                                <i class="fas fa-spinner fa-spin"></i> Chargement...
+                            </div>
+                            <table id="tableRupture" class="alert-table" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Article</th>
+                                        <th>Dernier mouvement</th>
+                                        <th>Etat</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyRupture">
+                                    <!-- Rempli dynamiquement -->
+                                </tbody>
+                            </table>
+                            <div id="noRupture" class="alert-empty" style="display: none;">
+                                <i class="fas fa-check-circle"></i>
+                                <p>Aucune rupture de stock</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boutons administration -->
+                <div class="admin-buttons" id="adminButtons">
+                    <!-- Les boutons sont ajoutés dynamiquement selon les permissions -->
+                </div>
+            </section>
+
+            <!-- Section statistiques rapides -->
+            <section class="stats-section">
+                <h2><i class="fas fa-chart-line"></i> Vue d'ensemble</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Articles total</h3>
+                            <p class="stat-value" id="totalArticles">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>En stock</h3>
+                            <p class="stat-value" id="articlesEnStock">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Réservés</h3>
+                            <p class="stat-value" id="articlesReserves">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-euro-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Valeur stock</h3>
+                            <p class="stat-value" id="valeurStock">0 €</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Système de gestion de stock • Version 1.0</p>
+            <p class="footer-info" id="lastSync"></p>
+        </footer>
+    </div>
+
+    <!-- Import des scripts -->
+    <script type="module" src="accueil.js"></script>
+</body>
+</html>
