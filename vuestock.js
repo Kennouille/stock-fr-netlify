@@ -857,7 +857,7 @@ class CanvasManager {
         });
 
         // Clic sur le canvas pour créer une étagère
-        this.canvas.addEventListener('click', (e) => {
+        this.canvas.addEventListener('click', async (e) => {  // ← AJOUT de async
             if (this.currentTool !== 'rack') return;
 
             const rect = this.canvas.getBoundingClientRect();
@@ -870,7 +870,7 @@ class CanvasManager {
 
             // Créer une nouvelle étagère via VueStock
             if (window.vueStock) {
-                const rack = window.vueStock.addRack({
+                const rack = await window.vueStock.addRack({  // ← AJOUT de await
                     code: String.fromCharCode(65 + this.racks.length), // A, B, C...
                     x: gridX,
                     y: gridY,
@@ -879,18 +879,13 @@ class CanvasManager {
                     color: this.getRandomColor()
                 });
 
-                this.addRackToCanvas(rack);
+                // ✅ Ne pas appeler addRackToCanvas ici, il est déjà appelé dans addRack()
+                // this.addRackToCanvas(rack); // ← SUPPRIMEZ CETTE LIGNE
 
                 // Revenir à l'outil sélection
                 const selectTool = document.querySelector('[data-tool="select"]');
                 if (selectTool) {
                     selectTool.click();
-                }
-            }
-
-            if (this.currentTool === 'delete' && this.selectedRack) {
-                if (confirm('Supprimer cette étagère et tous ses étages/emplacements ?')) {
-                    this.deleteRack(this.selectedRack.id);
                 }
             }
         });
