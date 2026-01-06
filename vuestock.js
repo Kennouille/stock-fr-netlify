@@ -122,6 +122,7 @@ class CanvasManager {
         this.handleResize = this.handleResize.bind(this);
         this.handleRotation = this.handleRotation.bind(this);
         this.saveAutoPosition = this.saveAutoPosition.bind(this);
+        this._clickInProgress = false;
 
         // Initialiser les propriétés
         this.canvas = document.getElementById(canvasId);
@@ -857,38 +858,55 @@ class CanvasManager {
         });
 
         // Clic sur le canvas pour créer une étagère
-        this.canvas.addEventListener('click', async (e) => {  // ← AJOUT de async
-            if (this.currentTool !== 'rack') return;
+        this.canvas.addEventListener('click', async (e) => {
+            // ✅ Protection contre double clic
+            if (this._clickInProgress) return;
 
-            const rect = this.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left - this.offsetX;
-            const y = e.clientY - rect.top - this.offsetY;
+            if (this.currentTool === 'rack') {
+                this._clickInProgress = true;
 
-            // Snap to grid
-            const gridX = Math.round(x / this.gridSize) * this.gridSize;
-            const gridY = Math.round(y / this.gridSize) * this.gridSize;
+                try {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left - this.offsetX;
+                    const y = e.clientY - rect.top - this.offsetY;
 
-            // Créer une nouvelle étagère via VueStock
-            if (window.vueStock) {
-                const rack = await window.vueStock.addRack({  // ← AJOUT de await
-                    code: String.fromCharCode(65 + this.racks.length), // A, B, C...
-                    x: gridX,
-                    y: gridY,
-                    width: 3,
-                    depth: 2,
-                    color: this.getRandomColor()
-                });
+                    const gridX = Math.round(x / this.gridSize) * this.gridSize;
+                    const gridY = Math.round(y / this.gridSize) * this.gridSize;
 
-                // ✅ Ne pas appeler addRackToCanvas ici, il est déjà appelé dans addRack()
-                // this.addRackToCanvas(rack); // ← SUPPRIMEZ CETTE LIGNE
+                    if (window.vueStock) {
+                        // Trouver le prochain code disponible
+                        const existingCodes = window.vueStock.racks.map(r => r.code);
+                        let nextCode = 'A';
+                        let charCode = 65;
 
-                // Revenir à l'outil sélection
-                const selectTool = document.querySelector('[data-tool="select"]');
-                if (selectTool) {
-                    selectTool.click();
+                        while (existingCodes.includes(nextCode)) {
+                            charCode++;
+                            nextCode = String.fromCharCode(charCode);
+                            if (charCode > 90) break; // Sécurité
+                        }
+
+                        await window.vueStock.addRack({
+                            code: nextCode,
+                            x: gridX,
+                            y: gridY,
+                            width: 3,
+                            depth: 2,
+                            color: this.getRandomColor()
+                        });
+
+                        const selectTool = document.querySelector('[data-tool="select"]');
+                        if (selectTool) {
+                            selectTool.click();
+                        }
+                    }
+                } finally {
+                    // ✅ Débloquer après 500ms (sécurité)
+                    setTimeout(() => {
+                        this._clickInProgress = false;
+                    }, 500);
                 }
             }
-        });
+        }, { once: false }); // Vérifier qu'il n'y a qu'UN seul addEventListener pour 'click'
 
         // Boutons de zoom - VÉRIFIER LES ID
         const zoomInBtn = document.getElementById('btnZoomIn');
