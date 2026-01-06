@@ -19,10 +19,9 @@ exports.handler = async (event) => {
 
   if (action === 'save-rack') {
     const body = JSON.parse(event.body || '{}');
-    console.log('Saving to Supabase:', body);
 
     const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uZ2dneWJheWpvb3FremJodnF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY2MTU3NDgsImV4cCI6MjA0MjE5MTc0OH0.lnOqnq1AwN41g4xJ5O9oNIPBQqXYJkSrRhJ3osXtcsk';
+    const supabaseKey = 'TA_CLE_SUPABASE_ICI';
 
     const payload = {
       rack_code: body.code,
@@ -42,7 +41,7 @@ exports.handler = async (event) => {
           'Content-Type': 'application/json',
           'apikey': supabaseKey,
           'Authorization': `Bearer ${supabaseKey}`,
-          'Prefer': 'return=representation' // 🔹 Important pour obtenir le rack sauvegardé
+          'Prefer': 'return=representation' // 🔹 renvoyer le rack créé
         },
         body: JSON.stringify(payload)
       });
@@ -54,14 +53,15 @@ exports.handler = async (event) => {
         return { statusCode: 500, body: JSON.stringify({ success: false, result }) };
       }
 
-      // 🔹 Retourner le rack sauvegardé pour que VueStock l’affiche correctement
+      // 🔹 Renvoie le rack créé
       return { statusCode: 200, body: JSON.stringify({ success: true, data: result[0] }) };
 
     } catch (error) {
       console.error('Supabase error:', error);
       return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
-  }
+}
+
 
   return {
     statusCode: 200,
