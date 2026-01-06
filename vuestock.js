@@ -233,7 +233,7 @@ class CanvasManager {
         console.log('🟢 Rack element created, adding to DOM');
 
         // Ajouter les poignées de redimensionnement (uniquement si sélectionné)
-        this.addRackHandles(rackElement);
+        this.addRackHandles(rackElement, rack);
 
         // Événements avec logging
         rackElement.addEventListener('mousedown', (e) => {
@@ -260,7 +260,7 @@ class CanvasManager {
         console.log('🟢 Rack added to canvas. Total racks:', this.racks.length);
     }
 
-    addRackHandles(rackElement) {
+    addRackHandles(rackElement, rack) {  // ← Ajoutez rack en paramètre
         // Poignées de redimensionnement
         const handles = [
             { class: 'handle-nw', cursor: 'nw-resize' },
@@ -274,17 +274,12 @@ class CanvasManager {
             handleEl.className = `rack-handle ${handle.class}`;
             handleEl.style.cursor = handle.cursor;
 
-            // AJOUTER L'ÉVÉNEMENT
+            // Événement DIRECT sans this.racks
             handleEl.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 console.log('🟢 Handle mousedown:', handle.class);
-
-                // Trouver le rack associé
-                const rack = this.racks.find(r => r.element === rackElement)?.rack;
-                if (rack) {
-                    this.startResize(e, rack, rackElement, handleEl);
-                }
+                this.startResize(e, rack, rackElement, handleEl); // ← Utilise rack du paramètre
             });
 
             rackElement.appendChild(handleEl);
@@ -295,21 +290,16 @@ class CanvasManager {
         rotateHandle.className = 'rotate-handle';
         rotateHandle.innerHTML = '⟳';
 
-        // AJOUTER L'ÉVÉNEMENT
         rotateHandle.addEventListener('mousedown', (e) => {
             e.stopPropagation();
             e.preventDefault();
             console.log('🟢 Rotate handle mousedown');
-
-            const rack = this.racks.find(r => r.element === rackElement)?.rack;
-            if (rack) {
-                this.startRotation(e, rack, rackElement);
-            }
+            this.startRotation(e, rack, rackElement); // ← Utilise rack du paramètre
         });
 
         rackElement.appendChild(rotateHandle);
 
-        // Dimensions affichées
+        // Dimensions
         const dimensions = document.createElement('div');
         dimensions.className = 'rack-dimensions';
         const width = parseInt(rackElement.style.width) / this.gridSize;
