@@ -215,6 +215,8 @@ class CanvasManager {
     }
 
     addRackToCanvas(rack) {
+        console.log('🟢 [CanvasManager] addRackToCanvas called for rack:', rack.id, rack.code);
+
         // Créer l'élément DOM pour l'étagère
         const rackElement = document.createElement('div');
         rackElement.className = 'rack-on-plan';
@@ -223,22 +225,39 @@ class CanvasManager {
         rackElement.style.top = `${rack.position_y}px`;
         rackElement.style.width = `${rack.width * this.gridSize}px`;
         rackElement.style.height = `${rack.depth * this.gridSize}px`;
-        rackElement.style.backgroundColor = rack.color;
+        rackElement.style.backgroundColor = rack.color || '#4a90e2';
         rackElement.style.transform = rack.rotation ? `rotate(${rack.rotation}deg)` : '';
+        rackElement.style.cursor = 'move';
         rackElement.textContent = rack.code;
+
+        console.log('🟢 Rack element created, adding to DOM');
 
         // Ajouter les poignées de redimensionnement (uniquement si sélectionné)
         this.addRackHandles(rackElement);
 
-        // Événements
-        rackElement.addEventListener('mousedown', (e) => this.startRackDrag(e, rack, rackElement));
+        // Événements avec logging
+        rackElement.addEventListener('mousedown', (e) => {
+            console.log('🟢 mousedown event triggered on rack', rack.id);
+            this.startRackDrag(e, rack, rackElement);
+        });
+
         rackElement.addEventListener('click', (e) => {
+            console.log('🟢 click event triggered on rack', rack.id);
             e.stopPropagation();
+            e.preventDefault();
             this.selectRack(rack, rackElement);
         });
 
+        // FORCER l'affichage des poignées au début
+        setTimeout(() => {
+            console.log('🟢 Auto-selecting rack for testing');
+            this.selectRack(rack, rackElement);
+        }, 100);
+
         this.overlay.appendChild(rackElement);
         this.racks.push({ rack, element: rackElement });
+
+        console.log('🟢 Rack added to canvas. Total racks:', this.racks.length);
     }
 
     addRackHandles(rackElement) {
@@ -273,10 +292,11 @@ class CanvasManager {
     }
 
     selectRack(rack, element) {
+        console.log('🟢 [CanvasManager] selectRack called for:', rack.id);
+
         // Désélectionner tout
         document.querySelectorAll('.rack-on-plan').forEach(el => {
             el.classList.remove('selected');
-            // Cacher les poignées
             el.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
                 h.style.display = 'none';
             });
@@ -285,6 +305,7 @@ class CanvasManager {
         // Sélectionner cette étagère
         element.classList.add('selected');
         this.selectedRack = rack;
+        console.log('🟢 Rack selected, adding handles');
 
         // Afficher les poignées
         element.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
@@ -293,6 +314,8 @@ class CanvasManager {
 
         // Mettre à jour le panneau de propriétés
         this.updatePropertiesPanel(rack);
+
+        console.log('🟢 Selection complete');
     }
 
     startRackDrag(e, rack, element) {
