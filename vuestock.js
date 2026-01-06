@@ -639,20 +639,29 @@ class CanvasManager {
 
         clearTimeout(this.saveTimeout);
         this.saveTimeout = setTimeout(() => {
-            window.vueStock.api.saveRack({
-                id: this.selectedRack.id,
+            // NE PAS envoyer l'ID si c'est juste pour la position/dimensions
+            // Créer un payload avec seulement ce qui a changé
+            const payload = {
                 position_x: this.selectedRack.position_x,
                 position_y: this.selectedRack.position_y,
                 rotation: this.selectedRack.rotation || 0,
                 width: this.selectedRack.width,
                 depth: this.selectedRack.depth,
                 color: this.selectedRack.color
-            }).then(() => {
-                console.log('💾 Modifications sauvegardées');
-            }).catch(err => {
-                console.error('❌ Erreur sauvegarde:', err);
-            });
-        }, 500);
+            };
+
+            // Si vous voulez quand même mettre à jour, il faut l'ID
+            // Mais votre fonction doit gérer PATCH
+            payload.id = this.selectedRack.id;
+
+            window.vueStock.api.saveRack(payload)
+                .then(() => {
+                    console.log('💾 Modifications sauvegardées');
+                })
+                .catch(err => {
+                    console.error('❌ Erreur sauvegarde:', err);
+                });
+        }, 1000); // Augmenter à 1s pour moins d'appels
     }
 
     updatePropertiesPanel(rack) {
