@@ -337,7 +337,6 @@ class CanvasManager {
     startRackDrag(e, rack, element) {
         console.log('🟢 startRackDrag called, target:', e.target.className);
 
-        e.stopPropagation();
 
         // Vérifier si on clique sur une poignée
         const handle = e.target.closest('.rack-handle, .rotate-handle');
