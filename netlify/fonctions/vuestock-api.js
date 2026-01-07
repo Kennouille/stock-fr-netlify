@@ -397,14 +397,60 @@ exports.handler = async (event) => {
                 throw new Error('level_id is required');
             }
 
+            // NOUVEAU : Construire le full_code
+            // Pour cela, nous devons d'abord récupérer le rack et le level
+            // 1. D'abord, récupérer le level pour avoir son rack_id et level_code
+            const levelResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?id=eq.${body.level_id}`, {
+                headers: {
+                    'apikey': supabaseKey,
+                    'Authorization': `Bearer ${supabaseKey}`
+                }
+            });
+
+            if (!levelResponse.ok) {
+                throw new Error(`Failed to fetch level: ${levelResponse.status}`);
+            }
+
+            const levels = await levelResponse.json();
+            if (!levels || levels.length === 0) {
+                throw new Error(`Level ${body.level_id} not found`);
+            }
+
+            const level = levels[0];
+
+            // 2. Récupérer le rack pour avoir son rack_code
+            const rackResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?id=eq.${level.rack_id}`, {
+                headers: {
+                    'apikey': supabaseKey,
+                    'Authorization': `Bearer ${supabaseKey}`
+                }
+            });
+
+            if (!rackResponse.ok) {
+                throw new Error(`Failed to fetch rack: ${rackResponse.status}`);
+            }
+
+            const racks = await rackResponse.json();
+            if (!racks || racks.length === 0) {
+                throw new Error(`Rack ${level.rack_id} not found`);
+            }
+
+            const rack = racks[0];
+
+            // 3. Construire le full_code : rack_code + level_code + slot_code
+            const fullCode = `${rack.rack_code}-${level.level_code}-${body.slot_code || body.code}`;
+
             const payload = {
                 level_id: body.level_id,
                 slot_code: body.slot_code || body.code || `SLOT_${Date.now()}`,
                 display_order: body.display_order || 1,
                 status: body.status || 'free',
                 capacity: body.capacity || 100,
+                full_code: fullCode, // AJOUT IMPORTANT !
                 created_at: new Date().toISOString()
             };
+
+            console.log('📤 Payload avec full_code:', payload);
 
             // Nettoyer le payload
             Object.keys(payload).forEach(key => {
