@@ -1324,59 +1324,84 @@ class VueStock {
     }
 
     async addSlotToLevel(levelId, slotCode = null, count = 1) {
-        const rack = this.racks.find(r => r.levels.some(l => l.id === levelId));
-        const level = rack?.levels.find(l => l.id === levelId);
-        if (!level) return;
+        // Protection contre les clics multiples
+        if (this._addingSlot) {
+            console.log('⚠️ Opération d\'ajout d\'emplacement déjà en cours');
+            return;
+        }
 
-        const slots = [];
+        this._addingSlot = true;
 
-        for (let i = 0; i < count; i++) {
-            // Si pas de code spécifié, trouver le prochain multiple de 10
-            let currentSlotCode;
-            if (!slotCode) {
-                const existingCodes = level.slots.map(s => parseInt(s.code)).filter(n => !isNaN(n));
-                const maxCode = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
-                currentSlotCode = (Math.floor(maxCode / 10) * 10) + 10 + (i * 10);
-            } else {
-                currentSlotCode = parseInt(slotCode) + (i * 10);
-            }
+        try {
+            const rack = this.racks.find(r => r.levels.some(l => l.id === levelId));
+            const level = rack?.levels.find(l => l.id === levelId);
+            if (!level) return;
 
-            try {
-                // Appeler l'API pour sauvegarder l'emplacement
-                const result = await this.api.saveSlot({
-                    level_id: levelId,
-                    slot_code: currentSlotCode.toString(),
-                    display_order: level.slots.length + i + 1,
-                    status: 'free'
-                });
+            const slots = [];
 
-                if (result.success && result.data) {
-                    const newSlot = {
-                        id: result.data.id,
-                        code: currentSlotCode.toString(),
-                        level_id: levelId,
-                        display_order: result.data.display_order,
-                        full_code: `${rack.code}-${level.code}-${currentSlotCode}`,
-                        status: 'free',
-                        articles: []
-                    };
-
-                    level.slots.push(newSlot);
-                    slots.push(newSlot);
+            for (let i = 0; i < count; i++) {
+                // Si pas de code spécifié, trouver le prochain multiple de 10
+                let currentSlotCode;
+                if (!slotCode) {
+                    const existingCodes = level.slots.map(s => parseInt(s.code)).filter(n => !isNaN(n));
+                    const maxCode = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
+                    currentSlotCode = (Math.floor(maxCode / 10) * 10) + 10 + (i * 10);
+                } else {
+                    currentSlotCode = parseInt(slotCode) + (i * 10);
                 }
-            } catch (error) {
-                console.error('Erreur lors de l\'ajout de l\'emplacement:', error);
+
+                // Vérifier si cet emplacement existe déjà
+                const slotExists = level.slots.some(s => s.code === currentSlotCode.toString());
+                if (slotExists) {
+                    console.log(`⚠️ Emplacement ${currentSlotCode} existe déjà`);
+                    continue; // Passer au suivant
+                }
+
+                try {
+                    // Appeler l'API pour sauvegarder l'emplacement
+                    console.log(`📤 Appel save-slot pour: ${currentSlotCode}`);
+
+                    const result = await this.api.saveSlot({
+                        level_id: levelId,
+                        slot_code: currentSlotCode.toString(),
+                        display_order: level.slots.length + i + 1,
+                        status: 'free'
+                    });
+
+                    if (result.success && result.data) {
+                        const newSlot = {
+                            id: result.data.id,
+                            code: currentSlotCode.toString(),
+                            level_id: levelId,
+                            display_order: result.data.display_order,
+                            full_code: `${rack.code}-${level.code}-${currentSlotCode}`,
+                            status: 'free',
+                            articles: []
+                        };
+
+                        level.slots.push(newSlot);
+                        slots.push(newSlot);
+                    }
+                } catch (error) {
+                    console.error(`Erreur pour l'emplacement ${currentSlotCode}:`, error);
+                    // Continuer avec les autres emplacements
+                    if (error.message.includes('duplicate') || error.message.includes('409')) {
+                        console.log(`L'emplacement ${currentSlotCode} existe déjà`);
+                    }
+                }
             }
-        }
 
-        // Afficher dans la vue étage
-        if (slots.length > 0) {
-            this.displaySlotsInLevelView(slots);
-            this.updateStats();
-            this.showNotification(`${slots.length} emplacement(s) ajouté(s) à l'étage ${level.code}`);
-        }
+            // Afficher dans la vue étage
+            if (slots.length > 0) {
+                this.displaySlotsInLevelView(slots);
+                this.updateStats();
+                this.showNotification(`${slots.length} emplacement(s) ajouté(s) à l'étage ${level.code}`);
+            }
 
-        return slots;
+            return slots;
+        } finally {
+            this._addingSlot = false;
+        }
     }
 
     displaySlotsInLevelView(slots) {
