@@ -1210,7 +1210,7 @@ class VueStock {
     }
 
     // ===== GESTION DES ÉTAGES (incréments de 10) =====
-    addLevelToRack(rackId, levelCode = null) {
+    async addLevelToRack(rackId, levelCode = null) {
         const rack = this.racks.find(r => r.id === rackId);
         if (!rack) return;
 
@@ -1221,25 +1221,39 @@ class VueStock {
             levelCode = (Math.floor(maxCode / 10) * 10) + 10;
         }
 
-        const newLevel = {
-            id: `${rackId}_level_${levelCode}`,
-            code: levelCode.toString(),
-            rack_id: rackId,
-            display_order: rack.levels.length + 1,
-            slots: []
-        };
+        try {
+            // Appeler l'API pour sauvegarder le niveau
+            const result = await this.api.saveLevel({
+                rack_id: rackId,
+                level_code: levelCode.toString(),
+                display_order: rack.levels.length + 1
+            });
 
-        rack.levels.push(newLevel);
+            if (result.success && result.data) {
+                const newLevel = {
+                    id: result.data.id,
+                    code: result.data.level_code,
+                    rack_id: rackId,
+                    display_order: result.data.display_order,
+                    slots: []
+                };
 
-        // Afficher dans la vue étagère
-        this.displayLevelInRackView(newLevel);
+                rack.levels.push(newLevel);
 
-        // Mettre à jour les statistiques
-        this.updateStats();
+                // Afficher dans la vue étagère
+                this.displayLevelInRackView(newLevel);
 
-        this.showNotification(`Étage ${levelCode} ajouté à l'étagère ${rack.code}`);
+                // Mettre à jour les statistiques
+                this.updateStats();
 
-        return newLevel;
+                this.showNotification(`Étage ${levelCode} ajouté à l'étagère ${rack.code}`);
+
+                return newLevel;
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'ajout de l\'étage:', error);
+            this.showNotification('Erreur: ' + error.message, 'error');
+        }
     }
 
     displayLevelInRackView(level) {
@@ -1286,8 +1300,7 @@ class VueStock {
         rackContainer.appendChild(levelElement);
     }
 
-    // ===== GESTION DES EMPLACEMENTS (incréments de 10) =====
-    addSlotToLevel(levelId, slotCode = null, count = 1) {
+    async addSlotToLevel(levelId, slotCode = null, count = 1) {
         const rack = this.racks.find(r => r.levels.some(l => l.id === levelId));
         const level = rack?.levels.find(l => l.id === levelId);
         if (!level) return;
@@ -1305,27 +1318,40 @@ class VueStock {
                 currentSlotCode = parseInt(slotCode) + (i * 10);
             }
 
-            const newSlot = {
-                id: `${levelId}_slot_${currentSlotCode}`,
-                code: currentSlotCode.toString(),
-                level_id: levelId,
-                display_order: level.slots.length + i + 1,
-                full_code: `${rack.code}-${level.code}-${currentSlotCode}`,
-                status: 'free',
-                articles: []
-            };
+            try {
+                // Appeler l'API pour sauvegarder l'emplacement
+                const result = await this.api.saveSlot({
+                    level_id: levelId,
+                    slot_code: currentSlotCode.toString(),
+                    display_order: level.slots.length + i + 1,
+                    status: 'free'
+                });
 
-            level.slots.push(newSlot);
-            slots.push(newSlot);
+                if (result.success && result.data) {
+                    const newSlot = {
+                        id: result.data.id,
+                        code: currentSlotCode.toString(),
+                        level_id: levelId,
+                        display_order: result.data.display_order,
+                        full_code: `${rack.code}-${level.code}-${currentSlotCode}`,
+                        status: 'free',
+                        articles: []
+                    };
+
+                    level.slots.push(newSlot);
+                    slots.push(newSlot);
+                }
+            } catch (error) {
+                console.error('Erreur lors de l\'ajout de l\'emplacement:', error);
+            }
         }
 
         // Afficher dans la vue étage
-        this.displaySlotsInLevelView(slots);
-
-        // Mettre à jour les statistiques
-        this.updateStats();
-
-        this.showNotification(`${count} emplacement(s) ajouté(s) à l'étage ${level.code}`);
+        if (slots.length > 0) {
+            this.displaySlotsInLevelView(slots);
+            this.updateStats();
+            this.showNotification(`${slots.length} emplacement(s) ajouté(s) à l'étage ${level.code}`);
+        }
 
         return slots;
     }
@@ -1473,7 +1499,28 @@ class VueStock {
             const result = await this.api.getFullConfig();
 
             if (result.success && result.data) {
-                this.racks = result.data;
+                // Charger les étagères avec leurs niveaux et emplacements
+                this.racks = result.data.racks || result.data;
+
+                // Si l'API retourne directement les étagères avec leurs niveaux
+                if (result.data.levels) {
+                    // Associer les niveaux aux étagères
+                    this.racks.forEach(rack => {
+                        rack.levels = result.data.levels
+                            .filter(level => level.rack_id === rack.id)
+                            .map(level => ({
+                                ...level,
+                                code: level.level_code,
+                                slots: result.data.slots
+                                    ?.filter(slot => slot.level_id === level.id)
+                                    .map(slot => ({
+                                        ...slot,
+                                        code: slot.slot_code
+                                    })) || []
+                            }));
+                    });
+                }
+
                 this.displayRacksFromAPI();
                 this.showNotification('Données chargées depuis Netlify Function');
             }

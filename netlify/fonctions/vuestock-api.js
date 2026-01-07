@@ -41,46 +41,117 @@ exports.handler = async (event) => {
 
   if (action === 'get-config') {
     try {
-      const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+        const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?select=*&order=rack_code.asc`, {
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`
+        // 1. Charger les étagères
+        const racksResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?select=*&order=rack_code.asc`, {
+            headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`
+            }
+        });
+
+        if (!racksResponse.ok) {
+            throw new Error(`Supabase error for racks: ${racksResponse.status}`);
         }
-      });
 
-      if (!response.ok) {
-        throw new Error(`Supabase error: ${response.status}`);
-      }
+        const racks = await racksResponse.json();
 
-      const data = await response.json();
+        // 2. Charger les niveaux
+        const levelsResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?select=*&order=display_order.asc`, {
+            headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`
+            }
+        });
 
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({
-          success: true,
-          data: data,
-          count: data.length
-        })
-      };
+        let levels = [];
+        if (levelsResponse.ok) {
+            levels = await levelsResponse.json();
+        }
+
+        // 3. Charger les emplacements
+        const slotsResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots?select=*&order=display_order.asc`, {
+            headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`
+            }
+        });
+
+        let slots = [];
+        if (slotsResponse.ok) {
+            slots = await slotsResponse.json();
+        }
+
+        // 4. Structurer les données
+        const racksWithLevels = racks.map(rack => {
+            const rackLevels = levels
+                .filter(level => level.rack_id === rack.id)
+                .map(level => {
+                    const levelSlots = slots
+                        .filter(slot => slot.level_id === level.id)
+                        .map(slot => ({
+                            id: slot.id,
+                            code: slot.slot_code,
+                            level_id: slot.level_id,
+                            display_order: slot.display_order,
+                            full_code: `${rack.rack_code}-${level.level_code}-${slot.slot_code}`,
+                            status: slot.status,
+                            capacity: slot.capacity,
+                            created_at: slot.created_at
+                        }));
+
+                    return {
+                        id: level.id,
+                        code: level.level_code,
+                        rack_id: level.rack_id,
+                        display_order: level.display_order,
+                        created_at: level.created_at,
+                        slots: levelSlots
+                    };
+                });
+
+            return {
+                id: rack.id,
+                code: rack.rack_code,
+                name: rack.display_name,
+                position_x: rack.position_x,
+                position_y: rack.position_y,
+                rotation: rack.rotation,
+                width: rack.width,
+                depth: rack.depth,
+                color: rack.color,
+                created_at: rack.created_at,
+                levels: rackLevels
+            };
+        });
+
+        return {
+            statusCode: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            body: JSON.stringify({
+                success: true,
+                data: racksWithLevels,
+                count: racksWithLevels.length
+            })
+        };
 
     } catch (error) {
-      return {
-        statusCode: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({
-          success: false,
-          error: error.message
-        })
-      };
+        console.error('❌ Error in get-config:', error);
+        return {
+            statusCode: 500,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            body: JSON.stringify({
+                success: false,
+                error: error.message
+            })
+        };
     }
   }
 
@@ -183,6 +254,232 @@ exports.handler = async (event) => {
 
         } catch (error) {
             console.error('❌ Server error in save-rack:', error);
+            return {
+                statusCode: 500,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    success: false,
+                    error: error.message
+                })
+            };
+        }
+    }
+
+    // Gestion des niveaux (levels)
+    if (action === 'save-level') {
+        try {
+            let body = {};
+            if (event.body) {
+                body = JSON.parse(event.body);
+            }
+
+            console.log('📦 Body parsed for save-level:', body);
+
+            const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+
+            // Vérifier les données requises
+            if (!body.rack_id) {
+                throw new Error('rack_id is required');
+            }
+
+            const payload = {
+                rack_id: body.rack_id,
+                level_code: body.level_code || body.code || `LVL_${Date.now()}`,
+                display_order: body.display_order || 1,
+                created_at: new Date().toISOString()
+            };
+
+            // Nettoyer le payload
+            Object.keys(payload).forEach(key => {
+                if (payload[key] === undefined) {
+                    delete payload[key];
+                }
+            });
+
+            let response;
+            let method;
+
+            // Décision: création ou mise à jour ?
+            if (body.id) {
+                // Mise à jour d'un niveau existant
+                console.log(`📝 Mise à jour PATCH du niveau ID: ${body.id}`);
+                method = 'PATCH';
+                response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?id=eq.${body.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                // Création d'un nouveau niveau
+                console.log('➕ Création POST nouveau niveau');
+                method = 'POST';
+                response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            const text = await response.text();
+            console.log(`📥 Supabase ${method} response for level:`, response.status, text);
+
+            if (!response.ok) {
+                throw new Error(`Supabase ${method} error: ${response.status} - ${text}`);
+            }
+
+            let result;
+            try {
+                result = text ? JSON.parse(text) : null;
+            } catch (e) {
+                console.error('❌ Error parsing JSON:', e);
+                result = { raw: text };
+            }
+
+            // Pour PATCH, Supabase peut retourner un tableau vide
+            const responseData = Array.isArray(result) && result.length > 0 ? result[0] : result;
+
+            return {
+                statusCode: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    success: true,
+                    data: responseData || { id: body.id, ...payload },
+                    operation: body.id ? 'updated' : 'created'
+                })
+            };
+
+        } catch (error) {
+            console.error('❌ Server error in save-level:', error);
+            return {
+                statusCode: 500,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    success: false,
+                    error: error.message
+                })
+            };
+        }
+    }
+
+    // Gestion des emplacements (slots)
+    if (action === 'save-slot') {
+        try {
+            let body = {};
+            if (event.body) {
+                body = JSON.parse(event.body);
+            }
+
+            console.log('📦 Body parsed for save-slot:', body);
+
+            const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+
+            // Vérifier les données requises
+            if (!body.level_id) {
+                throw new Error('level_id is required');
+            }
+
+            const payload = {
+                level_id: body.level_id,
+                slot_code: body.slot_code || body.code || `SLOT_${Date.now()}`,
+                display_order: body.display_order || 1,
+                status: body.status || 'free',
+                capacity: body.capacity || 100,
+                created_at: new Date().toISOString()
+            };
+
+            // Nettoyer le payload
+            Object.keys(payload).forEach(key => {
+                if (payload[key] === undefined) {
+                    delete payload[key];
+                }
+            });
+
+            let response;
+            let method;
+
+            // Décision: création ou mise à jour ?
+            if (body.id) {
+                // Mise à jour d'un emplacement existant
+                console.log(`📝 Mise à jour PATCH du slot ID: ${body.id}`);
+                method = 'PATCH';
+                response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots?id=eq.${body.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                // Création d'un nouvel emplacement
+                console.log('➕ Création POST nouveau slot');
+                method = 'POST';
+                response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            const text = await response.text();
+            console.log(`📥 Supabase ${method} response for slot:`, response.status, text);
+
+            if (!response.ok) {
+                throw new Error(`Supabase ${method} error: ${response.status} - ${text}`);
+            }
+
+            let result;
+            try {
+                result = text ? JSON.parse(text) : null;
+            } catch (e) {
+                console.error('❌ Error parsing JSON:', e);
+                result = { raw: text };
+            }
+
+            // Pour PATCH, Supabase peut retourner un tableau vide
+            const responseData = Array.isArray(result) && result.length > 0 ? result[0] : result;
+
+            return {
+                statusCode: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    success: true,
+                    data: responseData || { id: body.id, ...payload },
+                    operation: body.id ? 'updated' : 'created'
+                })
+            };
+
+        } catch (error) {
+            console.error('❌ Server error in save-slot:', error);
             return {
                 statusCode: 500,
                 headers: {
