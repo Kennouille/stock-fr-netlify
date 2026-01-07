@@ -1211,18 +1211,35 @@ class VueStock {
 
     // ===== GESTION DES ÉTAGES (incréments de 10) =====
     async addLevelToRack(rackId, levelCode = null) {
-        const rack = this.racks.find(r => r.id === rackId);
-        if (!rack) return;
-
-        // Si pas de code spécifié, trouver le prochain multiple de 10
-        if (!levelCode) {
-            const existingCodes = rack.levels.map(l => parseInt(l.code)).filter(n => !isNaN(n));
-            const maxCode = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
-            levelCode = (Math.floor(maxCode / 10) * 10) + 10;
+        // Vérifier si une opération est déjà en cours
+        if (this._addingLevel) {
+            console.log('⚠️ Opération d\'ajout d\'étage déjà en cours');
+            return;
         }
 
+        this._addingLevel = true;
+
         try {
-            // Appeler l'API pour sauvegarder le niveau
+            const rack = this.racks.find(r => r.id === rackId);
+            if (!rack) return;
+
+            // Si pas de code spécifié, trouver le prochain multiple de 10
+            if (!levelCode) {
+                const existingCodes = rack.levels.map(l => parseInt(l.code)).filter(n => !isNaN(n));
+                const maxCode = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
+                levelCode = (Math.floor(maxCode / 10) * 10) + 10;
+            }
+
+            // Vérifier si ce niveau existe déjà (avant l'appel API)
+            const levelExists = rack.levels.some(l => l.code === levelCode.toString());
+            if (levelExists) {
+                this.showNotification(`L'étage ${levelCode} existe déjà`, 'warning');
+                return;
+            }
+
+            // Appeler l'API UNE SEULE FOIS
+            console.log('📤 Appel API save-level avec:', { rack_id: rackId, level_code: levelCode });
+
             const result = await this.api.saveLevel({
                 rack_id: rackId,
                 level_code: levelCode.toString(),
@@ -1243,9 +1260,7 @@ class VueStock {
                 // Afficher dans la vue étagère
                 this.displayLevelInRackView(newLevel);
 
-                // Mettre à jour les statistiques
                 this.updateStats();
-
                 this.showNotification(`Étage ${levelCode} ajouté à l'étagère ${rack.code}`);
 
                 return newLevel;
@@ -1253,6 +1268,14 @@ class VueStock {
         } catch (error) {
             console.error('Erreur lors de l\'ajout de l\'étage:', error);
             this.showNotification('Erreur: ' + error.message, 'error');
+
+            // Afficher l'erreur spécifique dupliquée
+            if (error.message.includes('duplicate') || error.message.includes('409')) {
+                this.showNotification(`L'étage ${levelCode} existe déjà dans cette étagère`, 'error');
+            }
+        } finally {
+            // Toujours débloquer à la fin
+            this._addingLevel = false;
         }
     }
 
