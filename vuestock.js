@@ -1720,8 +1720,17 @@ class VueStock {
                 const article = results[0];
 
                 if (article.full_code) {
-                    // Trouver l'emplacement dans nos données
-                    this.highlightSlotByFullCode(article.full_code);
+                    // ✅ NOUVEAU : Proposer d'ouvrir la vue 3D
+                    const open3D = confirm(`Article trouvé dans ${article.full_code}\n\nOuvrir la vue 3D pour localiser l'article ?`);
+
+                    if (open3D) {
+                        // Ouvrir la vue 3D et localiser
+                        this.open3DAndLocate(article.full_code);
+                    } else {
+                        // Comportement classique (2D)
+                        this.highlightSlotByFullCode(article.full_code);
+                    }
+
                     this.showNotification(`Article trouvé dans ${article.full_code}`);
                 } else {
                     this.showNotification('Article trouvé mais non stocké', 'warning');
@@ -1735,6 +1744,58 @@ class VueStock {
             this.showNotification('Erreur de recherche: ' + error.message, 'error');
         } finally {
             this.showLoader(false);
+        }
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Ouvrir la 3D et localiser
+    open3DAndLocate(fullCode) {
+        console.log('🎯 Localisation 3D pour:', fullCode);
+
+        // Extraire rack, level, slot du code (ex: "A-10-20")
+        const parts = fullCode.split('-');
+        if (parts.length !== 3) {
+            console.error('Format de code invalide:', fullCode);
+            return;
+        }
+
+        const [rackCode, levelCode, slotCode] = parts;
+
+        // Trouver l'étagère
+        const rack = this.racks.find(r => r.code === rackCode);
+        if (!rack) {
+            console.error('Étagère non trouvée:', rackCode);
+            return;
+        }
+
+        // Trouver l'étage
+        const level = rack.levels?.find(l => l.code === levelCode);
+        if (!level) {
+            console.error('Étage non trouvé:', levelCode);
+            return;
+        }
+
+        // Trouver l'emplacement
+        const slot = level.slots?.find(s => s.code === slotCode);
+        if (!slot) {
+            console.error('Emplacement non trouvé:', slotCode);
+            return;
+        }
+
+        // Ouvrir le modal 3D
+        const modal3D = document.getElementById('modal3D');
+        modal3D.classList.add('active');
+
+        // Initialiser la vue 3D si nécessaire
+        if (!window.view3DManager) {
+            window.view3DManager = new View3DManager();
+            window.view3DManager.init();
+
+            // Attendre que la 3D soit chargée
+            setTimeout(() => {
+                window.view3DManager.locateAndHighlight(rack, level, slot);
+            }, 500);
+        } else {
+            window.view3DManager.locateAndHighlight(rack, level, slot);
         }
     }
 

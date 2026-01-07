@@ -606,6 +606,162 @@ class View3DManager {
         this.camera.lookAt(0, 5, 0);
         this.changeDisplayMode('normal');
     }
+
+    // ✅ NOUVELLE MÉTHODE : Localiser et mettre en évidence un emplacement
+    locateAndHighlight(rack, level, slot) {
+        console.log('🎯 Localisation de:', rack.code, level.code, slot.code);
+
+        // Trouver l'objet 3D correspondant
+        const rackGroup = this.racks3D.find(r => r.userData.rack.id === rack.id);
+        if (!rackGroup) {
+            console.error('Étagère 3D non trouvée');
+            return;
+        }
+
+        // Trouver le slot mesh dans le groupe
+        let targetSlot = null;
+        rackGroup.traverse(child => {
+            if (child.userData && child.userData.type === 'slot' && child.userData.slot.id === slot.id) {
+                targetSlot = child;
+            }
+        });
+
+        if (!targetSlot) {
+            console.error('Emplacement 3D non trouvé');
+            return;
+        }
+
+        // Calculer la position mondiale du slot
+        const worldPosition = new THREE.Vector3();
+        targetSlot.getWorldPosition(worldPosition);
+
+        // Animer la caméra vers le slot
+        this.animateCameraTo(worldPosition, () => {
+            // Une fois arrivé, faire clignoter le slot
+            this.blinkSlot(targetSlot);
+        });
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Animer la caméra
+    animateCameraTo(targetPosition, onComplete) {
+        const startPosition = this.camera.position.clone();
+        const startTime = Date.now();
+        const duration = 2000; // 2 secondes
+
+        // Position de la caméra : un peu au-dessus et devant le target
+        const endPosition = new THREE.Vector3(
+            targetPosition.x + 3,
+            targetPosition.y + 2,
+            targetPosition.z + 3
+        );
+
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Easing (ease-in-out)
+            const eased = progress < 0.5
+                ? 2 * progress * progress
+                : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+            // Interpoler la position
+            this.camera.position.lerpVectors(startPosition, endPosition, eased);
+            this.camera.lookAt(targetPosition);
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                if (onComplete) onComplete();
+            }
+        };
+
+        animate();
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Faire clignoter un slot
+    blinkSlot(slotMesh) {
+        const originalColor = slotMesh.material.color.clone();
+        const highlightColor = new THREE.Color(0xffeb3b); // Jaune
+        let blinkCount = 0;
+        const maxBlinks = 6;
+
+        const blink = () => {
+            if (blinkCount >= maxBlinks) {
+                slotMesh.material.color.copy(originalColor);
+                slotMesh.material.emissiveIntensity = 0.2;
+                return;
+            }
+
+            // Alterner entre couleur originale et jaune
+            if (blinkCount % 2 === 0) {
+                slotMesh.material.color.copy(highlightColor);
+                slotMesh.material.emissiveIntensity = 0.8;
+            } else {
+                slotMesh.material.color.copy(originalColor);
+                slotMesh.material.emissiveIntensity = 0.2;
+            }
+
+            blinkCount++;
+            setTimeout(blink, 300);
+        };
+
+        blink();
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Recherche directe depuis la 3D
+    searchInView(searchTerm) {
+        console.log('🔍 Recherche 3D:', searchTerm);
+
+        // Réinitialiser tous les highlights
+        this.racks3D.forEach(rackGroup => {
+            rackGroup.traverse(child => {
+                if (child.isMesh && child.userData.type === 'slot') {
+                    child.material.emissiveIntensity = 0.2;
+                }
+            });
+        });
+
+        // Chercher les slots qui contiennent l'article
+        const foundSlots = [];
+
+        this.racks3D.forEach(rackGroup => {
+            rackGroup.traverse(child => {
+                if (child.userData && child.userData.type === 'slot') {
+                    const slot = child.userData.slot;
+
+                    if (slot.articles && slot.articles.length > 0) {
+                        const hasArticle = slot.articles.some(art =>
+                            art.name && art.name.toLowerCase().includes(searchTerm.toLowerCase())
+                        );
+
+                        if (hasArticle) {
+                            foundSlots.push(child);
+                        }
+                    }
+                }
+            });
+        });
+
+        if (foundSlots.length > 0) {
+            console.log(`✅ ${foundSlots.length} emplacement(s) trouvé(s)`);
+
+            // Highlight tous les emplacements trouvés
+            foundSlots.forEach(slot => {
+                slot.material.color.setHex(0xffeb3b);
+                slot.material.emissiveIntensity = 0.6;
+            });
+
+            // Zoomer sur le premier
+            const worldPosition = new THREE.Vector3();
+            foundSlots[0].getWorldPosition(worldPosition);
+            this.animateCameraTo(worldPosition);
+
+            return foundSlots.length;
+        } else {
+            console.log('❌ Aucun emplacement trouvé');
+            return 0;
+        }
+    }
 }
 
 // Instance globale
@@ -670,6 +826,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn3DReset')?.addEventListener('click', () => {
         if (view3DManager) {
             view3DManager.reset();
+        }
+    });
+
+    // ✅ NOUVEAU : Recherche dans la vue 3D
+    document.getElementById('btnSearch3D')?.addEventListener('click', () => {
+        if (view3DManager) {
+            const searchTerm = document.getElementById('search3DInput').value.trim();
+            if (searchTerm) {
+                const count = view3DManager.searchInView(searchTerm);
+
+                if (count > 0) {
+                    alert(`${count} emplacement(s) contenant "${searchTerm}" trouvé(s) et mis en évidence.`);
+                } else {
+                    alert(`Aucun article "${searchTerm}" trouvé.`);
+                }
+            }
+        }
+    });
+
+    // Recherche avec Enter
+    document.getElementById('search3DInput')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('btnSearch3D')?.click();
         }
     });
 });
