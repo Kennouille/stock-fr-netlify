@@ -354,6 +354,31 @@
         </div>
     </div>
 
+    <!-- ✅ NOUVEAU : Modal détail emplacement -->
+    <div class="modal-backdrop" id="slotModalBackdrop"></div>
+    <div class="slot-detail-modal" id="slotDetailModal">
+        <div class="slot-detail-header">
+            <div>
+                <h3 id="slotModalTitle">Emplacement</h3>
+                <div class="slot-detail-code" id="slotModalCode">--</div>
+            </div>
+            <button class="slot-close-btn" id="closeSlotModal">&times;</button>
+        </div>
+
+        <div class="slot-detail-body" id="slotModalBody">
+            <!-- Contenu dynamique -->
+        </div>
+
+        <div class="slot-detail-footer">
+            <button class="footer-btn" id="btnAddArticle">
+                <i class="fas fa-plus"></i> Ajouter article
+            </button>
+            <button class="footer-btn primary" id="btnSaveSlot">
+                <i class="fas fa-save"></i> Sauvegarder
+            </button>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="vuestock.js"></script>

@@ -468,9 +468,207 @@ class View3DManager {
 
             if (object.userData && object.userData.type === 'slot') {
                 console.log('Slot clicked:', object.userData.slot);
-                // TODO: Ouvrir un modal détaillé
+                // ✅ Ouvrir le modal détaillé
+                this.openSlotDetailModal(object.userData.slot);
             }
         }
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Ouvrir le modal de détail
+    openSlotDetailModal(slot) {
+        console.log('📋 Ouverture modal pour:', slot);
+
+        const modal = document.getElementById('slotDetailModal');
+        const backdrop = document.getElementById('slotModalBackdrop');
+        const titleEl = document.getElementById('slotModalTitle');
+        const codeEl = document.getElementById('slotModalCode');
+        const bodyEl = document.getElementById('slotModalBody');
+
+        // Titre et code
+        titleEl.textContent = `Emplacement ${slot.code || 'N/A'}`;
+        codeEl.textContent = slot.full_code || '--';
+
+        // Contenu du modal
+        let html = `
+            <div class="slot-info-grid">
+                <div class="slot-info-item">
+                    <div class="slot-info-label">Capacité</div>
+                    <div class="slot-info-value">${slot.capacity || 100}</div>
+                </div>
+                <div class="slot-info-item">
+                    <div class="slot-info-label">Statut</div>
+                    <div class="slot-info-value">${slot.status || 'Libre'}</div>
+                </div>
+            </div>
+
+            <div class="articles-section">
+                <h4><i class="fas fa-boxes"></i> Articles (${slot.articles ? slot.articles.length : 0})</h4>
+        `;
+
+        if (slot.articles && slot.articles.length > 0) {
+            slot.articles.forEach((article, index) => {
+                const stockActuel = article.quantity || 0;
+                const stockReserve = article.reserved || 0;
+                const stockDispo = stockActuel - stockReserve;
+
+                html += `
+                    <div class="article-card">
+                        <div class="article-header">
+                            ${article.photo ?
+                                `<img src="${article.photo}" class="article-image" alt="${article.name}">` :
+                                `<div class="article-image placeholder"><i class="fas fa-box"></i></div>`
+                            }
+                            <div class="article-info">
+                                <h5 class="article-name">${article.name || 'Article sans nom'}</h5>
+                                ${article.barcode ?
+                                    `<span class="article-code">${article.barcode}</span>` :
+                                    ''
+                                }
+                                <div class="stock-status">
+                                    <div class="stock-item">
+                                        <span class="stock-item-label">Stock :</span>
+                                        <span class="stock-item-value">${stockActuel}</span>
+                                    </div>
+                                    <div class="stock-item">
+                                        <span class="stock-item-label">Réservé :</span>
+                                        <span class="stock-item-value reserved">${stockReserve}</span>
+                                    </div>
+                                    <div class="stock-item">
+                                        <span class="stock-item-label">Disponible :</span>
+                                        <span class="stock-item-value available">${stockDispo}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="article-quantity">
+                            <span class="quantity-label">Ajuster quantité :</span>
+                            <div class="quantity-controls">
+                                <button class="quantity-btn" onclick="view3DManager.adjustQuantity('${slot.id}', ${index}, -1)">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" class="quantity-input"
+                                       value="${stockActuel}"
+                                       id="qty_${slot.id}_${index}"
+                                       onchange="view3DManager.setQuantity('${slot.id}', ${index}, this.value)">
+                                <button class="quantity-btn" onclick="view3DManager.adjustQuantity('${slot.id}', ${index}, 1)">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            html += `
+                <div class="empty-slot-message">
+                    <i class="fas fa-box-open"></i>
+                    <p>Aucun article dans cet emplacement</p>
+                </div>
+            `;
+        }
+
+        html += `</div>`;
+
+        bodyEl.innerHTML = html;
+
+        // Afficher le modal
+        backdrop.classList.add('active');
+        modal.classList.add('active');
+
+        // Stocker le slot pour les modifications
+        this.currentEditingSlot = slot;
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Ajuster quantité
+    adjustQuantity(slotId, articleIndex, delta) {
+        const input = document.getElementById(`qty_${slotId}_${articleIndex}`);
+        if (input) {
+            const newValue = Math.max(0, parseInt(input.value) + delta);
+            input.value = newValue;
+            this.setQuantity(slotId, articleIndex, newValue);
+        }
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Définir quantité
+    setQuantity(slotId, articleIndex, newQuantity) {
+        console.log(`📝 Mise à jour quantité: Slot ${slotId}, Article ${articleIndex}, Qté ${newQuantity}`);
+
+        if (!this.currentEditingSlot) return;
+
+        // Mettre à jour dans l'objet local
+        if (this.currentEditingSlot.articles && this.currentEditingSlot.articles[articleIndex]) {
+            this.currentEditingSlot.articles[articleIndex].quantity = parseInt(newQuantity);
+
+            // Marquer comme modifié
+            this.currentEditingSlot._modified = true;
+        }
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Sauvegarder les modifications
+    async saveSlotChanges() {
+        if (!this.currentEditingSlot || !this.currentEditingSlot._modified) {
+            console.log('Aucune modification à sauvegarder');
+            return;
+        }
+
+        console.log('💾 Sauvegarde des modifications...', this.currentEditingSlot);
+
+        try {
+            // TODO: Appel API pour sauvegarder
+            // await window.vueStock.api.saveSlot(this.currentEditingSlot);
+
+            alert('✅ Modifications sauvegardées !');
+
+            // Fermer le modal
+            this.closeSlotModal();
+
+            // Recharger la vue 3D pour refléter les changements de couleur
+            this.updateSlotColors();
+
+        } catch (error) {
+            console.error('❌ Erreur de sauvegarde:', error);
+            alert('Erreur lors de la sauvegarde');
+        }
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Mettre à jour les couleurs des slots
+    updateSlotColors() {
+        this.racks3D.forEach(rackGroup => {
+            rackGroup.traverse(child => {
+                if (child.userData && child.userData.type === 'slot') {
+                    const slot = child.userData.slot;
+
+                    // Recalculer la couleur
+                    let color = 0x888888; // Gris = vide
+                    if (slot.articles && slot.articles.length > 0) {
+                        const totalQty = slot.articles.reduce((sum, art) => sum + (art.quantity || 0), 0);
+                        const capacity = slot.capacity || 100;
+                        const fillRate = totalQty / capacity;
+
+                        if (fillRate < 0.5) {
+                            color = 0x2ecc71; // Vert
+                        } else if (fillRate < 0.8) {
+                            color = 0xf39c12; // Orange
+                        } else {
+                            color = 0xe74c3c; // Rouge
+                        }
+                    }
+
+                    child.material.color.setHex(color);
+                }
+            });
+        });
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Fermer le modal
+    closeSlotModal() {
+        const modal = document.getElementById('slotDetailModal');
+        const backdrop = document.getElementById('slotModalBackdrop');
+
+        modal.classList.remove('active');
+        backdrop.classList.remove('active');
+
+        this.currentEditingSlot = null;
     }
 
     focusOnSlot(slotId) {
@@ -849,6 +1047,40 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('search3DInput')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             document.getElementById('btnSearch3D')?.click();
+        }
+    });
+
+    // ✅ NOUVEAUX ÉVÉNEMENTS : Modal slot
+    document.getElementById('closeSlotModal')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.closeSlotModal();
+        }
+    });
+
+    document.getElementById('slotModalBackdrop')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.closeSlotModal();
+        }
+    });
+
+    document.getElementById('btnSaveSlot')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.saveSlotChanges();
+        }
+    });
+
+    document.getElementById('btnAddArticle')?.addEventListener('click', () => {
+        alert('Fonctionnalité "Ajouter article" à venir !');
+        // TODO: Ouvrir un modal pour ajouter un article
+    });
+
+    // Fermer avec Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('slotDetailModal');
+            if (modal && modal.classList.contains('active') && view3DManager) {
+                view3DManager.closeSlotModal();
+            }
         }
     });
 });
