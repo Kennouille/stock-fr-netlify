@@ -121,8 +121,8 @@ async function loadLocationData() {
         // Charger les racks
         const { data: racks, error: racksError } = await supabase
             .from('w_vuestock_racks')
-            .select('id, name')
-            .order('name');
+            .select('id, rack_code, display_name')
+            .order('rack_code');
 
         if (racksError) throw racksError;
 
@@ -130,7 +130,8 @@ async function loadLocationData() {
         racks.forEach(rack => {
             const option = document.createElement('option');
             option.value = rack.id;
-            option.textContent = rack.name;
+            // Utiliser display_name s'il existe, sinon rack_code
+            option.textContent = rack.display_name || rack.rack_code;
             rackSelect.appendChild(option);
         });
 
@@ -149,16 +150,16 @@ async function loadLocationData() {
             if (rackId) {
                 // Charger les niveaux pour ce rack
                 const { data: levels, error: levelsError } = await supabase
-                    .from('w_vuestock_level')
-                    .select('id, level_number')
+                    .from('w_vuestock_levels') // NOTE: 's' à la fin
+                    .select('id, level_code')
                     .eq('rack_id', rackId)
-                    .order('level_number');
+                    .order('display_order');
 
                 if (!levelsError && levels) {
                     levels.forEach(level => {
                         const option = document.createElement('option');
                         option.value = level.id;
-                        option.textContent = `Niveau ${level.level_number}`;
+                        option.textContent = level.level_code;
                         levelSelect.appendChild(option);
                     });
                     levelSelect.disabled = false;
@@ -179,17 +180,19 @@ async function loadLocationData() {
                 // Charger les emplacements pour ce niveau
                 const { data: slots, error: slotsError } = await supabase
                     .from('w_vuestock_slots')
-                    .select('id, slot_number, is_occupied')
+                    .select('id, slot_code, status')
                     .eq('level_id', levelId)
-                    .order('slot_number');
+                    .order('display_order');
 
                 if (!slotsError && slots) {
                     slots.forEach(slot => {
                         const option = document.createElement('option');
                         option.value = slot.id;
-                        option.textContent = `Slot ${slot.slot_number} ${slot.is_occupied ? '(Occupé)' : ''}`;
-                        option.disabled = slot.is_occupied;
-                        option.style.color = slot.is_occupied ? '#999' : '';
+                        // Vérifier le statut : 'occupied' au lieu de 'is_occupied'
+                        const isOccupied = slot.status === 'occupied';
+                        option.textContent = `${slot.slot_code} ${isOccupied ? '(Occupé)' : ''}`;
+                        option.disabled = isOccupied;
+                        option.style.color = isOccupied ? '#999' : '';
                         slotSelect.appendChild(option);
                     });
                     slotSelect.disabled = false;
