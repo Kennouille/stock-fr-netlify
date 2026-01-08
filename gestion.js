@@ -394,9 +394,22 @@ async function showArticleDetails(articleId) {
 
         const { data: article, error } = await supabase
             .from('w_articles')
-            .select('*')
+            .select(`
+                *,
+                w_vuestock_racks (
+                    rack_code,
+                    display_name
+                ),
+                w_vuestock_levels (
+                    level_code
+                ),
+                w_vuestock_slots (
+                    full_code
+                )
+            `)
             .eq('id', articleId)
             .single();
+
 
         if (error) throw error;
 
@@ -465,13 +478,26 @@ function displayArticleDetails(article) {
 
     // Formater l'emplacement
     const locationParts = [];
-    if (article.zone) locationParts.push(article.zone);
-    if (article.rayon) locationParts.push(`Rayon ${article.rayon}`);
-    if (article.etagere) locationParts.push(`Étagère ${article.etagere}`);
-    if (article.position) locationParts.push(`Position ${article.position}`);
 
-    const locationString = locationParts.length > 0 ?
-        locationParts.join(' → ') : 'Non spécifié';
+    if (article.w_vuestock_racks) {
+        locationParts.push(
+            article.w_vuestock_racks.display_name
+            || article.w_vuestock_racks.rack_code
+        );
+    }
+
+    if (article.w_vuestock_levels) {
+        locationParts.push(`Niveau ${article.w_vuestock_levels.level_code}`);
+    }
+
+    if (article.w_vuestock_slots) {
+        locationParts.push(article.w_vuestock_slots.full_code);
+    }
+
+    const locationString = locationParts.length > 0
+        ? locationParts.join(' → ')
+        : 'Non spécifié';
+
 
     // GÉNÉRER LE HTML complet
     const htmlContent = `
@@ -938,21 +964,20 @@ async function openEditModal(articleId) {
 
             <!-- EMPLACEMENT -->
             <div class="form-group">
-                <label for="editZone">Zone</label>
-                <input type="text" id="editZone" class="form-input" value="${article.zone || ''}" placeholder="Zone">
+                <label for="editRack">Rack</label>
+                <select id="editRack" class="form-select"></select>
             </div>
+
             <div class="form-group">
-                <label for="editRayon">Rayon</label>
-                <input type="text" id="editRayon" class="form-input" value="${article.rayon || ''}" placeholder="Rayon">
+                <label for="editLevel">Niveau</label>
+                <select id="editLevel" class="form-select" disabled></select>
             </div>
+
             <div class="form-group">
-                <label for="editEtagere">Étagère</label>
-                <input type="text" id="editEtagere" class="form-input" value="${article.etagere || ''}" placeholder="Étagère">
+                <label for="editSlot">Slot</label>
+                <select id="editSlot" class="form-select" disabled></select>
             </div>
-            <div class="form-group">
-                <label for="editPosition">Position</label>
-                <input type="text" id="editPosition" class="form-input" value="${article.position || ''}" placeholder="Position">
-            </div>
+
 
             <div class="form-group" style="grid-column: 1 / -1;">
                 <label for="editDescription">Caractéristiques</label>
@@ -1169,10 +1194,9 @@ async function handleEditSubmit(e) {
         prix_unitaire: parseFloat(document.getElementById('editPrice').value) || 0,
         actif: document.getElementById('editActive').value === 'true',
         caracteristiques: document.getElementById('editDescription').value.trim(),
-        zone: document.getElementById('editZone').value.trim(),
-        rayon: document.getElementById('editRayon').value.trim(),
-        etagere: document.getElementById('editEtagere').value.trim(),
-        position: document.getElementById('editPosition').value.trim(),
+        rack_id: parseInt(document.getElementById('editRack').value) || null,
+        level_id: parseInt(document.getElementById('editLevel').value) || null,
+        slot_id: parseInt(document.getElementById('editSlot').value) || null,
         updated_at: new Date().toISOString()
     };
 
