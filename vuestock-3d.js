@@ -47,15 +47,21 @@ class View3DManager {
             alpha: true
         });
         this.renderer.setSize(container.clientWidth, container.clientHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimisation
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping; // ✅ Meilleur rendu des couleurs
+        this.renderer.toneMappingExposure = 1.2; // ✅ Ajuster l'exposition
+        this.renderer.outputEncoding = THREE.sRGBEncoding; // ✅ Couleurs correctes
 
         // Lights
         this.addLights();
 
         // Grid
         this.addGrid();
+
+        // ✅ Système de particules ambiantes
+        this.addAmbientParticles();
 
         // Controls (OrbitControls simulation simple)
         this.setupSimpleControls();
@@ -81,44 +87,116 @@ class View3DManager {
     }
 
     addLights() {
-        // Ambient light
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        // ✅ Ambient light améliorée
+        const ambientLight = new THREE.AmbientLight(0x667eea, 0.4);
         this.scene.add(ambientLight);
 
-        // Directional light (sun)
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(50, 50, 50);
+        // ✅ Directional light (sun) avec ombres douces
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        dirLight.position.set(50, 60, 30);
         dirLight.castShadow = true;
         dirLight.shadow.camera.left = -50;
         dirLight.shadow.camera.right = 50;
         dirLight.shadow.camera.top = 50;
         dirLight.shadow.camera.bottom = -50;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.mapSize.width = 4096;
+        dirLight.shadow.mapSize.height = 4096;
+        dirLight.shadow.bias = -0.0001;
+        dirLight.shadow.radius = 4; // Ombres douces
         this.scene.add(dirLight);
 
-        // Hemisphere light
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.4);
+        // Helper visuel pour debug (optionnel)
+        // const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 5);
+        // this.scene.add(dirLightHelper);
+
+        // ✅ Hemisphere light avec couleurs chaudes
+        const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x362c28, 0.5);
         this.scene.add(hemiLight);
+
+        // ✅ Lumières d'accentuation (spotlights)
+        const spotLight1 = new THREE.SpotLight(0x667eea, 0.5);
+        spotLight1.position.set(-30, 30, 30);
+        spotLight1.angle = Math.PI / 6;
+        spotLight1.penumbra = 0.3;
+        spotLight1.decay = 2;
+        spotLight1.distance = 100;
+        this.scene.add(spotLight1);
+
+        const spotLight2 = new THREE.SpotLight(0xff6b9d, 0.3);
+        spotLight2.position.set(30, 30, -30);
+        spotLight2.angle = Math.PI / 6;
+        spotLight2.penumbra = 0.3;
+        spotLight2.decay = 2;
+        spotLight2.distance = 100;
+        this.scene.add(spotLight2);
+
+        // ✅ Point lights pour ambiance
+        const pointLight1 = new THREE.PointLight(0x667eea, 0.5, 50);
+        pointLight1.position.set(0, 20, 0);
+        this.scene.add(pointLight1);
     }
 
     addGrid() {
-        // Floor
+        // ✅ Floor amélioré avec reflets
         const floorGeometry = new THREE.PlaneGeometry(200, 200);
         const floorMaterial = new THREE.MeshStandardMaterial({
-            color: 0x2a2a3e,
-            roughness: 0.8,
-            metalness: 0.2
+            color: 0x1a1a2e,
+            roughness: 0.6,
+            metalness: 0.4,
+            envMapIntensity: 0.5
         });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.rotation.x = -Math.PI / 2;
         floor.receiveShadow = true;
         this.scene.add(floor);
 
-        // Grid helper
-        const gridHelper = new THREE.GridHelper(200, 50, 0x4a4a6e, 0x2a2a3e);
+        // Grid helper avec effet lumineux
+        const gridHelper = new THREE.GridHelper(200, 50, 0x667eea, 0x2a2a3e);
         gridHelper.position.y = 0.01;
+        gridHelper.material.opacity = 0.5;
+        gridHelper.material.transparent = true;
         this.scene.add(gridHelper);
+
+        // Ajouter des lignes brillantes
+        const glowGridHelper = new THREE.GridHelper(200, 10, 0x667eea, 0x667eea);
+        glowGridHelper.position.y = 0.02;
+        glowGridHelper.material.opacity = 0.2;
+        glowGridHelper.material.transparent = true;
+        this.scene.add(glowGridHelper);
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Particules ambiantes
+    addAmbientParticles() {
+        const particleCount = 500;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const velocities = [];
+
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 100;
+            positions[i * 3 + 1] = Math.random() * 40;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+
+            velocities.push({
+                x: (Math.random() - 0.5) * 0.02,
+                y: Math.random() * 0.01,
+                z: (Math.random() - 0.5) * 0.02
+            });
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const material = new THREE.PointsMaterial({
+            color: 0x667eea,
+            size: 0.1,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+
+        this.particles = new THREE.Points(geometry, material);
+        this.particleVelocities = velocities;
+        this.scene.add(this.particles);
     }
 
     setupSimpleControls() {
@@ -248,15 +326,39 @@ class View3DManager {
         const rackGroup = new THREE.Group();
         rackGroup.userData = { rack: rack, type: 'rack' };
 
-        // Structure principale
+        // ✅ Structure principale avec matériau amélioré
         const geometry = new THREE.BoxGeometry(width, height, depth);
         const color = new THREE.Color(rack.color || '#4a90e2');
+
+        // Créer un matériau avec texture procédurale
         const material = new THREE.MeshStandardMaterial({
             color: color,
-            roughness: 0.7,
-            metalness: 0.3
+            roughness: 0.4,
+            metalness: 0.6,
+            envMapIntensity: 0.8
         });
+
+        // Ajouter un effet de bords brillants
+        const edgeMaterial = new THREE.MeshStandardMaterial({
+            color: 0xcccccc,
+            roughness: 0.2,
+            metalness: 0.9,
+            emissive: new THREE.Color(0x444444),
+            emissiveIntensity: 0.1
+        });
+
         const mesh = new THREE.Mesh(geometry, material);
+
+        // Ajouter un contour métallique
+        const edgesGeometry = new THREE.EdgesGeometry(geometry, 15);
+        const edgesMaterial = new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            linewidth: 2,
+            transparent: true,
+            opacity: 0.3
+        });
+        const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
+        mesh.add(edges);
         mesh.position.y = height / 2;
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -316,13 +418,36 @@ class View3DManager {
             }
         }
 
+        // ✅ Slot avec matériau amélioré et effets
         const geometry = new THREE.BoxGeometry(slotWidth * 0.8, 0.1, rackDepth * 0.8);
         const material = new THREE.MeshStandardMaterial({
             color: color,
             emissive: color,
-            emissiveIntensity: 0.2
+            emissiveIntensity: 0.2,
+            roughness: 0.5,
+            metalness: 0.3,
+            transparent: true,
+            opacity: 0.9
         });
         const mesh = new THREE.Mesh(geometry, material);
+
+        // Ajouter un contour lumineux
+        const outlineGeometry = new THREE.BoxGeometry(slotWidth * 0.82, 0.12, rackDepth * 0.82);
+        const outlineMaterial = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.BackSide
+        });
+        const outline = new THREE.Mesh(outlineGeometry, outlineMaterial);
+        mesh.add(outline);
+
+        // Animation de pulsation pour les slots pleins
+        if (slot.articles && slot.articles.length > 0) {
+            mesh.userData.animate = true;
+            mesh.userData.pulseSpeed = 0.001 + Math.random() * 0.001;
+            mesh.userData.pulsePhase = Math.random() * Math.PI * 2;
+        }
         mesh.position.set(slotX, levelY, 0);
         mesh.userData = { slot: slot, type: 'slot' };
 
@@ -364,10 +489,16 @@ class View3DManager {
         this.raycaster.setFromCamera(this.mouse, this.camera);
         const intersects = this.raycaster.intersectObjects(this.scene.children, true);
 
-        // Reset previous highlight
+        // ✅ Reset previous highlight avec animation
         if (this.hoveredObject) {
             if (this.hoveredObject.material) {
                 this.hoveredObject.material.emissiveIntensity = 0.2;
+            }
+            // Réinitialiser l'échelle
+            if (this.hoveredObject.userData.originalScale) {
+                this.hoveredObject.scale.copy(this.hoveredObject.userData.originalScale);
+            } else {
+                this.hoveredObject.scale.set(1, 1, 1);
             }
         }
 
@@ -379,9 +510,16 @@ class View3DManager {
             if (object.userData && (object.userData.type === 'slot' || object.userData.type === 'rack')) {
                 this.hoveredObject = object;
 
+                // ✅ Effet de surbrillance amélioré
                 if (object.material) {
-                    object.material.emissiveIntensity = 0.5;
+                    object.material.emissiveIntensity = 0.6;
                 }
+
+                // ✅ Effet de scale au survol
+                if (!object.userData.originalScale) {
+                    object.userData.originalScale = object.scale.clone();
+                }
+                object.scale.set(1.05, 1.1, 1.05);
 
                 // Show tooltip
                 this.showTooltip(object.userData, event);
@@ -671,6 +809,479 @@ class View3DManager {
         this.currentEditingSlot = null;
     }
 
+    // ===== MODE INVENTAIRE =====
+
+    // ✅ NOUVELLE MÉTHODE : Démarrer le mode inventaire
+    startInventoryMode() {
+        console.log('📋 Démarrage du mode inventaire');
+
+        this.inventoryMode = true;
+        this.inventoryData = {
+            slots: [],
+            checked: 0,
+            discrepancies: 0,
+            startTime: Date.now()
+        };
+
+        // Collecter tous les emplacements
+        this.collectAllSlots();
+
+        // Afficher l'interface inventaire
+        document.getElementById('inventoryBanner').classList.add('active');
+        document.getElementById('inventoryPanel').classList.add('active');
+
+        // Masquer les autres panneaux
+        document.getElementById('controls3D').style.display = 'none';
+        document.getElementById('stats3D').style.display = 'none';
+
+        // Générer la liste
+        this.renderInventoryList();
+
+        // Mettre en surbrillance les emplacements non vérifiés
+        this.highlightUncheckedSlots();
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Collecter tous les emplacements
+    collectAllSlots() {
+        const allSlots = [];
+
+        if (window.vueStock && window.vueStock.racks) {
+            window.vueStock.racks.forEach(rack => {
+                if (rack.levels) {
+                    rack.levels.forEach(level => {
+                        if (level.slots) {
+                            level.slots.forEach(slot => {
+                                allSlots.push({
+                                    slot: slot,
+                                    rack: rack,
+                                    level: level,
+                                    status: 'unchecked', // unchecked, checked, discrepancy
+                                    checkedData: null,
+                                    notes: ''
+                                });
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        this.inventoryData.slots = allSlots;
+        console.log(`📦 ${allSlots.length} emplacements à vérifier`);
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Afficher la liste d'inventaire
+    renderInventoryList(filter = 'all') {
+        const listContainer = document.getElementById('inventoryList');
+
+        let filteredSlots = this.inventoryData.slots;
+
+        if (filter !== 'all') {
+            filteredSlots = this.inventoryData.slots.filter(item => item.status === filter);
+        }
+
+        let html = '';
+
+        filteredSlots.forEach((item, index) => {
+            const slot = item.slot;
+            const articleCount = slot.articles ? slot.articles.length : 0;
+            const statusClass = item.status;
+
+            let statusIcon = '○';
+            if (item.status === 'checked') {
+                statusIcon = '✓';
+            } else if (item.status === 'discrepancy') {
+                statusIcon = '!';
+            }
+
+            html += `
+                <div class="inventory-item ${statusClass}" data-index="${index}" onclick="view3DManager.selectInventoryItem(${index})">
+                    <div class="inventory-item-header">
+                        <span class="inventory-item-code">${slot.full_code || slot.code}</span>
+                        <span class="inventory-status-icon ${statusClass}">${statusIcon}</span>
+                    </div>
+                    <div class="inventory-item-articles">
+                        ${articleCount} article(s)
+                    </div>
+                    <div class="inventory-item-actions">
+                        <button class="inventory-quick-btn primary" onclick="event.stopPropagation(); view3DManager.checkInventoryItem(${index})">
+                            <i class="fas fa-clipboard-check"></i> Vérifier
+                        </button>
+                        ${item.status === 'checked' || item.status === 'discrepancy' ?
+                            `<button class="inventory-quick-btn" onclick="event.stopPropagation(); view3DManager.viewInventoryDetails(${index})">
+                                <i class="fas fa-eye"></i> Détails
+                            </button>` : ''
+                        }
+                    </div>
+                </div>
+            `;
+        });
+
+        if (filteredSlots.length === 0) {
+            html = `
+                <div style="text-align: center; padding: 40px 20px; color: #adb5bd;">
+                    <i class="fas fa-check-circle" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                    <p>Aucun emplacement dans cette catégorie</p>
+                </div>
+            `;
+        }
+
+        listContainer.innerHTML = html;
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Sélectionner un emplacement dans la liste
+    selectInventoryItem(index) {
+        const item = this.inventoryData.slots[index];
+
+        // Marquer comme sélectionné dans la liste
+        document.querySelectorAll('.inventory-item').forEach(el => {
+            el.classList.remove('current');
+        });
+        document.querySelector(`[data-index="${index}"]`)?.classList.add('current');
+
+        // Trouver l'objet 3D et zoomer dessus
+        this.locateAndHighlight(item.rack, item.level, item.slot);
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Ouvrir le modal de vérification
+    checkInventoryItem(index) {
+        const item = this.inventoryData.slots[index];
+        const slot = item.slot;
+
+        console.log('🔍 Vérification de:', slot.full_code);
+
+        const modal = document.getElementById('inventoryCheckModal');
+        const backdrop = document.getElementById('slotModalBackdrop');
+        const codeEl = document.getElementById('checkModalCode');
+        const bodyEl = document.getElementById('checkModalBody');
+
+        codeEl.textContent = slot.full_code || slot.code;
+
+        let html = '';
+
+        if (slot.articles && slot.articles.length > 0) {
+            slot.articles.forEach((article, articleIndex) => {
+                const expected = article.quantity || 0;
+
+                html += `
+                    <div class="check-article">
+                        <div class="check-article-name">${article.name || 'Article sans nom'}</div>
+                        <div class="check-quantity">
+                            <span class="check-label">Quantité comptée :</span>
+                            <input type="number"
+                                   class="check-input"
+                                   id="check_qty_${articleIndex}"
+                                   value="${expected}"
+                                   min="0"
+                                   onchange="view3DManager.calculateDifference(${articleIndex}, ${expected})">
+                        </div>
+                        <div class="check-expected">
+                            Attendu : <strong>${expected}</strong>
+                            <span class="check-diff" id="check_diff_${articleIndex}"></span>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            html = `
+                <div style="text-align: center; padding: 20px; color: #adb5bd;">
+                    <i class="fas fa-box-open" style="font-size: 36px; margin-bottom: 10px;"></i>
+                    <p>Emplacement vide</p>
+                </div>
+            `;
+        }
+
+        html += `
+            <div class="check-notes">
+                <label>Notes / Observations :</label>
+                <textarea id="checkNotes" placeholder="Remarques, problèmes constatés..."></textarea>
+            </div>
+        `;
+
+        bodyEl.innerHTML = html;
+
+        // Stocker l'index pour la confirmation
+        this.currentCheckingIndex = index;
+
+        // Afficher le modal
+        backdrop.classList.add('active');
+        modal.classList.add('active');
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Calculer la différence
+    calculateDifference(articleIndex, expected) {
+        const input = document.getElementById(`check_qty_${articleIndex}`);
+        const diffEl = document.getElementById(`check_diff_${articleIndex}`);
+
+        if (!input || !diffEl) return;
+
+        const counted = parseInt(input.value) || 0;
+        const diff = counted - expected;
+
+        if (diff === 0) {
+            diffEl.textContent = '';
+            diffEl.className = 'check-diff';
+            input.classList.remove('error');
+        } else {
+            const sign = diff > 0 ? '+' : '';
+            diffEl.textContent = `${sign}${diff}`;
+            diffEl.className = `check-diff ${diff > 0 ? 'positive' : 'negative'}`;
+            input.classList.add('error');
+        }
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Confirmer la vérification
+    confirmInventoryCheck() {
+        if (this.currentCheckingIndex === undefined) return;
+
+        const item = this.inventoryData.slots[this.currentCheckingIndex];
+        const slot = item.slot;
+
+        // Collecter les données vérifiées
+        const checkedData = {
+            timestamp: Date.now(),
+            articles: []
+        };
+
+        let hasDiscrepancy = false;
+
+        if (slot.articles && slot.articles.length > 0) {
+            slot.articles.forEach((article, index) => {
+                const input = document.getElementById(`check_qty_${index}`);
+                const counted = input ? parseInt(input.value) || 0 : 0;
+                const expected = article.quantity || 0;
+
+                checkedData.articles.push({
+                    name: article.name,
+                    expected: expected,
+                    counted: counted,
+                    difference: counted - expected
+                });
+
+                if (counted !== expected) {
+                    hasDiscrepancy = true;
+                }
+            });
+        }
+
+        // Notes
+        const notesEl = document.getElementById('checkNotes');
+        checkedData.notes = notesEl ? notesEl.value : '';
+
+        // Mettre à jour le statut
+        item.status = hasDiscrepancy ? 'discrepancy' : 'checked';
+        item.checkedData = checkedData;
+        item.notes = checkedData.notes;
+
+        // Mettre à jour les compteurs
+        this.inventoryData.checked++;
+        if (hasDiscrepancy) {
+            this.inventoryData.discrepancies++;
+        }
+
+        this.updateInventoryStats();
+        this.renderInventoryList();
+        this.updateSlotColorForInventory(item);
+
+        // Fermer le modal
+        this.closeInventoryCheckModal();
+
+        // Passer au suivant automatiquement
+        const nextUnchecked = this.inventoryData.slots.findIndex(i => i.status === 'unchecked');
+        if (nextUnchecked !== -1) {
+            setTimeout(() => {
+                this.selectInventoryItem(nextUnchecked);
+            }, 300);
+        }
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Fermer le modal de vérification
+    closeInventoryCheckModal() {
+        const modal = document.getElementById('inventoryCheckModal');
+        const backdrop = document.getElementById('slotModalBackdrop');
+
+        modal.classList.remove('active');
+        backdrop.classList.remove('active');
+
+        this.currentCheckingIndex = undefined;
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Voir les détails d'une vérification
+    viewInventoryDetails(index) {
+        const item = this.inventoryData.slots[index];
+
+        if (!item.checkedData) return;
+
+        let details = `Emplacement : ${item.slot.full_code}\n`;
+        details += `Vérifié le : ${new Date(item.checkedData.timestamp).toLocaleString()}\n\n`;
+
+        details += `Articles :\n`;
+        item.checkedData.articles.forEach(art => {
+            details += `- ${art.name}\n`;
+            details += `  Attendu : ${art.expected} | Compté : ${art.counted}`;
+            if (art.difference !== 0) {
+                details += ` | Écart : ${art.difference > 0 ? '+' : ''}${art.difference}`;
+            }
+            details += `\n`;
+        });
+
+        if (item.notes) {
+            details += `\nNotes : ${item.notes}`;
+        }
+
+        alert(details);
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Mettre à jour les stats d'inventaire
+    updateInventoryStats() {
+        const total = this.inventoryData.slots.length;
+        const checked = this.inventoryData.checked;
+        const discrepancies = this.inventoryData.discrepancies;
+        const progress = total > 0 ? Math.round((checked / total) * 100) : 0;
+
+        document.getElementById('inventoryChecked').textContent = checked;
+        document.getElementById('inventoryDiscrepancies').textContent = discrepancies;
+        document.getElementById('inventoryProgress').textContent = `${progress}%`;
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Mettre en surbrillance les emplacements non vérifiés
+    highlightUncheckedSlots() {
+        this.racks3D.forEach(rackGroup => {
+            rackGroup.traverse(child => {
+                if (child.userData && child.userData.type === 'slot') {
+                    // Trouver l'item d'inventaire correspondant
+                    const inventoryItem = this.inventoryData.slots.find(item =>
+                        item.slot.id === child.userData.slot.id
+                    );
+
+                    if (inventoryItem) {
+                        this.updateSlotColorForInventory(inventoryItem, child);
+                    }
+                }
+            });
+        });
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Mettre à jour la couleur d'un slot pour l'inventaire
+    updateSlotColorForInventory(inventoryItem, mesh = null) {
+        // Trouver le mesh si non fourni
+        if (!mesh) {
+            this.racks3D.forEach(rackGroup => {
+                rackGroup.traverse(child => {
+                    if (child.userData && child.userData.type === 'slot' &&
+                        child.userData.slot.id === inventoryItem.slot.id) {
+                        mesh = child;
+                    }
+                });
+            });
+        }
+
+        if (!mesh) return;
+
+        // Couleurs selon statut
+        let color;
+        switch (inventoryItem.status) {
+            case 'unchecked':
+                color = 0xffd700; // Or (à vérifier)
+                break;
+            case 'checked':
+                color = 0x2ecc71; // Vert (OK)
+                break;
+            case 'discrepancy':
+                color = 0xe74c3c; // Rouge (écart)
+                break;
+        }
+
+        mesh.material.color.setHex(color);
+        mesh.material.emissiveIntensity = 0.4;
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Exporter le rapport PDF
+    exportInventoryReport() {
+        console.log('📄 Export du rapport d\'inventaire');
+
+        const duration = Date.now() - this.inventoryData.startTime;
+        const hours = Math.floor(duration / 3600000);
+        const minutes = Math.floor((duration % 3600000) / 60000);
+
+        let report = `RAPPORT D'INVENTAIRE\n`;
+        report += `======================\n\n`;
+        report += `Date : ${new Date().toLocaleString()}\n`;
+        report += `Durée : ${hours}h ${minutes}min\n\n`;
+        report += `STATISTIQUES\n`;
+        report += `------------\n`;
+        report += `Total emplacements : ${this.inventoryData.slots.length}\n`;
+        report += `Vérifiés : ${this.inventoryData.checked}\n`;
+        report += `Écarts détectés : ${this.inventoryData.discrepancies}\n`;
+        report += `Progrès : ${Math.round((this.inventoryData.checked / this.inventoryData.slots.length) * 100)}%\n\n`;
+
+        // Détails des écarts
+        const discrepancies = this.inventoryData.slots.filter(item => item.status === 'discrepancy');
+
+        if (discrepancies.length > 0) {
+            report += `ÉCARTS DÉTECTÉS\n`;
+            report += `---------------\n\n`;
+
+            discrepancies.forEach(item => {
+                report += `Emplacement : ${item.slot.full_code}\n`;
+
+                if (item.checkedData && item.checkedData.articles) {
+                    item.checkedData.articles.forEach(art => {
+                        if (art.difference !== 0) {
+                            report += `  - ${art.name}\n`;
+                            report += `    Attendu : ${art.expected} | Compté : ${art.counted} | Écart : ${art.difference}\n`;
+                        }
+                    });
+                }
+
+                if (item.notes) {
+                    report += `  Notes : ${item.notes}\n`;
+                }
+                report += `\n`;
+            });
+        }
+
+        // Télécharger comme fichier texte (en attendant une vraie lib PDF)
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `inventaire_${Date.now()}.txt`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        alert('📄 Rapport d\'inventaire exporté !');
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Arrêter le mode inventaire
+    stopInventoryMode() {
+        const confirmed = confirm(
+            `Voulez-vous vraiment terminer l'inventaire ?\n\n` +
+            `Progression : ${Math.round((this.inventoryData.checked / this.inventoryData.slots.length) * 100)}%\n` +
+            `Vérifiés : ${this.inventoryData.checked}/${this.inventoryData.slots.length}\n` +
+            `Écarts : ${this.inventoryData.discrepancies}`
+        );
+
+        if (!confirmed) return;
+
+        // Masquer l'interface inventaire
+        document.getElementById('inventoryBanner').classList.remove('active');
+        document.getElementById('inventoryPanel').classList.remove('active');
+
+        // Réafficher les panneaux normaux
+        document.getElementById('controls3D').style.display = 'block';
+        document.getElementById('stats3D').style.display = 'block';
+
+        // Réinitialiser les couleurs
+        this.updateSlotColors();
+
+        // Réinitialiser l'état
+        this.inventoryMode = false;
+        this.inventoryData = null;
+
+        console.log('✅ Mode inventaire terminé');
+    }
+
     focusOnSlot(slotId) {
         console.log('Focus on slot:', slotId);
         // TODO: Animer la caméra vers l'emplacement
@@ -727,6 +1338,47 @@ class View3DManager {
 
     animate() {
         this.animationId = requestAnimationFrame(this.animate);
+
+        // ✅ Animer les particules
+        if (this.particles && this.particleVelocities) {
+            const positions = this.particles.geometry.attributes.position.array;
+
+            for (let i = 0; i < this.particleVelocities.length; i++) {
+                positions[i * 3] += this.particleVelocities[i].x;
+                positions[i * 3 + 1] += this.particleVelocities[i].y;
+                positions[i * 3 + 2] += this.particleVelocities[i].z;
+
+                // Réinitialiser si sort des limites
+                if (positions[i * 3 + 1] > 40) {
+                    positions[i * 3 + 1] = 0;
+                }
+                if (Math.abs(positions[i * 3]) > 50) {
+                    positions[i * 3] = (Math.random() - 0.5) * 100;
+                }
+                if (Math.abs(positions[i * 3 + 2]) > 50) {
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+                }
+            }
+
+            this.particles.geometry.attributes.position.needsUpdate = true;
+        }
+
+        // ✅ Animer les slots (pulsation)
+        const time = Date.now() * 0.001;
+        this.racks3D.forEach(rackGroup => {
+            rackGroup.traverse(child => {
+                if (child.userData && child.userData.animate) {
+                    const scale = 1 + Math.sin(time * child.userData.pulseSpeed * 1000 + child.userData.pulsePhase) * 0.05;
+                    child.scale.set(1, scale, 1);
+
+                    // Effet de lueur pulsante
+                    if (child.material && child.material.emissiveIntensity !== undefined) {
+                        child.material.emissiveIntensity = 0.2 + Math.sin(time * 2 + child.userData.pulsePhase) * 0.1;
+                    }
+                }
+            });
+        });
+
         this.renderer.render(this.scene, this.camera);
     }
 
@@ -1081,6 +1733,56 @@ document.addEventListener('DOMContentLoaded', () => {
             if (modal && modal.classList.contains('active') && view3DManager) {
                 view3DManager.closeSlotModal();
             }
+
+            const checkModal = document.getElementById('inventoryCheckModal');
+            if (checkModal && checkModal.classList.contains('active') && view3DManager) {
+                view3DManager.closeInventoryCheckModal();
+            }
+        }
+    });
+
+    // ✅ NOUVEAUX ÉVÉNEMENTS : Mode inventaire
+    document.getElementById('btnStartInventory')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.startInventoryMode();
+        }
+    });
+
+    document.getElementById('btnStopInventory')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.stopInventoryMode();
+        }
+    });
+
+    document.getElementById('btnExportInventory')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.exportInventoryReport();
+        }
+    });
+
+    // Filtres inventaire
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+
+            if (view3DManager && view3DManager.inventoryMode) {
+                const filter = chip.dataset.filter;
+                view3DManager.renderInventoryList(filter);
+            }
+        });
+    });
+
+    // Modal vérification inventaire
+    document.getElementById('btnCancelCheck')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.closeInventoryCheckModal();
+        }
+    });
+
+    document.getElementById('btnConfirmCheck')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.confirmInventoryCheck();
         }
     });
 });

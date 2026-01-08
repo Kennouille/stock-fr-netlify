@@ -319,6 +319,12 @@
                     <button id="btn3DScreenshot"><i class="fas fa-camera"></i> Capture</button>
                     <button id="btn3DReset"><i class="fas fa-undo"></i> Reset</button>
                 </div>
+                <!-- ✅ NOUVEAU : Bouton mode inventaire -->
+                <div class="control-group-3d">
+                    <button id="btnStartInventory" class="control-group-3d button" style="width: 100%; background: #f39c12; color: white; border: none; padding: 10px;">
+                        <i class="fas fa-clipboard-check"></i> Mode Inventaire
+                    </button>
+                </div>
             </div>
 
             <div class="stats-3d" id="stats3D" style="display: none;">
@@ -334,6 +340,57 @@
                 <div class="stat-3d-item">
                     <span class="stat-3d-label">Taux remplissage :</span>
                     <span class="stat-3d-value" id="stat3DFill">0%</span>
+                </div>
+            </div>
+
+            <!-- ✅ NOUVEAU : Bannière mode inventaire -->
+            <div class="inventory-mode-banner" id="inventoryBanner">
+                <div class="inventory-banner-left">
+                    <div class="inventory-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="inventory-info">
+                        <h3>Mode Inventaire Actif</h3>
+                        <p>Vérifiez les emplacements un par un</p>
+                    </div>
+                </div>
+                <div class="inventory-progress">
+                    <div class="progress-item">
+                        <div class="progress-number" id="inventoryChecked">0</div>
+                        <div class="progress-label">Vérifiés</div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-number" id="inventoryDiscrepancies">0</div>
+                        <div class="progress-label">Écarts</div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-number" id="inventoryProgress">0%</div>
+                        <div class="progress-label">Complété</div>
+                    </div>
+                </div>
+                <div class="inventory-actions">
+                    <button class="inventory-btn" id="btnExportInventory">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button class="inventory-btn danger" id="btnStopInventory">
+                        <i class="fas fa-times"></i> Terminer
+                    </button>
+                </div>
+            </div>
+
+            <!-- ✅ NOUVEAU : Panel inventaire latéral -->
+            <div class="inventory-panel" id="inventoryPanel">
+                <div class="inventory-panel-header">
+                    <h3><i class="fas fa-list-check"></i> Liste des emplacements</h3>
+                    <div class="inventory-filters">
+                        <button class="filter-chip active" data-filter="all">Tous</button>
+                        <button class="filter-chip" data-filter="unchecked">À vérifier</button>
+                        <button class="filter-chip" data-filter="checked">Vérifiés</button>
+                        <button class="filter-chip" data-filter="discrepancy">Écarts</button>
+                    </div>
+                </div>
+                <div class="inventory-list" id="inventoryList">
+                    <!-- Liste dynamique -->
                 </div>
             </div>
 
@@ -375,6 +432,25 @@
             </button>
             <button class="footer-btn primary" id="btnSaveSlot">
                 <i class="fas fa-save"></i> Sauvegarder
+            </button>
+        </div>
+    </div>
+
+    <!-- ✅ NOUVEAU : Modal vérification inventaire -->
+    <div class="inventory-check-modal" id="inventoryCheckModal">
+        <div class="inventory-check-header">
+            <h3>Vérification emplacement</h3>
+            <div class="inventory-check-code" id="checkModalCode">--</div>
+        </div>
+        <div class="inventory-check-body" id="checkModalBody">
+            <!-- Contenu dynamique -->
+        </div>
+        <div class="inventory-check-footer">
+            <button class="check-footer-btn secondary" id="btnCancelCheck">
+                Annuler
+            </button>
+            <button class="check-footer-btn success" id="btnConfirmCheck">
+                <i class="fas fa-check"></i> Confirmer
             </button>
         </div>
     </div>
