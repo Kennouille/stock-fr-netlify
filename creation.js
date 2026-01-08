@@ -805,11 +805,12 @@ function getFormData() {
         quantite_initiale: parseInt(document.getElementById('initialQuantity').value) || 0,
         stock_minimum: parseInt(document.getElementById('minimumStock').value) || 1,
         prix_unitaire: parseFloat(document.getElementById('unitPrice').value) || 0,
-        zone: document.getElementById('locationZone').value,
-        rayon: document.getElementById('locationRack').value.trim(),
-        etagere: document.getElementById('locationShelf').value.trim(),
-        position: document.getElementById('locationPosition').value.trim()
+
+        rack_id: document.getElementById('rackSelect').value || null,
+        level_id: document.getElementById('levelSelect').value || null,
+        slot_id: document.getElementById('slotSelect').value || null
     };
+
 }
 
 function validateFormData(data) {
