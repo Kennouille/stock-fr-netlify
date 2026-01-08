@@ -69,6 +69,9 @@ function initializeForm() {
     // Générer un code-barre par défaut
     generateBarcode();
 
+    // Charger les données des emplacements
+    loadLocationData();
+
     // Mettre à jour le récapitulatif
     updateSummary();
 
@@ -110,6 +113,93 @@ function calculateEAN13Checksum(code) {
     }
     const checksum = (10 - (sum % 10)) % 10;
     return checksum.toString();
+}
+
+// Charger les données des emplacements
+async function loadLocationData() {
+    try {
+        // Charger les racks
+        const { data: racks, error: racksError } = await supabase
+            .from('w_vuestock_racks')
+            .select('id, name')
+            .order('name');
+
+        if (racksError) throw racksError;
+
+        const rackSelect = document.getElementById('rackSelect');
+        racks.forEach(rack => {
+            const option = document.createElement('option');
+            option.value = rack.id;
+            option.textContent = rack.name;
+            rackSelect.appendChild(option);
+        });
+
+        // Écouter le changement de rack pour charger les niveaux
+        rackSelect.addEventListener('change', async function() {
+            const rackId = this.value;
+            const levelSelect = document.getElementById('levelSelect');
+            const slotSelect = document.getElementById('slotSelect');
+
+            // Réinitialiser
+            levelSelect.innerHTML = '<option value="">-- Sélectionner un niveau --</option>';
+            slotSelect.innerHTML = '<option value="">-- Sélectionner un emplacement --</option>';
+            levelSelect.disabled = !rackId;
+            slotSelect.disabled = true;
+
+            if (rackId) {
+                // Charger les niveaux pour ce rack
+                const { data: levels, error: levelsError } = await supabase
+                    .from('w_vuestock_level')
+                    .select('id, level_number')
+                    .eq('rack_id', rackId)
+                    .order('level_number');
+
+                if (!levelsError && levels) {
+                    levels.forEach(level => {
+                        const option = document.createElement('option');
+                        option.value = level.id;
+                        option.textContent = `Niveau ${level.level_number}`;
+                        levelSelect.appendChild(option);
+                    });
+                    levelSelect.disabled = false;
+                }
+            }
+        });
+
+        // Écouter le changement de niveau pour charger les emplacements
+        document.getElementById('levelSelect').addEventListener('change', async function() {
+            const levelId = this.value;
+            const slotSelect = document.getElementById('slotSelect');
+
+            // Réinitialiser
+            slotSelect.innerHTML = '<option value="">-- Sélectionner un emplacement --</option>';
+            slotSelect.disabled = !levelId;
+
+            if (levelId) {
+                // Charger les emplacements pour ce niveau
+                const { data: slots, error: slotsError } = await supabase
+                    .from('w_vuestock_slots')
+                    .select('id, slot_number, is_occupied')
+                    .eq('level_id', levelId)
+                    .order('slot_number');
+
+                if (!slotsError && slots) {
+                    slots.forEach(slot => {
+                        const option = document.createElement('option');
+                        option.value = slot.id;
+                        option.textContent = `Slot ${slot.slot_number} ${slot.is_occupied ? '(Occupé)' : ''}`;
+                        option.disabled = slot.is_occupied;
+                        option.style.color = slot.is_occupied ? '#999' : '';
+                        slotSelect.appendChild(option);
+                    });
+                    slotSelect.disabled = false;
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Erreur chargement emplacements:', error);
+    }
 }
 
 function updateBarcodePreview(barcode) {
@@ -730,13 +820,15 @@ async function handleFormSubmit(event) {
             photo_url: photoUrl,
             caracteristiques: formData.caracteristiques,
             prix_unitaire: formData.prix_unitaire,
-            stock_actuel: formData.quantite_initiale,
+            stock_actuel: formData.stock_actuel,
+            stock_reserve: 0, // AJOUTÉ ICI
             stock_minimum: formData.stock_minimum,
             reference_interne: formData.reference_interne,
-            zone: formData.zone,
-            rayon: formData.rayon,
-            etagere: formData.etagere,
-            position: formData.position,
+
+            rack_id: formData.rack_id,
+            level_id: formData.level_id,
+            slot_id: formData.slot_id,
+
             actif: true
         };
 
@@ -750,14 +842,14 @@ async function handleFormSubmit(event) {
         if (insertError) throw insertError;
 
         // Enregistrer le mouvement d'entrée initial
-        if (formData.quantite_initiale > 0) {
+        if (formData.stock_actuel > 0) { // CHANGÉ ICI
             await supabase
                 .from('w_mouvements')
                 .insert([
                     {
                         article_id: newArticle.id,
                         type: 'entree',
-                        quantite: formData.quantite_initiale,
+                        quantite: formData.stock_actuel, // CHANGÉ ICI
                         projet: 'Stock initial',
                         commentaire: 'Création de l\'article',
                         utilisateur_id: currentUser.id
@@ -802,15 +894,14 @@ function getFormData() {
         code_barre: barcode,
         caracteristiques: document.getElementById('articleDescription').value.trim(),
         reference_interne: document.getElementById('internalReference').value.trim(),
-        quantite_initiale: parseInt(document.getElementById('initialQuantity').value) || 0,
+        stock_actuel: parseInt(document.getElementById('initialQuantity').value) || 0,
         stock_minimum: parseInt(document.getElementById('minimumStock').value) || 1,
         prix_unitaire: parseFloat(document.getElementById('unitPrice').value) || 0,
 
-        rack_id: document.getElementById('rackSelect').value || null,
-        level_id: document.getElementById('levelSelect').value || null,
-        slot_id: document.getElementById('slotSelect').value || null
+        rack_id: document.getElementById('rackSelect').value ? parseInt(document.getElementById('rackSelect').value) : null,
+        level_id: document.getElementById('levelSelect').value ? parseInt(document.getElementById('levelSelect').value) : null,
+        slot_id: document.getElementById('slotSelect').value ? parseInt(document.getElementById('slotSelect').value) : null
     };
-
 }
 
 function validateFormData(data) {
@@ -831,7 +922,7 @@ function validateFormData(data) {
         return { isValid: false, message: 'Le code-barre doit contenir 13 chiffres' };
     }
 
-    if (data.quantite_initiale < 0) {
+    if (data.stock_actuel < 0) { // CHANGÉ ICI
         return { isValid: false, message: 'La quantité initiale ne peut pas être négative' };
     }
 
