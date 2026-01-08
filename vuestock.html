@@ -325,6 +325,12 @@
                         <i class="fas fa-clipboard-check"></i> Mode Inventaire
                     </button>
                 </div>
+                <!-- ✅ NOUVEAU : Bouton chemin optimal -->
+                <div class="control-group-3d">
+                    <button id="btnOptimalPath" class="control-group-3d button" style="width: 100%; background: #2ecc71; color: white; border: none; padding: 10px;">
+                        <i class="fas fa-route"></i> Chemin optimal
+                    </button>
+                </div>
             </div>
 
             <div class="stats-3d" id="stats3D" style="display: none;">
@@ -394,6 +400,51 @@
                 </div>
             </div>
 
+            <!-- ✅ NOUVEAU : Panel multi-recherche / chemin optimal -->
+            <div class="multi-search-panel" id="multiSearchPanel">
+                <div class="multi-search-header">
+                    <h3><i class="fas fa-route"></i> Chemin optimal</h3>
+                    <button class="multi-close-btn" id="closeMultiSearch">&times;</button>
+                </div>
+
+                <div class="multi-search-input-group">
+                    <input type="text"
+                           class="multi-search-input"
+                           id="multiSearchInput"
+                           placeholder="Nom de l'article...">
+                    <button class="multi-add-btn" id="btnAddToPath">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+
+                <div class="multi-articles-list" id="multiArticlesList">
+                    <!-- Liste dynamique -->
+                </div>
+
+                <div class="multi-stats" id="multiStats" style="display: none;">
+                    <div class="multi-stat-item">
+                        <span class="multi-stat-value" id="multiDistance">0m</span>
+                        <span class="multi-stat-label">Distance</span>
+                    </div>
+                    <div class="multi-stat-item">
+                        <span class="multi-stat-value" id="multiTime">0min</span>
+                        <span class="multi-stat-label">Temps estimé</span>
+                    </div>
+                </div>
+
+                <div class="multi-actions">
+                    <button class="multi-action-btn primary" id="btnCalculatePath" disabled>
+                        <i class="fas fa-map-marked-alt"></i> Calculer le chemin
+                    </button>
+                    <button class="multi-action-btn secondary" id="btnShowPickingList" disabled>
+                        <i class="fas fa-clipboard-list"></i> Liste de picking
+                    </button>
+                    <button class="multi-action-btn secondary" id="btnClearPath">
+                        <i class="fas fa-eraser"></i> Effacer
+                    </button>
+                </div>
+            </div>
+
             <div class="minimap-3d" id="minimap3D" style="display: none;">
                 <h4>Mini-carte</h4>
                 <canvas class="minimap-canvas" id="minimapCanvas"></canvas>
@@ -451,6 +502,25 @@
             </button>
             <button class="check-footer-btn success" id="btnConfirmCheck">
                 <i class="fas fa-check"></i> Confirmer
+            </button>
+        </div>
+    </div>
+
+    <!-- ✅ NOUVEAU : Modal liste de picking -->
+    <div class="picking-list-modal" id="pickingListModal">
+        <div class="picking-list-header">
+            <h3><i class="fas fa-clipboard-list"></i> Liste de picking optimisée</h3>
+            <button class="multi-close-btn" id="closePickingList">&times;</button>
+        </div>
+        <div class="picking-list-body" id="pickingListBody">
+            <!-- Contenu dynamique -->
+        </div>
+        <div class="picking-list-footer">
+            <button class="picking-footer-btn secondary" id="btnClosePickingList">
+                Fermer
+            </button>
+            <button class="picking-footer-btn primary" id="btnExportPickingList">
+                <i class="fas fa-file-pdf"></i> Exporter PDF
             </button>
         </div>
     </div>

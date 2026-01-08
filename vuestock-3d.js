@@ -1282,6 +1282,516 @@ class View3DManager {
         console.log('✅ Mode inventaire terminé');
     }
 
+    // ===== CHEMIN OPTIMAL / MULTI-PICKING =====
+
+    // ✅ NOUVELLE MÉTHODE : Ouvrir le panel multi-recherche
+    openMultiSearchPanel() {
+        console.log('🗺️ Ouverture du panel chemin optimal');
+
+        this.multiSearchMode = true;
+        this.selectedArticles = [];
+        this.pathLine = null;
+        this.optimizedPath = null;
+
+        // Afficher le panel
+        document.getElementById('multiSearchPanel').classList.add('active');
+
+        // Masquer les autres panneaux
+        document.getElementById('controls3D').style.display = 'none';
+        document.getElementById('stats3D').style.display = 'none';
+
+        this.renderMultiArticlesList();
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Fermer le panel
+    closeMultiSearchPanel() {
+        document.getElementById('multiSearchPanel').classList.remove('active');
+
+        // Réafficher les panneaux normaux
+        document.getElementById('controls3D').style.display = 'block';
+        document.getElementById('stats3D').style.display = 'block';
+
+        // Nettoyer la ligne de chemin
+        this.clearPath();
+
+        this.multiSearchMode = false;
+        this.selectedArticles = [];
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Ajouter un article à la liste
+    async addArticleToPath() {
+        const input = document.getElementById('multiSearchInput');
+        const searchTerm = input.value.trim();
+
+        if (!searchTerm) return;
+
+        console.log('🔍 Recherche de:', searchTerm);
+
+        // Simuler une recherche (à remplacer par ton API)
+        const foundLocations = this.searchArticleLocations(searchTerm);
+
+        if (foundLocations.length === 0) {
+            alert(`Aucun article trouvé pour "${searchTerm}"`);
+            return;
+        }
+
+        // Prendre le premier résultat
+        const location = foundLocations[0];
+
+        // Vérifier si déjà ajouté
+        const alreadyAdded = this.selectedArticles.some(item =>
+            item.slot.id === location.slot.id
+        );
+
+        if (alreadyAdded) {
+            alert('Cet emplacement est déjà dans la liste');
+            return;
+        }
+
+        // Ajouter à la liste
+        this.selectedArticles.push({
+            name: searchTerm,
+            slot: location.slot,
+            rack: location.rack,
+            level: location.level
+        });
+
+        // Effacer l'input
+        input.value = '';
+
+        // Mettre à jour l'affichage
+        this.renderMultiArticlesList();
+
+        // Activer les boutons
+        this.updateMultiSearchButtons();
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Rechercher les emplacements d'un article
+    searchArticleLocations(searchTerm) {
+        const locations = [];
+
+        if (!window.vueStock || !window.vueStock.racks) return locations;
+
+        window.vueStock.racks.forEach(rack => {
+            if (rack.levels) {
+                rack.levels.forEach(level => {
+                    if (level.slots) {
+                        level.slots.forEach(slot => {
+                            if (slot.articles && slot.articles.length > 0) {
+                                const hasArticle = slot.articles.some(art =>
+                                    art.name && art.name.toLowerCase().includes(searchTerm.toLowerCase())
+                                );
+
+                                if (hasArticle) {
+                                    locations.push({ slot, level, rack });
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        return locations;
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Afficher la liste des articles
+    renderMultiArticlesList() {
+        const container = document.getElementById('multiArticlesList');
+
+        if (this.selectedArticles.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 20px; color: #adb5bd;">
+                    <i class="fas fa-box-open" style="font-size: 36px; margin-bottom: 10px;"></i>
+                    <p style="font-size: 13px;">Ajoutez des articles à collecter</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+
+        this.selectedArticles.forEach((item, index) => {
+            html += `
+                <div class="multi-article-item">
+                    <div class="multi-article-info">
+                        <div class="multi-article-name">${item.name}</div>
+                        <div class="multi-article-location">${item.slot.full_code || item.slot.code}</div>
+                    </div>
+                    <button class="multi-article-remove" onclick="view3DManager.removeArticleFromPath(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Retirer un article de la liste
+    removeArticleFromPath(index) {
+        this.selectedArticles.splice(index, 1);
+        this.renderMultiArticlesList();
+        this.updateMultiSearchButtons();
+
+        // Recalculer le chemin si existant
+        if (this.optimizedPath) {
+            this.clearPath();
+        }
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Mettre à jour les boutons
+    updateMultiSearchButtons() {
+        const calcBtn = document.getElementById('btnCalculatePath');
+        const listBtn = document.getElementById('btnShowPickingList');
+
+        const hasArticles = this.selectedArticles.length >= 2;
+
+        calcBtn.disabled = !hasArticles;
+        listBtn.disabled = !this.optimizedPath;
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Calculer le chemin optimal
+    calculateOptimalPath() {
+        if (this.selectedArticles.length < 2) {
+            alert('Ajoutez au moins 2 articles');
+            return;
+        }
+
+        console.log('🧮 Calcul du chemin optimal...');
+
+        // Obtenir les positions 3D de chaque emplacement
+        const locations = this.selectedArticles.map(item => {
+            const position = this.getSlot3DPosition(item.slot);
+            return {
+                ...item,
+                position: position
+            };
+        });
+
+        // Algorithme du plus proche voisin (greedy)
+        const optimized = this.nearestNeighborTSP(locations);
+
+        // Stocker le chemin
+        this.optimizedPath = optimized;
+
+        // Dessiner la ligne 3D
+        this.drawPathLine(optimized);
+
+        // Calculer les stats
+        this.calculatePathStats(optimized);
+
+        // Afficher les stats
+        document.getElementById('multiStats').style.display = 'grid';
+
+        // Activer le bouton liste
+        this.updateMultiSearchButtons();
+
+        console.log('✅ Chemin calculé:', optimized);
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Obtenir la position 3D d'un slot
+    getSlot3DPosition(slot) {
+        let position = new THREE.Vector3(0, 0, 0);
+
+        this.racks3D.forEach(rackGroup => {
+            rackGroup.traverse(child => {
+                if (child.userData && child.userData.type === 'slot' &&
+                    child.userData.slot.id === slot.id) {
+                    child.getWorldPosition(position);
+                }
+            });
+        });
+
+        return position;
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Algorithme du plus proche voisin (TSP simplifié)
+    nearestNeighborTSP(locations) {
+        if (locations.length === 0) return [];
+
+        const unvisited = [...locations];
+        const path = [];
+
+        // Commencer par le premier
+        let current = unvisited.shift();
+        path.push(current);
+
+        // Tant qu'il reste des emplacements
+        while (unvisited.length > 0) {
+            let nearestIndex = 0;
+            let nearestDistance = Infinity;
+
+            // Trouver le plus proche
+            unvisited.forEach((loc, index) => {
+                const distance = current.position.distanceTo(loc.position);
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearestIndex = index;
+                }
+            });
+
+            // Ajouter au chemin
+            current = unvisited.splice(nearestIndex, 1)[0];
+            path.push(current);
+        }
+
+        return path;
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Dessiner la ligne de chemin en 3D
+    drawPathLine(path) {
+        // Supprimer l'ancienne ligne
+        if (this.pathLine) {
+            this.scene.remove(this.pathLine);
+            this.pathLine = null;
+        }
+
+        if (path.length < 2) return;
+
+        // Créer les points de la ligne
+        const points = path.map(loc => loc.position);
+
+        // Créer la géométrie
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+        // Matériau de la ligne
+        const material = new THREE.LineBasicMaterial({
+            color: 0x2ecc71,
+            linewidth: 3,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        // Créer la ligne
+        this.pathLine = new THREE.Line(geometry, material);
+        this.pathLine.userData.isPathLine = true;
+        this.scene.add(this.pathLine);
+
+        // Ajouter des marqueurs numérotés sur chaque point
+        path.forEach((loc, index) => {
+            this.addPathMarker(loc.position, index + 1);
+        });
+
+        // Animer la caméra pour montrer tout le chemin
+        this.focusOnPath(path);
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Ajouter un marqueur numéroté
+    addPathMarker(position, number) {
+        // Créer un sprite avec le numéro
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+
+        // Fond cercle
+        ctx.fillStyle = '#2ecc71';
+        ctx.beginPath();
+        ctx.arc(32, 32, 28, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Contour blanc
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(32, 32, 28, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Numéro
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(number.toString(), 32, 32);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({
+            map: texture,
+            sizeAttenuation: false
+        });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(0.1, 0.1, 1);
+        sprite.position.copy(position);
+        sprite.position.y += 1;
+        sprite.userData.isPathMarker = true;
+
+        this.scene.add(sprite);
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Focuser sur le chemin
+    focusOnPath(path) {
+        if (path.length === 0) return;
+
+        // Calculer le centre et la taille du chemin
+        const center = new THREE.Vector3();
+        path.forEach(loc => center.add(loc.position));
+        center.divideScalar(path.length);
+
+        // Calculer la distance max depuis le centre
+        let maxDistance = 0;
+        path.forEach(loc => {
+            const dist = center.distanceTo(loc.position);
+            if (dist > maxDistance) maxDistance = dist;
+        });
+
+        // Positionner la caméra
+        const distance = maxDistance * 2.5;
+        const endPosition = new THREE.Vector3(
+            center.x + distance * 0.7,
+            center.y + distance * 0.5,
+            center.z + distance * 0.7
+        );
+
+        this.animateCameraTo(center, () => {
+            // Une fois centré, ajuster la distance
+            this.camera.position.copy(endPosition);
+            this.camera.lookAt(center);
+        });
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Calculer les stats du chemin
+    calculatePathStats(path) {
+        if (path.length < 2) return;
+
+        let totalDistance = 0;
+
+        for (let i = 0; i < path.length - 1; i++) {
+            const distance = path[i].position.distanceTo(path[i + 1].position);
+            totalDistance += distance;
+        }
+
+        // Convertir en mètres (1 unité 3D = ~0.4m selon ton scale)
+        const distanceInMeters = Math.round(totalDistance * 0.4);
+
+        // Temps estimé (vitesse de marche = 1.4 m/s = 5 km/h)
+        const timeInSeconds = distanceInMeters / 1.4;
+        const timeInMinutes = Math.ceil(timeInSeconds / 60);
+
+        // Afficher
+        document.getElementById('multiDistance').textContent = `${distanceInMeters}m`;
+        document.getElementById('multiTime').textContent = `${timeInMinutes}min`;
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Effacer le chemin
+    clearPath() {
+        // Supprimer la ligne
+        if (this.pathLine) {
+            this.scene.remove(this.pathLine);
+            this.pathLine = null;
+        }
+
+        // Supprimer les marqueurs
+        const toRemove = [];
+        this.scene.traverse(child => {
+            if (child.userData && child.userData.isPathMarker) {
+                toRemove.push(child);
+            }
+        });
+        toRemove.forEach(obj => this.scene.remove(obj));
+
+        // Réinitialiser l'état
+        this.optimizedPath = null;
+
+        // Masquer les stats
+        document.getElementById('multiStats').style.display = 'none';
+
+        // Mettre à jour les boutons
+        this.updateMultiSearchButtons();
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Afficher la liste de picking
+    showPickingList() {
+        if (!this.optimizedPath || this.optimizedPath.length === 0) return;
+
+        const modal = document.getElementById('pickingListModal');
+        const backdrop = document.getElementById('slotModalBackdrop');
+        const body = document.getElementById('pickingListBody');
+
+        let html = '';
+        let cumulativeDistance = 0;
+
+        this.optimizedPath.forEach((item, index) => {
+            let stepDistance = 0;
+            if (index > 0) {
+                stepDistance = this.optimizedPath[index - 1].position.distanceTo(item.position) * 0.4;
+                cumulativeDistance += stepDistance;
+            }
+
+            html += `
+                <div class="picking-step">
+                    <div class="picking-step-number">${index + 1}</div>
+                    <div class="picking-step-location">${item.slot.full_code || item.slot.code}</div>
+                    <div class="picking-step-article">
+                        <i class="fas fa-box"></i> ${item.name}
+                    </div>
+                    ${index > 0 ? `
+                        <div class="picking-step-distance">
+                            <i class="fas fa-walking"></i>
+                            ${Math.round(stepDistance)}m depuis le point précédent
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+
+        body.innerHTML = html;
+
+        backdrop.classList.add('active');
+        modal.classList.add('active');
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Fermer la liste de picking
+    closePickingList() {
+        const modal = document.getElementById('pickingListModal');
+        const backdrop = document.getElementById('slotModalBackdrop');
+
+        modal.classList.remove('active');
+        backdrop.classList.remove('active');
+    }
+
+    // ✅ NOUVELLE MÉTHODE : Exporter la liste en PDF
+    exportPickingList() {
+        if (!this.optimizedPath) return;
+
+        let report = `LISTE DE PICKING OPTIMISÉE\n`;
+        report += `============================\n\n`;
+        report += `Date : ${new Date().toLocaleString()}\n`;
+        report += `Nombre d'articles : ${this.optimizedPath.length}\n\n`;
+
+        const totalDistance = document.getElementById('multiDistance').textContent;
+        const totalTime = document.getElementById('multiTime').textContent;
+
+        report += `Distance totale : ${totalDistance}\n`;
+        report += `Temps estimé : ${totalTime}\n\n`;
+        report += `ORDRE DE COLLECTE\n`;
+        report += `------------------\n\n`;
+
+        this.optimizedPath.forEach((item, index) => {
+            report += `${index + 1}. ${item.slot.full_code || item.slot.code}\n`;
+            report += `   Article : ${item.name}\n`;
+
+            if (index > 0) {
+                const stepDistance = Math.round(
+                    this.optimizedPath[index - 1].position.distanceTo(item.position) * 0.4
+                );
+                report += `   Distance : ${stepDistance}m\n`;
+            }
+            report += `\n`;
+        });
+
+        // Télécharger
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `picking_list_${Date.now()}.txt`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        alert('📋 Liste de picking exportée !');
+    }
+
     focusOnSlot(slotId) {
         console.log('Focus on slot:', slotId);
         // TODO: Animer la caméra vers l'emplacement
@@ -1783,6 +2293,68 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnConfirmCheck')?.addEventListener('click', () => {
         if (view3DManager) {
             view3DManager.confirmInventoryCheck();
+        }
+    });
+
+    // ✅ NOUVEAUX ÉVÉNEMENTS : Chemin optimal
+    document.getElementById('btnOptimalPath')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.openMultiSearchPanel();
+        }
+    });
+
+    document.getElementById('closeMultiSearch')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.closeMultiSearchPanel();
+        }
+    });
+
+    document.getElementById('btnAddToPath')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.addArticleToPath();
+        }
+    });
+
+    document.getElementById('multiSearchInput')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('btnAddToPath')?.click();
+        }
+    });
+
+    document.getElementById('btnCalculatePath')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.calculateOptimalPath();
+        }
+    });
+
+    document.getElementById('btnShowPickingList')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.showPickingList();
+        }
+    });
+
+    document.getElementById('btnClearPath')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.clearPath();
+        }
+    });
+
+    // Modal picking list
+    document.getElementById('closePickingList')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.closePickingList();
+        }
+    });
+
+    document.getElementById('btnClosePickingList')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.closePickingList();
+        }
+    });
+
+    document.getElementById('btnExportPickingList')?.addEventListener('click', () => {
+        if (view3DManager) {
+            view3DManager.exportPickingList();
         }
     });
 });
