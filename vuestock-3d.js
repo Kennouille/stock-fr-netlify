@@ -625,7 +625,7 @@ class View3DManager {
         const intersects = this.raycaster.intersectObjects(this.scene.children, true);
 
         // ✅ Reset previous highlight avec animation
-        if (this.hoveredObject === object) return;
+        if (this.hoveredObject && this.hoveredObject === object) return;
             if (this.hoveredObject.material) {
                 this.hoveredObject.material.emissiveIntensity = 0.2;
             }
