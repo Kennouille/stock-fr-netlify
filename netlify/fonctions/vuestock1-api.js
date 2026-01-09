@@ -1,10 +1,28 @@
-// netlify/fonctions/vuestock1-api.js
 const { Pool } = require('pg');
 
-// Connexion à PostgreSQL
+// Connexion à PostgreSQL Supabase
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: {
+    rejectUnauthorized: false // IMPORTANT pour Supabase
+  },
+  // Options supplémentaires pour éviter les timeout
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 30000,
+  max: 5
+});
+
+// Test de connexion au démarrage (optionnel)
+let isDBConnected = false;
+
+pool.on('connect', () => {
+  console.log('✅ Connexion PostgreSQL établie');
+  isDBConnected = true;
+});
+
+pool.on('error', (err) => {
+  console.error('❌ Erreur pool PostgreSQL:', err);
+  isDBConnected = false;
 });
 
 exports.handler = async (event, context) => {
