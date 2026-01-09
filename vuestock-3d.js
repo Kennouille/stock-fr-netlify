@@ -28,44 +28,59 @@ class View3DManager {
         // Scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x1a1a2e);
-        this.scene.fog = new THREE.Fog(0x1a1a2e, 50, 200);
 
         // Camera
         this.camera = new THREE.PerspectiveCamera(
-            75,
+            60,
             container.clientWidth / container.clientHeight,
             0.1,
-            1000
+            500
         );
-        // ✅ Caméra plus proche pour mieux voir les détails
-        this.camera.position.set(15, 15, 15);
+        this.camera.position.set(0, 20, 30);
         this.camera.lookAt(0, 5, 0);
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
             canvas: canvas,
-            antialias: true,
-            alpha: true
+            antialias: true
         });
         this.renderer.setSize(container.clientWidth, container.clientHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimisation
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping; // ✅ Meilleur rendu des couleurs
-        this.renderer.toneMappingExposure = 1.2; // ✅ Ajuster l'exposition
-        this.renderer.outputEncoding = THREE.sRGBEncoding; // ✅ Couleurs correctes
 
-        // Lights
-        this.addLights();
+        // Lights simples mais efficaces
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        this.scene.add(ambientLight);
 
-        // Grid
-        this.addGrid();
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(20, 30, 20);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.left = -50;
+        dirLight.shadow.camera.right = 50;
+        dirLight.shadow.camera.top = 50;
+        dirLight.shadow.camera.bottom = -50;
+        this.scene.add(dirLight);
 
-        // ✅ Système de particules ambiantes
-        this.addAmbientParticles();
+        // Sol simple
+        const floorGeometry = new THREE.PlaneGeometry(200, 200);
+        const floorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2a2a3e,
+            roughness: 0.8
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        this.scene.add(floor);
 
-        // Controls (OrbitControls simulation simple)
-        this.setupSimpleControls();
+        // Grille simple
+        const gridHelper = new THREE.GridHelper(200, 50, 0x4a4a6e, 0x2a2a3e);
+        gridHelper.position.y = 0.01;
+        this.scene.add(gridHelper);
+
+        // Contrôles WASD + Souris (FPS-like)
+        this.setupFPSControls();
 
         // Events
         canvas.addEventListener('mousemove', this.onMouseMove, false);
@@ -200,96 +215,124 @@ class View3DManager {
         this.scene.add(this.particles);
     }
 
-    setupSimpleControls() {
-        // Simple orbit controls without library
-        let isDragging = false;
-        let previousMousePosition = { x: 0, y: 0 };
-        let rotation = { x: 0, y: 0 };
-        let distance = 50;
-        let target = new THREE.Vector3(0, 5, 0);
+    setupFPSControls() {
+        // État des touches
+        this.keys = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false,
+            up: false,
+            down: false
+        };
+
+        // Rotation de la caméra
+        this.cameraRotation = {
+            yaw: 0, // Horizontal
+            pitch: -0.3 // Vertical (légèrement vers le bas)
+        };
+
+        this.moveSpeed = 0.3;
+        this.mouseSensitivity = 0.002;
 
         const canvas = this.renderer.domElement;
 
-        const updateCamera = () => {
-            const phi = rotation.x;
-            const theta = rotation.y;
+        // Clic pour verrouiller la souris
+        let isLocked = false;
 
-            this.camera.position.x = target.x + distance * Math.sin(phi) * Math.cos(theta);
-            this.camera.position.y = target.y + distance * Math.sin(theta);
-            this.camera.position.z = target.z + distance * Math.cos(phi) * Math.cos(theta);
-            this.camera.lookAt(target);
-        };
-
-        canvas.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-        });
-
-        canvas.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const deltaX = e.clientX - previousMousePosition.x;
-                const deltaY = e.clientY - previousMousePosition.y;
-
-                rotation.x += deltaX * 0.01;
-                rotation.y += deltaY * 0.01;
-
-                // Limit vertical rotation
-                rotation.y = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, rotation.y));
-
-                previousMousePosition = { x: e.clientX, y: e.clientY };
-                updateCamera();
+        canvas.addEventListener('click', () => {
+            if (!isLocked) {
+                canvas.requestPointerLock();
             }
         });
 
-        canvas.addEventListener('mouseup', () => {
-            isDragging = false;
+        document.addEventListener('pointerlockchange', () => {
+            isLocked = document.pointerLockElement === canvas;
         });
 
-        canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            distance += e.deltaY * 0.05;
-            distance = Math.max(2, Math.min(100, distance));
-            updateCamera();
-        });
+        // Mouvement souris
+        document.addEventListener('mousemove', (e) => {
+            if (document.pointerLockElement === canvas) {
+                this.cameraRotation.yaw -= e.movementX * this.mouseSensitivity;
+                this.cameraRotation.pitch -= e.movementY * this.mouseSensitivity;
 
-        // Pan with right click
-        canvas.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-        });
-
-        let isPanning = false;
-        canvas.addEventListener('mousedown', (e) => {
-            if (e.button === 2) { // Right click
-                isPanning = true;
-                previousMousePosition = { x: e.clientX, y: e.clientY };
+                // Limiter le pitch
+                this.cameraRotation.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.cameraRotation.pitch));
             }
         });
 
-        canvas.addEventListener('mousemove', (e) => {
-            if (isPanning) {
-                const deltaX = e.clientX - previousMousePosition.x;
-                const deltaY = e.clientY - previousMousePosition.y;
-
-                const right = new THREE.Vector3();
-                const up = new THREE.Vector3(0, 1, 0);
-                this.camera.getWorldDirection(right);
-                right.cross(up).normalize();
-
-                target.add(right.multiplyScalar(-deltaX * 0.05));
-                target.y += deltaY * 0.05;
-
-                previousMousePosition = { x: e.clientX, y: e.clientY };
-                updateCamera();
+        // Touches clavier
+        document.addEventListener('keydown', (e) => {
+            switch(e.code) {
+                case 'KeyW': case 'ArrowUp': this.keys.forward = true; break;
+                case 'KeyS': case 'ArrowDown': this.keys.backward = true; break;
+                case 'KeyA': case 'ArrowLeft': this.keys.left = true; break;
+                case 'KeyD': case 'ArrowRight': this.keys.right = true; break;
+                case 'Space': this.keys.up = true; break;
+                case 'ShiftLeft': this.keys.down = true; break;
+                case 'Escape': document.exitPointerLock(); break;
             }
         });
 
-        canvas.addEventListener('mouseup', (e) => {
-            if (e.button === 2) {
-                isPanning = false;
+        document.addEventListener('keyup', (e) => {
+            switch(e.code) {
+                case 'KeyW': case 'ArrowUp': this.keys.forward = false; break;
+                case 'KeyS': case 'ArrowDown': this.keys.backward = false; break;
+                case 'KeyA': case 'ArrowLeft': this.keys.left = false; break;
+                case 'KeyD': case 'ArrowRight': this.keys.right = false; break;
+                case 'Space': this.keys.up = false; break;
+                case 'ShiftLeft': this.keys.down = false; break;
             }
         });
+    }
 
-        updateCamera();
+    // ✅ NOUVELLE MÉTHODE : Mettre à jour la position de la caméra
+    updateCameraPosition() {
+        // Direction de la caméra
+        const direction = new THREE.Vector3();
+        direction.x = Math.sin(this.cameraRotation.yaw);
+        direction.z = Math.cos(this.cameraRotation.yaw);
+        direction.y = 0;
+        direction.normalize();
+
+        // Direction droite
+        const right = new THREE.Vector3();
+        right.x = Math.sin(this.cameraRotation.yaw - Math.PI / 2);
+        right.z = Math.cos(this.cameraRotation.yaw - Math.PI / 2);
+        right.normalize();
+
+        // Déplacement
+        if (this.keys.forward) {
+            this.camera.position.add(direction.clone().multiplyScalar(this.moveSpeed));
+        }
+        if (this.keys.backward) {
+            this.camera.position.sub(direction.clone().multiplyScalar(this.moveSpeed));
+        }
+        if (this.keys.left) {
+            this.camera.position.sub(right.clone().multiplyScalar(this.moveSpeed));
+        }
+        if (this.keys.right) {
+            this.camera.position.add(right.clone().multiplyScalar(this.moveSpeed));
+        }
+        if (this.keys.up) {
+            this.camera.position.y += this.moveSpeed;
+        }
+        if (this.keys.down) {
+            this.camera.position.y -= this.moveSpeed;
+        }
+
+        // Limiter la hauteur minimale
+        this.camera.position.y = Math.max(1, this.camera.position.y);
+
+        // Orientation de la caméra
+        const lookDirection = new THREE.Vector3();
+        lookDirection.x = Math.sin(this.cameraRotation.yaw) * Math.cos(this.cameraRotation.pitch);
+        lookDirection.y = Math.sin(this.cameraRotation.pitch);
+        lookDirection.z = Math.cos(this.cameraRotation.yaw) * Math.cos(this.cameraRotation.pitch);
+
+        const lookAt = new THREE.Vector3();
+        lookAt.copy(this.camera.position).add(lookDirection);
+        this.camera.lookAt(lookAt);
     }
 
     loadRacks() {
@@ -312,85 +355,48 @@ class View3DManager {
     }
 
     createRack3D(rack) {
-        // ✅ Scale beaucoup plus grand pour voir les détails
-        const gridSize = 2; // Scale factor (augmenté de 0.4 à 2)
+        // Scale
+        const gridSize = 3; // Plus grand pour mieux voir
         const x = (rack.position_x || 0) * gridSize / 40;
         const z = (rack.position_y || 0) * gridSize / 40;
         const width = (rack.width || 3) * gridSize;
         const depth = (rack.depth || 2) * gridSize;
 
-        // ✅ Hauteur basée sur le nombre d'étages (beaucoup plus haute)
+        // Hauteur
         const levels = rack.levels || [];
-        const height = Math.max(4, levels.length * 2); // Chaque niveau = 2 unités
+        const height = Math.max(4, levels.length * 2.5);
 
-        // Créer le groupe pour l'étagère
+        // Groupe
         const rackGroup = new THREE.Group();
         rackGroup.userData = { rack: rack, type: 'rack' };
 
-        // ✅ Structure principale avec matériau amélioré
+        // Structure principale (simple et efficace)
         const geometry = new THREE.BoxGeometry(width, height, depth);
         const color = new THREE.Color(rack.color || '#4a90e2');
-
-        // Créer un matériau avec texture procédurale
         const material = new THREE.MeshStandardMaterial({
             color: color,
-            roughness: 0.4,
-            metalness: 0.6,
-            envMapIntensity: 0.8
+            roughness: 0.6,
+            metalness: 0.4
         });
-
-        // Ajouter un effet de bords brillants
-        const edgeMaterial = new THREE.MeshStandardMaterial({
-            color: 0xcccccc,
-            roughness: 0.2,
-            metalness: 0.9,
-            emissive: new THREE.Color(0x444444),
-            emissiveIntensity: 0.1
-        });
-
         const mesh = new THREE.Mesh(geometry, material);
-
-        // Ajouter un contour métallique
-        const edgesGeometry = new THREE.EdgesGeometry(geometry, 15);
-        const edgesMaterial = new THREE.LineBasicMaterial({
-            color: 0xffffff,
-            linewidth: 2,
-            transparent: true,
-            opacity: 0.3
-        });
-        const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
-        mesh.add(edges);
         mesh.position.y = height / 2;
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         rackGroup.add(mesh);
 
-        // Ajouter les étages si disponibles
+        // Ajouter les niveaux
         levels.forEach((level, index) => {
-            const levelY = 0.5 + (index * 2); // Chaque niveau à 2 unités de hauteur
+            const levelY = 1 + (index * 2.5);
 
-            // Ligne pour représenter l'étage
-            // ✅ Plateforme visible pour chaque étage
-            const platformGeometry = new THREE.BoxGeometry(width, 0.05, depth);
-            const platformMaterial = new THREE.MeshStandardMaterial({
-                color: 0x666666,
-                metalness: 0.8,
-                roughness: 0.2
-            });
-            const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+            // Plateforme
+            const platformGeom = new THREE.BoxGeometry(width, 0.1, depth);
+            const platformMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+            const platform = new THREE.Mesh(platformGeom, platformMat);
             platform.position.y = levelY;
             platform.castShadow = true;
-            platform.receiveShadow = true;
             rackGroup.add(platform);
 
-            // Bordure de la plateforme
-            const edgesGeometry = new THREE.EdgesGeometry(platformGeometry);
-            const edgesMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
-            const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
-            edges.position.y = levelY;
-            rackGroup.add(edges);
-
-            // Ajouter les emplacements
+            // Slots
             const slots = level.slots || [];
             slots.forEach((slot, slotIndex) => {
                 const slotMesh = this.createSlot3D(slot, slotIndex, slots.length, width, depth, levelY);
@@ -398,16 +404,30 @@ class View3DManager {
             });
         });
 
-        // Label
-        this.addLabel(rackGroup, rack.code || 'N/A', height);
+        // Label simple
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, 128, 64);
+        ctx.fillStyle = '#333';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(rack.code || 'N/A', 64, 42);
 
-        // Rotation
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMat = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.scale.set(2, 1, 1);
+        sprite.position.y = height + 1;
+        rackGroup.add(sprite);
+
+        // Position et rotation
+        rackGroup.position.set(x, 0, z);
         if (rack.rotation) {
             rackGroup.rotation.y = (rack.rotation * Math.PI) / 180;
         }
-
-        // Position
-        rackGroup.position.set(x, 0, z);
 
         this.scene.add(rackGroup);
         this.racks3D.push(rackGroup);
@@ -417,54 +437,26 @@ class View3DManager {
         const slotWidth = rackWidth / total;
         const slotX = -rackWidth / 2 + slotWidth / 2 + index * slotWidth;
 
-        // Calculer la couleur selon le remplissage
-        let color = 0x888888; // Gris = vide
+        // Couleur selon remplissage
+        let color = 0x666666; // Gris = vide
+
         if (slot.articles && slot.articles.length > 0) {
             const totalQty = slot.articles.reduce((sum, art) => sum + (art.quantity || 0), 0);
-            const capacity = slot.capacity || 100;
-            const fillRate = totalQty / capacity;
 
-            if (fillRate < 0.5) {
-                color = 0x2ecc71; // Vert
-            } else if (fillRate < 0.8) {
-                color = 0xf39c12; // Orange
-            } else {
-                color = 0xe74c3c; // Rouge
+            if (totalQty > 0) {
+                color = 0x2ecc71; // Vert = il y a du stock
             }
         }
 
-        // ✅ Slot avec matériau amélioré et effets
-        // ✅ Slots plus épais et plus visibles
-        const geometry = new THREE.BoxGeometry(slotWidth * 0.85, 0.3, rackDepth * 0.85);
+        const geometry = new THREE.BoxGeometry(slotWidth * 0.9, 0.4, rackDepth * 0.9);
         const material = new THREE.MeshStandardMaterial({
             color: color,
             emissive: color,
-            emissiveIntensity: 0.2,
-            roughness: 0.5,
-            metalness: 0.3,
-            transparent: true,
-            opacity: 0.9
+            emissiveIntensity: 0.3
         });
         const mesh = new THREE.Mesh(geometry, material);
-
-        // Ajouter un contour lumineux
-        const outlineGeometry = new THREE.BoxGeometry(slotWidth * 0.82, 0.12, rackDepth * 0.82);
-        const outlineMaterial = new THREE.MeshBasicMaterial({
-            color: color,
-            transparent: true,
-            opacity: 0.3,
-            side: THREE.BackSide
-        });
-        const outline = new THREE.Mesh(outlineGeometry, outlineMaterial);
-        mesh.add(outline);
-
-        // Animation de pulsation pour les slots pleins
-        if (slot.articles && slot.articles.length > 0) {
-            mesh.userData.animate = true;
-            mesh.userData.pulseSpeed = 0.001 + Math.random() * 0.001;
-            mesh.userData.pulsePhase = Math.random() * Math.PI * 2;
-        }
-        mesh.position.set(slotX, levelY, 0);
+        mesh.position.set(slotX, levelY + 0.3, 0);
+        mesh.castShadow = true;
         mesh.userData = { slot: slot, type: 'slot' };
 
         return mesh;
@@ -1865,45 +1857,10 @@ class View3DManager {
     animate() {
         this.animationId = requestAnimationFrame(this.animate);
 
-        // ✅ Animer les particules
-        if (this.particles && this.particleVelocities) {
-            const positions = this.particles.geometry.attributes.position.array;
-
-            for (let i = 0; i < this.particleVelocities.length; i++) {
-                positions[i * 3] += this.particleVelocities[i].x;
-                positions[i * 3 + 1] += this.particleVelocities[i].y;
-                positions[i * 3 + 2] += this.particleVelocities[i].z;
-
-                // Réinitialiser si sort des limites
-                if (positions[i * 3 + 1] > 40) {
-                    positions[i * 3 + 1] = 0;
-                }
-                if (Math.abs(positions[i * 3]) > 50) {
-                    positions[i * 3] = (Math.random() - 0.5) * 100;
-                }
-                if (Math.abs(positions[i * 3 + 2]) > 50) {
-                    positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
-                }
-            }
-
-            this.particles.geometry.attributes.position.needsUpdate = true;
+        // ✅ Mettre à jour la caméra avec les contrôles FPS
+        if (this.keys) {
+            this.updateCameraPosition();
         }
-
-        // ✅ Animer les slots (pulsation)
-        const time = Date.now() * 0.001;
-        this.racks3D.forEach(rackGroup => {
-            rackGroup.traverse(child => {
-                if (child.userData && child.userData.animate) {
-                    const scale = 1 + Math.sin(time * child.userData.pulseSpeed * 1000 + child.userData.pulsePhase) * 0.05;
-                    child.scale.set(1, scale, 1);
-
-                    // Effet de lueur pulsante
-                    if (child.material && child.material.emissiveIntensity !== undefined) {
-                        child.material.emissiveIntensity = 0.2 + Math.sin(time * 2 + child.userData.pulsePhase) * 0.1;
-                    }
-                }
-            });
-        });
 
         this.renderer.render(this.scene, this.camera);
     }
