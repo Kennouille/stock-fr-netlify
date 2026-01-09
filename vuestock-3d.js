@@ -302,87 +302,74 @@ class View3DManager {
     }
 
 
-
     createRack3D(rack) {
+      // ✅ SAFE ACCESS aux propriétés avec fallback
       const gridSize = 2;
-      const x = (rack.position.x || 0) * gridSize * 4;
-      const z = (rack.position.y || 0) * gridSize * 4;
+      const x = ((rack.position?.x || rack.x || 0) * gridSize * 4) || 0;
+      const z = ((rack.position?.y || rack.y || 0) * gridSize * 4) || 0;
       const width = (rack.width || 3) * gridSize;
       const depth = (rack.depth || 2) * gridSize;
-      const levels = rack.levels;
+      const levels = rack.levels || [];
       const height = Math.max(4, levels.length * 2);
 
-      // ✅ GROUPE PRINCIPAL RACK
       const rackGroup = new THREE.Group();
       rackGroup.userData = { rack, type: 'rack' };
 
-      // ✅ Structure rack (cadre)
-      const geometry = new THREE.BoxGeometry(width * 0.95, height, depth * 0.95); // 5% plus petit
+      // ✅ Cadre rack (5% plus petit)
+      const geometry = new THREE.BoxGeometry(width * 0.95, height, depth * 0.95);
       const color = new THREE.Color(rack.color || 0x4a90e2);
       const material = new THREE.MeshStandardMaterial({
-        color,
-        roughness: 0.4,
-        metalness: 0.6
+        color, roughness: 0.4, metalness: 0.6
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.position.y = height / 2;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      rackGroup.add(mesh); // ✅ Dans rackGroup
+      rackGroup.add(mesh);
 
-      // ✅ ✅ POUR CHAQUE LEVEL → Crée un GROUPE LEVEL
+      // ✅ Levels dans racks
       levels.forEach((level, index) => {
-        const levelY = (index * 1.2) + 0.6; // Position dans le rack
-
-        // GROUPE LEVEL (contient platforms + slots)
+        const levelY = (index * 1.2) + 0.6;
         const levelGroup = new THREE.Group();
         levelGroup.userData = { level, type: 'level' };
         levelGroup.position.y = levelY;
 
-        // Platform du level (dans SON groupe)
-        const platformGeometry = new THREE.BoxGeometry(width * 0.9, 0.08, depth * 0.9); // Plus petit
+        // Platform
+        const platformGeometry = new THREE.BoxGeometry(width * 0.9, 0.08, depth * 0.9);
         const platformMaterial = new THREE.MeshStandardMaterial({
-          color: 0x444444,
-          metalness: 0.7,
-          roughness: 0.3
+          color: 0x444444, metalness: 0.7, roughness: 0.3
         });
         const platform = new THREE.Mesh(platformGeometry, platformMaterial);
         platform.receiveShadow = true;
-        levelGroup.add(platform); // ✅ Dans levelGroup
+        levelGroup.add(platform);
 
-        // ✅ ✅ SLOTS dans le levelGroup
+        // ✅ Slots dans levelGroup
         const slots = level.slots || [];
         slots.forEach((slot, slotIndex) => {
-          const slotWidth = (width * 0.9) / slots.length;
-          const slotX = - (width * 0.45) + (slotIndex * slotWidth) + (slotWidth / 2);
+          const slotWidth = (width * 0.9) / Math.max(1, slots.length);
+          const slotX = -(width * 0.45) + (slotIndex * slotWidth) + (slotWidth / 2);
 
-          // Slot geometry (taille contrôlée)
           const slotGeometry = new THREE.BoxGeometry(slotWidth * 0.8, 0.5, depth * 0.8);
-          const slotColor = slot.articles && slot.articles.length > 0 ? 0x4CAF50 : 0xB0BEC5;
+          const slotColor = (slot.articles?.length > 0) ? 0x4CAF50 : 0xB0BEC5;
           const slotMaterial = new THREE.MeshStandardMaterial({
-            color: slotColor,
-            roughness: 0.2,
-            metalness: 0.1,
-            emissive: new THREE.Color(0x222222),
-            emissiveIntensity: 0.2,
+            color: slotColor, roughness: 0.2, metalness: 0.1,
+            emissive: new THREE.Color(0x222222), emissiveIntensity: 0.2,
             side: THREE.DoubleSide
           });
 
           const slotMesh = new THREE.Mesh(slotGeometry, slotMaterial);
-          slotMesh.position.set(slotX, -0.1, 0); // Dans le level
+          slotMesh.position.set(slotX, -0.1, 0);
           slotMesh.castShadow = true;
           slotMesh.receiveShadow = true;
           slotMesh.userData = { slot, type: 'slot' };
 
-          // Articles dans le slot
-          if(slot.articles && slot.articles.length > 0) {
+          // Articles
+          if(slot.articles?.length > 0) {
             slot.articles.forEach(article => {
               const articleGeometry = new THREE.BoxGeometry(slotWidth * 0.6, 0.35, depth * 0.6);
               const articleMaterial = new THREE.MeshStandardMaterial({
-                color: 0xFF9800,
-                roughness: 0.3,
-                emissive: new THREE.Color(0x664400),
-                emissiveIntensity: 0.4,
+                color: 0xFF9800, roughness: 0.3,
+                emissive: new THREE.Color(0x664400), emissiveIntensity: 0.4,
                 side: THREE.DoubleSide
               });
               const articleMesh = new THREE.Mesh(articleGeometry, articleMaterial);
@@ -391,15 +378,16 @@ class View3DManager {
             });
           }
 
-          levelGroup.add(slotMesh); // ✅ Dans levelGroup
+          levelGroup.add(slotMesh);
         });
 
-        rackGroup.add(levelGroup); // ✅ levelGroup dans rackGroup
+        rackGroup.add(levelGroup);
       });
 
-      // Position finale
+      // ✅ Rotation safe
       if(rack.rotation) rackGroup.rotation.y = (rack.rotation * Math.PI) / 180;
       rackGroup.position.set(x, 0, z);
+
       this.scene.add(rackGroup);
       this.racks3D.push(rackGroup);
     }
