@@ -30,9 +30,10 @@ class View3DManager {
         this.scene.background = new THREE.Color(0x1a1a2e);
         this.scene.fog = new THREE.Fog(0x1a1a2e, 50, 200);
 
-        // Camera ✅ OPTIMISÉE
-        this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 300);
-        this.camera.position.set(25, 20, 25); // Position idéale
+        // ✅ CAMÉRA ADAPTÉE à la taille réelle (1200+ unités)
+        this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 2000); // far=2000
+        this.camera.position.set(800, 400, 800); // Vue d'ensemble
+
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -257,11 +258,12 @@ class View3DManager {
         });
 
         canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            distance += e.deltaY * 0.05;
-            distance = Math.max(10, Math.min(80, distance));
-            updateCamera();
+          e.preventDefault();
+          distance += e.deltaY * 0.05;
+          distance = Math.max(50, Math.min(1500, distance)); // ✅ 50-1500 au lieu de 10-80
+          updateCamera();
         });
+
 
         canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -284,8 +286,7 @@ class View3DManager {
           this.createRack3D(rack);
         });
 
-        // ✅ SUPPRIMEZ centerSceneOnRacks() → MAUVAISE position absolue
-        // this.centerSceneOnRacks(); ❌ ENLEVER ÇA
+        this.centerCameraOnRacks();
 
         this.updateStats();
         this.drawMinimap();
@@ -1919,21 +1920,27 @@ class View3DManager {
         this.renderer.dispose();
     }
 
-    centerSceneOnRacks() {
-        const box = new THREE.Box3().setFromObject(this.scene);
-        const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const cameraDistance = maxDim * 1.5; // Distance adaptée à la taille de la scène
+    centerCameraOnRacks() {
+      if(this.racks3D.length === 0) return;
 
-        this.camera.position.set(
-            center.x + cameraDistance,
-            center.y + cameraDistance * 0.5,
-            center.z + cameraDistance
-        );
-        this.camera.lookAt(center);
-        if (this.controls) this.controls.target.copy(center); // Si OrbitControls est utilisé
+      // Calcule bounding box de TOUS racks
+      const box = new THREE.Box3();
+      this.racks3D.forEach(rack => box.expandByObject(rack));
+
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+
+      // Position caméra optimale
+      const fov = this.camera.fov * (Math.PI / 180);
+      const distance = Math.abs(maxDim / Math.sin(fov / 2)) * 1.5;
+
+      this.camera.position.set(center.x + distance * 0.5, center.y + distance * 0.3, center.z + distance * 0.5);
+      this.camera.lookAt(center);
+
+      console.log(`📷 Caméra centrée: center=${center.x.toFixed(0)},${center.y.toFixed(0)},${center.z.toFixed(0)} distance=${distance.toFixed(0)}`);
     }
+
 
     createArticleMesh(article) {
         // Créer une icône simple pour l'article
