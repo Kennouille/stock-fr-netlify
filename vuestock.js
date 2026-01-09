@@ -958,25 +958,6 @@ class CanvasManager {
     }
 }
 
-// ===== VUE 3D =====
-
-async function open3DView() {
-    console.log('Ouverture de la vue 3D');
-    const modal3D = document.getElementById('modal3D');
-
-    // ✅ D'ABORD afficher le modal
-    modal3D.classList.add('active');
-
-    // ✅ PUIS attendre un peu que le DOM soit prêt
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    // ✅ ENSUITE initialiser Three.js
-    if (!window.vueStock3D) {
-        window.vueStock3D = new VueStock3D();
-        await window.vueStock3D.init();
-    }
-}
-
 
 // vuestock.js - Version 1.0 - Structure de base
 class VueStock {
@@ -1819,6 +1800,20 @@ class VueStock {
                 this.canvasManager.addRackToCanvas(newRack);
             }
         });
+    }
+
+    // ===== VUE 3D =====
+    open3DView = async () => {
+        console.log('Ouverture de la vue 3D');
+        const modal3D = document.getElementById('modal3D');
+
+        modal3D.classList.add('active');
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        if (!window.vueStock3D) {
+            window.vueStock3D = new VueStock3D();
+            await window.vueStock3D.init();
+        }
     }
 
     // ===== RECHERCHE D'ARTICLE =====
