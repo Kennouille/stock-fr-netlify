@@ -41,117 +41,129 @@ exports.handler = async (event) => {
 
   if (action === 'get-config') {
     try {
-        const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+      const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
 
-        // 1. Charger les étagères
-        const racksResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?select=*&order=rack_code.asc`, {
-            headers: {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`
-            }
-        });
-
-        if (!racksResponse.ok) {
-            throw new Error(`Supabase error for racks: ${racksResponse.status}`);
+      // ✅ 1. Charger les racks
+      const racksResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?select=*&order=rack_code.asc`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
         }
+      });
 
-        const racks = await racksResponse.json();
+      if (!racksResponse.ok) {
+        throw new Error(`Supabase racks error: ${racksResponse.status}`);
+      }
 
-        // 2. Charger les niveaux
-        const levelsResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?select=*&order=display_order.asc`, {
-            headers: {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`
-            }
-        });
+      const racks = await racksResponse.json();
 
-        let levels = [];
-        if (levelsResponse.ok) {
-            levels = await levelsResponse.json();
+      // ✅ 2. Charger les levels
+      const levelsResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?select=*&order=display_order.asc`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
         }
+      });
 
-        // 3. Charger les emplacements
-        const slotsResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots?select=*&order=display_order.asc`, {
-            headers: {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`
-            }
-        });
+      const levels = levelsResponse.ok ? await levelsResponse.json() : [];
 
-        let slots = [];
-        if (slotsResponse.ok) {
-            slots = await slotsResponse.json();
+      // ✅ 3. Charger les slots
+      const slotsResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots?select=*&order=display_order.asc`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
         }
+      });
 
-        // 4. Structurer les données
-        const racksWithLevels = racks.map(rack => {
-            const rackLevels = levels
-                .filter(level => level.rack_id === rack.id)
-                .map(level => {
-                    const levelSlots = slots
-                        .filter(slot => slot.level_id === level.id)
-                        .map(slot => ({
-                            id: slot.id,
-                            code: slot.slot_code,
-                            level_id: slot.level_id,
-                            display_order: slot.display_order,
-                            full_code: `${rack.rack_code}-${level.level_code}-${slot.slot_code}`,
-                            status: slot.status,
-                            capacity: slot.capacity,
-                            created_at: slot.created_at
-                        }));
+      const slots = slotsResponse.ok ? await slotsResponse.json() : [];
 
-                    return {
-                        id: level.id,
-                        code: level.level_code,
-                        rack_id: level.rack_id,
-                        display_order: level.display_order,
-                        created_at: level.created_at,
-                        slots: levelSlots
-                    };
-                });
+      // ✅ 4. Charger les articles
+      const articlesResponse = await fetch(`${supabaseUrl}/rest/v1/w_articles?select=*&actif=eq.true`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      });
+
+      const articles = articlesResponse.ok ? await articlesResponse.json() : [];
+
+      // ✅ 5. Assembler la structure complète
+      const completeData = racks.map(rack => {
+        const rackLevels = levels.filter(l => l.rack_id === rack.id).map(level => {
+          const levelSlots = slots.filter(s => s.level_id === level.id).map(slot => {
+            // Trouver les articles dans ce slot
+            const slotArticles = articles.filter(art =>
+              art.rack_id === rack.id &&
+              art.level_id === level.id &&
+              art.slot_id === slot.id
+            ).map(art => ({
+              id: art.id,
+              name: art.nom,
+              barcode: art.code_barre,
+              photo: art.photo_url,
+              quantity: parseInt(art.stock_actuel) || 0,
+              reserved: parseInt(art.stock_reserve) || 0,
+              price: parseFloat(art.prix_unitaire) || 0
+            }));
 
             return {
-                id: rack.id,
-                code: rack.rack_code,
-                name: rack.display_name,
-                position_x: rack.position_x,
-                position_y: rack.position_y,
-                rotation: rack.rotation,
-                width: rack.width,
-                depth: rack.depth,
-                color: rack.color,
-                created_at: rack.created_at,
-                levels: rackLevels
+              id: slot.id,
+              code: slot.slot_code,
+              full_code: slot.full_code,
+              capacity: slot.capacity || 100,
+              display_order: slot.display_order,
+              status: slotArticles.length > 0 ? 'occupied' : 'free',
+              articles: slotArticles
             };
+          });
+
+          return {
+            id: level.id,
+            code: level.level_code,
+            display_order: level.display_order,
+            slots: levelSlots
+          };
         });
 
         return {
-            statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            body: JSON.stringify({
-                success: true,
-                data: racksWithLevels,
-                count: racksWithLevels.length
-            })
+          id: rack.id,
+          code: rack.rack_code,
+          name: rack.display_name,
+          position_x: rack.position_x || 100,
+          position_y: rack.position_y || 100,
+          rotation: rack.rotation || 0,
+          width: rack.width || 3,
+          depth: rack.depth || 2,
+          color: rack.color || '#4a90e2',
+          levels: rackLevels
         };
+      });
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: true,
+          data: completeData,
+          count: completeData.length
+        })
+      };
 
     } catch (error) {
-        console.error('❌ Error in get-config:', error);
-        return {
-            statusCode: 500,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            body: JSON.stringify({
-                success: false,
-                error: error.message
-            })
-        };
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: error.message
+        })
+      };
     }
   }
 
