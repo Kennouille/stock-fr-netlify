@@ -770,16 +770,38 @@ class VueStock3D {
     // ==================== UI ====================
 
     createUI() {
-        // Le HTML a déjà été créé dans createCanvas()
-        // Initialiser les éléments
-        this.ui.hud = {
-            position: document.getElementById('hud-position'),
-            mode: document.getElementById('hud-mode')
+        // ✅ INITIALISEZ d'abord l'objet ui
+        this.ui = {
+            hud: {
+                position: document.getElementById('hud-position'),
+                mode: document.getElementById('hud-mode')
+            },
+            levelPanel: document.getElementById('level-panel'),
+            levelContent: document.getElementById('level-content'),
+            levelTitle: document.getElementById('level-title')
         };
 
-        this.ui.levelPanel = document.getElementById('level-panel');
-        this.ui.levelContent = document.getElementById('level-content');
-        this.ui.levelTitle = document.getElementById('level-title');
+        // ✅ Vérifiez que les éléments existent
+        if (!this.ui.hud.position) {
+            console.warn('⚠️ Élément HUD position non trouvé');
+            // Créez-le si nécessaire
+            const hud = document.querySelector('.vuestock3d-hud');
+            if (hud) {
+                hud.innerHTML = `
+                    <div class="hud-position">
+                        <span class="hud-label">Position:</span>
+                        <span class="hud-value" id="hud-position">0, 0</span>
+                    </div>
+                    <div class="hud-mode">
+                        <span class="hud-label">Mode:</span>
+                        <span class="hud-value" id="hud-mode">Navigation</span>
+                    </div>
+                `;
+                // Réinitialisez les références
+                this.ui.hud.position = document.getElementById('hud-position');
+                this.ui.hud.mode = document.getElementById('hud-mode');
+            }
+        }
     }
 
     showLevelPanel(levelData) {
@@ -1075,9 +1097,16 @@ class VueStock3D {
         this.camera.position.copy(this.playerPosition);
         this.camera.rotation.set(this.mouseY, this.playerRotation, 0, 'YXZ');
 
-        // Mettre à jour le HUD
-        this.ui.hud.position.textContent =
-            `${Math.round(this.playerPosition.x)}, ${Math.round(this.playerPosition.z)}`;
+        // ✅ CORRECTION : Vérifier si les éléments UI existent avant de les modifier
+        if (this.ui && this.ui.hud && this.ui.hud.position) {
+            this.ui.hud.position.textContent =
+                `${Math.round(this.playerPosition.x)}, ${Math.round(this.playerPosition.z)}`;
+        }
+
+        // ✅ Optionnel : Mettre à jour aussi le mode si l'élément existe
+        if (this.ui && this.ui.hud && this.ui.hud.mode) {
+            // Vous pouvez mettre à jour le mode si nécessaire
+        }
     }
 
     animate() {

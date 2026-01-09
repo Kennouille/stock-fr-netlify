@@ -283,11 +283,24 @@
         <div class="view-3d-container">
             <canvas id="canvas3D"></canvas>
 
+            <!-- ✅ AJOUTEZ ICI le HUD (juste après le canvas) -->
+            <div class="vuestock3d-hud">
+                <div class="hud-position">
+                    <span class="hud-label">Position:</span>
+                    <span class="hud-value" id="hud-position">0, 0</span>
+                </div>
+                <div class="hud-mode">
+                    <span class="hud-label">Mode:</span>
+                    <span class="hud-value" id="hud-mode">Navigation</span>
+                </div>
+            </div>
+
             <div class="loading-3d" id="loading3D">
                 <div class="spinner-3d"></div>
                 <p>Chargement de la vue 3D...</p>
             </div>
 
+            <!-- ... le reste de votre code 3D existant ... -->
             <div class="controls-3d" id="controls3D" style="display: none;">
                 <h3><i class="fas fa-sliders-h"></i> Contrôles</h3>
 
