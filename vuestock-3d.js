@@ -291,7 +291,6 @@ class View3DManager {
         updateCamera();
     }
     
-
     loadRacks() {
         console.log('📦 Chargement des étagères en 3D');
 
