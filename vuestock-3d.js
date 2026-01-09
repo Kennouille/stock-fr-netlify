@@ -32,7 +32,10 @@ class View3DManager {
 
         // ✅ CAMÉRA ADAPTÉE à la taille réelle (1200+ unités)
         this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 2000); // far=2000
-        this.camera.position.set(800, 400, 800); // Vue d'ensemble
+        this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 2000);
+        this.camera.position.set(0, 15, 30); // DEVANT la grille
+        this.camera.lookAt(0, 5, 0); // Regarde le centre
+
 
 
         // Renderer
@@ -289,31 +292,12 @@ class View3DManager {
 
         if (!result.success) throw new Error(result.error);
 
-        // ✅ CRÉER racks SANS recentrage
-        // DEBUG VISUEL - Cube ROUGE géant sur chaque rack
-        result.data.forEach((rack, index) => {
+        // ✅ SEULEMENT ÇA - pas de cubes debug
+        result.data.forEach(rack => {
           this.createRack3D(rack);
-
-          // ✅ CUBE ROUGE DEBUG 3m x 3m x 3m
-          const debugGeometry = new THREE.BoxGeometry(3, 3, 3);
-          const debugMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff0000,
-            wireframe: true,
-            side: THREE.DoubleSide
-          });
-          const debugCube = new THREE.Mesh(debugGeometry, debugMaterial);
-          debugCube.position.set(
-            (rack.position_x || 0) * 1.6,  // Même échelle que racks
-            1.5,
-            (rack.position_y || 0) * 1.6
-          );
-          this.scene.add(debugCube);
-          console.log(`🔴 Debug cube ${index + 1} à`, debugCube.position);
         });
 
-
-        this.centerCameraOnRacks();
-
+        this.centerCameraOnRacks(); // Centre caméra automatiquement
         this.updateStats();
         this.drawMinimap();
 
@@ -323,6 +307,7 @@ class View3DManager {
         alert('Erreur: ' + error.message);
       }
     }
+
 
 
 
