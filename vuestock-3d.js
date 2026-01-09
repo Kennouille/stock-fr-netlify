@@ -30,9 +30,14 @@ class View3DManager {
         this.scene.background = new THREE.Color(0x1a1a2e);
         this.scene.fog = new THREE.Fog(0x1a1a2e, 50, 200);
 
-        // Camera ✅ OPTIMISÉE
+        // Camera
         this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 300);
-        this.camera.position.set(25, 20, 25); // Position idéale
+        this.camera.position.set(30, 25, 30); // Vue d'ensemble + haute
+
+
+        // ✅ Caméra plus proche pour mieux voir les détails
+        this.camera.position.set(15, 15, 15);
+        this.camera.lookAt(0, 5, 0);
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -41,12 +46,12 @@ class View3DManager {
             alpha: true
         });
         this.renderer.setSize(container.clientWidth, container.clientHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimisation
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.2;
-        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping; // ✅ Meilleur rendu des couleurs
+        this.renderer.toneMappingExposure = 1.2; // ✅ Ajuster l'exposition
+        this.renderer.outputEncoding = THREE.sRGBEncoding; // ✅ Couleurs correctes
 
         // Lights
         this.addLights();
@@ -57,25 +62,18 @@ class View3DManager {
         // ✅ Système de particules ambiantes
         this.addAmbientParticles();
 
-        // ✅ NETTOYAGE OBLIGATOIRE des anciens event listeners
-        const events = ['mousedown', 'mousemove', 'mouseup', 'wheel', 'contextmenu'];
-        events.forEach(event => {
-            canvas.removeEventListener(event, canvas[`on${event}`]);
-            canvas[`on${event}`] = null;
-        });
-
-        // ✅ Controls NOUVEAUX (navigation fluide)
+        // Controls (OrbitControls simulation simple)
         this.setupSimpleControls();
 
-        // ✅ Mouse events INTERACTIONS (raycast, tooltips) - APRÈS controls
-        canvas.addEventListener('mousemove', this.onMouseMove.bind(this), false);
-        canvas.addEventListener('click', this.onMouseClick.bind(this), false);
-        window.addEventListener('resize', this.onWindowResize.bind(this), false);
+        // Events
+        canvas.addEventListener('mousemove', this.onMouseMove, false);
+        canvas.addEventListener('click', this.onMouseClick, false);
+        window.addEventListener('resize', this.onWindowResize, false);
 
         // Load data
         this.loadRacks();
 
-        // Centre dynamique
+        // Remplace le lookAt fixe par un calcul dynamique
         this.centerSceneOnRacks();
 
         // Start animation
@@ -87,9 +85,8 @@ class View3DManager {
         document.getElementById('stats3D').style.display = 'block';
         document.getElementById('minimap3D').style.display = 'block';
 
-        console.log('✅ Vue 3D initialisée - Navigation OK');
+        console.log('✅ Vue 3D initialisée');
     }
-
 
     addLights() {
         // ✅ Ambient light améliorée
