@@ -28,7 +28,7 @@ class View3DManager {
         // Scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x1a1a2e);
-        this.scene.fog = new THREE.Fog(0x1a1a2e, 50, 200);
+        this.scene.fog = null;
 
         // ✅ CAMÉRA ADAPTÉE à la taille réelle (1200+ unités)
         this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 2000); // far=2000
@@ -48,6 +48,15 @@ class View3DManager {
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.2;
         this.renderer.outputEncoding = THREE.sRGBEncoding;
+
+        // 🚨 TEST URGENT - Cube vert 10m visible partout
+        const testGeometry = new THREE.BoxGeometry(10, 10, 10);
+        const testMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const testCube = new THREE.Mesh(testGeometry, testMaterial);
+        testCube.position.set(0, 5, 0);
+        this.scene.add(testCube);
+        console.log('🟢 Cube test ajouté');
+
 
         // Lights
         this.addLights();
@@ -281,10 +290,27 @@ class View3DManager {
         if (!result.success) throw new Error(result.error);
 
         // ✅ CRÉER racks SANS recentrage
-        result.data.forEach(rack => {
-          console.log('Rack data:', rack); // DEBUG
+        // DEBUG VISUEL - Cube ROUGE géant sur chaque rack
+        result.data.forEach((rack, index) => {
           this.createRack3D(rack);
+
+          // ✅ CUBE ROUGE DEBUG 3m x 3m x 3m
+          const debugGeometry = new THREE.BoxGeometry(3, 3, 3);
+          const debugMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            wireframe: true,
+            side: THREE.DoubleSide
+          });
+          const debugCube = new THREE.Mesh(debugGeometry, debugMaterial);
+          debugCube.position.set(
+            (rack.position_x || 0) * 1.6,  // Même échelle que racks
+            1.5,
+            (rack.position_y || 0) * 1.6
+          );
+          this.scene.add(debugCube);
+          console.log(`🔴 Debug cube ${index + 1} à`, debugCube.position);
         });
+
 
         this.centerCameraOnRacks();
 
@@ -1858,7 +1884,13 @@ class View3DManager {
     }
 
     animate() {
-        this.animationId = requestAnimationFrame(this.animate);
+        if (!this.animationId) {
+            this.animationId = requestAnimationFrame(this.animate.bind(this));
+        }
+
+        console.log('🧮 Racks visibles:', this.racks3D.length); // DEBUG
+
+        this.renderer.render(this.scene, this.camera);
 
         // ✅ Animer les particules
         if (this.particles && this.particleVelocities) {
