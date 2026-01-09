@@ -1,31 +1,9 @@
-const { Pool } = require('pg');
-
-// Connexion à PostgreSQL Supabase
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false // IMPORTANT pour Supabase
-  },
-  // Options supplémentaires pour éviter les timeout
-  connectionTimeoutMillis: 5000,
-  idleTimeoutMillis: 30000,
-  max: 5
-});
-
-// Test de connexion au démarrage (optionnel)
-let isDBConnected = false;
-
-pool.on('connect', () => {
-  console.log('✅ Connexion PostgreSQL établie');
-  isDBConnected = true;
-});
-
-pool.on('error', (err) => {
-  console.error('❌ Erreur pool PostgreSQL:', err);
-  isDBConnected = false;
-});
-
+// vuestock1-api.js - Version avec API REST Supabase
 exports.handler = async (event, context) => {
+  // Variables d'environnement
+  const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+  const supabaseKey = process.env.SUPABASE_KEY;
+
   // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -43,26 +21,39 @@ exports.handler = async (event, context) => {
     };
   }
 
+  // Vérifier la clé Supabase
+  if (!supabaseKey) {
+    console.error('❌ SUPABASE_KEY manquante');
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({
+        success: false,
+        error: 'Supabase key not configured'
+      })
+    };
+  }
+
   try {
     // Récupérer l'action depuis le query string
-    const params = new URLSearchParams(event.queryStringParameters || '');
-    const action = params.get('action');
+    const params = event.queryStringParameters || {};
+    const action = params.action;
 
     console.log('📡 API Action:', action);
 
     switch (action) {
       case 'get-3d-data':
-        return await get3DData(event, headers);
+        return await get3DData(supabaseUrl, supabaseKey, headers);
 
       case 'update-quantity':
         if (event.httpMethod === 'PUT') {
-          return await updateQuantity(event, headers);
+          return await updateQuantity(event, supabaseUrl, supabaseKey, headers);
         }
         break;
 
       case 'level-interaction':
         if (event.httpMethod === 'POST') {
-          return await logLevelInteraction(event, headers);
+          return await logLevelInteraction(event, supabaseUrl, supabaseKey, headers);
         }
         break;
 
@@ -84,79 +75,125 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         success: false,
-        error: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        error: error.message
       })
     };
   }
 };
 
-// Fonction pour récupérer les données 3D
-async function get3DData(event, headers) {
+// ==================== FONCTION GET 3D DATA ====================
+async function get3DData(supabaseUrl, supabaseKey, headers) {
   console.log('📦 Chargement des données 3D...');
 
-  const query = `
-    SELECT
-      r.id,
-      r.rack_code as code,
-      r.display_name as name,
-      r.position_x,
-      r.position_y,
-      r.rotation,
-      r.width,
-      r.depth,
-      r.color,
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'id', l.id,
-            'code', l.level_code,
-            'order', l.display_order,
-            'height', l.height,
-            'is_active', l.is_active,
-            'slots', COALESCE(
-              (SELECT json_agg(
-                json_build_object(
-                  'id', s.id,
-                  'code', s.slot_code,
-                  'full_code', s.full_code,
-                  'capacity', s.capacity,
-                  'status', s.status
-                )
-                ORDER BY s.display_order
-              )
-              FROM w_vuestock_slots s
-              WHERE s.level_id = l.id),
-              '[]'::json
-            )
-          )
-          ORDER BY l.display_order
-        ) FILTER (WHERE l.id IS NOT NULL),
-        '[]'::json
-      ) as levels
-    FROM w_vuestock_racks r
-    LEFT JOIN w_vuestock_levels l ON l.rack_id = r.id AND l.is_active = true
-    GROUP BY r.id
-    ORDER BY r.position_x, r.position_y;
-  `;
+  try {
+    // Récupérer tous les racks
+    const racksResponse = await fetch(
+      `${supabaseUrl}/rest/v1/w_vuestock_racks?select=*&order=position_x,position_y`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      }
+    );
 
-  const result = await pool.query(query);
+    if (!racksResponse.ok) {
+      throw new Error(`Erreur racks: ${racksResponse.status}`);
+    }
 
-  console.log(`✅ ${result.rows.length} racks chargés pour la vue 3D`);
+    const racks = await racksResponse.json();
+    console.log(`✅ ${racks.length} racks récupérés`);
 
-  return {
-    statusCode: 200,
-    headers,
-    body: JSON.stringify({
-      success: true,
-      data: result.rows,
-      timestamp: new Date().toISOString()
-    })
-  };
+    // Pour chaque rack, récupérer ses niveaux et slots
+    const racksWithData = await Promise.all(
+      racks.map(async (rack) => {
+        // Récupérer les niveaux du rack
+        const levelsResponse = await fetch(
+          `${supabaseUrl}/rest/v1/w_vuestock_levels?rack_id=eq.${rack.id}&is_active=eq.true&select=*&order=display_order`,
+          {
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`
+            }
+          }
+        );
+
+        const levels = levelsResponse.ok ? await levelsResponse.json() : [];
+
+        // Pour chaque niveau, récupérer ses slots
+        const levelsWithSlots = await Promise.all(
+          levels.map(async (level) => {
+            const slotsResponse = await fetch(
+              `${supabaseUrl}/rest/v1/w_vuestock_slots?level_id=eq.${level.id}&select=*&order=display_order`,
+              {
+                headers: {
+                  'apikey': supabaseKey,
+                  'Authorization': `Bearer ${supabaseKey}`
+                }
+              }
+            );
+
+            const slots = slotsResponse.ok ? await slotsResponse.json() : [];
+
+            return {
+              id: level.id,
+              code: level.level_code,
+              order: level.display_order,
+              height: level.height,
+              is_active: level.is_active,
+              slots: slots.map(slot => ({
+                id: slot.id,
+                code: slot.slot_code,
+                full_code: slot.full_code,
+                capacity: slot.capacity,
+                status: slot.status
+              }))
+            };
+          })
+        );
+
+        return {
+          id: rack.id,
+          code: rack.rack_code,
+          name: rack.display_name,
+          position_x: rack.position_x,
+          position_y: rack.position_y,
+          rotation: rack.rotation,
+          width: rack.width,
+          depth: rack.depth,
+          color: rack.color,
+          levels: levelsWithSlots
+        };
+      })
+    );
+
+    console.log(`✅ Données 3D complètes chargées`);
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        data: racksWithData,
+        timestamp: new Date().toISOString()
+      })
+    };
+
+  } catch (error) {
+    console.error('❌ Erreur get3DData:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({
+        success: false,
+        error: error.message
+      })
+    };
+  }
 }
 
-// Fonction pour mettre à jour une quantité
-async function updateQuantity(event, headers) {
+// ==================== FONCTION UPDATE QUANTITY ====================
+async function updateQuantity(event, supabaseUrl, supabaseKey, headers) {
   const body = JSON.parse(event.body || '{}');
   const { slotId, articleId, quantity } = body;
 
@@ -173,63 +210,121 @@ async function updateQuantity(event, headers) {
 
   try {
     // Vérifier si l'entrée existe
-    const checkQuery = `
-      SELECT id, quantity as old_quantity
-      FROM stock_articles
-      WHERE slot_id = $1 AND article_id = $2
-    `;
+    const checkResponse = await fetch(
+      `${supabaseUrl}/rest/v1/stock_articles?slot_id=eq.${slotId}&article_id=eq.${articleId}&select=id,quantity`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      }
+    );
 
-    const checkResult = await pool.query(checkQuery, [slotId, articleId]);
+    const existing = await checkResponse.json();
 
-    if (checkResult.rows.length > 0) {
-      // Mise à jour existante
+    if (existing.length > 0) {
+      // Mise à jour ou suppression
       if (quantity === 0) {
-        // Supprimer si quantité = 0
-        await pool.query(
-          'DELETE FROM stock_articles WHERE id = $1',
-          [checkResult.rows[0].id]
+        // Supprimer
+        await fetch(
+          `${supabaseUrl}/rest/v1/stock_articles?id=eq.${existing[0].id}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`
+            }
+          }
         );
       } else {
         // Mettre à jour
-        await pool.query(
-          `UPDATE stock_articles
-           SET quantity = $1, updated_at = NOW()
-           WHERE id = $2`,
-          [quantity, checkResult.rows[0].id]
+        await fetch(
+          `${supabaseUrl}/rest/v1/stock_articles?id=eq.${existing[0].id}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              quantity: quantity,
+              updated_at: new Date().toISOString()
+            })
+          }
         );
       }
     } else if (quantity > 0) {
       // Nouvelle entrée
-      await pool.query(
-        `INSERT INTO stock_articles
-         (slot_id, article_id, quantity, created_at, updated_at)
-         VALUES ($1, $2, $3, NOW(), NOW())`,
-        [slotId, articleId, quantity]
+      await fetch(
+        `${supabaseUrl}/rest/v1/stock_articles`,
+        {
+          method: 'POST',
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            slot_id: slotId,
+            article_id: articleId,
+            quantity: quantity,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+        }
       );
     }
 
     // Mettre à jour le statut du slot
-    await pool.query(`
-      UPDATE w_vuestock_slots s
-      SET
-        status = CASE
-          WHEN total_qty = 0 THEN 'free'
-          WHEN total_qty >= s.capacity THEN 'occupied'
-          ELSE 'partial'
-        END,
-        updated_at = NOW()
-      FROM (
-        SELECT
-          s2.id,
-          COALESCE(SUM(sa.quantity), 0) as total_qty,
-          s2.capacity
-        FROM w_vuestock_slots s2
-        LEFT JOIN stock_articles sa ON sa.slot_id = s2.id
-        WHERE s2.id = $1
-        GROUP BY s2.id, s2.capacity
-      ) stats
-      WHERE s.id = stats.id;
-    `, [slotId]);
+    // (Simplifié - vous pouvez ajouter une logique plus complexe si nécessaire)
+    const totalResponse = await fetch(
+      `${supabaseUrl}/rest/v1/stock_articles?slot_id=eq.${slotId}&select=quantity`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      }
+    );
+
+    const allArticles = await totalResponse.json();
+    const totalQty = allArticles.reduce((sum, a) => sum + a.quantity, 0);
+
+    // Récupérer la capacité du slot
+    const slotResponse = await fetch(
+      `${supabaseUrl}/rest/v1/w_vuestock_slots?id=eq.${slotId}&select=capacity`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      }
+    );
+
+    const slotData = await slotResponse.json();
+    const capacity = slotData[0]?.capacity || 100;
+
+    let newStatus = 'free';
+    if (totalQty > 0 && totalQty < capacity) newStatus = 'partial';
+    if (totalQty >= capacity) newStatus = 'occupied';
+
+    // Mettre à jour le statut
+    await fetch(
+      `${supabaseUrl}/rest/v1/w_vuestock_slots?id=eq.${slotId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+      }
+    );
 
     return {
       statusCode: 200,
@@ -253,24 +348,49 @@ async function updateQuantity(event, headers) {
   }
 }
 
-// Fonction pour logger les interactions
-async function logLevelInteraction(event, headers) {
+// ==================== FONCTION LOG INTERACTION ====================
+async function logLevelInteraction(event, supabaseUrl, supabaseKey, headers) {
   const body = JSON.parse(event.body || '{}');
   const { level_id, action, duration_ms, user_id } = body;
 
-  await pool.query(
-    `INSERT INTO level_interactions
-     (level_id, action, duration_ms, user_id, created_at)
-     VALUES ($1, $2, $3, $4, NOW())`,
-    [level_id, action, duration_ms, user_id]
-  );
+  try {
+    await fetch(
+      `${supabaseUrl}/rest/v1/level_interactions`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          level_id,
+          action,
+          duration_ms,
+          user_id,
+          created_at: new Date().toISOString()
+        })
+      }
+    );
 
-  return {
-    statusCode: 200,
-    headers,
-    body: JSON.stringify({
-      success: true,
-      message: 'Interaction enregistrée'
-    })
-  };
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        message: 'Interaction enregistrée'
+      })
+    };
+
+  } catch (error) {
+    console.error('❌ Erreur log interaction:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({
+        success: false,
+        error: error.message
+      })
+    };
+  }
 }
