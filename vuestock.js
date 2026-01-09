@@ -1649,6 +1649,11 @@ class VueStock {
             this.openRackModal(); // Appel direct, pas via window
         });
 
+        // ✅ AJOUTEZ CECI : Bouton Vue 3D
+        document.getElementById('btnView3D').addEventListener('click', () => {
+            this.open3DView();
+        });
+
         // Bouton Ajouter étage
         document.getElementById('btnAddLevel')?.addEventListener('click', () => {
             if (this.selectedRack) {
@@ -1743,6 +1748,63 @@ class VueStock {
         window.openRackModal = (rack = null) => {
             this.openRackModal(rack);
         };
+
+        // ===== VUE 3D =====
+
+        open3DView() {
+            console.log('🎮 Ouverture de la vue 3D');
+
+            // Feedback visuel
+            const btn3D = document.getElementById('btnView3D');
+            btn3D.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chargement...';
+            btn3D.disabled = true;
+
+            // Ouvrir le modal 3D
+            const modal3D = document.getElementById('modal3D');
+            modal3D.classList.add('active');
+
+            // Initialiser la vue 3D
+            const init3D = async () => {
+                try {
+                    if (!window.vueStock3D) {
+                        window.vueStock3D = new VueStock3D();
+                        await window.vueStock3D.init();
+                    } else {
+                        // Recharger les données si nécessaire
+                        await window.vueStock3D.loadData();
+                    }
+
+                    // Si on a une étagère sélectionnée, la mettre en évidence
+                    if (this.selectedRack) {
+                        setTimeout(() => {
+                            if (window.vueStock3D?.locateAndHighlight) {
+                                window.vueStock3D.locateAndHighlight(
+                                    this.selectedRack,
+                                    this.selectedLevel,
+                                    null
+                                );
+                            }
+                        }, 500);
+                    }
+
+                    // Remettre le bouton normal
+                    btn3D.innerHTML = '<i class="fas fa-cube"></i> Vue 3D';
+                    btn3D.disabled = false;
+
+                } catch (error) {
+                    console.error('Erreur lors du chargement 3D:', error);
+                    btn3D.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erreur 3D';
+
+                    setTimeout(() => {
+                        btn3D.innerHTML = '<i class="fas fa-cube"></i> Vue 3D';
+                        btn3D.disabled = false;
+                    }, 3000);
+                }
+            };
+
+            // Lancer l'initialisation
+            init3D();
+        }
 
         // Fermer modal
         document.getElementById('closeRackModal')?.addEventListener('click', () => {
