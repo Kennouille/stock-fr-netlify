@@ -209,6 +209,7 @@ class View3DManager {
     setupSimpleControls() {
         // Simple orbit controls without library
         let isDragging = false;
+        let isPanning = false;
         let previousMousePosition = { x: 0, y: 0 };
         let rotation = { x: 0, y: 0 };
         let distance = 50;
@@ -226,29 +227,71 @@ class View3DManager {
             this.camera.lookAt(target);
         };
 
+        // Rotation avec clic gauche
         canvas.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            previousMousePosition = { x: e.clientX, y: e.clientY };
+            if (e.button === 0) { // Clic gauche = rotation
+                isDragging = true;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+                e.preventDefault();
+            } else if (e.button === 2) { // Clic droit = pan
+                isPanning = true;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+                e.preventDefault();
+            }
         });
 
         canvas.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const deltaX = e.clientX - previousMousePosition.x;
-                const deltaY = e.clientY - previousMousePosition.y;
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
 
+            if (isDragging) {
+                // Rotation
                 rotation.x += deltaX * 0.01;
                 rotation.y += deltaY * 0.01;
 
-                // Limit vertical rotation
+                // Limiter la rotation verticale
                 rotation.y = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, rotation.y));
+
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+                updateCamera();
+            } else if (isPanning) {
+                // Pan (déplacement latéral)
+                // Calculer les vecteurs de direction pour le déplacement
+                const direction = new THREE.Vector3();
+                this.camera.getWorldDirection(direction);
+                direction.y = 0; // Garder le déplacement horizontal
+                direction.normalize();
+
+                // Vecteur pour le déplacement latéral (perpendiculaire)
+                const right = new THREE.Vector3();
+                right.crossVectors(new THREE.Vector3(0, 1, 0), direction).normalize();
+
+                // Vecteur pour le déplacement avant/arrière
+                const forward = direction.clone();
+
+                // Déplacer la cible (target) selon le mouvement de la souris
+                // Déplacement latéral (droite/gauche) avec deltaX
+                target.add(right.multiplyScalar(-deltaX * 0.05));
+
+                // Déplacement avant/arrière avec deltaY
+                target.add(forward.multiplyScalar(-deltaY * 0.05));
 
                 previousMousePosition = { x: e.clientX, y: e.clientY };
                 updateCamera();
             }
         });
 
-        canvas.addEventListener('mouseup', () => {
+        canvas.addEventListener('mouseup', (e) => {
+            if (e.button === 0) {
+                isDragging = false;
+            } else if (e.button === 2) {
+                isPanning = false;
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
             isDragging = false;
+            isPanning = false;
         });
 
         canvas.addEventListener('wheel', (e) => {
@@ -258,40 +301,32 @@ class View3DManager {
             updateCamera();
         });
 
-        // Pan with right click
+        // Empêcher le menu contextuel sur clic droit
         canvas.addEventListener('contextmenu', (e) => {
             e.preventDefault();
         });
 
-        let isPanning = false;
+        // Alternative : utiliser la touche Ctrl pour le pan (plus intuitif)
+        let ctrlPressed = false;
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Control') {
+                ctrlPressed = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'Control') {
+                ctrlPressed = false;
+            }
+        });
+
+        // Option supplémentaire : pan avec Ctrl + clic gauche
         canvas.addEventListener('mousedown', (e) => {
-            if (e.button === 2) { // Right click
+            if (e.button === 0 && ctrlPressed) {
                 isPanning = true;
+                isDragging = false;
                 previousMousePosition = { x: e.clientX, y: e.clientY };
-            }
-        });
-
-        canvas.addEventListener('mousemove', (e) => {
-            if (isPanning) {
-                const deltaX = e.clientX - previousMousePosition.x;
-                const deltaY = e.clientY - previousMousePosition.y;
-
-                const right = new THREE.Vector3();
-                const up = new THREE.Vector3(0, 1, 0);
-                this.camera.getWorldDirection(right);
-                right.cross(up).normalize();
-
-                target.add(right.multiplyScalar(-deltaX * 0.05));
-                target.y += deltaY * 0.05;
-
-                previousMousePosition = { x: e.clientX, y: e.clientY };
-                updateCamera();
-            }
-        });
-
-        canvas.addEventListener('mouseup', (e) => {
-            if (e.button === 2) {
-                isPanning = false;
+                e.preventDefault();
             }
         });
 
