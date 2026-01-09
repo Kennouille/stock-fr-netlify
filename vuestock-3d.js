@@ -271,32 +271,32 @@ class View3DManager {
 
 
     async loadRacks() {
-        console.log('📦 Chargement des données depuis Netlify...');
+      console.log('🔄 Chargement des racks...');
+      try {
+        const response = await fetch('https://stockfr.netlify.app/.netlify/functions/vuestock-api?action=get-config');
+        const result = await response.json();
 
-        try {
-            // 1. Appel à TON endpoint existant (get-config)
-            const response = await fetch('https://stockfr.netlify.app/.netlify/functions/vuestock-api?action=get-config');
-            const result = await response.json();
+        if (!result.success) throw new Error(result.error);
 
-            if (!result.success) {
-                throw new Error(result.error || 'Échec du chargement');
-            }
+        // ✅ CRÉER racks SANS recentrage
+        result.data.forEach(rack => {
+          console.log('Rack data:', rack); // DEBUG
+          this.createRack3D(rack);
+        });
 
-            // 2. Utilise directement les données (déjà formatées pour la 3D)
-            window.vueStock = { racks: result.data }; // Format attendu par ton code actuel
+        // ✅ SUPPRIMEZ centerSceneOnRacks() → MAUVAISE position absolue
+        // this.centerSceneOnRacks(); ❌ ENLEVER ÇA
 
-            // 3. Crée les racks 3D
-            result.data.forEach(rack => this.createRack3D(rack));
+        this.updateStats();
+        this.drawMinimap();
 
-            this.centerSceneOnRacks();
-            this.updateStats();
-            this.drawMinimap();
-
-        } catch (error) {
-            console.error('❌ Erreur:', error);
-            alert('Erreur : ' + error.message);
-        }
+        console.log(`✅ ${this.racks3D.length} racks chargés`);
+      } catch (error) {
+        console.error('❌ Erreur loadRacks:', error);
+        alert('Erreur: ' + error.message);
+      }
     }
+
 
 
     createRack3D(rack) {
@@ -385,6 +385,9 @@ class View3DManager {
 
       // Rotation
       if(rack.rotation) rackGroup.rotation.y = THREE.MathUtils.degToRad(rack.rotation);
+
+      console.log(`Rack ${rack.code} → position: (${x.toFixed(1)}, ${z.toFixed(1)})`);
+      console.log(`RackGroup position avant add:`, rackGroup.position);
 
       this.scene.add(rackGroup);
       this.racks3D.push(rackGroup);
