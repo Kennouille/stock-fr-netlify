@@ -302,11 +302,13 @@ class View3DManager {
     createRack3D(rack) {
       const gridSize = 2;
 
-      // ✅ POSITION RÉELLE avec fallbacks multiples
-      const rackX = rack.position?.x || rack.x || rack.gridX || 0;
-      const rackZ = rack.position?.y || rack.y || rack.gridY || 0;
-      const x = rackX * gridSize * 8;  // Espacement x2
-      const z = rackZ * gridSize * 8;
+      // ✅ FIX : position_x ET position_y (vos vraies données)
+      const rackX = rack.position_x || rack.position?.x || rack.x || 0;  // 120, 240, 360...
+      const rackZ = rack.position_y || rack.position?.y || rack.y || 0;  // 120
+      const x = rackX * gridSize * 0.8;  // Échelle correcte
+      const z = rackZ * gridSize * 0.8;
+
+      console.log(`📍 DEBUG Rack ${rack.code}: position_x=${rack.position_x}, x3D=${x.toFixed(1)}, z3D=${z.toFixed(1)}`);
 
       const width = Math.max(2, (rack.width || 3)) * gridSize;
       const depth = Math.max(1.5, (rack.depth || 2)) * gridSize;
@@ -315,14 +317,13 @@ class View3DManager {
 
       const rackGroup = new THREE.Group();
       rackGroup.userData = { rack, type: 'rack' };
-      rackGroup.position.set(x, 0, z); // ✅ Position IMMÉDIATE
+      rackGroup.position.set(x, 0, z); // ✅ POSITIONS RÉELLES
 
       // Cadre rack
       const geometry = new THREE.BoxGeometry(width*0.92, height, depth*0.92);
-      const color = new THREE.Color(rack.color || `#${rack.code?.slice(-6) || '4a90e2'}`);
+      const color = new THREE.Color(rack.color || 0x4a90e2);
       const material = new THREE.MeshStandardMaterial({
-        color, roughness: 0.3, metalness: 0.4,
-        side: THREE.DoubleSide
+        color, roughness: 0.3, metalness: 0.4, side: THREE.DoubleSide
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.position.y = height/2;
@@ -335,7 +336,6 @@ class View3DManager {
         const levelGroup = new THREE.Group();
         levelGroup.position.y = (index * 1.1) + 0.5;
 
-        // Platform
         const platformGeometry = new THREE.BoxGeometry(width*0.88, 0.06, depth*0.88);
         const platform = new THREE.Mesh(platformGeometry, new THREE.MeshStandardMaterial({
           color: 0x555555, metalness: 0.6, roughness: 0.4
@@ -343,7 +343,6 @@ class View3DManager {
         platform.receiveShadow = true;
         levelGroup.add(platform);
 
-        // Slots
         const slots = level.slots || [];
         const slotsPerRow = Math.max(1, slots.length);
         slots.forEach((slot, slotIndex) => {
@@ -356,21 +355,18 @@ class View3DManager {
             color: hasArticles ? 0x28a745 : 0x6c757d,
             emissive: new THREE.Color(hasArticles ? 0x224422 : 0x222222),
             emissiveIntensity: hasArticles ? 0.3 : 0.1,
-            roughness: 0.25, metalness: 0.15,
-            side: THREE.DoubleSide
+            roughness: 0.25, metalness: 0.15, side: THREE.DoubleSide
           }));
 
           slotMesh.position.set(slotX, -0.08, 0);
           slotMesh.castShadow = true;
           slotMesh.userData = { slot, type: 'slot' };
 
-          // Articles
           if(hasArticles) {
-            slot.articles.slice(0,2).forEach((article, artIndex) => { // Max 2 visibles
+            slot.articles.slice(0,2).forEach((article, artIndex) => {
               const artGeometry = new THREE.BoxGeometry(slotWidth*0.55, 0.3, depth*0.55);
               const artMesh = new THREE.Mesh(artGeometry, new THREE.MeshStandardMaterial({
-                color: 0xFF8C00, emissive: 0x442200, emissiveIntensity: 0.5,
-                side: THREE.DoubleSide
+                color: 0xFF8C00, emissive: 0x442200, emissiveIntensity: 0.5, side: THREE.DoubleSide
               }));
               artMesh.position.set(0, 0.3 + (artIndex*0.32), 0.03);
               slotMesh.add(artMesh);
@@ -383,17 +379,12 @@ class View3DManager {
         rackGroup.add(levelGroup);
       });
 
-      // Rotation
       if(rack.rotation) rackGroup.rotation.y = THREE.MathUtils.degToRad(rack.rotation);
-
-      console.log(`Rack ${rack.code} → position: (${x.toFixed(1)}, ${z.toFixed(1)})`);
-      console.log(`RackGroup position avant add:`, rackGroup.position);
 
       this.scene.add(rackGroup);
       this.racks3D.push(rackGroup);
-
-      console.log(`✅ Rack ${rack.code || rack.id} créé à (${x.toFixed(1)}, ${z.toFixed(1)})`);
     }
+
 
 
     createSlot3D(slot, index, total, rackWidth, rackDepth, levelY) {
