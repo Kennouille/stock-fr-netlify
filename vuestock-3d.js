@@ -30,13 +30,10 @@ class View3DManager {
         this.scene.background = new THREE.Color(0x1a1a2e);
         this.scene.fog = null;
 
-        // ✅ CAMÉRA ADAPTÉE à la taille réelle (1200+ unités)
-        this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 2000); // far=2000
+        // ✅ CAMÉRA CORRECTEMENT CONFIGURÉE
         this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 2000);
         this.camera.position.set(0, 15, 30); // DEVANT la grille
         this.camera.lookAt(0, 5, 0); // Regarde le centre
-
-
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -51,15 +48,6 @@ class View3DManager {
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.2;
         this.renderer.outputEncoding = THREE.sRGBEncoding;
-
-        // 🚨 TEST URGENT - Cube vert 10m visible partout
-        const testGeometry = new THREE.BoxGeometry(10, 10, 10);
-        const testMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const testCube = new THREE.Mesh(testGeometry, testMaterial);
-        testCube.position.set(0, 5, 0);
-        this.scene.add(testCube);
-        console.log('🟢 Cube test ajouté');
-
 
         // Lights
         this.addLights();
@@ -100,7 +88,6 @@ class View3DManager {
         console.log('✅ Vue 3D initialisée - Navigation OK');
     }
 
-
     addLights() {
         // ✅ Ambient light améliorée
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -121,10 +108,6 @@ class View3DManager {
         dirLight.shadow.bias = -0.0001;
         dirLight.shadow.radius = 4; // Ombres douces
         this.scene.add(dirLight);
-
-        // Helper visuel pour debug (optionnel)
-        // const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 5);
-        // this.scene.add(dirLightHelper);
 
         // ✅ Hemisphere light avec couleurs chaudes
         const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x362c28, 0.5);
@@ -276,13 +259,11 @@ class View3DManager {
           updateCamera();
         });
 
-
         canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
         // Initial position
         updateCamera();
     }
-
 
     async loadRacks() {
       console.log('🔄 Chargement des racks...');
@@ -292,7 +273,7 @@ class View3DManager {
 
         if (!result.success) throw new Error(result.error);
 
-        // ✅ SEULEMENT ÇA - pas de cubes debug
+        // ✅ Charger les racks
         result.data.forEach(rack => {
           this.createRack3D(rack);
         });
@@ -307,9 +288,6 @@ class View3DManager {
         alert('Erreur: ' + error.message);
       }
     }
-
-
-
 
     createRack3D(rack) {
       const gridSize = 2;
@@ -397,8 +375,6 @@ class View3DManager {
       this.racks3D.push(rackGroup);
     }
 
-
-
     createSlot3D(slot, index, total, rackWidth, rackDepth, levelY) {
         const slotWidth = rackWidth / total;
         const slotX = -rackWidth / 2 + slotWidth / 2 + index * slotWidth;
@@ -440,8 +416,6 @@ class View3DManager {
                 mesh.add(articleMesh);
             });
         }
-
-
 
         // Ajouter un contour lumineux
         const outlineGeometry = new THREE.BoxGeometry(slotWidth * 0.82, 0.12, rackDepth * 0.82);
