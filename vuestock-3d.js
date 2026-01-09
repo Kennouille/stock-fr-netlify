@@ -207,71 +207,144 @@ class View3DManager {
     }
 
     setupSimpleControls() {
-        const canvas = this.renderer.domElement;
-        let isDragging = false, isPanning = false;
+        // Simple orbit controls without library
+        let isDragging = false;
         let previousMousePosition = { x: 0, y: 0 };
-        let rotation = { x: 0, y: 0 }, target = new THREE.Vector3(0, 5, 0), distance = 35;
+        let rotation = { x: 0, y: 0 };
+        let distance = 50;
+        let target = new THREE.Vector3(0, 5, 0);
+
+        const canvas = this.renderer.domElement;
 
         const updateCamera = () => {
             const phi = rotation.x;
             const theta = rotation.y;
+
             this.camera.position.x = target.x + distance * Math.sin(phi) * Math.cos(theta);
             this.camera.position.y = target.y + distance * Math.sin(theta);
             this.camera.position.z = target.z + distance * Math.cos(phi) * Math.cos(theta);
             this.camera.lookAt(target);
         };
 
-        // Rotation (clic GAUCHE)
         canvas.addEventListener('mousedown', (e) => {
-            if(e.button === 0) {
-                isDragging = true;
-                canvas.style.cursor = 'grabbing';
-            }
-            if(e.button === 2) {
-                isPanning = true;
-            }
+            isDragging = true;
             previousMousePosition = { x: e.clientX, y: e.clientY };
         });
 
-        canvas.addEventListener('mousemove', (e) => {
-            if(isDragging) {
-                const deltaX = (e.clientX - previousMousePosition.x) * 0.005;
-                const deltaY = (e.clientY - previousMousePosition.y) * 0.005;
-                rotation.x += deltaX;
-                rotation.y -= deltaY;
-                rotation.y = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, rotation.y));
-                previousMousePosition = { x: e.clientX, y: e.clientY };
-                updateCamera();
-            }
+        setupSimpleControls() {
+          const canvas = this.renderer.domElement;
+          let isDragging = false;
+          let previousMousePosition = { x: 0, y: 0 };
+          let target = new THREE.Vector3(0, 5, 0);
+          let distance = 40;
+
+          const updateCamera = () => {
+            const phi = rotation.x;
+            const theta = rotation.y;
+            this.camera.position.x = target.x + distance * Math.sin(phi) * Math.cos(theta);
+            this.camera.position.y = target.y + distance * Math.sin(theta);
+            this.camera.position.z = target.z + distance * Math.cos(phi) * Math.cos(theta);
+            this.camera.lookAt(target);
+          };
+
+          // DRAG ROTATION (gauche)
+          canvas.addEventListener('mousedown', e => {
+            if(e.button === 0) isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+          });
+
+          canvas.addEventListener('mousemove', e => {
+            if(!isDragging) return;
+            const deltaX = (e.clientX - previousMousePosition.x) * 0.005;
+            const deltaY = (e.clientY - previousMousePosition.y) * 0.005;
+            rotation.x += deltaX;
+            rotation.y -= deltaY;
+            rotation.y = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, rotation.y));
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+            updateCamera();
+          });
+
+          // PAN HORIZONTAL (droite) - NOUVEAU
+          let isPanning = false;
+          canvas.addEventListener('mousedown', e => {
+            if(e.button === 2) isPanning = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+          });
+
+          canvas.addEventListener('mousemove', e => {
             if(isPanning) {
-                const deltaX = (e.clientX - previousMousePosition.x) * 0.3;
-                const deltaZ = (e.clientY - previousMousePosition.y) * 0.15;
-                target.x += deltaX;
-                target.z += deltaZ;
-                previousMousePosition = { x: e.clientX, y: e.clientY };
-                updateCamera();
+              const deltaX = (e.clientX - previousMousePosition.x) * 0.3; // Pan gauche/droite
+              const deltaZ = (e.clientY - previousMousePosition.y) * 0.15; // Avance/recule
+              target.x += deltaX;
+              target.z += deltaZ;
+              previousMousePosition = { x: e.clientX, y: e.clientY };
+              updateCamera();
             }
-        });
+          });
+
+          canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            isPanning = false;
+          });
+          canvas.addEventListener('wheel', e => {
+            distance += e.deltaY * 0.05;
+            distance = Math.max(10, Math.min(80, distance));
+            updateCamera();
+          });
+          canvas.addEventListener('contextmenu', e => e.preventDefault());
+        }
+
 
         canvas.addEventListener('mouseup', () => {
             isDragging = false;
-            isPanning = false;
-            canvas.style.cursor = 'grab';
         });
 
         canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
             distance += e.deltaY * 0.05;
-            distance = Math.max(10, Math.min(80, distance));
+            distance = Math.max(2, Math.min(100, distance));
             updateCamera();
         });
 
-        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Pan with right click
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
 
-        // Initial position
+        let isPanning = false;
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 2) { // Right click
+                isPanning = true;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+
+                const right = new THREE.Vector3();
+                const up = new THREE.Vector3(0, 1, 0);
+                this.camera.getWorldDirection(right);
+                right.cross(up).normalize();
+
+                target.add(right.multiplyScalar(-deltaX * 0.05));
+                target.y += deltaY * 0.05;
+
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+                updateCamera();
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (e.button === 2) {
+                isPanning = false;
+            }
+        });
+
         updateCamera();
     }
-
 
     async loadRacks() {
         console.log('📦 Chargement des données depuis Netlify...');
@@ -304,106 +377,153 @@ class View3DManager {
 
 
     createRack3D(rack) {
-      const gridSize = 2;
-      const x = (rack.position.x || 0) * gridSize * 4;
-      const z = (rack.position.y || 0) * gridSize * 4;
-      const width = (rack.width || 3) * gridSize;
-      const depth = (rack.depth || 2) * gridSize;
-      const levels = rack.levels;
-      const height = Math.max(4, levels.length * 2);
+        // ✅ Scale beaucoup plus grand pour voir les détails
+        const gridSize = 2; // Scale factor (augmenté de 0.4 à 2)
+        const x = (rack.position_x || 0) * gridSize / 40;
+        const z = (rack.position_y || 0) * gridSize / 40;
+        const width = (rack.width || 3) * gridSize;
+        const depth = (rack.depth || 2) * gridSize;
 
-      // ✅ GROUPE PRINCIPAL RACK
-      const rackGroup = new THREE.Group();
-      rackGroup.userData = { rack, type: 'rack' };
+        // ✅ Hauteur basée sur le nombre d'étages (beaucoup plus haute)
+        const levels = rack.levels || [];
+        const height = Math.max(4, levels.length * 2); // Chaque niveau = 2 unités
 
-      // ✅ Structure rack (cadre)
-      const geometry = new THREE.BoxGeometry(width * 0.95, height, depth * 0.95); // 5% plus petit
-      const color = new THREE.Color(rack.color || 0x4a90e2);
-      const material = new THREE.MeshStandardMaterial({
-        color,
-        roughness: 0.4,
-        metalness: 0.6
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.y = height / 2;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      rackGroup.add(mesh); // ✅ Dans rackGroup
+        // Créer le groupe pour l'étagère
+        const rackGroup = new THREE.Group();
+        rackGroup.userData = { rack: rack, type: 'rack' };
 
-      // ✅ ✅ POUR CHAQUE LEVEL → Crée un GROUPE LEVEL
-      levels.forEach((level, index) => {
-        const levelY = (index * 1.2) + 0.6; // Position dans le rack
+        // ✅ Structure principale avec matériau amélioré
+        const geometry = new THREE.BoxGeometry(width, height, depth);
+        const color = new THREE.Color(rack.color || '#4a90e2');
 
-        // GROUPE LEVEL (contient platforms + slots)
-        const levelGroup = new THREE.Group();
-        levelGroup.userData = { level, type: 'level' };
-        levelGroup.position.y = levelY;
-
-        // Platform du level (dans SON groupe)
-        const platformGeometry = new THREE.BoxGeometry(width * 0.9, 0.08, depth * 0.9); // Plus petit
-        const platformMaterial = new THREE.MeshStandardMaterial({
-          color: 0x444444,
-          metalness: 0.7,
-          roughness: 0.3
+        // Créer un matériau avec texture procédurale
+        const material = new THREE.MeshStandardMaterial({
+            color: color,
+            roughness: 0.4,
+            metalness: 0.6,
+            envMapIntensity: 0.8
         });
-        const platform = new THREE.Mesh(platformGeometry, platformMaterial);
-        platform.receiveShadow = true;
-        levelGroup.add(platform); // ✅ Dans levelGroup
 
-        // ✅ ✅ SLOTS dans le levelGroup
-        const slots = level.slots || [];
-        slots.forEach((slot, slotIndex) => {
-          const slotWidth = (width * 0.9) / slots.length;
-          const slotX = - (width * 0.45) + (slotIndex * slotWidth) + (slotWidth / 2);
-
-          // Slot geometry (taille contrôlée)
-          const slotGeometry = new THREE.BoxGeometry(slotWidth * 0.8, 0.5, depth * 0.8);
-          const slotColor = slot.articles && slot.articles.length > 0 ? 0x4CAF50 : 0xB0BEC5;
-          const slotMaterial = new THREE.MeshStandardMaterial({
-            color: slotColor,
+        // Ajouter un effet de bords brillants
+        const edgeMaterial = new THREE.MeshStandardMaterial({
+            color: 0xcccccc,
             roughness: 0.2,
-            metalness: 0.1,
-            emissive: new THREE.Color(0x222222),
-            emissiveIntensity: 0.2,
-            side: THREE.DoubleSide
-          });
-
-          const slotMesh = new THREE.Mesh(slotGeometry, slotMaterial);
-          slotMesh.position.set(slotX, -0.1, 0); // Dans le level
-          slotMesh.castShadow = true;
-          slotMesh.receiveShadow = true;
-          slotMesh.userData = { slot, type: 'slot' };
-
-          // Articles dans le slot
-          if(slot.articles && slot.articles.length > 0) {
-            slot.articles.forEach(article => {
-              const articleGeometry = new THREE.BoxGeometry(slotWidth * 0.6, 0.35, depth * 0.6);
-              const articleMaterial = new THREE.MeshStandardMaterial({
-                color: 0xFF9800,
-                roughness: 0.3,
-                emissive: new THREE.Color(0x664400),
-                emissiveIntensity: 0.4,
-                side: THREE.DoubleSide
-              });
-              const articleMesh = new THREE.Mesh(articleGeometry, articleMaterial);
-              articleMesh.position.set(0, 0.35, 0.05);
-              slotMesh.add(articleMesh);
-            });
-          }
-
-          levelGroup.add(slotMesh); // ✅ Dans levelGroup
+            metalness: 0.9,
+            emissive: new THREE.Color(0x444444),
+            emissiveIntensity: 0.1
         });
 
-        rackGroup.add(levelGroup); // ✅ levelGroup dans rackGroup
-      });
+        const mesh = new THREE.Mesh(geometry, material);
 
-      // Position finale
-      if(rack.rotation) rackGroup.rotation.y = (rack.rotation * Math.PI) / 180;
-      rackGroup.position.set(x, 0, z);
-      this.scene.add(rackGroup);
-      this.racks3D.push(rackGroup);
+        // Ajouter un contour métallique
+        const edgesGeometry = new THREE.EdgesGeometry(geometry, 15);
+        const edgesMaterial = new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            linewidth: 2,
+            transparent: true,
+            opacity: 0.3
+        });
+        const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
+        mesh.add(edges);
+        mesh.position.y = height / 2;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        rackGroup.add(mesh);
+
+        // Ajouter les étages si disponibles
+        levels.forEach((level, index) => {
+            const levelY = 0.5 + (index * 1.2); // 1.2 unités entre chaque étage (au lieu de 2)
+
+            // Ligne pour représenter l'étage
+            // ✅ Plateforme visible pour chaque étage
+            const platformGeometry = new THREE.BoxGeometry(width, 0.05, depth);
+            const platformMaterial = new THREE.MeshStandardMaterial({
+                color: 0x666666,
+                metalness: 0.8,
+                roughness: 0.2
+            });
+            const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+            platform.position.y = levelY;
+            platform.castShadow = true;
+            platform.receiveShadow = true;
+            rackGroup.add(platform);
+
+            // Bordure de la plateforme
+            const edgesGeometry = new THREE.EdgesGeometry(platformGeometry);
+            const edgesMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+            const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
+            edges.position.y = levelY;
+            rackGroup.add(edges);
+
+            // Ajouter les emplacements
+            const slots = level.slots || [];
+            slots.forEach((slot, slotIndex) => {
+                // Calculer la position X du slot
+                const slotWidth = width / slots.length;
+                const slotX = -width / 2 + slotWidth / 2 + slotIndex * slotWidth;
+
+                // Créer le slot (boîte visible)
+                const slotGeometry = new THREE.BoxGeometry(slotWidth*1.5, 0.6, depth*1.5); // +50% taille
+                const slotColor = slot.articles && slot.articles.length > 0 ? 0x4CAF50 : 0xB0BEC5;
+                const slotMaterial = new THREE.MeshStandardMaterial({
+                  color: slotColor,
+                  roughness: 0.2,
+                  metalness: 0.1,
+                  emissive: new THREE.Color(0x222222), // Lueur subtile
+                  emissiveIntensity: 0.2
+                });
+                const slotMesh = new THREE.Mesh(slotGeometry, slotMaterial);
+                slotMesh.material.side = THREE.DoubleSide; // Visible tous angles
+                slotMesh.position.set(slotX, levelY+0.1, 0.2); // Plus haut + avance Z
+                slotMesh.scale.set(1.2, 1.2, 1.2); // Encore + gros
+                slotMesh.castShadow = true;
+                slotMesh.receiveShadow = true;
+                slotMesh.userData = { slot, type: 'slot' };
+                rackGroup.add(slotMesh);
+
+
+                // Ajouter les articles si présents
+                if(slot.articles && slot.articles.length > 0) {
+                  slot.articles.forEach(article => {
+                    const articleGeometry = new THREE.BoxGeometry(slotWidth*1.1, 0.45, depth*1.1); // +60% taille
+                    const articleMaterial = new THREE.MeshStandardMaterial({
+                      color: 0xFF9800,
+                      roughness: 0.3,
+                      emissive: new THREE.Color(0x664400), // Lueur orange
+                      emissiveIntensity: 0.4
+                    });
+                    const articleMesh = new THREE.Mesh(articleGeometry, articleMaterial);
+                    articleMesh.material.side = THREE.DoubleSide;
+                    articleMesh.position.set(0, 0.45, 0.1); // Plus haut + avance
+                    slotMesh.add(articleMesh);
+
+                    // Étiquette visible
+                    const label = this.createTextLabel(article.nom || article.name || 'Article');
+                    label.material.emissiveIntensity = 0.8;
+                    label.scale.set(1.8, 1.8, 1.8);
+                    label.position.y = 0.55;
+                    articleMesh.add(label);
+                  });
+                }
+
+            });
+
+        });
+
+        // Label
+        this.addLabel(rackGroup, rack.code || 'N/A', height);
+
+        // Rotation
+        if (rack.rotation) {
+            rackGroup.rotation.y = (rack.rotation * Math.PI) / 180;
+        }
+
+        // Position
+        rackGroup.position.set(x, 0, z);
+
+        this.scene.add(rackGroup);
+        this.racks3D.push(rackGroup);
     }
-
 
     createSlot3D(slot, index, total, rackWidth, rackDepth, levelY) {
         const slotWidth = rackWidth / total;
