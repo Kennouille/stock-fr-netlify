@@ -349,10 +349,11 @@ class View3DManager {
         const color = new THREE.Color(rack.color || '#4a90e2');
 
         // Créer un matériau avec texture procédurale
-        const rackMaterial = new THREE.MeshStandardMaterial({
-            color: 0x336699,
-            roughness: 0.5,
-            metalness: 0.2
+        const material = new THREE.MeshStandardMaterial({
+            color: color,
+            roughness: 0.4,
+            metalness: 0.6,
+            envMapIntensity: 0.8
         });
 
         // Ajouter un effet de bords brillants
@@ -409,9 +410,46 @@ class View3DManager {
             // Ajouter les emplacements
             const slots = level.slots || [];
             slots.forEach((slot, slotIndex) => {
-                const slotMesh = this.createSlot3D(slot, slotIndex, slots.length, width, depth, levelY);
+                // Calculer la position X du slot
+                const slotWidth = width / slots.length;
+                const slotX = -width / 2 + slotWidth / 2 + slotIndex * slotWidth;
+
+                // Créer le slot (boîte visible)
+                const slotGeometry = new THREE.BoxGeometry(slotWidth * 0.9, 0.4, depth * 0.9);
+                const slotColor = (slot.articles && slot.articles.length > 0) ? 0x4CAF50 : 0xB0BEC5; // Vert/gris
+                const slotMaterial = new THREE.MeshStandardMaterial({
+                    color: slotColor,
+                    roughness: 0.2,
+                    metalness: 0.1
+                });
+                const slotMesh = new THREE.Mesh(slotGeometry, slotMaterial);
+                slotMesh.position.set(slotX, levelY + 0.2, 0);
+                slotMesh.castShadow = true;
+                slotMesh.receiveShadow = true;
+                slotMesh.userData = { slot: slot, type: 'slot' };
                 rackGroup.add(slotMesh);
+
+                // Ajouter les articles si présents
+                if (slot.articles && slot.articles.length > 0) {
+                    slot.articles.forEach(article => {
+                        // Créer une boîte pour l'article
+                        const articleGeometry = new THREE.BoxGeometry(slotWidth * 0.7, 0.25, depth * 0.7);
+                        const articleMaterial = new THREE.MeshStandardMaterial({
+                            color: 0xFF9800, // Orange
+                            roughness: 0.3
+                        });
+                        const articleMesh = new THREE.Mesh(articleGeometry, articleMaterial);
+                        articleMesh.position.set(0, 0.3, 0);
+                        slotMesh.add(articleMesh);
+
+                        // Ajouter une étiquette
+                        const label = this.createTextLabel(article.nom || article.name || "?");
+                        label.position.y = 0.2;
+                        articleMesh.add(label);
+                    });
+                }
             });
+
         });
 
         // Label
