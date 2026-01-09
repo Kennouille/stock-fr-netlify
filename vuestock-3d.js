@@ -233,7 +233,7 @@ class View3DManager {
                 rotation.y += deltaY * 0.01;
 
                 // Limit vertical rotation
-                rotation.y = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, rotation.y));
+                rotation.y = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, rotation.y));
 
                 previousMousePosition = { x: e.clientX, y: e.clientY };
                 updateCamera();
@@ -247,7 +247,7 @@ class View3DManager {
         canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
             distance += e.deltaY * 0.05;
-            distance = Math.max(10, Math.min(100, distance));
+            distance = Math.max(2, Math.min(100, distance));
             updateCamera();
         });
 
