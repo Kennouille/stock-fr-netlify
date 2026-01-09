@@ -78,40 +78,21 @@ class VueStock3D {
     }
 
     createCanvas() {
-        const container = document.getElementById('vuestock3d-container');
-        container.innerHTML = `
-            <div class="vuestock3d-canvas-container">
-                <canvas id="vuestock3d-canvas"></canvas>
-                <div class="vuestock3d-hud">
-                    <div class="hud-position">
-                        <span class="hud-label">Position:</span>
-                        <span class="hud-value" id="hud-position">0, 0</span>
+    // NE FAIS RIEN - le canvas existe déjà dans le HTML
+    // Vérifie juste qu'il est présent
+        const canvas = document.getElementById('vuestock3d-canvas');
+        if (!canvas) {
+            console.error('❌ Canvas 3D non trouvé');
+            // Crée-le si vraiment absent
+            const modal = document.getElementById('modal3D');
+            if (modal) {
+                modal.innerHTML = `
+                    <div class="vuestock3d-canvas-container">
+                        <canvas id="vuestock3d-canvas"></canvas>
                     </div>
-                    <div class="hud-mode">
-                        <span class="hud-label">Mode:</span>
-                        <span class="hud-value" id="hud-mode">Navigation</span>
-                    </div>
-                </div>
-                <div class="vuestock3d-level-panel" id="level-panel">
-                    <div class="panel-header">
-                        <h3 id="level-title">Étage</h3>
-                        <button class="close-btn" id="close-level">×</button>
-                    </div>
-                    <div class="panel-content" id="level-content">
-                        <!-- Contenu dynamique -->
-                    </div>
-                </div>
-                <div class="vuestock3d-search">
-                    <input type="text" id="search-input" placeholder="Rechercher un article...">
-                    <button id="search-btn">🔍</button>
-                </div>
-                <div class="vuestock3d-help">
-                    <div class="help-item">W/A/S/D : Se déplacer</div>
-                    <div class="help-item">Clic : Sélectionner</div>
-                    <div class="help-item">Échap : Fermer l'étage</div>
-                </div>
-            </div>
-        `;
+                `;
+            }
+        }
     }
 
     initThreeJS() {
