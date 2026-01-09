@@ -297,48 +297,22 @@ class View3DManager {
     }
 
     async loadRacks() {
-        console.log('📦 Chargement des données depuis Supabase...');
+        console.log('📦 Chargement des données depuis Netlify...');
 
         try {
-            // 1. Charger les racks, levels et slots (comme dans ton API)
-            const [racks, levels, slots] = await Promise.all([
-                fetch('/api/vuestock-api?action=get-racks').then(res => res.json()),
-                fetch('/api/vuestock-api?action=get-levels').then(res => res.json()),
-                fetch('/api/vuestock-api?action=get-slots').then(res => res.json())
-            ]);
+            // 1. Appel à TON endpoint existant (get-config)
+            const response = await fetch('https://stockfr.netlify.app/.netlify/functions/vuestock-api?action=get-config');
+            const result = await response.json();
 
-            // 2. Charger les articles depuis w_articles
-            const articlesResponse = await fetch('https://mngggybayjooqkzbhvqy.supabase.co/rest/v1/w_articles?select=*&actif=eq.true', {
-                headers: {
-                    'apikey': process.env.SUPABASE_KEY,
-                    'Authorization': `Bearer ${process.env.SUPABASE_KEY}`
-                }
-            });
-            const articles = await articlesResponse.json();
+            if (!result.success) {
+                throw new Error(result.error || 'Échec du chargement');
+            }
 
-            // 3. Assembler la structure attendue par createRack3D()
-            const racksWithData = racks.map(rack => {
-                const rackLevels = levels
-                    .filter(l => l.rack_id === rack.id)
-                    .map(level => {
-                        const levelSlots = slots
-                            .filter(s => s.level_id === level.id)
-                            .map(slot => {
-                                // Trouver les articles pour ce slot
-                                const slotArticles = articles.filter(art =>
-                                    art.rack_id === rack.id &&
-                                    art.level_id === level.id &&
-                                    art.slot_id === slot.id
-                                );
-                                return { ...slot, articles: slotArticles };
-                            });
-                        return { ...level, slots: levelSlots };
-                    });
-                return { ...rack, levels: rackLevels };
-            });
+            // 2. Utilise directement les données (déjà formatées pour la 3D)
+            window.vueStock = { racks: result.data }; // Format attendu par ton code actuel
 
-            // 4. Créer les racks 3D
-            racksWithData.forEach(rack => this.createRack3D(rack));
+            // 3. Crée les racks 3D
+            result.data.forEach(rack => this.createRack3D(rack));
 
             this.centerSceneOnRacks();
             this.updateStats();
@@ -346,9 +320,10 @@ class View3DManager {
 
         } catch (error) {
             console.error('❌ Erreur:', error);
-            alert('Erreur de chargement');
+            alert('Erreur : ' + error.message);
         }
     }
+
 
 
     createRack3D(rack) {
