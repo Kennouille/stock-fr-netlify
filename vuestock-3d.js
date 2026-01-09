@@ -37,8 +37,9 @@ class View3DManager {
             0.1,
             1000
         );
-        this.camera.position.set(30, 30, 30);
-        this.camera.lookAt(0, 0, 0);
+        // ✅ Caméra plus proche pour mieux voir les détails
+        this.camera.position.set(15, 15, 15);
+        this.camera.lookAt(0, 5, 0);
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -290,7 +291,7 @@ class View3DManager {
 
         updateCamera();
     }
-    
+
     loadRacks() {
         console.log('📦 Chargement des étagères en 3D');
 
@@ -311,16 +312,16 @@ class View3DManager {
     }
 
     createRack3D(rack) {
-        // Convertir les coordonnées 2D en 3D
-        const gridSize = 0.4; // Scale factor
+        // ✅ Scale beaucoup plus grand pour voir les détails
+        const gridSize = 2; // Scale factor (augmenté de 0.4 à 2)
         const x = (rack.position_x || 0) * gridSize / 40;
         const z = (rack.position_y || 0) * gridSize / 40;
         const width = (rack.width || 3) * gridSize;
         const depth = (rack.depth || 2) * gridSize;
 
-        // Hauteur basée sur le nombre d'étages
+        // ✅ Hauteur basée sur le nombre d'étages (beaucoup plus haute)
         const levels = rack.levels || [];
-        const height = Math.max(2, levels.length * 0.8);
+        const height = Math.max(4, levels.length * 2); // Chaque niveau = 2 unités
 
         // Créer le groupe pour l'étagère
         const rackGroup = new THREE.Group();
@@ -366,11 +367,25 @@ class View3DManager {
 
         // Ajouter les étages si disponibles
         levels.forEach((level, index) => {
-            const levelY = (index + 0.5) * (height / levels.length);
+            const levelY = 0.5 + (index * 2); // Chaque niveau à 2 unités de hauteur
 
             // Ligne pour représenter l'étage
-            const edgesGeometry = new THREE.EdgesGeometry(new THREE.BoxGeometry(width, 0.05, depth));
-            const edgesMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+            // ✅ Plateforme visible pour chaque étage
+            const platformGeometry = new THREE.BoxGeometry(width, 0.05, depth);
+            const platformMaterial = new THREE.MeshStandardMaterial({
+                color: 0x666666,
+                metalness: 0.8,
+                roughness: 0.2
+            });
+            const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+            platform.position.y = levelY;
+            platform.castShadow = true;
+            platform.receiveShadow = true;
+            rackGroup.add(platform);
+
+            // Bordure de la plateforme
+            const edgesGeometry = new THREE.EdgesGeometry(platformGeometry);
+            const edgesMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
             const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
             edges.position.y = levelY;
             rackGroup.add(edges);
@@ -419,7 +434,8 @@ class View3DManager {
         }
 
         // ✅ Slot avec matériau amélioré et effets
-        const geometry = new THREE.BoxGeometry(slotWidth * 0.8, 0.1, rackDepth * 0.8);
+        // ✅ Slots plus épais et plus visibles
+        const geometry = new THREE.BoxGeometry(slotWidth * 0.85, 0.3, rackDepth * 0.85);
         const material = new THREE.MeshStandardMaterial({
             color: color,
             emissive: color,
@@ -473,8 +489,8 @@ class View3DManager {
         const texture = new THREE.CanvasTexture(canvas);
         const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
         const sprite = new THREE.Sprite(spriteMaterial);
-        sprite.scale.set(2, 1, 1);
-        sprite.position.y = height + 1;
+        sprite.scale.set(1, 0.5, 1); // ✅ Beaucoup plus petit
+        sprite.position.y = height + 0.5; // ✅ Plus proche du haut
         group.add(sprite);
     }
 
