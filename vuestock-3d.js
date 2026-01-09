@@ -93,8 +93,10 @@ class View3DManager {
 
     addLights() {
         // ✅ Ambient light améliorée
-        const ambientLight = new THREE.AmbientLight(0x667eea, 0.4);
-        this.scene.add(ambientLight);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(1, 1, 1);
+        this.scene.add(ambientLight, directionalLight);
 
         // ✅ Directional light (sun) avec ombres douces
         const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
@@ -347,11 +349,10 @@ class View3DManager {
         const color = new THREE.Color(rack.color || '#4a90e2');
 
         // Créer un matériau avec texture procédurale
-        const material = new THREE.MeshStandardMaterial({
-            color: color,
-            roughness: 0.4,
-            metalness: 0.6,
-            envMapIntensity: 0.8
+        const rackMaterial = new THREE.MeshStandardMaterial({
+            color: 0x336699,
+            roughness: 0.5,
+            metalness: 0.2
         });
 
         // Ajouter un effet de bords brillants
@@ -382,7 +383,7 @@ class View3DManager {
 
         // Ajouter les étages si disponibles
         levels.forEach((level, index) => {
-            const levelY = 0.5 + (index * 2); // Chaque niveau à 2 unités de hauteur
+            const levelY = 0.5 + (index * 1.2); // 1.2 unités entre chaque étage (au lieu de 2)
 
             // Ligne pour représenter l'étage
             // ✅ Plateforme visible pour chaque étage
@@ -449,31 +450,27 @@ class View3DManager {
         }
 
         // ✅ Slot avec matériau amélioré et effets
-        // ✅ Slots plus épais et plus visibles
-        const geometry = new THREE.BoxGeometry(slotWidth * 0.95, 0.5, rackDepth * 0.95); // Plus épais
+        const geometry = new THREE.BoxGeometry(slotWidth * 0.9, 0.4, rackDepth * 0.9); // Épaisseur visible
         const material = new THREE.MeshStandardMaterial({
-            color: color,
-            emissive: color,
-            emissiveIntensity: 0.2,
-            roughness: 0.5,
-            metalness: 0.3,
-            transparent: true,
-            opacity: 0.9
+            color: slot.articles.length > 0 ? 0x4CAF50 : 0x9E9E9E, // Vert si occupé, gris sinon
+            roughness: 0.3,
+            metalness: 0.1,
+            transparent: false,
+            opacity: 1
         });
         const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.y = levelY + 0.2; // Positionnement précis
 
-        // Ajouter une représentation des articles
+
+        // Ajouter les articles (si présents)
         if (slot.articles && slot.articles.length > 0) {
             slot.articles.forEach(article => {
                 const articleMesh = this.createArticleMesh(article);
-                articleMesh.position.set(
-                    slotX,
-                    levelY + 0.3, // Légèrement au-dessus du slot
-                    0
-                );
+                articleMesh.position.set(slotX, levelY + 0.5, 0); // Position au-dessus du slot
                 mesh.add(articleMesh);
             });
         }
+
 
 
         // Ajouter un contour lumineux
@@ -1981,24 +1978,40 @@ class View3DManager {
     }
 
     createArticleMesh(article) {
+        // Créer une icône simple pour l'article
+        const geometry = new THREE.BoxGeometry(0.3, 0.1, 0.3);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x2196F3,
+            roughness: 0.2
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+
+        // Ajouter une étiquette avec le nom de l'article
+        const label = this.createTextLabel(article.nom || "?");
+        label.position.y = 0.1;
+        mesh.add(label);
+
+        return mesh;
+    }
+
+    createTextLabel(text) {
         const canvas = document.createElement('canvas');
-        canvas.width = 64;
-        canvas.height = 64;
+        canvas.width = 128; canvas.height = 64;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#4a90e2';
-        ctx.fillRect(0, 0, 64, 64);
-        ctx.font = 'Bold 32px Arial';
         ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'black';
+        ctx.font = 'Bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(article.name ? article.name.charAt(0).toUpperCase() : '?', 32, 32);
+        ctx.fillText(text, canvas.width/2, canvas.height/2);
 
         const texture = new THREE.CanvasTexture(canvas);
         const material = new THREE.SpriteMaterial({ map: texture });
         const sprite = new THREE.Sprite(material);
-        sprite.scale.set(0.4, 0.4, 1);
+        sprite.scale.set(0.5, 0.25, 1);
         return sprite;
     }
+
 
 
     changeView(viewType) {
