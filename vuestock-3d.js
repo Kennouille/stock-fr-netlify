@@ -30,14 +30,9 @@ class View3DManager {
         this.scene.background = new THREE.Color(0x1a1a2e);
         this.scene.fog = new THREE.Fog(0x1a1a2e, 50, 200);
 
-        // Camera
+        // Camera ✅ OPTIMISÉE
         this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 300);
-        this.camera.position.set(30, 25, 30); // Vue d'ensemble + haute
-
-
-        // ✅ Caméra plus proche pour mieux voir les détails
-        this.camera.position.set(15, 15, 15);
-        this.camera.lookAt(0, 5, 0);
+        this.camera.position.set(25, 20, 25); // Position idéale
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -46,12 +41,12 @@ class View3DManager {
             alpha: true
         });
         this.renderer.setSize(container.clientWidth, container.clientHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimisation
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping; // ✅ Meilleur rendu des couleurs
-        this.renderer.toneMappingExposure = 1.2; // ✅ Ajuster l'exposition
-        this.renderer.outputEncoding = THREE.sRGBEncoding; // ✅ Couleurs correctes
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.2;
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
 
         // Lights
         this.addLights();
@@ -62,18 +57,25 @@ class View3DManager {
         // ✅ Système de particules ambiantes
         this.addAmbientParticles();
 
-        // Controls (OrbitControls simulation simple)
+        // ✅ NETTOYAGE OBLIGATOIRE des anciens event listeners
+        const events = ['mousedown', 'mousemove', 'mouseup', 'wheel', 'contextmenu'];
+        events.forEach(event => {
+            canvas.removeEventListener(event, canvas[`on${event}`]);
+            canvas[`on${event}`] = null;
+        });
+
+        // ✅ Controls NOUVEAUX (navigation fluide)
         this.setupSimpleControls();
 
-        // Events
-        canvas.addEventListener('mousemove', this.onMouseMove, false);
-        canvas.addEventListener('click', this.onMouseClick, false);
-        window.addEventListener('resize', this.onWindowResize, false);
+        // ✅ Mouse events INTERACTIONS (raycast, tooltips) - APRÈS controls
+        canvas.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+        canvas.addEventListener('click', this.onMouseClick.bind(this), false);
+        window.addEventListener('resize', this.onWindowResize.bind(this), false);
 
         // Load data
         this.loadRacks();
 
-        // Remplace le lookAt fixe par un calcul dynamique
+        // Centre dynamique
         this.centerSceneOnRacks();
 
         // Start animation
@@ -85,8 +87,9 @@ class View3DManager {
         document.getElementById('stats3D').style.display = 'block';
         document.getElementById('minimap3D').style.display = 'block';
 
-        console.log('✅ Vue 3D initialisée');
+        console.log('✅ Vue 3D initialisée - Navigation OK');
     }
+
 
     addLights() {
         // ✅ Ambient light améliorée
@@ -204,144 +207,71 @@ class View3DManager {
     }
 
     setupSimpleControls() {
-        // Simple orbit controls without library
-        let isDragging = false;
-        let previousMousePosition = { x: 0, y: 0 };
-        let rotation = { x: 0, y: 0 };
-        let distance = 50;
-        let target = new THREE.Vector3(0, 5, 0);
-
         const canvas = this.renderer.domElement;
+        let isDragging = false, isPanning = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let rotation = { x: 0, y: 0 }, target = new THREE.Vector3(0, 5, 0), distance = 35;
 
         const updateCamera = () => {
             const phi = rotation.x;
             const theta = rotation.y;
-
             this.camera.position.x = target.x + distance * Math.sin(phi) * Math.cos(theta);
             this.camera.position.y = target.y + distance * Math.sin(theta);
             this.camera.position.z = target.z + distance * Math.cos(phi) * Math.cos(theta);
             this.camera.lookAt(target);
         };
 
+        // Rotation (clic GAUCHE)
         canvas.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-        });
-
-        setupSimpleControls() {
-          const canvas = this.renderer.domElement;
-          let isDragging = false;
-          let previousMousePosition = { x: 0, y: 0 };
-          let target = new THREE.Vector3(0, 5, 0);
-          let distance = 40;
-
-          const updateCamera = () => {
-            const phi = rotation.x;
-            const theta = rotation.y;
-            this.camera.position.x = target.x + distance * Math.sin(phi) * Math.cos(theta);
-            this.camera.position.y = target.y + distance * Math.sin(theta);
-            this.camera.position.z = target.z + distance * Math.cos(phi) * Math.cos(theta);
-            this.camera.lookAt(target);
-          };
-
-          // DRAG ROTATION (gauche)
-          canvas.addEventListener('mousedown', e => {
-            if(e.button === 0) isDragging = true;
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-          });
-
-          canvas.addEventListener('mousemove', e => {
-            if(!isDragging) return;
-            const deltaX = (e.clientX - previousMousePosition.x) * 0.005;
-            const deltaY = (e.clientY - previousMousePosition.y) * 0.005;
-            rotation.x += deltaX;
-            rotation.y -= deltaY;
-            rotation.y = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, rotation.y));
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-            updateCamera();
-          });
-
-          // PAN HORIZONTAL (droite) - NOUVEAU
-          let isPanning = false;
-          canvas.addEventListener('mousedown', e => {
-            if(e.button === 2) isPanning = true;
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-          });
-
-          canvas.addEventListener('mousemove', e => {
-            if(isPanning) {
-              const deltaX = (e.clientX - previousMousePosition.x) * 0.3; // Pan gauche/droite
-              const deltaZ = (e.clientY - previousMousePosition.y) * 0.15; // Avance/recule
-              target.x += deltaX;
-              target.z += deltaZ;
-              previousMousePosition = { x: e.clientX, y: e.clientY };
-              updateCamera();
+            if(e.button === 0) {
+                isDragging = true;
+                canvas.style.cursor = 'grabbing';
             }
-          });
-
-          canvas.addEventListener('mouseup', () => {
-            isDragging = false;
-            isPanning = false;
-          });
-          canvas.addEventListener('wheel', e => {
-            distance += e.deltaY * 0.05;
-            distance = Math.max(10, Math.min(80, distance));
-            updateCamera();
-          });
-          canvas.addEventListener('contextmenu', e => e.preventDefault());
-        }
-
-
-        canvas.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
-
-        canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            distance += e.deltaY * 0.05;
-            distance = Math.max(2, Math.min(100, distance));
-            updateCamera();
-        });
-
-        // Pan with right click
-        canvas.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-        });
-
-        let isPanning = false;
-        canvas.addEventListener('mousedown', (e) => {
-            if (e.button === 2) { // Right click
+            if(e.button === 2) {
                 isPanning = true;
-                previousMousePosition = { x: e.clientX, y: e.clientY };
             }
+            previousMousePosition = { x: e.clientX, y: e.clientY };
         });
 
         canvas.addEventListener('mousemove', (e) => {
-            if (isPanning) {
-                const deltaX = e.clientX - previousMousePosition.x;
-                const deltaY = e.clientY - previousMousePosition.y;
-
-                const right = new THREE.Vector3();
-                const up = new THREE.Vector3(0, 1, 0);
-                this.camera.getWorldDirection(right);
-                right.cross(up).normalize();
-
-                target.add(right.multiplyScalar(-deltaX * 0.05));
-                target.y += deltaY * 0.05;
-
+            if(isDragging) {
+                const deltaX = (e.clientX - previousMousePosition.x) * 0.005;
+                const deltaY = (e.clientY - previousMousePosition.y) * 0.005;
+                rotation.x += deltaX;
+                rotation.y -= deltaY;
+                rotation.y = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, rotation.y));
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+                updateCamera();
+            }
+            if(isPanning) {
+                const deltaX = (e.clientX - previousMousePosition.x) * 0.3;
+                const deltaZ = (e.clientY - previousMousePosition.y) * 0.15;
+                target.x += deltaX;
+                target.z += deltaZ;
                 previousMousePosition = { x: e.clientX, y: e.clientY };
                 updateCamera();
             }
         });
 
-        canvas.addEventListener('mouseup', (e) => {
-            if (e.button === 2) {
-                isPanning = false;
-            }
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            isPanning = false;
+            canvas.style.cursor = 'grab';
         });
 
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            distance += e.deltaY * 0.05;
+            distance = Math.max(10, Math.min(80, distance));
+            updateCamera();
+        });
+
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Initial position
         updateCamera();
     }
+
 
     async loadRacks() {
         console.log('📦 Chargement des données depuis Netlify...');
