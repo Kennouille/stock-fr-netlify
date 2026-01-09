@@ -80,7 +80,7 @@ class VueStock3D {
     createCanvas() {
     // NE FAIS RIEN - le canvas existe déjà dans le HTML
     // Vérifie juste qu'il est présent
-        const canvas = document.getElementById('vuestock3d-canvas');
+        const canvas = document.getElementById('canvas3D');
         if (!canvas) {
             console.error('❌ Canvas 3D non trouvé');
             // Crée-le si vraiment absent
@@ -96,7 +96,7 @@ class VueStock3D {
     }
 
     initThreeJS() {
-        const canvas = document.getElementById('vuestock3d-canvas');
+        const canvas = document.getElementById('canvas3D');
         const container = canvas.parentElement;
 
         // Scene
