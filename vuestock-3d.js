@@ -450,7 +450,7 @@ class View3DManager {
                 const slotX = -width / 2 + slotWidth / 2 + slotIndex * slotWidth;
 
                 // Créer le slot (boîte visible)
-                const slotGeometry = new THREE.BoxGeometry(slotWidth*1.5, 0.6, depth*1.5); // +50% taille
+                const slotGeometry = new THREE.BoxGeometry(slotWidth * 0.8, 0.6, depth * 0.8);
                 const slotColor = slot.articles && slot.articles.length > 0 ? 0x4CAF50 : 0xB0BEC5;
                 const slotMaterial = new THREE.MeshStandardMaterial({
                   color: slotColor,
@@ -472,7 +472,7 @@ class View3DManager {
                 // Ajouter les articles si présents
                 if(slot.articles && slot.articles.length > 0) {
                   slot.articles.forEach(article => {
-                    const articleGeometry = new THREE.BoxGeometry(slotWidth*1.1, 0.45, depth*1.1); // +60% taille
+                    const articleGeometry = new THREE.BoxGeometry(slotWidth * 0.6, 0.45, depth * 0.6);
                     const articleMaterial = new THREE.MeshStandardMaterial({
                       color: 0xFF9800,
                       roughness: 0.3,
