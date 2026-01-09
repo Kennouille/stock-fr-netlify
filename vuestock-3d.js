@@ -461,7 +461,7 @@ class View3DManager {
                 });
                 const slotMesh = new THREE.Mesh(slotGeometry, slotMaterial);
                 slotMesh.material.side = THREE.DoubleSide; // Visible tous angles
-                slotMesh.position.set(slotX, levelY+0.1, 0.2); // Plus haut + avance Z
+                slotMesh.position.set(slotX, levelY+0.1, slotIndex * 0.1);
                 slotMesh.scale.set(1.2, 1.2, 1.2); // Encore + gros
                 slotMesh.castShadow = true;
                 slotMesh.receiveShadow = true;
