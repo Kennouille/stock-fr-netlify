@@ -296,24 +296,60 @@ class View3DManager {
         updateCamera();
     }
 
-    loadRacks() {
-        console.log('📦 Chargement des étagères en 3D');
+    async loadRacks() {
+        console.log('📦 Chargement des données depuis Supabase...');
 
-        if (!window.vueStock || !window.vueStock.racks) {
-            console.warn('Aucune donnée d\'étagère disponible');
-            return;
+        try {
+            // 1. Charger les racks, levels et slots (comme dans ton API)
+            const [racks, levels, slots] = await Promise.all([
+                fetch('/api/vuestock-api?action=get-racks').then(res => res.json()),
+                fetch('/api/vuestock-api?action=get-levels').then(res => res.json()),
+                fetch('/api/vuestock-api?action=get-slots').then(res => res.json())
+            ]);
+
+            // 2. Charger les articles depuis w_articles
+            const articlesResponse = await fetch('https://mngggybayjooqkzbhvqy.supabase.co/rest/v1/w_articles?select=*&actif=eq.true', {
+                headers: {
+                    'apikey': process.env.SUPABASE_KEY,
+                    'Authorization': `Bearer ${process.env.SUPABASE_KEY}`
+                }
+            });
+            const articles = await articlesResponse.json();
+
+            // 3. Assembler la structure attendue par createRack3D()
+            const racksWithData = racks.map(rack => {
+                const rackLevels = levels
+                    .filter(l => l.rack_id === rack.id)
+                    .map(level => {
+                        const levelSlots = slots
+                            .filter(s => s.level_id === level.id)
+                            .map(slot => {
+                                // Trouver les articles pour ce slot
+                                const slotArticles = articles.filter(art =>
+                                    art.rack_id === rack.id &&
+                                    art.level_id === level.id &&
+                                    art.slot_id === slot.id
+                                );
+                                return { ...slot, articles: slotArticles };
+                            });
+                        return { ...level, slots: levelSlots };
+                    });
+                return { ...rack, levels: rackLevels };
+            });
+
+            // 4. Créer les racks 3D
+            racksWithData.forEach(rack => this.createRack3D(rack));
+
+            this.centerSceneOnRacks();
+            this.updateStats();
+            this.drawMinimap();
+
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            alert('Erreur de chargement');
         }
-
-        const racks = window.vueStock.racks;
-        console.log(`Found ${racks.length} racks`);
-
-        racks.forEach(rack => {
-            this.createRack3D(rack);
-        });
-
-        this.updateStats();
-        this.drawMinimap();
     }
+
 
     createRack3D(rack) {
         // ✅ Scale beaucoup plus grand pour voir les détails

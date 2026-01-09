@@ -39,6 +39,22 @@ exports.handler = async (event) => {
     };
   }
 
+    if (action === 'get-racks') {
+        const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?select=*`, { headers });
+        return { statusCode: 200, body: JSON.stringify(await response.json()) };
+    }
+
+    if (action === 'get-levels') {
+        const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?select=*`, { headers });
+        return { statusCode: 200, body: JSON.stringify(await response.json()) };
+    }
+
+    if (action === 'get-slots') {
+        const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots?select=*`, { headers });
+        return { statusCode: 200, body: JSON.stringify(await response.json()) };
+    }
+
+
   if (action === 'get-config') {
     try {
       const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
