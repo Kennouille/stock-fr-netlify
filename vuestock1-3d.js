@@ -780,32 +780,38 @@ class VueStock3D {
     // ==================== UI ====================
 
     createUI() {
-        // ✅ Attendre que le DOM soit prêt
-        const waitForElements = () => {
-            const hudPosition = document.getElementById('hud-position');
-            const hudMode = document.getElementById('hud-mode');
-
-            if (!hudPosition || !hudMode) {
-                console.warn('⚠️ Éléments HUD non encore disponibles, nouvelle tentative...');
-                setTimeout(waitForElements, 100);
-                return;
-            }
-
-            // ✅ Maintenant qu'on les a, initialiser l'objet ui
-            this.ui = {
-                hud: {
-                    position: hudPosition,
-                    mode: hudMode
-                },
-                levelPanel: document.getElementById('level-panel'),
-                levelContent: document.getElementById('level-content'),
-                levelTitle: document.getElementById('level-title')
-            };
-
-            console.log('✅ UI initialisée avec succès');
+        // ✅ INITIALISEZ d'abord l'objet ui
+        this.ui = {
+            hud: {
+                position: document.getElementById('hud-position'),
+                mode: document.getElementById('hud-mode')
+            },
+            levelPanel: document.getElementById('level-panel'),
+            levelContent: document.getElementById('level-content'),
+            levelTitle: document.getElementById('level-title')
         };
 
-        waitForElements();
+        // ✅ Vérifiez que les éléments existent
+        if (!this.ui.hud.position) {
+            console.warn('⚠️ Élément HUD position non trouvé');
+            // Créez-le si nécessaire
+            const hud = document.querySelector('.vuestock3d-hud');
+            if (hud) {
+                hud.innerHTML = `
+                    <div class="hud-position">
+                        <span class="hud-label">Position:</span>
+                        <span class="hud-value" id="hud-position">0, 0</span>
+                    </div>
+                    <div class="hud-mode">
+                        <span class="hud-label">Mode:</span>
+                        <span class="hud-value" id="hud-mode">Navigation</span>
+                    </div>
+                `;
+                // Réinitialisez les références
+                this.ui.hud.position = document.getElementById('hud-position');
+                this.ui.hud.mode = document.getElementById('hud-mode');
+            }
+        }
     }
 
     showLevelPanel(levelData) {

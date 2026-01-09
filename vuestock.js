@@ -1806,28 +1806,20 @@ class VueStock {
 
     // ===== VUE 3D =====
 
-    open3DView() {
-        console.log('🎮 Ouverture de la vue 3D');
-
+    async function open3DView() {
+        console.log('Ouverture de la vue 3D');
         const modal3D = document.getElementById('modal3D');
+
+        // ✅ D'ABORD afficher le modal
         modal3D.classList.add('active');
 
-        if (!document.getElementById('vuestock3d-container')) {
-            modal3D.innerHTML = `
-                <div id="vuestock3d-container" class="view-3d-container">
-                    <canvas id="canvas3D"></canvas>
-                    <div class="loading-3d" id="loading3D">
-                        <div class="spinner-3d"></div>
-                        <p>Chargement de la vue 3D...</p>
-                    </div>
-                    <!-- ... autres éléments ... -->
-                </div>
-            `;
-        }
+        // ✅ PUIS attendre un peu que le DOM soit prêt
+        await new Promise(resolve => setTimeout(resolve, 100));
 
+        // ✅ ENSUITE initialiser Three.js
         if (!window.vueStock3D) {
             window.vueStock3D = new VueStock3D();
-            window.vueStock3D.init();
+            await window.vueStock3D.init();
         }
     }
 
