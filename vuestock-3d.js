@@ -30,10 +30,9 @@ class View3DManager {
         this.scene.background = new THREE.Color(0x1a1a2e);
         this.scene.fog = new THREE.Fog(0x1a1a2e, 50, 200);
 
-        // ✅ CAMÉRA ADAPTÉE à la taille réelle (1200+ unités)
-        this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 2000); // far=2000
-        this.camera.position.set(800, 400, 800); // Vue d'ensemble
-
+        // Camera ✅ OPTIMISÉE
+        this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 300);
+        this.camera.position.set(25, 20, 25); // Position idéale
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -75,6 +74,9 @@ class View3DManager {
 
         // Load data
         this.loadRacks();
+
+        // Centre dynamique
+        this.centerSceneOnRacks();
 
         // Start animation
         this.animate();
@@ -258,12 +260,11 @@ class View3DManager {
         });
 
         canvas.addEventListener('wheel', (e) => {
-          e.preventDefault();
-          distance += e.deltaY * 0.05;
-          distance = Math.max(50, Math.min(1500, distance)); // ✅ 50-1500 au lieu de 10-80
-          updateCamera();
+            e.preventDefault();
+            distance += e.deltaY * 0.05;
+            distance = Math.max(10, Math.min(80, distance));
+            updateCamera();
         });
-
 
         canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -273,120 +274,135 @@ class View3DManager {
 
 
     async loadRacks() {
-      console.log('🔄 Chargement des racks...');
-      try {
-        const response = await fetch('https://stockfr.netlify.app/.netlify/functions/vuestock-api?action=get-config');
-        const result = await response.json();
+        console.log('📦 Chargement des données depuis Netlify...');
 
-        if (!result.success) throw new Error(result.error);
+        try {
+            // 1. Appel à TON endpoint existant (get-config)
+            const response = await fetch('https://stockfr.netlify.app/.netlify/functions/vuestock-api?action=get-config');
+            const result = await response.json();
 
-        // ✅ CRÉER racks SANS recentrage
-        result.data.forEach(rack => {
-          console.log('Rack data:', rack); // DEBUG
-          this.createRack3D(rack);
-        });
+            if (!result.success) {
+                throw new Error(result.error || 'Échec du chargement');
+            }
 
-        // ✅ SUPPRIMEZ centerSceneOnRacks() → MAUVAISE position absolue
-        // this.centerSceneOnRacks(); ❌ ENLEVER ÇA
+            // 2. Utilise directement les données (déjà formatées pour la 3D)
+            window.vueStock = { racks: result.data }; // Format attendu par ton code actuel
 
-        this.updateStats();
-        this.drawMinimap();
+            // 3. Crée les racks 3D
+            result.data.forEach(rack => this.createRack3D(rack));
 
-        console.log(`✅ ${this.racks3D.length} racks chargés`);
-      } catch (error) {
-        console.error('❌ Erreur loadRacks:', error);
-        alert('Erreur: ' + error.message);
-      }
+            this.centerSceneOnRacks();
+            this.updateStats();
+            this.drawMinimap();
+
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            alert('Erreur : ' + error.message);
+        }
     }
 
 
 
     createRack3D(rack) {
       const gridSize = 2;
+      const x = (rack.position.x || 0) * gridSize * 4;
+      const z = (rack.position.y || 0) * gridSize * 4;
+      const width = (rack.width || 3) * gridSize;
+      const depth = (rack.depth || 2) * gridSize;
+      const levels = rack.levels;
+      const height = Math.max(4, levels.length * 2);
 
-      // ✅ FIX : position_x ET position_y (vos vraies données)
-      const rackX = rack.position_x || rack.position?.x || rack.x || 0;  // 120, 240, 360...
-      const rackZ = rack.position_y || rack.position?.y || rack.y || 0;  // 120
-      const x = rackX * gridSize * 0.8;  // Échelle correcte
-      const z = rackZ * gridSize * 0.8;
-
-      console.log(`📍 DEBUG Rack ${rack.code}: position_x=${rack.position_x}, x3D=${x.toFixed(1)}, z3D=${z.toFixed(1)}`);
-
-      const width = Math.max(2, (rack.width || 3)) * gridSize;
-      const depth = Math.max(1.5, (rack.depth || 2)) * gridSize;
-      const levels = rack.levels || [];
-      const height = Math.max(4, levels.length * 1.8);
-
+      // ✅ GROUPE PRINCIPAL RACK
       const rackGroup = new THREE.Group();
       rackGroup.userData = { rack, type: 'rack' };
-      rackGroup.position.set(x, 0, z); // ✅ POSITIONS RÉELLES
 
-      // Cadre rack
-      const geometry = new THREE.BoxGeometry(width*0.92, height, depth*0.92);
+      // ✅ Structure rack (cadre)
+      const geometry = new THREE.BoxGeometry(width * 0.95, height, depth * 0.95); // 5% plus petit
       const color = new THREE.Color(rack.color || 0x4a90e2);
       const material = new THREE.MeshStandardMaterial({
-        color, roughness: 0.3, metalness: 0.4, side: THREE.DoubleSide
+        color,
+        roughness: 0.4,
+        metalness: 0.6
       });
       const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.y = height/2;
+      mesh.position.y = height / 2;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      rackGroup.add(mesh);
+      rackGroup.add(mesh); // ✅ Dans rackGroup
 
-      // Levels
+      // ✅ ✅ POUR CHAQUE LEVEL → Crée un GROUPE LEVEL
       levels.forEach((level, index) => {
+        const levelY = (index * 1.2) + 0.6; // Position dans le rack
+
+        // GROUPE LEVEL (contient platforms + slots)
         const levelGroup = new THREE.Group();
-        levelGroup.position.y = (index * 1.1) + 0.5;
+        levelGroup.userData = { level, type: 'level' };
+        levelGroup.position.y = levelY;
 
-        const platformGeometry = new THREE.BoxGeometry(width*0.88, 0.06, depth*0.88);
-        const platform = new THREE.Mesh(platformGeometry, new THREE.MeshStandardMaterial({
-          color: 0x555555, metalness: 0.6, roughness: 0.4
-        }));
+        // Platform du level (dans SON groupe)
+        const platformGeometry = new THREE.BoxGeometry(width * 0.9, 0.08, depth * 0.9); // Plus petit
+        const platformMaterial = new THREE.MeshStandardMaterial({
+          color: 0x444444,
+          metalness: 0.7,
+          roughness: 0.3
+        });
+        const platform = new THREE.Mesh(platformGeometry, platformMaterial);
         platform.receiveShadow = true;
-        levelGroup.add(platform);
+        levelGroup.add(platform); // ✅ Dans levelGroup
 
+        // ✅ ✅ SLOTS dans le levelGroup
         const slots = level.slots || [];
-        const slotsPerRow = Math.max(1, slots.length);
         slots.forEach((slot, slotIndex) => {
-          const slotWidth = (width * 0.85) / slotsPerRow;
-          const slotX = -(width*0.42) + (slotIndex * slotWidth) + (slotWidth/2);
+          const slotWidth = (width * 0.9) / slots.length;
+          const slotX = - (width * 0.45) + (slotIndex * slotWidth) + (slotWidth / 2);
 
-          const slotGeometry = new THREE.BoxGeometry(slotWidth*0.7, 0.45, depth*0.75);
-          const hasArticles = slot.articles?.length > 0;
-          const slotMesh = new THREE.Mesh(slotGeometry, new THREE.MeshStandardMaterial({
-            color: hasArticles ? 0x28a745 : 0x6c757d,
-            emissive: new THREE.Color(hasArticles ? 0x224422 : 0x222222),
-            emissiveIntensity: hasArticles ? 0.3 : 0.1,
-            roughness: 0.25, metalness: 0.15, side: THREE.DoubleSide
-          }));
+          // Slot geometry (taille contrôlée)
+          const slotGeometry = new THREE.BoxGeometry(slotWidth * 0.8, 0.5, depth * 0.8);
+          const slotColor = slot.articles && slot.articles.length > 0 ? 0x4CAF50 : 0xB0BEC5;
+          const slotMaterial = new THREE.MeshStandardMaterial({
+            color: slotColor,
+            roughness: 0.2,
+            metalness: 0.1,
+            emissive: new THREE.Color(0x222222),
+            emissiveIntensity: 0.2,
+            side: THREE.DoubleSide
+          });
 
-          slotMesh.position.set(slotX, -0.08, 0);
+          const slotMesh = new THREE.Mesh(slotGeometry, slotMaterial);
+          slotMesh.position.set(slotX, -0.1, 0); // Dans le level
           slotMesh.castShadow = true;
+          slotMesh.receiveShadow = true;
           slotMesh.userData = { slot, type: 'slot' };
 
-          if(hasArticles) {
-            slot.articles.slice(0,2).forEach((article, artIndex) => {
-              const artGeometry = new THREE.BoxGeometry(slotWidth*0.55, 0.3, depth*0.55);
-              const artMesh = new THREE.Mesh(artGeometry, new THREE.MeshStandardMaterial({
-                color: 0xFF8C00, emissive: 0x442200, emissiveIntensity: 0.5, side: THREE.DoubleSide
-              }));
-              artMesh.position.set(0, 0.3 + (artIndex*0.32), 0.03);
-              slotMesh.add(artMesh);
+          // Articles dans le slot
+          if(slot.articles && slot.articles.length > 0) {
+            slot.articles.forEach(article => {
+              const articleGeometry = new THREE.BoxGeometry(slotWidth * 0.6, 0.35, depth * 0.6);
+              const articleMaterial = new THREE.MeshStandardMaterial({
+                color: 0xFF9800,
+                roughness: 0.3,
+                emissive: new THREE.Color(0x664400),
+                emissiveIntensity: 0.4,
+                side: THREE.DoubleSide
+              });
+              const articleMesh = new THREE.Mesh(articleGeometry, articleMaterial);
+              articleMesh.position.set(0, 0.35, 0.05);
+              slotMesh.add(articleMesh);
             });
           }
 
-          levelGroup.add(slotMesh);
+          levelGroup.add(slotMesh); // ✅ Dans levelGroup
         });
 
-        rackGroup.add(levelGroup);
+        rackGroup.add(levelGroup); // ✅ levelGroup dans rackGroup
       });
 
-      if(rack.rotation) rackGroup.rotation.y = THREE.MathUtils.degToRad(rack.rotation);
-
+      // Position finale
+      if(rack.rotation) rackGroup.rotation.y = (rack.rotation * Math.PI) / 180;
+      rackGroup.position.set(x, 0, z);
       this.scene.add(rackGroup);
       this.racks3D.push(rackGroup);
     }
-
 
 
     createSlot3D(slot, index, total, rackWidth, rackDepth, levelY) {
