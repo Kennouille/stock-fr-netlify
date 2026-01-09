@@ -155,8 +155,17 @@ class VueStock3D {
         try {
             console.log('📦 Chargement des données...');
 
-            // Appel à votre API
-            const response = await fetch('/api/vuestock/3d-data');
+            // ✅ CORRECTION : Utilisez la bonne URL
+            // Option 1 : Votre API Netlify Function
+            const response = await fetch('/.netlify/functions/vuestock1-api?action=get-3d-data');
+
+            // Option 2 : Si vous avez configuré une redirection dans netlify.toml
+            // const response = await fetch('/api/vuestock/3d-data');
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
             const data = await response.json();
 
             if (data.success) {
@@ -167,8 +176,9 @@ class VueStock3D {
             }
         } catch (error) {
             console.error('❌ Erreur:', error);
-            // Données de test
+            // Gardez les données de test temporairement pour debug
             this.stockData = this.getTestData();
+            console.log('⚠️ Utilisation de données de test pour le debug');
         }
     }
 
