@@ -1843,8 +1843,13 @@ class VueStock {
                     const open3D = confirm(`Article trouvé dans ${article.full_code}\n\nOuvrir la vue 3D pour localiser l'article ?`);
 
                     if (open3D) {
-                        // Ouvrir la vue 3D et localiser
-                        this.open3DAndLocate(article.full_code);
+                        // Ouvrir la vue 3D (fonction globale)
+                        await open3DView();
+
+                        // Si vous voulez localiser l'article, ajoutez ceci :
+                        // if (window.vueStock3D?.locateArticle) {
+                        //     window.vueStock3D.locateArticle(article.full_code);
+                        // }
                     } else {
                         // Comportement classique (2D)
                         this.highlightSlotByFullCode(article.full_code);
