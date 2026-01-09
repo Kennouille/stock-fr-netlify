@@ -231,21 +231,69 @@ class View3DManager {
             previousMousePosition = { x: e.clientX, y: e.clientY };
         });
 
-        canvas.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const deltaX = e.clientX - previousMousePosition.x;
-                const deltaY = e.clientY - previousMousePosition.y;
+        setupSimpleControls() {
+          const canvas = this.renderer.domElement;
+          let isDragging = false;
+          let previousMousePosition = { x: 0, y: 0 };
+          let target = new THREE.Vector3(0, 5, 0);
+          let distance = 40;
 
-                rotation.x += deltaX * 0.01;
-                rotation.y += deltaY * 0.01;
+          const updateCamera = () => {
+            const phi = rotation.x;
+            const theta = rotation.y;
+            this.camera.position.x = target.x + distance * Math.sin(phi) * Math.cos(theta);
+            this.camera.position.y = target.y + distance * Math.sin(theta);
+            this.camera.position.z = target.z + distance * Math.cos(phi) * Math.cos(theta);
+            this.camera.lookAt(target);
+          };
 
-                // Limit vertical rotation
-                rotation.y = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, rotation.y));
+          // DRAG ROTATION (gauche)
+          canvas.addEventListener('mousedown', e => {
+            if(e.button === 0) isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+          });
 
-                previousMousePosition = { x: e.clientX, y: e.clientY };
-                updateCamera();
+          canvas.addEventListener('mousemove', e => {
+            if(!isDragging) return;
+            const deltaX = (e.clientX - previousMousePosition.x) * 0.005;
+            const deltaY = (e.clientY - previousMousePosition.y) * 0.005;
+            rotation.x += deltaX;
+            rotation.y -= deltaY;
+            rotation.y = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, rotation.y));
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+            updateCamera();
+          });
+
+          // PAN HORIZONTAL (droite) - NOUVEAU
+          let isPanning = false;
+          canvas.addEventListener('mousedown', e => {
+            if(e.button === 2) isPanning = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+          });
+
+          canvas.addEventListener('mousemove', e => {
+            if(isPanning) {
+              const deltaX = (e.clientX - previousMousePosition.x) * 0.3; // Pan gauche/droite
+              const deltaZ = (e.clientY - previousMousePosition.y) * 0.15; // Avance/recule
+              target.x += deltaX;
+              target.z += deltaZ;
+              previousMousePosition = { x: e.clientX, y: e.clientY };
+              updateCamera();
             }
-        });
+          });
+
+          canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            isPanning = false;
+          });
+          canvas.addEventListener('wheel', e => {
+            distance += e.deltaY * 0.05;
+            distance = Math.max(10, Math.min(80, distance));
+            updateCamera();
+          });
+          canvas.addEventListener('contextmenu', e => e.preventDefault());
+        }
+
 
         canvas.addEventListener('mouseup', () => {
             isDragging = false;
