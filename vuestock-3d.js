@@ -31,12 +31,9 @@ class View3DManager {
         this.scene.fog = new THREE.Fog(0x1a1a2e, 50, 200);
 
         // Camera
-        this.camera = new THREE.PerspectiveCamera(
-            60,  // Angle plus large pour moins de déformation
-            container.clientWidth / container.clientHeight,
-            0.01, // near réduit pour les petits objets
-            500  // far réduit pour éviter les artefacts
-        );
+        this.camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 300);
+        this.camera.position.set(30, 25, 30); // Vue d'ensemble + haute
+
 
         // ✅ Caméra plus proche pour mieux voir les détails
         this.camera.position.set(15, 15, 15);
@@ -231,21 +228,69 @@ class View3DManager {
             previousMousePosition = { x: e.clientX, y: e.clientY };
         });
 
-        canvas.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const deltaX = e.clientX - previousMousePosition.x;
-                const deltaY = e.clientY - previousMousePosition.y;
+        setupSimpleControls() {
+          const canvas = this.renderer.domElement;
+          let isDragging = false;
+          let previousMousePosition = { x: 0, y: 0 };
+          let target = new THREE.Vector3(0, 5, 0);
+          let distance = 40;
 
-                rotation.x += deltaX * 0.01;
-                rotation.y += deltaY * 0.01;
+          const updateCamera = () => {
+            const phi = rotation.x;
+            const theta = rotation.y;
+            this.camera.position.x = target.x + distance * Math.sin(phi) * Math.cos(theta);
+            this.camera.position.y = target.y + distance * Math.sin(theta);
+            this.camera.position.z = target.z + distance * Math.cos(phi) * Math.cos(theta);
+            this.camera.lookAt(target);
+          };
 
-                // Limit vertical rotation
-                rotation.y = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, rotation.y));
+          // DRAG ROTATION (gauche)
+          canvas.addEventListener('mousedown', e => {
+            if(e.button === 0) isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+          });
 
-                previousMousePosition = { x: e.clientX, y: e.clientY };
-                updateCamera();
+          canvas.addEventListener('mousemove', e => {
+            if(!isDragging) return;
+            const deltaX = (e.clientX - previousMousePosition.x) * 0.005;
+            const deltaY = (e.clientY - previousMousePosition.y) * 0.005;
+            rotation.x += deltaX;
+            rotation.y -= deltaY;
+            rotation.y = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, rotation.y));
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+            updateCamera();
+          });
+
+          // PAN HORIZONTAL (droite) - NOUVEAU
+          let isPanning = false;
+          canvas.addEventListener('mousedown', e => {
+            if(e.button === 2) isPanning = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+          });
+
+          canvas.addEventListener('mousemove', e => {
+            if(isPanning) {
+              const deltaX = (e.clientX - previousMousePosition.x) * 0.3; // Pan gauche/droite
+              const deltaZ = (e.clientY - previousMousePosition.y) * 0.15; // Avance/recule
+              target.x += deltaX;
+              target.z += deltaZ;
+              previousMousePosition = { x: e.clientX, y: e.clientY };
+              updateCamera();
             }
-        });
+          });
+
+          canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            isPanning = false;
+          });
+          canvas.addEventListener('wheel', e => {
+            distance += e.deltaY * 0.05;
+            distance = Math.max(10, Math.min(80, distance));
+            updateCamera();
+          });
+          canvas.addEventListener('contextmenu', e => e.preventDefault());
+        }
+
 
         canvas.addEventListener('mouseup', () => {
             isDragging = false;
@@ -415,39 +460,49 @@ class View3DManager {
                 const slotX = -width / 2 + slotWidth / 2 + slotIndex * slotWidth;
 
                 // Créer le slot (boîte visible)
-                const slotGeometry = new THREE.BoxGeometry(slotWidth * 0.9, 0.4, depth * 0.9);
-                const slotColor = (slot.articles && slot.articles.length > 0) ? 0x4CAF50 : 0xB0BEC5; // Vert/gris
+                const slotGeometry = new THREE.BoxGeometry(slotWidth*1.5, 0.6, depth*1.5); // +50% taille
+                const slotColor = slot.articles && slot.articles.length > 0 ? 0x4CAF50 : 0xB0BEC5;
                 const slotMaterial = new THREE.MeshStandardMaterial({
-                    color: slotColor,
-                    roughness: 0.2,
-                    metalness: 0.1
+                  color: slotColor,
+                  roughness: 0.2,
+                  metalness: 0.1,
+                  emissive: new THREE.Color(0x222222), // Lueur subtile
+                  emissiveIntensity: 0.2
                 });
                 const slotMesh = new THREE.Mesh(slotGeometry, slotMaterial);
-                slotMesh.position.set(slotX, levelY + 0.2, 0);
+                slotMesh.material.side = THREE.DoubleSide; // Visible tous angles
+                slotMesh.position.set(slotX, levelY+0.1, 0.2); // Plus haut + avance Z
+                slotMesh.scale.set(1.2, 1.2, 1.2); // Encore + gros
                 slotMesh.castShadow = true;
                 slotMesh.receiveShadow = true;
-                slotMesh.userData = { slot: slot, type: 'slot' };
+                slotMesh.userData = { slot, type: 'slot' };
                 rackGroup.add(slotMesh);
 
-                // Ajouter les articles si présents
-                if (slot.articles && slot.articles.length > 0) {
-                    slot.articles.forEach(article => {
-                        // Créer une boîte pour l'article
-                        const articleGeometry = new THREE.BoxGeometry(slotWidth * 0.7, 0.25, depth * 0.7);
-                        const articleMaterial = new THREE.MeshStandardMaterial({
-                            color: 0xFF9800, // Orange
-                            roughness: 0.3
-                        });
-                        const articleMesh = new THREE.Mesh(articleGeometry, articleMaterial);
-                        articleMesh.position.set(0, 0.3, 0);
-                        slotMesh.add(articleMesh);
 
-                        // Ajouter une étiquette
-                        const label = this.createTextLabel(article.nom || article.name || "?");
-                        label.position.y = 0.2;
-                        articleMesh.add(label);
+                // Ajouter les articles si présents
+                if(slot.articles && slot.articles.length > 0) {
+                  slot.articles.forEach(article => {
+                    const articleGeometry = new THREE.BoxGeometry(slotWidth*1.1, 0.45, depth*1.1); // +60% taille
+                    const articleMaterial = new THREE.MeshStandardMaterial({
+                      color: 0xFF9800,
+                      roughness: 0.3,
+                      emissive: new THREE.Color(0x664400), // Lueur orange
+                      emissiveIntensity: 0.4
                     });
+                    const articleMesh = new THREE.Mesh(articleGeometry, articleMaterial);
+                    articleMesh.material.side = THREE.DoubleSide;
+                    articleMesh.position.set(0, 0.45, 0.1); // Plus haut + avance
+                    slotMesh.add(articleMesh);
+
+                    // Étiquette visible
+                    const label = this.createTextLabel(article.nom || article.name || 'Article');
+                    label.material.emissiveIntensity = 0.8;
+                    label.scale.set(1.8, 1.8, 1.8);
+                    label.position.y = 0.55;
+                    articleMesh.add(label);
+                  });
                 }
+
             });
 
         });
