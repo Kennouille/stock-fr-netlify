@@ -1179,6 +1179,11 @@ class QuadViewManager {
 
     // Méthode pour gérer les clics sur le canvas
     handleCanvasClick(e) {
+        e.preventDefault(); // Empêche le comportement par défaut
+        e.stopPropagation(); // Empêche la propagation
+
+        console.log('handleCanvasClick appelé, detail:', e.detail, 'type:', e.type);
+
         if (!this.currentRacks || this.currentRacks.length === 0) return;
 
         const rect = this.canvasTop.getBoundingClientRect();
@@ -1188,7 +1193,7 @@ class QuadViewManager {
         console.log('Clic sur canvas Quad à:', x, y);
 
         // D'abord vérifier si on clique sur une poignette du rack sélectionné
-        if (this.selectedRack && this.selectionHandles) {
+        if (this.selectedRack) {
             const handle = this.getClickedHandle(x, y);
 
             if (handle) {
@@ -1215,6 +1220,19 @@ class QuadViewManager {
         if (clickedRack) {
             console.log('Rack cliqué:', clickedRack.code);
 
+            // Empêcher la sélection multiple rapide
+            if (this._lastClickTime && Date.now() - this._lastClickTime < 300) {
+                console.log('Clic trop rapide, ignoré');
+                return;
+            }
+            this._lastClickTime = Date.now();
+
+            // Si c'est le même rack, ignorer
+            if (this.selectedRack && this.selectedRack.id === clickedRack.id) {
+                console.log('Même rack déjà sélectionné');
+                return;
+            }
+
             // 1. Mettre à jour la sélection
             this.selectedRack = clickedRack;
 
@@ -1229,11 +1247,6 @@ class QuadViewManager {
 
             // 5. Mettre à jour le panneau Propriétés à gauche
             this.updatePropertiesPanel(clickedRack);
-
-            // 6. Démarrer le mode déplacement si double-clic ou clic droit
-            if (e.detail === 2) { // Double-clic
-                this.startDragMode(clickedRack, x, y);
-            }
 
         } else {
             console.log('Aucun rack à cette position');
@@ -1257,9 +1270,13 @@ class QuadViewManager {
             const rackWidth = rack.width * gridSize;
             const rackHeight = rack.depth * gridSize;
 
+            console.log(`Vérification rack ${rack.code}: x=${rackX}, y=${rackY}, w=${rackWidth}, h=${rackHeight}`);
+            console.log(`Clic à: x=${x}, y=${y}`);
+
             // Vérifier si le clic est dans les limites du rack
             if (x >= rackX && x <= rackX + rackWidth &&
                 y >= rackY && y <= rackY + rackHeight) {
+                console.log(`Rack ${rack.code} trouvé!`);
                 return rack;
             }
         }
@@ -2224,12 +2241,59 @@ class QuadViewManager {
 
     // Vérifier quelle poignette a été cliquée
     getClickedHandle(clickX, clickY) {
-        if (!this.selectionHandles) return null;
+        if (!this.selectionHandles || !this.selectedRack) return null;
+
+        const scale = 0.8; // Même échelle que drawTopView
+        const gridSize = 20;
+
+        // Recalculer la position du rack avec la même logique que drawTopView
+        const rackX = (this.selectedRack.position_x * scale) % this.canvasTop.width;
+        const rackY = (this.selectedRack.position_y * scale) % this.canvasTop.height;
+        const rackWidth = this.selectedRack.width * gridSize;
+        const rackHeight = this.selectedRack.depth * gridSize;
+
+        // Redéfinir les poignettes avec les bonnes coordonnées
+        const handleSize = 8;
+        const rotateHandleY = rackY - 25;
+
+        const handles = {
+            nw: {
+                x: rackX - handleSize/2,
+                y: rackY - handleSize/2,
+                width: handleSize,
+                height: handleSize
+            },
+            ne: {
+                x: rackX + rackWidth - handleSize/2,
+                y: rackY - handleSize/2,
+                width: handleSize,
+                height: handleSize
+            },
+            sw: {
+                x: rackX - handleSize/2,
+                y: rackY + rackHeight - handleSize/2,
+                width: handleSize,
+                height: handleSize
+            },
+            se: {
+                x: rackX + rackWidth - handleSize/2,
+                y: rackY + rackHeight - handleSize/2,
+                width: handleSize,
+                height: handleSize
+            },
+            rotate: {
+                x: rackX + rackWidth/2 - 10,
+                y: rotateHandleY - 10,
+                width: 20,
+                height: 20
+            }
+        };
 
         // Vérifier chaque poignette
-        for (const [handleName, handleRect] of Object.entries(this.selectionHandles)) {
+        for (const [handleName, handleRect] of Object.entries(handles)) {
             if (clickX >= handleRect.x && clickX <= handleRect.x + handleRect.width &&
                 clickY >= handleRect.y && clickY <= handleRect.y + handleRect.height) {
+                console.log('Poignette détectée:', handleName, 'à', clickX, clickY);
                 return handleName;
             }
         }
@@ -2492,8 +2556,14 @@ class VueStock {
 
     // AJOUTER CETTE MÉTHODE APRÈS init()
     initQuadView() {
+        // Vérifier si QuadViewManager est déjà initialisé
+        if (this.quadViewManager) {
+            console.log('QuadViewManager déjà initialisé');
+            return;
+        }
+
         // Initialiser le QuadViewManager seulement si on est en vue plan
-        if (this.currentView === 'plan' && !this.quadViewManager) {
+        if (this.currentView === 'plan') {
             setTimeout(() => {
                 console.log('Initialisation de QuadViewManager...');
                 this.quadViewManager = new QuadViewManager();
@@ -2504,7 +2574,7 @@ class VueStock {
                     this.quadViewManager.updateAllViews(this.racks);
                 }
 
-            }, 1500); // Délai pour laisser charger les données
+            }, 1500);
         }
     }
 
