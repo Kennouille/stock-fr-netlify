@@ -25,15 +25,9 @@ function hideLoading() {
 
 
 function showInfoPanel(title, content) {
-  const infoTitle = document.getElementById('info-title');
-  const infoContent = document.getElementById('info-content');
-  const infoPanel = document.getElementById('info-panel');
-
-  if (infoTitle && infoContent && infoPanel) {
-    infoTitle.textContent = title;
-    infoContent.innerHTML = content;
-    infoPanel.classList.remove('hidden');
-  }
+  document.getElementById('info-title').textContent = title;
+  document.getElementById('info-content').innerHTML = content;
+  document.getElementById('info-panel').classList.remove('hidden');
 }
 
 function hideInfoPanel() {
@@ -44,30 +38,16 @@ function hideInfoPanel() {
 }
 
 async function initWarehouse() {
-  // Attendre encore un peu pour être sûr
-  await new Promise(resolve => setTimeout(resolve, 50));
-
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1a1a);
 
-  const container = document.getElementById('canvas-container');
-  if (!container) {
-    console.error('Conteneur canvas non trouvé, réessai...');
-    // Réessayer
-    await new Promise(resolve => setTimeout(resolve, 100));
-    const container = document.getElementById('canvas-container');
-    if (!container) {
-      console.error('Conteneur canvas toujours non trouvé');
-      return;
-    }
-  }
-
-  camera = new THREE.PerspectiveCamera(
-    60,
-    container.clientWidth / container.clientHeight,
-    0.1,
-    1000
-  );
+  const container = document.getElementById('warehouse3DContainer');
+    camera = new THREE.PerspectiveCamera(
+      60,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      1000
+    );
 
 
   camera.position.set(0, 20, 40);
@@ -478,37 +458,20 @@ function onWindowResize() {
 
 function animate() {
   if (!isModalOpen) return;
-  if (!renderer || !scene || !camera) return;
-
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
 }
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
-  if (!modal) {
-    console.error('Modal non trouvé');
-    return;
-  }
-  modal.classList.remove('hidden');
+  modal.classList.add('active');
   isModalOpen = true;
 
-  // Attendre que le DOM soit mis à jour
-  requestAnimationFrame(() => {
-    if (!scene) {
-      initWarehouse();
-    } else {
-      // Vérifier que le conteneur existe
-      const container = document.getElementById('canvas-container');
-      if (container && renderer && camera) {
-        // Redimensionner le renderer si nécessaire
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        camera.aspect = container.clientWidth / container.clientHeight;
-        camera.updateProjectionMatrix();
-      }
-      animate();
-    }
-  });
+  if (!scene) {
+    initWarehouse();
+  } else {
+    animate();
+  }
 }
 
 
@@ -532,7 +495,7 @@ export function closeWarehouseModal() {
   }
 }
 
-const closeBtn = document.getElementById('close-modal');
+const closeBtn = document.getElementById('closeWarehouseModal');  // ← BON ID
 if (closeBtn) {
   closeBtn.addEventListener('click', closeWarehouseModal);
 }
