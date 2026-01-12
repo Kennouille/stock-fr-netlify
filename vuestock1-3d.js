@@ -464,38 +464,14 @@ function animate() {
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
-
-  // DEBUG: Vérifier ce qui se passe
-  console.log("Modal avant:", modal);
-  console.log("Classe avant:", modal?.className);
-
   modal.classList.remove('hidden');
   isModalOpen = true;
 
-  // 1. FORCER le bouton à fonctionner
+  // SOLUTION SIMPLE ET DIRECTIONNELLE
   const closeBtn = document.getElementById('closeWarehouseModal');
-  console.log("Bouton:", closeBtn);
-
   if (closeBtn) {
-    // Supprimer TOUS les anciens événements
-    const newCloseBtn = closeBtn.cloneNode(true);
-    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-
-    // Attacher l'événement au NOUVEAU bouton
-    newCloseBtn.onclick = function(event) {
-      console.log("CLICK SUR LA CROIX !");
-      event.stopPropagation();
-      event.preventDefault();
-      closeWarehouseModal();
-      return false;
-    };
-
-    // Aussi en addEventListener
-    newCloseBtn.addEventListener('click', function(event) {
-      console.log("ADD EVENT LISTENER CLICK !");
-      event.stopPropagation();
-      closeWarehouseModal();
-    });
+    // Force l'événement avec onclick
+    closeBtn.onclick = closeWarehouseModal;
   }
 
   if (!scene) {

@@ -275,6 +275,14 @@
         </div>
     </div>
 
+    <!-- Modal Vue 3D -->
+    <div id="warehouse-modal" class="modal-overlay hidden">
+        <div class="modal modal-3d">
+            <button id="closeWarehouseModal" class="modal-close">✕</button>
+            <div id="warehouse3DContainer" style="width:75vw; height:75vh;"></div>
+        </div>
+    </div>
+
 
 
     <!-- Scripts -->
@@ -289,12 +297,6 @@
         }
     </script>
 
-    <script>
-        // Fermer le modal 3D quand on clique sur la croix
-        document.getElementById('closeWarehouseModal').addEventListener('click', function() {
-            document.getElementById('warehouse-modal').classList.add('hidden');
-        });
-    </script>
 
 
 </body>
