@@ -31,11 +31,8 @@ function showInfoPanel(title, content) {
 }
 
 function hideInfoPanel() {
-  const panel = document.getElementById('info-panel');
-  if (!panel) return;
-  panel.classList.add('hidden');
+  document.getElementById('info-panel').classList.add('hidden');
 }
-
 
 async function initWarehouse() {
   scene = new THREE.Scene();
@@ -450,15 +447,11 @@ function onKeyDown(event) {
 
 function onWindowResize() {
   if (!isModalOpen) return;
-
-  const container = document.getElementById('warehouse3DContainer');
-  if (!container || !camera || !renderer) return;
-
+  const container = document.getElementById('canvas-container');
   camera.aspect = container.clientWidth / container.clientHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(container.clientWidth, container.clientHeight);
 }
-
 
 function animate() {
   if (!isModalOpen) return;
@@ -471,15 +464,12 @@ export function openWarehouseModal() {
   modal.classList.remove('hidden');
   isModalOpen = true;
 
-  requestAnimationFrame(() => {
-    if (!scene) {
-      initWarehouse();
-    } else {
-      animate();
-    }
-  });
+  if (!scene) {
+    initWarehouse();
+  } else {
+    animate();
+  }
 }
-
 
 document
   .getElementById('closeWarehouseModal')
