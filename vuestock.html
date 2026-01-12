@@ -70,30 +70,100 @@
 
         <!-- Zone centrale - Les 3 vues -->
         <section class="view-container">
-            <!-- VUE 1 : PLAN DU STOCK (vue du dessus) -->
+            <!-- Remplacez la section <div class="view active" id="viewPlan"> -->
             <div class="view active" id="viewPlan">
                 <div class="view-header">
-                    <h2><i class="fas fa-map"></i> Plan du stock</h2>
-                    <div class="view-actions">
-                        <button class="btn btn-sm" id="btnGridToggle">
-                            <i class="fas fa-th"></i> Grille
+                    <h2><i class="fas fa-map"></i> Plan du stock - Vue Quad</h2>
+                    <div class="view-switch-container">
+                        <button class="view-switch-btn active" data-view="quad">
+                            <i class="fas fa-th-large"></i> Vue Quad
                         </button>
-                        <button class="btn btn-sm" id="btnZoomIn"><i class="fas fa-search-plus"></i></button>
-                        <button class="btn btn-sm" id="btnZoomOut"><i class="fas fa-search-minus"></i></button>
-                        <button class="btn btn-sm" id="btnZoomReset"><i class="fas fa-expand-arrows-alt"></i></button>
+                        <button class="view-switch-btn" data-view="single">
+                            <i class="fas fa-expand"></i> Vue Simple
+                        </button>
                     </div>
                 </div>
 
-                <div class="canvas-container">
-                    <canvas id="canvasPlan" width="1200" height="800"></canvas>
-                    <div class="canvas-overlay" id="planOverlay">
-                        <!-- Les étagères seront dessinées ici -->
+                <!-- Vue Quad-Split (visible par défaut) -->
+                <div class="quad-split-container" id="quadView">
+                    <!-- Haut-Gauche : Vue du dessus -->
+                    <div class="quad-view view-top">
+                        <div class="quad-view-header">
+                            <span><i class="fas fa-dharmachakra"></i> Vue du dessus</span>
+                            <span class="quad-rack-count" id="quadRackCount">0 racks</span>
+                        </div>
+                        <div class="quad-view-content">
+                            <canvas id="canvasTop" class="quad-canvas"></canvas>
+                            <div class="canvas-overlay" id="topOverlay"></div>
+                        </div>
+                    </div>
+
+                    <!-- Haut-Droite : Vue de face -->
+                    <div class="quad-view view-front">
+                        <div class="quad-view-header">
+                            <span><i class="fas fa-arrows-alt-h"></i> Vue de face</span>
+                            <span class="quad-selected-rack" id="quadSelectedRack">Aucun rack sélectionné</span>
+                        </div>
+                        <div class="quad-view-content">
+                            <canvas id="canvasFront" class="quad-canvas"></canvas>
+                            <div class="quad-front-elevation" id="frontElevation"></div>
+                        </div>
+                    </div>
+
+                    <!-- Bas-Gauche : Vue 3D isométrique -->
+                    <div class="quad-view view-3d">
+                        <div class="quad-view-header">
+                            <span><i class="fas fa-cube"></i> Vue 3D</span>
+                            <button class="btn btn-sm" id="quad3DReset">
+                                <i class="fas fa-sync-alt"></i> Réinitialiser
+                            </button>
+                        </div>
+                        <div class="quad-view-content">
+                            <canvas id="canvas3D" class="quad-canvas"></canvas>
+                            <div class="quad-3d-controls">
+                                <button class="quad-3d-btn" data-angle="45">
+                                    <i class="fas fa-compass"></i> 45°
+                                </button>
+                                <button class="quad-3d-btn" data-angle="30">
+                                    <i class="fas fa-mountain"></i> 30°
+                                </button>
+                                <button class="quad-3d-btn" data-angle="60">
+                                    <i class="fas fa-hill-rockslide"></i> 60°
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bas-Droite : Vue étage -->
+                    <div class="quad-view view-level">
+                        <div class="quad-view-header">
+                            <span><i class="fas fa-layer-group"></i> Détail étage</span>
+                            <span class="quad-level-info" id="quadLevelInfo">Aucun étage</span>
+                        </div>
+                        <div class="quad-view-content">
+                            <div class="level-slots-grid" id="quadLevelSlots">
+                                <div class="empty-quad">
+                                    <i class="fas fa-layer-group fa-2x"></i>
+                                    <p>Sélectionnez un étage</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vue Simple (cachée par défaut) -->
+                <div class="simple-view-container" id="simpleView" style="display: none;">
+                    <div class="canvas-container">
+                        <canvas id="canvasPlan" width="1200" height="800"></canvas>
+                        <div class="canvas-overlay" id="planOverlay"></div>
                     </div>
                 </div>
 
                 <div class="view-footer">
                     <div class="coord-display">
-                        Position: <span id="mouseCoords">X: 0, Y: 0</span>
+                        Mode: <span id="viewMode">Quad</span> |
+                        Racks: <span id="racksCount">0</span> |
+                        Sélection: <span id="selectedElement">Aucun</span>
                     </div>
                     <div class="scale-display">
                         Échelle: <span id="scaleDisplay">100%</span>

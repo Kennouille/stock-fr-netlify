@@ -958,6 +958,492 @@ class CanvasManager {
     }
 }
 
+// vuestock.js - AJOUTEZ après la classe CanvasManager
+
+class QuadViewManager {
+    constructor() {
+        this.currentView = 'quad'; // 'quad' ou 'single'
+        this.selectedRack = null;
+        this.selectedLevel = null;
+
+        // Canvases
+        this.canvasTop = document.getElementById('canvasTop');
+        this.canvasFront = document.getElementById('canvasFront');
+        this.canvas3D = document.getElementById('canvas3D');
+
+        // Contexts
+        this.ctxTop = this.canvasTop?.getContext('2d');
+        this.ctxFront = this.canvasFront?.getContext('2d');
+        this.ctx3D = this.canvas3D?.getContext('2d');
+
+        // Dimensions par défaut (seront ajustées)
+        this.rackHeightPerLevel = 40; // px par niveau
+        this.slotSize = 60; // px par emplacement
+
+        this.init();
+    }
+
+    init() {
+        console.log('QuadViewManager initialisé');
+
+        // Ajuster les dimensions des canvas
+        this.resizeCanvases();
+
+        // Événements de redimensionnement
+        window.addEventListener('resize', () => this.resizeCanvases());
+
+        // Basculement de vue
+        document.querySelectorAll('.view-switch-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const view = e.target.dataset.view;
+                this.switchView(view);
+            });
+        });
+
+        // Contrôles 3D
+        document.querySelectorAll('.quad-3d-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const angle = parseInt(e.target.dataset.angle);
+                this.set3DAngle(angle);
+            });
+        });
+
+        // Réinitialisation 3D
+        document.getElementById('quad3DReset')?.addEventListener('click', () => {
+            this.reset3DView();
+        });
+
+        // Démarrer avec la vue quad
+        this.switchView('quad');
+    }
+
+    resizeCanvases() {
+        const quadViews = document.querySelectorAll('.quad-view-content');
+
+        quadViews.forEach(container => {
+            const canvas = container.querySelector('canvas');
+            if (canvas) {
+                const rect = container.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            }
+        });
+    }
+
+    switchView(viewType) {
+        this.currentView = viewType;
+
+        // Mettre à jour les boutons
+        document.querySelectorAll('.view-switch-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === viewType);
+        });
+
+        // Afficher/masquer les vues
+        const quadView = document.getElementById('quadView');
+        const simpleView = document.getElementById('simpleView');
+
+        if (viewType === 'quad') {
+            quadView.style.display = 'grid';
+            simpleView.style.display = 'none';
+            document.getElementById('viewMode').textContent = 'Quad';
+
+            // Redessiner toutes les vues
+            setTimeout(() => {
+                this.resizeCanvases();
+                if (window.vueStock) {
+                    this.updateAllViews(window.vueStock.racks);
+                }
+            }, 100);
+        } else {
+            quadView.style.display = 'none';
+            simpleView.style.display = 'block';
+            document.getElementById('viewMode').textContent = 'Simple';
+        }
+    }
+
+    // Mettre à jour toutes les vues avec les racks
+    updateAllViews(racks) {
+        if (!racks || !racks.length) return;
+
+        // 1. Vue du dessus
+        this.drawTopView(racks);
+
+        // 2. Vue de face (si un rack est sélectionné)
+        if (this.selectedRack) {
+            this.drawFrontView(this.selectedRack);
+        } else {
+            this.drawFrontView(racks[0]); // Premier rack par défaut
+        }
+
+        // 3. Vue 3D isométrique
+        this.draw3DView(racks);
+
+        // 4. Vue étage (si un niveau est sélectionné)
+        if (this.selectedLevel) {
+            this.updateLevelView(this.selectedLevel);
+        }
+
+        // Mettre à jour les infos
+        this.updateInfoPanel(racks);
+    }
+
+    drawTopView(racks) {
+        if (!this.ctxTop || !this.canvasTop) return;
+
+        const ctx = this.ctxTop;
+        const width = this.canvasTop.width;
+        const height = this.canvasTop.height;
+
+        // Effacer
+        ctx.clearRect(0, 0, width, height);
+
+        // Grille légère
+        this.drawGrid(ctx, width, height, 20);
+
+        // Dessiner chaque rack
+        racks.forEach(rack => {
+            const scale = 0.8; // Réduire pour la vue quad
+            const x = (rack.position_x * scale) % width;
+            const y = (rack.position_y * scale) % height;
+            const w = rack.width * 20; // 20px par case
+            const d = rack.depth * 20;
+
+            // Rectangle du rack
+            ctx.fillStyle = rack.color || '#4a90e2';
+            ctx.fillRect(x, y, w, d);
+
+            // Bordure
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, w, d);
+
+            // Code du rack
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(rack.code, x + w/2, y + d/2);
+
+            // Si sélectionné, mettre en surbrillance
+            if (this.selectedRack && rack.id === this.selectedRack.id) {
+                ctx.strokeStyle = '#ffeb3b';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x - 2, y - 2, w + 4, d + 4);
+            }
+        });
+
+        // Mettre à jour le compteur
+        document.getElementById('quadRackCount').textContent = `${racks.length} racks`;
+    }
+
+    drawFrontView(rack) {
+        if (!this.ctxFront || !this.canvasFront || !rack) return;
+
+        const ctx = this.ctxFront;
+        const width = this.canvasFront.width;
+        const height = this.canvasFront.height;
+
+        // Effacer
+        ctx.clearRect(0, 0, width, height);
+
+        // Dessiner le rack en élévation
+        const rackWidth = rack.width * 30; // 30px par case en largeur
+        const startX = (width - rackWidth) / 2;
+        const startY = height - 20; // Bas du canvas
+
+        // Base du rack
+        ctx.fillStyle = '#8b7355';
+        ctx.fillRect(startX, startY - 10, rackWidth, 10);
+
+        // Niveaux (du bas vers le haut)
+        if (rack.levels && rack.levels.length) {
+            const levels = [...rack.levels].sort((a, b) => a.display_order - b.display_order);
+
+            let currentY = startY - 10;
+
+            levels.forEach(level => {
+                // Étage
+                ctx.fillStyle = level.code % 20 === 0 ? '#6c757d' : '#adb5bd';
+                const levelHeight = 40; // Hauteur fixe par niveau
+
+                ctx.fillRect(startX, currentY - levelHeight, rackWidth, levelHeight);
+
+                // Séparateur
+                ctx.strokeStyle = '#495057';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(startX, currentY - levelHeight);
+                ctx.lineTo(startX + rackWidth, currentY - levelHeight);
+                ctx.stroke();
+
+                // Code de l'étage
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(level.code, startX + rackWidth/2, currentY - levelHeight/2);
+
+                currentY -= levelHeight;
+            });
+
+            // Hauteur totale
+            const totalHeight = startY - currentY;
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(startX - 30, currentY, 25, totalHeight);
+
+            // Étiquette de hauteur
+            ctx.fillStyle = '#333';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${levels.length} étages`, startX - 35, currentY + totalHeight/2);
+        }
+
+        // Code du rack en bas
+        ctx.fillStyle = '#333';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Rack ${rack.code}`, width/2, height - 5);
+
+        // Mettre à jour l'info
+        document.getElementById('quadSelectedRack').textContent = `Rack ${rack.code} - ${rack.levels?.length || 0} étages`;
+    }
+
+    draw3DView(racks) {
+        if (!this.ctx3D || !this.canvas3D) return;
+
+        const ctx = this.ctx3D;
+        const width = this.canvas3D.width;
+        const height = this.canvas3D.height;
+
+        // Effacer
+        ctx.clearRect(0, 0, width, height);
+
+        // Fond gradient
+        const gradient = ctx.createLinearGradient(0, 0, width, height);
+        gradient.addColorStop(0, '#667eea');
+        gradient.addColorStop(1, '#764ba2');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+
+        // Dessiner les racks en perspective isométrique
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        racks.forEach((rack, index) => {
+            // Position isométrique
+            const isoX = centerX + (rack.position_x * 0.5 - rack.position_y * 0.5) * 0.3;
+            const isoY = centerY + (rack.position_x * 0.25 + rack.position_y * 0.25 - (rack.levels?.length || 0) * 5) * 0.3;
+
+            // Dimensions projetées
+            const isoWidth = rack.width * 15;
+            const isoDepth = rack.depth * 15;
+            const isoHeight = (rack.levels?.length || 1) * 8;
+
+            // Couleur avec transparence
+            ctx.fillStyle = rack.color + 'CC';
+
+            // Dessiner le prisme 3D simple
+            this.drawIsoPrism(ctx, isoX, isoY, isoWidth, isoDepth, isoHeight);
+
+            // Code du rack (si assez grand)
+            if (isoWidth > 30) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(rack.code, isoX, isoY - isoHeight/2);
+            }
+        });
+
+        // Légende
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Vue 3D - ${racks.length} racks`, 10, 20);
+    }
+
+    drawIsoPrism(ctx, x, y, w, d, h) {
+        // Faces avant et droite simplifiées
+        const isoAngle = 0.5; // Ratio isométrique
+
+        // Face avant
+        ctx.beginPath();
+        ctx.moveTo(x - w/2, y + d/2);
+        ctx.lineTo(x - w/2, y - d/2);
+        ctx.lineTo(x - w/2 + h * isoAngle, y - d/2 - h * isoAngle);
+        ctx.lineTo(x - w/2 + h * isoAngle, y + d/2 - h * isoAngle);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fill();
+
+        // Face droite
+        ctx.beginPath();
+        ctx.moveTo(x + w/2, y + d/2);
+        ctx.lineTo(x + w/2, y - d/2);
+        ctx.lineTo(x + w/2 - h * isoAngle, y - d/2 - h * isoAngle);
+        ctx.lineTo(x + w/2 - h * isoAngle, y + d/2 - h * isoAngle);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fill();
+
+        // Face du dessus
+        ctx.beginPath();
+        ctx.moveTo(x - w/2, y - d/2);
+        ctx.lineTo(x + w/2, y - d/2);
+        ctx.lineTo(x + w/2 - h * isoAngle, y - d/2 - h * isoAngle);
+        ctx.lineTo(x - w/2 + h * isoAngle, y - d/2 - h * isoAngle);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fill();
+    }
+
+    updateLevelView(level) {
+        const container = document.getElementById('quadLevelSlots');
+        if (!container || !level) return;
+
+        container.innerHTML = '';
+
+        if (!level.slots || level.slots.length === 0) {
+            container.innerHTML = `
+                <div class="empty-quad">
+                    <i class="fas fa-box-open fa-2x"></i>
+                    <p>Aucun emplacement</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Trier les emplacements par code
+        const sortedSlots = [...level.slots].sort((a, b) => {
+            return parseInt(a.code) - parseInt(b.code);
+        });
+
+        // Créer les éléments d'emplacement
+        sortedSlots.forEach(slot => {
+            const slotEl = document.createElement('div');
+            slotEl.className = `quad-slot ${slot.status !== 'free' ? 'occupied' : ''}`;
+            slotEl.title = `Emplacement ${slot.code} - ${slot.status}`;
+
+            slotEl.innerHTML = `
+                <div class="quad-slot-code">${slot.code}</div>
+                <div class="quad-slot-status">${slot.status === 'free' ? 'Libre' : 'Occupé'}</div>
+            `;
+
+            // Événement clic
+            slotEl.addEventListener('click', () => {
+                console.log('Emplacement sélectionné:', slot.full_code);
+
+                // Mettre en surbrillance
+                container.querySelectorAll('.quad-slot').forEach(s => {
+                    s.classList.remove('selected');
+                });
+                slotEl.classList.add('selected');
+
+                // Afficher les articles si besoin
+                if (slot.articles && slot.articles.length > 0) {
+                    this.showSlotArticles(slot);
+                }
+            });
+
+            container.appendChild(slotEl);
+        });
+
+        // Mettre à jour l'info
+        document.getElementById('quadLevelInfo').textContent =
+            `Étage ${level.code} - ${level.slots.length} emplacements`;
+    }
+
+    showSlotArticles(slot) {
+        // Pourrait ouvrir un popup ou mettre à jour la sidebar
+        console.log('Articles dans l\'emplacement:', slot.articles);
+
+        // Exemple: mettre à jour la sidebar existante
+        const sidebar = document.getElementById('slotContents');
+        if (sidebar) {
+            let html = `<h4>${slot.full_code}</h4>`;
+
+            slot.articles.forEach(article => {
+                html += `
+                    <div class="article-item">
+                        <div>${article.nom}</div>
+                        <div>${article.stock_actuel} unités</div>
+                    </div>
+                `;
+            });
+
+            sidebar.innerHTML = html;
+        }
+    }
+
+    drawGrid(ctx, width, height, size) {
+        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+        ctx.lineWidth = 1;
+
+        // Lignes verticales
+        for (let x = 0; x < width; x += size) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+
+        // Lignes horizontales
+        for (let y = 0; y < height; y += size) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+    }
+
+    set3DAngle(angle) {
+        // Implémentation pour changer l'angle de vue 3D
+        console.log('Angle 3D changé à:', angle);
+        // À implémenter selon vos besoins
+    }
+
+    reset3DView() {
+        console.log('Vue 3D réinitialisée');
+        if (window.vueStock) {
+            this.draw3DView(window.vueStock.racks);
+        }
+    }
+
+    updateInfoPanel(racks) {
+        document.getElementById('racksCount').textContent = racks.length;
+
+        if (this.selectedRack) {
+            document.getElementById('selectedElement').textContent =
+                `Rack ${this.selectedRack.code}`;
+        } else if (this.selectedLevel) {
+            document.getElementById('selectedElement').textContent =
+                `Étage ${this.selectedLevel.code}`;
+        }
+    }
+
+    // Méthodes pour la sélection
+    selectRack(rack) {
+        this.selectedRack = rack;
+        this.selectedLevel = null;
+
+        // Mettre à jour les vues
+        if (window.vueStock) {
+            this.drawFrontView(rack);
+            this.updateAllViews(window.vueStock.racks);
+        }
+
+        // Si le rack a des niveaux, sélectionner le premier
+        if (rack.levels && rack.levels.length > 0) {
+            this.selectLevel(rack.levels[0]);
+        }
+    }
+
+    selectLevel(level) {
+        this.selectedLevel = level;
+        this.updateLevelView(level);
+    }
+}
+
 
 // vuestock.js - Version 1.0 - Structure de base
 class VueStock {
@@ -972,6 +1458,35 @@ class VueStock {
         this.api = new ApiManager();
 
         this.init();
+
+        this.quadViewManager = null;
+
+        // Dans la méthode init(), ajoutez :
+        initQuadView() {
+            // Initialiser le QuadViewManager seulement si on est en vue plan
+            if (this.currentView === 'plan') {
+                setTimeout(() => {
+                    this.quadViewManager = new QuadViewManager();
+
+                    // Connecter les événements de sélection
+                    if (this.canvasManager) {
+                        // Quand une étagère est sélectionnée dans le canvas
+                        // (vous devrez peut-être ajouter un événement personnalisé)
+                    }
+                }, 500);
+            }
+        }
+
+        // Modifiez showView pour initialiser la vue quad
+        showView(viewName) {
+            // ... code existant ...
+
+            if (viewName === 'plan') {
+                setTimeout(() => {
+                    this.initQuadView();
+                }, 100);
+            }
+        }
     }
 
     init() {
@@ -2123,4 +2638,15 @@ class VueStock {
 // ===== INITIALISATION AU CHARGEMENT =====
 document.addEventListener('DOMContentLoaded', () => {
     window.vueStock = new VueStock();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.vueStock = new VueStock();
+
+    // Initialiser la vue quad après un délai
+    setTimeout(() => {
+        if (window.vueStock.quadViewManager) {
+            window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
+        }
+    }, 1000);
 });
