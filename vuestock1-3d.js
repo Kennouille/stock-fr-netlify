@@ -495,10 +495,9 @@ export function closeWarehouseModal() {
   }
 }
 
-// Gestion de la fermeture - version corrigée
-document.addEventListener('DOMContentLoaded', function() {
-  const closeBtn = document.getElementById('closeWarehouseModal');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closeWarehouseModal);
+// Gestion de la fermeture - version finale
+document.addEventListener('click', function(event) {
+  if (event.target && event.target.id === 'closeWarehouseModal') {
+    closeWarehouseModal();
   }
 });
