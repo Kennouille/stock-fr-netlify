@@ -1980,7 +1980,25 @@ class VueStock {
 
     // ===== GESTION DES ÉTAGÈRES =====
     async addRack(rackData) {
+        // PROTECTION CONTRE LES DOUBLES CLICS
+        if (this._addingRackInProgress) {
+            console.log('⏳ Ajout d\'étagère déjà en cours, veuillez patienter...');
+            this.showNotification('Ajout en cours, veuillez patienter...', 'warning');
+            return null;
+        }
+
         console.log('🟢 [VueStock.addRack] Called with:', rackData);
+
+        // Bloquer les nouveaux clics
+        this._addingRackInProgress = true;
+
+        // Désactiver le bouton visuellement
+        const addButton = document.getElementById('btnAddRack');
+        if (addButton) {
+            const originalText = addButton.innerHTML;
+            addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+            addButton.disabled = true;
+        }
 
         try {
             const payload = {
@@ -2034,6 +2052,12 @@ class VueStock {
                     this.canvasManager.addRackToCanvas(newRack);
                 }
 
+                // AJOUT IMPORTANT : Mettre à jour QuadView si actif
+                if (this.quadViewManager && this.currentView === 'plan') {
+                    console.log('Mise à jour QuadView après ajout de rack');
+                    this.quadViewManager.updateAllViews(this.racks);
+                }
+
                 this.updateStats();
                 this.showNotification(`Étagère ${newRack.code} créée`);
 
@@ -2042,7 +2066,26 @@ class VueStock {
 
         } catch (error) {
             console.error('❌ Erreur lors de la sauvegarde:', error);
-            this.showNotification('Erreur: ' + error.message, 'error');
+
+            // Message d'erreur plus informatif
+            let errorMessage = 'Erreur lors de la création';
+            if (error.message.includes('500')) {
+                errorMessage = 'Erreur serveur (500). L\'étagère a peut-être été créée malgré tout.';
+            } else if (error.message.includes('409') || error.message.includes('duplicate')) {
+                errorMessage = 'Une étagère avec ce code existe déjà.';
+            }
+
+            this.showNotification(errorMessage, 'error');
+
+        } finally {
+            // TOUJOURS débloquer à la fin
+            this._addingRackInProgress = false;
+
+            // Réactiver le bouton
+            if (addButton) {
+                addButton.innerHTML = '<i class="fas fa-plus"></i> Ajouter étagère';
+                addButton.disabled = false;
+            }
         }
     }
 
@@ -2613,40 +2656,62 @@ class VueStock {
 
         // Sauvegarder
         document.getElementById('saveRackModal')?.addEventListener('click', async () => {
-            const code = document.getElementById('modalRackCode').value.trim();
-            const name = document.getElementById('modalRackName').value.trim();
-            const width = parseInt(document.getElementById('modalRackWidth').value);
-            const depth = parseInt(document.getElementById('modalRackDepth').value);
-            const color = document.getElementById('modalRackColor').value;
-
-            if (!code) {
-                this.showNotification('Le code étagère est requis', 'error');
-                return;
+            // Désactiver le bouton pendant le traitement
+            const saveButton = document.getElementById('saveRackModal');
+            if (saveButton) {
+                const originalText = saveButton.innerHTML;
+                saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+                saveButton.disabled = true;
             }
 
-            const codeExists = this.racks.some(r => r.code === code);
-            if (codeExists) {
-                this.showNotification(`Le code ${code} existe déjà`, 'error');
-                return;
-            }
+            try {
+                const code = document.getElementById('modalRackCode').value.trim();
+                const name = document.getElementById('modalRackName').value.trim();
+                const width = parseInt(document.getElementById('modalRackWidth').value);
+                const depth = parseInt(document.getElementById('modalRackDepth').value);
+                const color = document.getElementById('modalRackColor').value;
 
-            // Création de l'étagère
-            const newRack = await this.addRack({
-                code,
-                name: name || `Étagère ${code}`,
-                x: 100 + (this.racks.length * 150),
-                y: 100,
-                width: width || 3,
-                depth: depth || 2,
-                color: color || '#4a90e2'
-            });
+                if (!code) {
+                    this.showNotification('Le code étagère est requis', 'error');
+                    return;
+                }
 
-            // Fermer le modal
-            document.getElementById('modalOverlay').classList.remove('active');
+                const codeExists = this.racks.some(r => r.code === code);
+                if (codeExists) {
+                    this.showNotification(`Le code ${code} existe déjà`, 'error');
+                    return;
+                }
 
-            // Ajouter au canvas si on est en vue plan
-            if (this.currentView === 'plan' && this.canvasManager && newRack) {
-                this.canvasManager.addRackToCanvas(newRack);
+                // Création de l'étagère
+                const newRack = await this.addRack({
+                    code,
+                    name: name || `Étagère ${code}`,
+                    x: 100 + (this.racks.length * 150),
+                    y: 100,
+                    width: width || 3,
+                    depth: depth || 2,
+                    color: color || '#4a90e2'
+                });
+
+                // Fermer le modal seulement si succès
+                if (newRack) {
+                    document.getElementById('modalOverlay').classList.remove('active');
+
+                    // Mettre à jour QuadView
+                    if (this.quadViewManager && this.currentView === 'plan') {
+                        this.quadViewManager.updateAllViews(this.racks);
+                    }
+                }
+
+            } catch (error) {
+                console.error('Erreur dans saveRackModal:', error);
+
+            } finally {
+                // TOUJOURS réactiver le bouton
+                if (saveButton) {
+                    saveButton.innerHTML = 'Enregistrer';
+                    saveButton.disabled = false;
+                }
             }
         });
     }
