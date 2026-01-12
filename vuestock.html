@@ -6,18 +6,186 @@
     <title>VueStock - Visualisation 3D du Stock</title>
     <link rel="stylesheet" href="vuestock.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* ... votre CSS existant ... */
 
-        /* AJOUTEZ JUSTE CES 2 LIGNES POUR AGRANDIR LE MODAL */
-        .modal.modal-3d {
-            width: 95vw !important;   /* Agrandir la fenêtre */
-            height: 95vh !important;  /* Agrandir la fenêtre */
+    <style>
+        /* Votre CSS existant */
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
         }
 
+        body {
+          font-family: Arial, sans-serif;
+          overflow: hidden;
+          background: #1a1a1a;
+          color: #fff;
+        }
+
+        #canvas-container {
+          width: 100vw;
+          height: 100vh;
+          position: relative;
+        }
+
+        #info-panel {
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          background: rgba(0, 0, 0, 0.8);
+          padding: 15px;
+          border-radius: 8px;
+          min-width: 250px;
+          max-width: 400px;
+          backdrop-filter: blur(10px);
+        }
+
+        #info-panel h2 {
+          font-size: 18px;
+          margin-bottom: 10px;
+          color: #4CAF50;
+        }
+
+        #info-panel p {
+          margin: 5px 0;
+          font-size: 14px;
+        }
+
+        #info-panel img {
+          max-width: 100%;
+          margin-top: 10px;
+          border-radius: 4px;
+        }
+
+        .controls {
+          position: absolute;
+          bottom: 20px;
+          left: 20px;
+          background: rgba(0, 0, 0, 0.8);
+          padding: 15px;
+          border-radius: 8px;
+          backdrop-filter: blur(10px);
+        }
+
+        .controls p {
+          font-size: 12px;
+          margin: 3px 0;
+        }
+
+        .close-btn {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: #f44336;
+          border: none;
+          color: white;
+          padding: 5px 10px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          z-index: 1001;
+        }
+
+        .close-btn:hover {
+          background: #d32f2f;
+        }
+
+        .hidden {
+          display: none !important;
+        }
+
+        /* Styles pour le modal (AGANDI) */
+        /* Styles pour le modal (AGANDI) */
+        #warehouse-modal {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.95); /* Plus foncé */
+          z-index: 1000;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        #warehouse-modal:not(.hidden) {
+          opacity: 1;
+        }
+
+        .modal-content {
+          width: 98vw; /* Presque toute la largeur */
+          height: 98vh; /* Presque toute la hauteur */
+          max-width: none; /* Important: enlever les limites */
+          max-height: none; /* Important: enlever les limites */
+          background: #1a1a1a;
+          border-radius: 8px; /* Bordures légèrement arrondies */
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7); /* Ombre plus prononcée */
+        }
+
+        #canvas-container {
+          width: 100%;
+          height: 100%;
+          flex-grow: 1;
+        }
+
+        /* Agrandir aussi le bouton de fermeture pour être plus visible */
+        .close-btn {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          background: #f44336;
+          border: none;
+          color: white;
+          padding: 10px 15px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 18px; /* Plus grand */
+          z-index: 1001;
+          transition: background 0.3s, transform 0.2s;
+        }
+
+        .close-btn:hover {
+          background: #d32f2f;
+          transform: scale(1.1);
+        }
+
+        .loading {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          text-align: center;
+        }
+
+        .spinner {
+          border: 4px solid rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
+          border-top: 4px solid #4CAF50;
+          width: 40px;
+          height: 40px;
+          animation: spin 1s linear infinite;
+          margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .modal.modal-3d {
+            width: 95vw; /* Au lieu de 75vw */
+            height: 95vh; /* Au lieu de 75vh */
+        }
         #warehouse3DContainer {
-            width: 100% !important;   /* Remplir la fenêtre */
-            height: 100% !important;  /* Remplir la fenêtre */
+            width: 100% !important;  /* Prend toute la largeur du modal */
+            height: 100% !important; /* Prend toute la hauteur du modal */
         }
       </style>
 </head>
@@ -294,12 +462,12 @@
         <i class="fas fa-cube"></i> Voir l'entrepôt 3D
     </button>
 
-     <div id="warehouse-modal" class="modal-overlay hidden">
-          <div class="modal modal-3d">
-              <button id="closeWarehouseModal" class="modal-close">✕</button>
-              <div id="warehouse3DContainer" style="width:75vw; height:75vh;"></div>
-          </div>
-      </div>
+    <div id="warehouse-modal" class="modal-overlay hidden">
+        <div class="modal modal-3d" style="width:95vw; height:95vh;">
+            <button id="closeWarehouseModal" class="modal-close">✕</button>
+            <div id="warehouse3DContainer" style="width:100%; height:100%;"></div>
+        </div>
+    </div>
 
 
 
@@ -309,9 +477,13 @@
     <script src="vuestock.js"></script>
 
     <script type="module">
-          import { openWarehouseModal } from './vuestock1-3d.js';
-          document.getElementById('open-warehouse').addEventListener('click', openWarehouseModal);
-      </script>
+        import { openWarehouseModal } from './vuestock1-3d.js';
+
+        const btn = document.getElementById('btnView3D');
+        if (btn) {
+            btn.addEventListener('click', openWarehouseModal);
+        }
+    </script>
 
 
 
