@@ -478,6 +478,8 @@ function onWindowResize() {
 
 function animate() {
   if (!isModalOpen) return;
+  if (!renderer || !scene || !camera) return;
+
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
 }
@@ -498,7 +500,7 @@ export function openWarehouseModal() {
     } else {
       // Vérifier que le conteneur existe
       const container = document.getElementById('canvas-container');
-      if (container) {
+      if (container && renderer && camera) {
         // Redimensionner le renderer si nécessaire
         renderer.setSize(container.clientWidth, container.clientHeight);
         camera.aspect = container.clientWidth / container.clientHeight;
