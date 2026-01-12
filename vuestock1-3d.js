@@ -83,6 +83,7 @@ async function initWarehouse() {
   scene.add(floor);
 
   renderer.domElement.addEventListener('click', onCanvasClick);
+  renderer.domElement.addEventListener('wheel', onMouseWheel);
   window.addEventListener('resize', onWindowResize);
   document.addEventListener('keydown', onKeyDown);
 
@@ -461,6 +462,20 @@ function onKeyDown(event) {
     }
   }
 }
+
+function onMouseWheel(event) {
+  if (!scene) return;
+
+  const delta = event.deltaY;
+
+  if (delta > 0) {
+    // Molette vers le bas → revenir en arrière
+    if (viewMode !== 'overview') {
+      goBack();
+    }
+  }
+}
+
 
 function onWindowResize() {
   if (!isModalOpen) return;
