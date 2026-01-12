@@ -43,17 +43,22 @@ function hideInfoPanel() {
   }
 }
 
-async function initWarehouse() {
+function initWarehouse() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1a1a);
 
   const container = document.getElementById('canvas-container');
-    camera = new THREE.PerspectiveCamera(
-      60,
-      container.clientWidth / container.clientHeight,
-      0.1,
-      1000
-    );
+  if (!container) {
+    console.error('Conteneur canvas non trouvé');
+    return;
+  }
+
+  camera = new THREE.PerspectiveCamera(
+    60,
+    container.clientWidth / container.clientHeight,
+    0.1,
+    1000
+  );
 
 
   camera.position.set(0, 20, 40);
@@ -470,14 +475,21 @@ function animate() {
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
+  if (!modal) {
+    console.error('Modal non trouvé');
+    return;
+  }
   modal.classList.remove('hidden');
   isModalOpen = true;
 
-  if (!scene) {
-    initWarehouse();
-  } else {
-    animate();
-  }
+  // Petit délai pour laisser le DOM se mettre à jour
+  setTimeout(() => {
+    if (!scene) {
+      initWarehouse();
+    } else {
+      animate();
+    }
+  }, 100);
 }
 
 
