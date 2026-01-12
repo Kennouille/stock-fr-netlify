@@ -962,6 +962,12 @@ class CanvasManager {
 
 class QuadViewManager {
     constructor() {
+        if (window.quadViewInitialized) {
+            console.log('⚠️ QuadViewManager déjà initialisé');
+            return;
+        }
+        window.quadViewInitialized = true;
+
         this.currentView = 'quad'; // 'quad' ou 'single'
         this.selectedRack = null;
         this.selectedLevel = null;
@@ -1187,10 +1193,11 @@ class QuadViewManager {
         if (!this.currentRacks || this.currentRacks.length === 0) return;
 
         const rect = this.canvasTop.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const scale = 0.8;
+        const x = (e.clientX - rect.left) / scale * (40/20); // Ajuster pour l'échelle
+        const y = (e.clientY - rect.top) / scale * (40/20);
 
-        console.log('Clic sur canvas Quad à:', x, y);
+        console.log('Clic corrigé à:', x, y);
 
         // D'abord vérifier si on clique sur une poignette du rack sélectionné
         if (this.selectedRack) {
@@ -1265,8 +1272,8 @@ class QuadViewManager {
         const gridSize = 20; // Même taille que dans drawTopView
 
         for (const rack of this.currentRacks) {
-            const rackX = (rack.position_x * scale) % this.canvasTop.width;
-            const rackY = (rack.position_y * scale) % this.canvasTop.height;
+            const rackX = (rack.position_x * 0.8) / 40 * 20;
+            const rackY = (rack.position_y * 0.8) / 40 * 20;
             const rackWidth = rack.width * gridSize;
             const rackHeight = rack.depth * gridSize;
 
@@ -1451,8 +1458,8 @@ class QuadViewManager {
         // Dessiner chaque rack
         racks.forEach(rack => {
             const scale = 0.8; // Réduire pour la vue quad
-            const x = (rack.position_x * scale) % width;
-            const y = (rack.position_y * scale) % height;
+            const x = (rack.position_x * 0.8) / 40 * 20;
+            const y = (rack.position_y * 0.8) / 40 * 20;
             const w = rack.width * 20; // 20px par case
             const d = rack.depth * 20;
 
@@ -2523,6 +2530,12 @@ class QuadViewManager {
 // vuestock.js - Version 1.0 - Structure de base
 class VueStock {
     constructor() {
+        if (window.vueStockInitialized) {
+            console.log('⚠️ VueStock déjà initialisé, arrêt...');
+            return;
+        }
+        window.vueStockInitialized = true;
+
         this.currentView = 'plan'; // plan, rack, level
         this.selectedRack = null;
         this.selectedLevel = null;
