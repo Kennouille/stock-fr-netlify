@@ -1457,36 +1457,10 @@ class VueStock {
         this.canvasManager = null;
         this.api = new ApiManager();
 
-        this.init();
-
+        // AJOUT pour QuadView
         this.quadViewManager = null;
 
-        // Dans la méthode init(), ajoutez :
-        initQuadView() {
-            // Initialiser le QuadViewManager seulement si on est en vue plan
-            if (this.currentView === 'plan') {
-                setTimeout(() => {
-                    this.quadViewManager = new QuadViewManager();
-
-                    // Connecter les événements de sélection
-                    if (this.canvasManager) {
-                        // Quand une étagère est sélectionnée dans le canvas
-                        // (vous devrez peut-être ajouter un événement personnalisé)
-                    }
-                }, 500);
-            }
-        }
-
-        // Modifiez showView pour initialiser la vue quad
-        showView(viewName) {
-            // ... code existant ...
-
-            if (viewName === 'plan') {
-                setTimeout(() => {
-                    this.initQuadView();
-                }, 100);
-            }
-        }
+        this.init();
     }
 
     init() {
@@ -1503,6 +1477,58 @@ class VueStock {
 
         // Mettre à jour les statistiques
         this.updateStats();
+    }
+
+    // ===== GESTION DES VUES =====
+    showView(viewName) {
+        // Mettre à jour la vue courante
+        this.currentView = viewName;
+
+        // Masquer toutes les vues
+        document.querySelectorAll('.view').forEach(view => {
+            view.classList.remove('active');
+        });
+
+        // Afficher la vue demandée
+        const viewElement = document.getElementById(`view${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`);
+        if (viewElement) {
+            viewElement.classList.add('active');
+        }
+
+        // Mettre à jour le breadcrumb
+        this.updateBreadcrumb();
+
+        if (viewName === 'plan' && !this.canvasManager) {
+            setTimeout(() => {
+                this.initCanvas();
+            }, 100);
+        }
+
+        // AJOUT : Initialiser la vue quad si on est en vue plan
+        if (viewName === 'plan') {
+            setTimeout(() => {
+                this.initQuadView();
+            }, 100);
+        }
+    }
+
+    // AJOUT : Méthode pour initialiser la vue quad
+    initQuadView() {
+        // Initialiser le QuadViewManager seulement si on est en vue plan
+        if (this.currentView === 'plan' && !this.quadViewManager) {
+            setTimeout(() => {
+                this.quadViewManager = new QuadViewManager();
+
+                // Connecter les événements de sélection
+                if (this.canvasManager) {
+                    // Quand une étagère est sélectionnée dans le canvas
+                    // (vous devrez peut-être ajouter un événement personnalisé)
+                }
+
+                // Mettre à jour les vues avec les données actuelles
+                this.quadViewManager.updateAllViews(this.racks);
+            }, 500);
+        }
     }
 
     initCanvas() {
