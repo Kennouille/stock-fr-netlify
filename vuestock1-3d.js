@@ -25,10 +25,17 @@ function hideLoading() {
 
 
 function showInfoPanel(title, content) {
-  document.getElementById('info-title').textContent = title;
-  document.getElementById('info-content').innerHTML = content;
-  document.getElementById('info-panel').classList.remove('hidden');
+  const titleEl = document.getElementById('info-title');
+  const contentEl = document.getElementById('info-content');
+  const panelEl = document.getElementById('info-panel');
+
+  if (!titleEl || !contentEl || !panelEl) return;
+
+  titleEl.textContent = title;
+  contentEl.innerHTML = content;
+  panelEl.classList.remove('hidden');
 }
+
 
 function hideInfoPanel() {
   const infoPanel = document.getElementById('info-panel');
