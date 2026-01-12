@@ -468,4 +468,7 @@ export function closeWarehouseModal() {
   }
 }
 
-document.getElementById('close-modal').addEventListener('click', closeWarehouseModal);
+const closeBtn = document.getElementById('close-modal');
+if (closeBtn) {
+  closeBtn.addEventListener('click', closeWarehouseModal);
+}
