@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrepôt 3D</title>
+  <link rel="stylesheet" href="vuestock1-3d.css">
+</head>
+<body>
+  <!-- Modale -->
+  <div id="warehouse-modal" class="modal hidden">
+    <div class="modal-content">
+      <button id="close-modal" class="close-btn">&times;</button>
+
+      <div id="canvas-container"></div>
+
+      <div id="info-panel" class="hidden">
+        <h2 id="info-title"></h2>
+        <div id="info-content"></div>
+      </div>
+
+      <div class="controls">
+        <p><strong>Navigation:</strong></p>
+        <p>Clic: Sélectionner</p>
+        <p>Echap: Retour</p>
+        <p>Molette: Zoom</p>
+      </div>
+
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>Chargement...</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="vuestock1-3d.js"></script>
+</body>
+</html>

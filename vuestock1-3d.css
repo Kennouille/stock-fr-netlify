@@ -1,541 +1,93 @@
-/* ============================================
-   VUESTOCK 3D - Styles
-   ============================================ */
-
-/* Conteneur principal */
-#vuestock3d-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    z-index: 1000;
-    display: none;
-    overflow: hidden;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Canvas container */
-.vuestock3d-canvas-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-/* Canvas Three.js */
-#vuestock3d-canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    cursor: grab;
-}
-
-#vuestock3d-canvas:active {
-    cursor: grabbing;
-}
-
-/* HUD (Heads-Up Display) */
-.vuestock3d-hud {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 15px 20px;
-    color: white;
-    min-width: 200px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    z-index: 10;
-}
-
-.vuestock3d-hud .hud-position,
-.vuestock3d-hud .hud-mode {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-
-.vuestock3d-hud .hud-position:last-child {
-    margin-bottom: 0;
-}
-
-.vuestock3d-hud .hud-label {
-    color: #a0aec0;
-    font-weight: 500;
-}
-
-.vuestock3d-hud .hud-value {
-    color: #ffffff;
-    font-weight: 600;
-}
-
-/* Panel d'étage */
-.vuestock3d-level-panel {
-    position: absolute;
-    top: 50%;
-    right: -400px;
-    transform: translateY(-50%);
-    width: 380px;
-    max-height: 80vh;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 16px;
-    padding: 0;
-    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
-    transition: right 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 20;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.vuestock3d-level-panel.visible {
-    right: 20px;
-}
-
-.panel-header {
-    background: linear-gradient(135deg, #4a90e2 0%, #2d5aa0 100%);
-    color: white;
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 16px 16px 0 0;
-}
-
-.panel-header h3 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.close-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-}
-
-.close-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.panel-content {
-    padding: 20px;
-    overflow-y: auto;
-    flex: 1;
-}
-
-/* Section informations */
-.level-info {
-    background: #f7fafc;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 20px;
-    border: 1px solid #e2e8f0;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-
-.info-item:last-child {
-    margin-bottom: 0;
-}
-
-.info-label {
-    color: #4a5568;
-    font-weight: 500;
-}
-
-.info-value {
-    color: #2d3748;
-    font-weight: 600;
-}
-
-/* Section slots */
-.slots-section h4 {
-    color: #2d3748;
-    margin: 0 0 15px 0;
-    font-size: 1.1rem;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #4a90e2;
-}
-
-.slots-grid {
-    display: grid;
-    gap: 15px;
-}
-
-/* Carte slot */
-.slot-card {
-    background: white;
-    border-radius: 10px;
-    padding: 15px;
-    border: 2px solid #e2e8f0;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-.slot-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.slot-card.occupied {
-    border-color: #48bb78;
-}
-
-.slot-card.partial {
-    border-color: #ed8936;
-}
-
-.slot-card.free {
-    border-color: #a0aec0;
-}
-
-.slot-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.slot-code {
-    font-weight: 700;
-    color: #2d3748;
-    font-size: 1.1rem;
-}
-
-.slot-status {
-    font-size: 12px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-weight: 600;
-    text-transform: uppercase;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.occupied .slot-status {
-    background: #c6f6d5;
-    color: #22543d;
+body {
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+  background: #1a1a1a;
+  color: #fff;
 }
 
-.partial .slot-status {
-    background: #fed7d7;
-    color: #742a2a;
+#canvas-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
 }
 
-.free .slot-status {
-    background: #e2e8f0;
-    color: #4a5568;
+#info-panel {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 15px;
+  border-radius: 8px;
+  min-width: 250px;
+  max-width: 400px;
+  backdrop-filter: blur(10px);
 }
 
-.slot-capacity {
-    color: #718096;
-    font-size: 13px;
-    margin-bottom: 10px;
+#info-panel h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #4CAF50;
 }
 
-/* Articles dans le slot */
-.slot-articles {
-    margin-top: 10px;
+#info-panel p {
+  margin: 5px 0;
+  font-size: 14px;
 }
 
-.slot-articles ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+#info-panel img {
+  max-width: 100%;
+  margin-top: 10px;
+  border-radius: 4px;
 }
 
-.slot-articles li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid #f1f5f9;
+.controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 15px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
 }
 
-.slot-articles li:last-child {
-    border-bottom: none;
+.controls p {
+  font-size: 12px;
+  margin: 3px 0;
 }
-
-.article-quantity {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.qty-btn {
-    background: #4a90e2;
-    color: white;
-    border: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    transition: background 0.2s;
-}
-
-.qty-btn:hover {
-    background: #2d5aa0;
-}
-
-.qty-btn.minus {
-    background: #e53e3e;
-}
-
-.qty-btn.minus:hover {
-    background: #c53030;
-}
-
-.qty-input {
-    width: 50px;
-    padding: 4px 8px;
-    border: 1px solid #cbd5e0;
-    border-radius: 4px;
-    text-align: center;
-    font-size: 14px;
-}
-
-.qty-input:focus {
-    outline: none;
-    border-color: #4a90e2;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
-}
-
-.slot-empty {
-    text-align: center;
-    color: #a0aec0;
-    font-style: italic;
-    padding: 20px 0;
-}
-
-.no-slots {
-    text-align: center;
-    color: #a0aec0;
-    padding: 40px 20px;
-    font-style: italic;
-}
-
-/* Actions */
-.level-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #e2e8f0;
-}
-
-.btn-action {
-    flex: 1;
-    background: #4a90e2;
-    color: white;
-    border: none;
-    padding: 12px 15px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: all 0.2s;
-}
-
-.btn-action:hover {
-    background: #2d5aa0;
-    transform: translateY(-1px);
-}
-
-.btn-action i {
-    font-size: 1.1rem;
-}
-
-/* Recherche */
-.vuestock3d-search {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    gap: 10px;
-    z-index: 10;
-}
-
-#search-input {
-    width: 300px;
-    padding: 12px 20px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 25px;
-    color: white;
-    font-size: 14px;
-    transition: all 0.3s;
-}
-
-#search-input:focus {
-    outline: none;
-    border-color: #4a90e2;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-    width: 350px;
-}
-
-#search-input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-#search-btn {
-    background: #4a90e2;
-    color: white;
-    border: none;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 18px;
-    transition: all 0.2s;
-}
-
-#search-btn:hover {
-    background: #2d5aa0;
-    transform: scale(1.05);
-}
-
-/* Aide */
-.vuestock3d-help {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 15px;
-    color: white;
-    font-size: 13px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 10;
-}
-
-.help-item {
-    margin-bottom: 6px;
-    color: #a0aec0;
-}
-
-.help-item:last-child {
-    margin-bottom: 0;
-}
-
-/* Scrollbar personnalisée */
-.panel-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.panel-content::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 10px;
-}
-
-.panel-content::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
-    border-radius: 10px;
-}
-
-.panel-content::-webkit-scrollbar-thumb:hover {
-    background: #a0aec0;
-}
-
-/* Animation pour les boutons */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-.qty-btn:active {
-    animation: pulse 0.2s;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .vuestock3d-level-panel {
-        width: calc(100% - 40px);
-        right: -100%;
-    }
-
-    .vuestock3d-level-panel.visible {
-        right: 20px;
-    }
-
-    .vuestock3d-search {
-        width: calc(100% - 40px);
-        right: 20px;
-    }
-
-    #search-input {
-        width: 100%;
-    }
-
-    #search-input:focus {
-        width: 100%;
-    }
 
-    .vuestock3d-help {
-        display: none;
-    }
+#close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #f44336;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
 }
 
-/* Overlay de chargement (optionnel) */
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(26, 26, 46, 0.9);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
+#close-btn:hover {
+  background: #d32f2f;
 }
 
-.loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid rgba(74, 144, 226, 0.3);
-    border-radius: 50%;
-    border-top-color: #4a90e2;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
+.hidden {
+  display: none;
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+.stock-warning {
+  color: #ff9800;
+  font-weight: bold;
 }
 
-.loading-text {
-    color: white;
-    font-size: 16px;
-    font-weight: 500;
+.stock-critical {
+  color: #f44336;
+  font-weight: bold;
 }
