@@ -471,12 +471,15 @@ export function openWarehouseModal() {
   modal.classList.remove('hidden');
   isModalOpen = true;
 
-  if (!scene) {
-    initWarehouse();
-  } else {
-    animate();
-  }
+  requestAnimationFrame(() => {
+    if (!scene) {
+      initWarehouse();
+    } else {
+      animate();
+    }
+  });
 }
+
 
 document
   .getElementById('closeWarehouseModal')
