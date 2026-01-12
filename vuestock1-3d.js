@@ -454,7 +454,7 @@ function animate() {
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
-  modal.classList.remove('hidden');
+  modal.classList.add('active');
   isModalOpen = true;
 
   if (!scene) {
@@ -463,6 +463,7 @@ export function openWarehouseModal() {
     animate();
   }
 }
+
 
 window.openWarehouseModal = openWarehouseModal;
 
