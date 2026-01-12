@@ -1252,7 +1252,7 @@ class QuadViewManager {
         if (rack) {
             this.canvasTop.style.cursor = 'pointer';
             // Option : afficher une info-bulle
-            this.showTooltip(rack, x, y);
+            this.showTooltip(rack, e.clientX, e.clientY);
         } else {
             this.canvasTop.style.cursor = 'default';
             this.hideTooltip();
@@ -1287,8 +1287,15 @@ class QuadViewManager {
             ${rack.width} × ${rack.depth} cases
         `;
 
-        tooltip.style.left = (x + rect.left) + 'px';
-        tooltip.style.top = (y + rect.top - 10) + 'px';
+        // CORRECTION : Utiliser les coordonnées directement
+        // x et y sont déjà les coordonnées relatives au canvas
+        // On les convertit en coordonnées absolues de la page
+        const canvasRect = this.canvasTop.getBoundingClientRect();
+        const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+        tooltip.style.left = (canvasRect.left + x + scrollX) + 'px';
+        tooltip.style.top = (canvasRect.top + y + scrollY - 10) + 'px';
         tooltip.style.display = 'block';
     }
 
