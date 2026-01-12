@@ -13,65 +13,62 @@ let isModalOpen = false;
 
 function showLoading() {
   const el = document.getElementById('loading');
-  if (el) el.classList.remove('hidden');
+  if (!el) return;
+  el.classList.remove('hidden');
 }
 
 function hideLoading() {
   const el = document.getElementById('loading');
-  if (el) el.classList.add('hidden');
+  if (!el) return;
+  el.classList.add('hidden');
 }
+
 
 function showInfoPanel(title, content) {
   const titleEl = document.getElementById('info-title');
   const contentEl = document.getElementById('info-content');
   const panelEl = document.getElementById('info-panel');
 
-  if (titleEl && contentEl && panelEl) {
-    titleEl.textContent = title;
-    contentEl.innerHTML = content;
-    panelEl.classList.remove('hidden');
-  }
+  if (!titleEl || !contentEl || !panelEl) return;
+
+  titleEl.textContent = title;
+  contentEl.innerHTML = content;
+  panelEl.classList.remove('hidden');
 }
+
 
 function hideInfoPanel() {
   const infoPanel = document.getElementById('info-panel');
-  if (infoPanel) infoPanel.classList.add('hidden');
+  if (infoPanel) {
+    infoPanel.classList.add('hidden');
+  }
 }
 
 async function initWarehouse() {
-  const container = document.getElementById('warehouse3DContainer');
-  if (!container) {
-    console.error('Conteneur 3D non trouvé');
-    return;
-  }
-
-  // Nettoyer l'ancienne scène si elle existe
-  if (renderer) {
-    container.removeChild(renderer.domElement);
-  }
-
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1a1a);
 
-  camera = new THREE.PerspectiveCamera(
-    60,
-    container.clientWidth / container.clientHeight,
-    0.1,
-    1000
-  );
+  const container = document.getElementById('warehouse3DContainer');
+    camera = new THREE.PerspectiveCamera(
+      60,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      1000
+    );
+
 
   camera.position.set(0, 20, 40);
   camera.lookAt(0, 0, 0);
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(container.clientWidth, container.clientHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
-  container.appendChild(renderer.domElement);
+  renderer.setSize(container.offsetWidth, container.offsetHeight);
+    container.innerHTML = '';
+    container.appendChild(renderer.domElement);
+
 
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
 
-  // Éclairage
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
   scene.add(ambientLight);
 
@@ -79,42 +76,42 @@ async function initWarehouse() {
   directionalLight.position.set(20, 30, 20);
   scene.add(directionalLight);
 
-  // Sol
   const floorGeometry = new THREE.PlaneGeometry(200, 200);
   const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
   const floor = new THREE.Mesh(floorGeometry, floorMaterial);
   floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
 
-  // Événements
   renderer.domElement.addEventListener('click', onCanvasClick);
   renderer.domElement.addEventListener('wheel', onMouseWheel);
   window.addEventListener('resize', onWindowResize);
   document.addEventListener('keydown', onKeyDown);
 
   await loadRacks();
+  camera.position.set(0, 15, 25);
+  camera.lookAt(0, 0, 0);
   animate();
+
 }
 
 async function loadRacks() {
   showLoading();
+  const { data: racks, error } = await supabase
+    .from('w_vuestock_racks')
+    .select('*');
 
-  try {
-    const { data: racks, error } = await supabase
-      .from('w_vuestock_racks')
-      .select('*');
+  console.log('3D racks:', racks);
 
-    if (error) throw error;
+  hideLoading();
 
-    console.log('Racks chargés:', racks);
-
-    racks.forEach(rack => createRackMesh(rack));
-  } catch (error) {
+  if (error) {
     console.error('Erreur chargement racks:', error);
-  } finally {
-    hideLoading();
+    return;
   }
+
+  racks.forEach(rack => createRackMesh(rack));
 }
+
 
 function createRackMesh(rack) {
   const group = new THREE.Group();
@@ -124,7 +121,6 @@ function createRackMesh(rack) {
   const depth = rack.depth || 2;
   const height = 8;
 
-  // Boîte principale
   const geometry = new THREE.BoxGeometry(width, height, depth);
   const material = new THREE.MeshStandardMaterial({
     color: rack.color || '#4a90e2',
@@ -135,14 +131,12 @@ function createRackMesh(rack) {
   mesh.position.y = height / 2;
   group.add(mesh);
 
-  // Contours
   const edges = new THREE.EdgesGeometry(geometry);
-  const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+  const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
   const edgesMesh = new THREE.LineSegments(edges, edgeMaterial);
   edgesMesh.position.y = height / 2;
   group.add(edgesMesh);
 
-  // Label
   const canvas = document.createElement('canvas');
   canvas.width = 512;
   canvas.height = 256;
@@ -159,10 +153,10 @@ function createRackMesh(rack) {
   label.position.set(0, height + 1.5, 0);
   group.add(label);
 
-  // Position
   const posX = (rack.position_x || 0) / 50;
   const posY = (rack.position_y || 0) / 50;
-  group.position.set(posX, 0, posY);
+   group.position.set(posX, 0, posY);
+
 
   if (rack.rotation) {
     group.rotation.y = (rack.rotation * Math.PI) / 180;
@@ -186,28 +180,26 @@ async function zoomToRack(rackGroup) {
   camera.lookAt(pos.x, 5, pos.z);
 
   showLoading();
+  const { data: levels, error } = await supabase
+    .from('w_vuestock_levels')
+    .select('*')
+    .eq('rack_id', rack.id)
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
 
-  try {
-    const { data: levels, error } = await supabase
-      .from('w_vuestock_levels')
-      .select('*')
-      .eq('rack_id', rack.id)
-      .eq('is_active', true)
-      .order('display_order', { ascending: true });
+  hideLoading();
 
-    if (error) throw error;
-
-    levels.forEach((level, index) => createLevelMesh(level, index, rack));
-
-    let content = `<p><strong>Code:</strong> ${rack.rack_code}</p>`;
-    content += `<p><strong>Niveaux:</strong> ${levels.length}</p>`;
-    content += `<p><strong>Position:</strong> X:${rack.position_x} Y:${rack.position_y}</p>`;
-    showInfoPanel(rack.display_name || rack.rack_code, content);
-  } catch (error) {
+  if (error) {
     console.error('Erreur chargement levels:', error);
-  } finally {
-    hideLoading();
+    return;
   }
+
+  levels.forEach((level, index) => createLevelMesh(level, index, rack));
+
+  let content = `<p><strong>Code:</strong> ${rack.rack_code}</p>`;
+  content += `<p><strong>Niveaux:</strong> ${levels.length}</p>`;
+  content += `<p><strong>Position:</strong> X:${rack.position_x} Y:${rack.position_y}</p>`;
+  showInfoPanel(rack.display_name || rack.rack_code, content);
 }
 
 function createLevelMesh(level, index, rack) {
@@ -228,7 +220,7 @@ function createLevelMesh(level, index, rack) {
   group.add(mesh);
 
   const edges = new THREE.EdgesGeometry(geometry);
-  const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+  const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 2 });
   const edgesMesh = new THREE.LineSegments(edges, edgeMaterial);
   group.add(edgesMesh);
 
@@ -238,13 +230,147 @@ function createLevelMesh(level, index, rack) {
   if (rackMesh) {
     group.position.set(rackMesh.position.x, yPos, rackMesh.position.z);
     group.rotation.y = rackMesh.rotation.y;
+  } else {
+    group.position.set(rack.position_x || 0, yPos, rack.position_y || 0);
+    if (rack.rotation) {
+      group.rotation.y = (rack.rotation * Math.PI) / 180;
+    }
   }
 
   scene.add(group);
   levelMeshes.push(group);
 }
 
-// ... (les autres fonctions restent similaires, assurez-vous qu'elles utilisent le bon ID)
+
+async function zoomToLevel(levelGroup) {
+  selectedLevel = levelGroup;
+  viewMode = 'level';
+  clearSlotMeshes();
+  hideInfoPanel();
+
+  const level = levelGroup.userData.data;
+  const rack = levelGroup.userData.rackData;
+  const pos = levelGroup.position;
+
+  camera.position.set(pos.x, pos.y, pos.z + 10);
+  camera.lookAt(pos.x, pos.y, pos.z);
+
+  showLoading();
+  const { data: slots, error } = await supabase
+    .from('w_vuestock_slots')
+    .select('*')
+    .eq('level_id', level.id)
+    .order('display_order', { ascending: true });
+
+  hideLoading();
+
+  if (error) {
+    console.error('Erreur chargement slots:', error);
+    return;
+  }
+
+  slots.forEach((slot, index) => createSlotMesh(slot, index, level, rack, pos.y));
+
+  let content = `<p><strong>Rack:</strong> ${rack.display_name || rack.rack_code}</p>`;
+  content += `<p><strong>Niveau:</strong> ${level.level_code}</p>`;
+  content += `<p><strong>Emplacements:</strong> ${slots.length}</p>`;
+  showInfoPanel(`Niveau ${level.level_code}`, content);
+}
+
+function createSlotMesh(slot, index, level, rack, yPos) {
+  const group = new THREE.Group();
+  group.userData = { type: 'slot', data: slot, levelData: level, rackData: rack };
+
+  const slotWidth = 0.8;
+  const slotHeight = 0.8;
+  const slotDepth = 0.8;
+
+  const totalSlots = 5;
+  const startX = -(totalSlots - 1) * slotWidth / 2;
+
+  const geometry = new THREE.BoxGeometry(slotWidth, slotHeight, slotDepth);
+  let color = 0x2196F3;
+  if (slot.status === 'occupied') color = 0xFF9800;
+  if (slot.status === 'reserved') color = 0xF44336;
+
+  const material = new THREE.MeshStandardMaterial({
+    color: color,
+    transparent: true,
+    opacity: 0.8
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  group.add(mesh);
+
+  const edges = new THREE.EdgesGeometry(geometry);
+  const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+  const edgesMesh = new THREE.LineSegments(edges, edgeMaterial);
+  group.add(edgesMesh);
+
+  const xPos = (rack.position_x || 0) + startX + index * slotWidth;
+  group.position.set(xPos, yPos, rack.position_y || 0);
+
+  if (rack.rotation) {
+    group.rotation.y = (rack.rotation * Math.PI) / 180;
+  }
+
+  scene.add(group);
+  slotMeshes.push(group);
+}
+
+async function showSlotDetails(slotGroup) {
+  selectedSlot = slotGroup;
+  viewMode = 'slot';
+
+  const slot = slotGroup.userData.data;
+  const level = slotGroup.userData.levelData;
+  const rack = slotGroup.userData.rackData;
+
+  showLoading();
+  const { data: articles, error } = await supabase
+    .from('w_articles')
+    .select('*')
+    .eq('slot_id', slot.id)
+    .eq('actif', true);
+
+  hideLoading();
+
+  if (error) {
+    console.error('Erreur chargement articles:', error);
+    return;
+  }
+
+  let content = `<p><strong>Rack:</strong> ${rack.display_name || rack.rack_code}</p>`;
+  content += `<p><strong>Niveau:</strong> ${level.level_code}</p>`;
+  content += `<p><strong>Emplacement:</strong> ${slot.slot_code}</p>`;
+  content += `<p><strong>Code complet:</strong> ${slot.full_code}</p>`;
+  content += `<p><strong>Capacité:</strong> ${slot.capacity}</p>`;
+  content += `<p><strong>Statut:</strong> ${slot.status}</p>`;
+
+  if (articles && articles.length > 0) {
+    content += `<hr style="margin: 15px 0; border-color: #4CAF50;">`;
+    articles.forEach(article => {
+      content += `<p><strong>Article:</strong> ${article.nom}</p>`;
+      content += `<p><strong>Numéro:</strong> ${article.numero}</p>`;
+      content += `<p><strong>Stock actuel:</strong> ${article.stock_actuel}</p>`;
+
+      const stockClass = article.stock_actuel <= article.stock_minimum ? 'stock-critical' :
+                         article.stock_actuel <= article.stock_minimum * 1.5 ? 'stock-warning' : '';
+      content += `<p class="${stockClass}"><strong>Stock minimum:</strong> ${article.stock_minimum}</p>`;
+
+      if (article.photo_url) {
+        content += `<img src="${article.photo_url}" alt="${article.nom}">`;
+      }
+
+      if (articles.indexOf(article) < articles.length - 1) {
+        content += `<hr style="margin: 15px 0; border-color: #666;">`;
+      }
+    });
+  } else {
+    content += `<p style="color: #999; margin-top: 15px;">Aucun article dans cet emplacement</p>`;
+  }
+
+  showInfoPanel(`Détails ${slot.full_code}`, content);
+}
 
 function clearLevelMeshes() {
   levelMeshes.forEach(mesh => scene.remove(mesh));
@@ -256,113 +382,178 @@ function clearSlotMeshes() {
   slotMeshes = [];
 }
 
-function cleanupScene() {
-  if (scene) {
-    while(scene.children.length > 0) {
-      scene.remove(scene.children[0]);
-    }
+function goBack() {
+  if (viewMode === 'slot') {
+    viewMode = 'level';
+    hideInfoPanel();
+    camera.position.set(selectedLevel.position.x, selectedLevel.position.y, selectedLevel.position.z + 10);
+    camera.lookAt(selectedLevel.position.x, selectedLevel.position.y, selectedLevel.position.z);
+    zoomToLevel(selectedLevel);
+  } else if (viewMode === 'level') {
+    viewMode = 'rack';
+    clearSlotMeshes();
+    hideInfoPanel();
+    const pos = selectedRack.position;
+    camera.position.set(pos.x, 10, pos.z + 15);
+    camera.lookAt(pos.x, 5, pos.z);
+    zoomToRack(selectedRack);
+  } else if (viewMode === 'rack') {
+    viewMode = 'overview';
+    clearLevelMeshes();
+    clearSlotMeshes();
+    hideInfoPanel();
+    selectedRack = null;
+    selectedLevel = null;
+    selectedSlot = null;
+    camera.position.set(0, 20, 40);
+    camera.lookAt(0, 0, 0);
   }
-
-  if (renderer) {
-    renderer.dispose();
-    renderer = null;
-  }
-
-  rackMeshes = [];
-  levelMeshes = [];
-  slotMeshes = [];
-  selectedRack = null;
-  selectedLevel = null;
-  selectedSlot = null;
-  viewMode = 'overview';
 }
 
+function onCanvasClick(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+
+  let intersects = [];
+
+  if (viewMode === 'overview') {
+    intersects = raycaster.intersectObjects(rackMeshes, true);
+    if (intersects.length > 0) {
+      let obj = intersects[0].object;
+      while (obj.parent && !obj.userData.type) {
+        obj = obj.parent;
+      }
+      if (obj.userData.type === 'rack') {
+        zoomToRack(obj);
+      }
+    }
+  } else if (viewMode === 'rack') {
+    intersects = raycaster.intersectObjects(levelMeshes, true);
+    if (intersects.length > 0) {
+      let obj = intersects[0].object;
+      while (obj.parent && !obj.userData.type) {
+        obj = obj.parent;
+      }
+      if (obj.userData.type === 'level') {
+        zoomToLevel(obj);
+      }
+    }
+  } else if (viewMode === 'level') {
+    intersects = raycaster.intersectObjects(slotMeshes, true);
+    if (intersects.length > 0) {
+      let obj = intersects[0].object;
+      while (obj.parent && !obj.userData.type) {
+        obj = obj.parent;
+      }
+      if (obj.userData.type === 'slot') {
+        showSlotDetails(obj);
+      }
+    }
+  }
+}
+
+function onKeyDown(event) {
+  if (event.key === 'Escape') {
+    if (viewMode !== 'overview') {
+      goBack();
+    }
+  }
+}
+
+function onMouseWheel(event) {
+  if (!scene) return;
+
+  const delta = event.deltaY;
+
+  if (delta > 0) {
+    // Molette vers le bas → revenir en arrière
+    if (viewMode !== 'overview') {
+      goBack();
+    }
+  }
+}
+
+
 function onWindowResize() {
-  if (!isModalOpen || !camera || !renderer) return;
-
-  const container = document.getElementById('warehouse3DContainer');
-  if (!container) return;
-
+  if (!isModalOpen) return;
+  const container = document.getElementById('canvas-container');
   camera.aspect = container.clientWidth / container.clientHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(container.clientWidth, container.clientHeight);
 }
 
 function animate() {
-  if (!isModalOpen || !renderer || !scene || !camera) return;
-
+  if (!isModalOpen) return;
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
 }
 
+async function loadAllLevels() {
+  showLoading();
+  for (let rackGroup of rackMeshes) {
+    const rack = rackGroup.userData.data;
+
+    const { data: levels, error } = await supabase
+      .from('w_vuestock_levels')
+      .select('*')
+      .eq('rack_id', rack.id)
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      console.error('Erreur chargement levels pour rack', rack.rack_code, error);
+      continue;
+    }
+
+    levels.forEach((level, index) => createLevelMesh(level, index, rack));
+  }
+  hideLoading();
+}
+
 export async function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
-  if (!modal) {
-    console.error('Modal non trouvé');
-    return;
-  }
-
   modal.classList.remove('hidden');
   modal.classList.add('active');
   isModalOpen = true;
 
-  // Initialiser ou réinitialiser la scène
   if (!scene) {
     await initWarehouse();
-  } else {
-    // Si la scène existe déjà, s'assurer qu'elle est visible
-    onWindowResize();
   }
-
-  // Charger les niveaux pour tous les racks
-  showLoading();
 
   for (let rackGroup of rackMeshes) {
     const rack = rackGroup.userData.data;
 
-    try {
-      const { data: levels, error } = await supabase
-        .from('w_vuestock_levels')
-        .select('*')
-        .eq('rack_id', rack.id)
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
+    const { data: levels, error } = await supabase
+      .from('w_vuestock_levels')
+      .select('*')
+      .eq('rack_id', rack.id)
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
 
-      if (!error && levels) {
-        levels.forEach((level, index) => createLevelMesh(level, index, rack));
-      }
-    } catch (error) {
-      console.error('Erreur chargement niveaux:', error);
+    if (!error && levels) {
+      levels.forEach((level, index) => createLevelMesh(level, index, rack));
     }
   }
 
-  hideLoading();
-
-  // Démarrer l'animation
   animate();
 }
 
+
+
+window.openWarehouseModal = openWarehouseModal;
+
 export function closeWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
-  if (modal) {
-    modal.classList.remove('active');
-    modal.classList.add('hidden');
-  }
+  modal.classList.remove('active');
+  modal.classList.add('hidden');
   isModalOpen = false;
 }
 
-// Attacher l'événement de fermeture
-document.addEventListener('DOMContentLoaded', () => {
-  const closeBtn = document.getElementById('closeWarehouseModal');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closeWarehouseModal);
-  }
-});
 
-// Rendre la fonction accessible globalement
-window.openWarehouseModal = openWarehouseModal;
-
-// Fonction pour nettoyer quand la page se ferme
-window.addEventListener('beforeunload', () => {
-  cleanupScene();
-});
+const closeBtn = document.getElementById('closeWarehouseModal');  // ← BON ID
+if (closeBtn) {
+  closeBtn.addEventListener('click', closeWarehouseModal);
+}
