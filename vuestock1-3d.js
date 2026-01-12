@@ -468,13 +468,15 @@ export function openWarehouseModal() {
   modal.classList.add('active');
   isModalOpen = true;
 
-  // Attacher l'événement au bouton de fermeture
-  setTimeout(() => {
+  // Attacher l'événement au bouton de fermeture IMMÉDIATEMENT
     const closeBtn = document.getElementById('closeWarehouseModal');
+    console.log("Bouton trouvé pour fermeture:", closeBtn); // Pour déboguer
     if (closeBtn) {
+      // Supprimer d'abord l'ancien événement s'il existe
+      closeBtn.removeEventListener('click', closeWarehouseModal);
+      // Ajouter le nouvel événement
       closeBtn.addEventListener('click', closeWarehouseModal);
     }
-  }, 100);
 
   if (!scene) {
     initWarehouse();
