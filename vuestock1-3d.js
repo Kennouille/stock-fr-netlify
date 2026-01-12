@@ -43,7 +43,7 @@ function hideInfoPanel() {
   }
 }
 
-function initWarehouse() {
+async function initWarehouse() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1a1a);
 
