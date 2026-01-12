@@ -77,7 +77,10 @@ async function initWarehouse() {
   document.addEventListener('keydown', onKeyDown);
 
   await loadRacks();
+  camera.position.set(0, 15, 25);
+  camera.lookAt(0, 0, 0);
   animate();
+
 }
 
 async function loadRacks() {
