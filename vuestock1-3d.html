@@ -175,6 +175,30 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+      /* AGANDIR LE MODAL - Modifications minimales */
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.95) !important; /* Fond plus foncé */
+    }
+
+    .modal.modal-3d {
+      width: 95vw !important;    /* Presque toute la largeur */
+      height: 95vh !important;   /* Presque toute la hauteur */
+      max-width: none !important;  /* Enlever les limites */
+      max-height: none !important; /* Enlever les limites */
+    }
+
+    #warehouse3DContainer {
+      width: 100% !important;    /* Remplir tout le modal */
+      height: 100% !important;   /* Remplir tout le modal */
+    }
+
+    /* Bouton de fermeture plus visible */
+    .modal-close {
+      font-size: 24px !important;
+      padding: 12px 18px !important;
+      z-index: 1001;
+    }
   </style>
 </head>
 <body>

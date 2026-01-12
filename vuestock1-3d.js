@@ -479,7 +479,7 @@ function onMouseWheel(event) {
 
 function onWindowResize() {
   if (!isModalOpen) return;
-  const container = document.getElementById('canvas-container');
+  const container = document.getElementById('warehouse3DContainer');
   camera.aspect = container.clientWidth / container.clientHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(container.clientWidth, container.clientHeight);
