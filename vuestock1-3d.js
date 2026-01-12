@@ -51,7 +51,7 @@ async function initWarehouse() {
   camera.lookAt(0, 0, 0);
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setSize(container.offsetWidth, container.offsetHeight);
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
