@@ -47,7 +47,7 @@ async function initWarehouse() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1a1a);
 
-  const container = document.getElementById('warehouse3DContainer');
+  const container = document.getElementById('canvas-container');
     camera = new THREE.PerspectiveCamera(
       60,
       container.clientWidth / container.clientHeight,
@@ -470,7 +470,7 @@ function animate() {
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
-  modal.classList.add('active');
+  modal.classList.remove('hidden');
   isModalOpen = true;
 
   if (!scene) {
@@ -501,7 +501,7 @@ export function closeWarehouseModal() {
   }
 }
 
-const closeBtn = document.getElementById('closeWarehouseModal');  // ← BON ID
+const closeBtn = document.getElementById('close-modal');
 if (closeBtn) {
   closeBtn.addEventListener('click', closeWarehouseModal);
 }
