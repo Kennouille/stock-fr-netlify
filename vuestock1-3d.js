@@ -89,6 +89,8 @@ async function loadRacks() {
     .from('w_vuestock_racks')
     .select('*');
 
+  console.log('3D racks:', racks);
+
   hideLoading();
 
   if (error) {
@@ -98,6 +100,7 @@ async function loadRacks() {
 
   racks.forEach(rack => createRackMesh(rack));
 }
+
 
 function createRackMesh(rack) {
   const group = new THREE.Group();
