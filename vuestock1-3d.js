@@ -12,12 +12,17 @@ let slotMeshes = [];
 let isModalOpen = false;
 
 function showLoading() {
-  document.getElementById('loading').classList.remove('hidden');
+  const el = document.getElementById('loading');
+  if (!el) return;
+  el.classList.remove('hidden');
 }
 
 function hideLoading() {
-  document.getElementById('loading').classList.add('hidden');
+  const el = document.getElementById('loading');
+  if (!el) return;
+  el.classList.add('hidden');
 }
+
 
 function showInfoPanel(title, content) {
   document.getElementById('info-title').textContent = title;
