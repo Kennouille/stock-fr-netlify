@@ -1,6 +1,131 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          font-family: Arial, sans-serif;
+          overflow: hidden;
+          background: #1a1a1a;
+          color: #fff;
+        }
+
+        #canvas-container {
+          width: 100vw;
+          height: 100vh;
+          position: relative;
+        }
+
+        #info-panel {
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          background: rgba(0, 0, 0, 0.8);
+          padding: 15px;
+          border-radius: 8px;
+          min-width: 250px;
+          max-width: 400px;
+          backdrop-filter: blur(10px);
+        }
+
+        #info-panel h2 {
+          font-size: 18px;
+          margin-bottom: 10px;
+          color: #4CAF50;
+        }
+
+        #info-panel p {
+          margin: 5px 0;
+          font-size: 14px;
+        }
+
+        #info-panel img {
+          max-width: 100%;
+          margin-top: 10px;
+          border-radius: 4px;
+        }
+
+        .controls {
+          position: absolute;
+          bottom: 20px;
+          left: 20px;
+          background: rgba(0, 0, 0, 0.8);
+          padding: 15px;
+          border-radius: 8px;
+          backdrop-filter: blur(10px);
+        }
+
+        .controls p {
+          font-size: 12px;
+          margin: 3px 0;
+        }
+
+        #close-btn {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: #f44336;
+          border: none;
+          color: white;
+          padding: 5px 10px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+        }
+
+        #close-btn:hover {
+          background: #d32f2f;
+        }
+
+        .hidden {
+          display: none !important;
+        }
+
+        .stock-warning {
+          color: #ff9800;
+          font-weight: bold;
+        }
+
+        .stock-critical {
+          color: #f44336;
+          font-weight: bold;
+        }
+
+        #warehouse-modal.modal-overlay {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.7);
+          z-index: 1000;
+        }
+
+        .modal.modal-3d {
+          width: 90vw;
+          height: 90vh;
+          max-width: 1400px;
+          max-height: 900px;
+          background: #1a1a1a;
+          border-radius: 10px;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          padding: 20px;
+          box-sizing: border-box;
+        }
+
+        #warehouse3DContainer {
+          width: 100%;
+          height: 100%;
+        }
+
+  </style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Entrepôt 3D</title>
@@ -36,3 +161,8 @@
   <script type="module" src="vuestock1-3d.js"></script>
 </body>
 </html>
+
+
+
+
+
