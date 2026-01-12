@@ -464,15 +464,8 @@ function animate() {
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
-  modal.classList.remove('hidden');
+  modal.classList.add('active');
   isModalOpen = true;
-
-  // SOLUTION SIMPLE ET DIRECTIONNELLE
-  const closeBtn = document.getElementById('closeWarehouseModal');
-  if (closeBtn) {
-    // Force l'événement avec onclick
-    closeBtn.onclick = closeWarehouseModal;
-  }
 
   if (!scene) {
     initWarehouse();
@@ -480,6 +473,7 @@ export function openWarehouseModal() {
     animate();
   }
 }
+
 
 window.openWarehouseModal = openWarehouseModal;
 
@@ -499,4 +493,9 @@ export function closeWarehouseModal() {
     camera.position.set(0, 20, 40);
     camera.lookAt(0, 0, 0);
   }
+}
+
+const closeBtn = document.getElementById('closeWarehouseModal');  // ← BON ID
+if (closeBtn) {
+  closeBtn.addEventListener('click', closeWarehouseModal);
 }
