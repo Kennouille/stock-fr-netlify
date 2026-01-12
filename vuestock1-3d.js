@@ -44,13 +44,22 @@ function hideInfoPanel() {
 }
 
 async function initWarehouse() {
+  // Attendre encore un peu pour être sûr
+  await new Promise(resolve => setTimeout(resolve, 50));
+
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1a1a);
 
   const container = document.getElementById('canvas-container');
   if (!container) {
-    console.error('Conteneur canvas non trouvé');
-    return;
+    console.error('Conteneur canvas non trouvé, réessai...');
+    // Réessayer
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const container = document.getElementById('canvas-container');
+    if (!container) {
+      console.error('Conteneur canvas toujours non trouvé');
+      return;
+    }
   }
 
   camera = new THREE.PerspectiveCamera(
@@ -482,14 +491,22 @@ export function openWarehouseModal() {
   modal.classList.remove('hidden');
   isModalOpen = true;
 
-  // Petit délai pour laisser le DOM se mettre à jour
-  setTimeout(() => {
+  // Attendre que le DOM soit mis à jour
+  requestAnimationFrame(() => {
     if (!scene) {
       initWarehouse();
     } else {
+      // Vérifier que le conteneur existe
+      const container = document.getElementById('canvas-container');
+      if (container) {
+        // Redimensionner le renderer si nécessaire
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+      }
       animate();
     }
-  }, 100);
+  });
 }
 
 
