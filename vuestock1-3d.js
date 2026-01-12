@@ -33,14 +33,23 @@ async function initWarehouse() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1a1a);
 
-  const container = document.getElementById('canvas-container');
-  camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+  const container = document.getElementById('warehouse3DContainer');
+    camera = new THREE.PerspectiveCamera(
+      60,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      1000
+    );
+
+
   camera.position.set(0, 20, 40);
   camera.lookAt(0, 0, 0);
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(container.clientWidth, container.clientHeight);
-  container.appendChild(renderer.domElement);
+    container.innerHTML = '';
+    container.appendChild(renderer.domElement);
+
 
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
