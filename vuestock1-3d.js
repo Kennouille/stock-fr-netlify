@@ -495,7 +495,10 @@ export function closeWarehouseModal() {
   }
 }
 
-const closeBtn = document.getElementById('closeWarehouseModal');  // ← BON ID
-if (closeBtn) {
-  closeBtn.addEventListener('click', closeWarehouseModal);
-}
+// Gestion de la fermeture - version corrigée
+document.addEventListener('DOMContentLoaded', function() {
+  const closeBtn = document.getElementById('closeWarehouseModal');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeWarehouseModal);
+  }
+});
