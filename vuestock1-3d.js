@@ -450,6 +450,8 @@ export function openWarehouseModal() {
   }
 }
 
+window.openWarehouseModal = openWarehouseModal;
+
 export function closeWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
   modal.classList.add('hidden');
