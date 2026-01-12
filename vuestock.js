@@ -1638,10 +1638,6 @@ class VueStock {
             this.showView('plan');
         });
 
-        document.getElementById('btnView3D')?.addEventListener('click', () => {
-            window.openWarehouseModal();
-        });
-
         document.getElementById('backToRack')?.addEventListener('click', () => {
             this.showView('rack');
         });

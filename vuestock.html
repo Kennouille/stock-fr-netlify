@@ -296,14 +296,16 @@
 
     <!-- Scripts -->
     <script src="vuestock.js"></script>
-    <!-- Script MODULE pour le 3D -->
+
     <script type="module">
         import { openWarehouseModal } from './vuestock1-3d.js';
 
-        const btn = document.getElementById('open-warehouse');
+        const btn = document.getElementById('btnView3D');
         if (btn) {
             btn.addEventListener('click', openWarehouseModal);
         }
     </script>
+
+
 </body>
 </html>
