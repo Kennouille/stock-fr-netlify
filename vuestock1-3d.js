@@ -462,19 +462,42 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-export function openWarehouseModal() {
+async function loadAllLevels() {
+  showLoading();
+  for (let rackGroup of rackMeshes) {
+    const rack = rackGroup.userData.data;
+
+    const { data: levels, error } = await supabase
+      .from('w_vuestock_levels')
+      .select('*')
+      .eq('rack_id', rack.id)
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      console.error('Erreur chargement levels pour rack', rack.rack_code, error);
+      continue;
+    }
+
+    levels.forEach((level, index) => createLevelMesh(level, index, rack));
+  }
+  hideLoading();
+}
+
+export async function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
   modal.classList.remove('hidden');
   modal.classList.add('active');
   isModalOpen = true;
 
   if (!scene) {
-    initWarehouse();
-  } else {
-    animate();
+    await initWarehouse();
   }
-}
 
+  await loadAllLevels();
+
+  animate();
+}
 
 
 window.openWarehouseModal = openWarehouseModal;
