@@ -280,6 +280,18 @@
         <i class="fas fa-cube"></i> Voir l'entrepôt 3D
     </button>
 
+    <div id="warehouse-modal" class="modal-overlay hidden">
+        <div class="modal modal-3d">
+            <button class="modal-close" onclick="this.closest('#warehouse-modal').classList.add('hidden')">
+                ✕
+            </button>
+
+            <div id="warehouse3DContainer"></div>
+        </div>
+    </div>
+
+
+
 
 
     <!-- Scripts -->
