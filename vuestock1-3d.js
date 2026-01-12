@@ -513,38 +513,11 @@ async function loadAllLevels() {
   hideLoading();
 }
 
-// AJOUTER CES LIGNES pour créer les éléments manquants :
-  const modalContent = modal.querySelector('.modal.modal-3d');
-  if (modalContent) {
-    // Vérifier si les éléments existent déjà, sinon les créer
-    if (!modalContent.querySelector('#info-panel')) {
-      const infoPanel = document.createElement('div');
-      infoPanel.id = 'info-panel';
-      infoPanel.className = 'hidden';
-      infoPanel.innerHTML = '<h2 id="info-title"></h2><div id="info-content"></div>';
-      modalContent.appendChild(infoPanel);
-    }
-
-    if (!modalContent.querySelector('.controls')) {
-      const controls = document.createElement('div');
-      controls.className = 'controls';
-      controls.innerHTML = `
-        <p><strong>Navigation:</strong></p>
-        <p>Clic: Sélectionner</p>
-        <p>Echap: Retour</p>
-        <p>Molette vers le bas: Retour</p>
-      `;
-      modalContent.appendChild(controls);
-    }
-
-    if (!modalContent.querySelector('#loading')) {
-      const loading = document.createElement('div');
-      loading.id = 'loading';
-      loading.className = 'loading hidden';
-      loading.innerHTML = '<div class="spinner"></div><p>Chargement...</p>';
-      modalContent.appendChild(loading);
-    }
-  }
+export async function openWarehouseModal() {
+  const modal = document.getElementById('warehouse-modal');
+  modal.classList.remove('hidden');
+  modal.classList.add('active');
+  isModalOpen = true;
 
   if (!scene) {
     await initWarehouse();
