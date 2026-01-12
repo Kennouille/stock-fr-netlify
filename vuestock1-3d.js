@@ -49,21 +49,11 @@ async function initWarehouse() {
   scene.background = new THREE.Color(0x1a1a1a);
 
   const container = document.getElementById('warehouse3DContainer');
-    camera = new THREE.PerspectiveCamera(
-      60,
-      container.clientWidth / container.clientHeight,
-      0.1,
-      1000
-    );
-
-
-  camera.position.set(0, 20, 40);
-  camera.lookAt(0, 0, 0);
-
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(container.offsetWidth, container.offsetHeight);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
+
 
 
   raycaster = new THREE.Raycaster();
@@ -478,12 +468,14 @@ function onMouseWheel(event) {
 
 
 function onWindowResize() {
-  if (!isModalOpen) return;
-  const container = document.getElementById('canvas-container');
-  camera.aspect = container.clientWidth / container.clientHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(container.clientWidth, container.clientHeight);
+    if (!isModalOpen) return;
+    const container = document.getElementById('warehouse3DContainer');
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
 }
+window.addEventListener('resize', onWindowResize);
+
 
 function animate() {
   if (!isModalOpen) return;
