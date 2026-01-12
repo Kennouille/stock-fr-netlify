@@ -31,8 +31,11 @@ function showInfoPanel(title, content) {
 }
 
 function hideInfoPanel() {
-  document.getElementById('info-panel').classList.add('hidden');
+  const panel = document.getElementById('info-panel');
+  if (!panel) return;
+  panel.classList.add('hidden');
 }
+
 
 async function initWarehouse() {
   scene = new THREE.Scene();
@@ -461,7 +464,7 @@ function animate() {
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
-  modal.classList.add('active');
+  modal.classList.remove('hidden');
   isModalOpen = true;
 
   if (!scene) {
@@ -470,6 +473,14 @@ export function openWarehouseModal() {
     animate();
   }
 }
+
+document
+  .getElementById('closeWarehouseModal')
+  ?.addEventListener('click', () => {
+    document.getElementById('warehouse-modal').classList.add('hidden');
+    isModalOpen = false;
+  });
+
 
 
 window.openWarehouseModal = openWarehouseModal;
