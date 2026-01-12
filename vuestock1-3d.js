@@ -144,7 +144,7 @@ function createRackMesh(rack) {
 
   const posX = (rack.position_x || 0) / 50;
   const posY = (rack.position_y || 0) / 50;
-  group.position.set(posX, 0, posY);
+   group.position.set(posX, 0, posY);
 
 
   if (rack.rotation) {
@@ -461,7 +461,7 @@ function animate() {
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
-  modal.classList.remove('hidden');
+  modal.classList.add('active');
   isModalOpen = true;
 
   if (!scene) {
@@ -470,14 +470,6 @@ export function openWarehouseModal() {
     animate();
   }
 }
-
-document
-  .getElementById('closeWarehouseModal')
-  ?.addEventListener('click', () => {
-    document.getElementById('warehouse-modal').classList.add('hidden');
-    isModalOpen = false;
-  });
-
 
 
 window.openWarehouseModal = openWarehouseModal;
