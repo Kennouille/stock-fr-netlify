@@ -25,13 +25,22 @@ function hideLoading() {
 
 
 function showInfoPanel(title, content) {
-  document.getElementById('info-title').textContent = title;
-  document.getElementById('info-content').innerHTML = content;
-  document.getElementById('info-panel').classList.remove('hidden');
+  const infoTitle = document.getElementById('info-title');
+  const infoContent = document.getElementById('info-content');
+  const infoPanel = document.getElementById('info-panel');
+
+  if (infoTitle && infoContent && infoPanel) {
+    infoTitle.textContent = title;
+    infoContent.innerHTML = content;
+    infoPanel.classList.remove('hidden');
+  }
 }
 
 function hideInfoPanel() {
-  document.getElementById('info-panel').classList.add('hidden');
+  const infoPanel = document.getElementById('info-panel');
+  if (infoPanel) {
+    infoPanel.classList.add('hidden');
+  }
 }
 
 async function initWarehouse() {
