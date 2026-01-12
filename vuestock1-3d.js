@@ -464,19 +464,38 @@ function animate() {
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
-  console.log("Ouverture du modal, élément:", modal);
+
+  // DEBUG: Vérifier ce qui se passe
+  console.log("Modal avant:", modal);
+  console.log("Classe avant:", modal?.className);
+
   modal.classList.remove('hidden');
   isModalOpen = true;
 
-  // SOLUTION DIRECTE
+  // 1. FORCER le bouton à fonctionner
   const closeBtn = document.getElementById('closeWarehouseModal');
+  console.log("Bouton:", closeBtn);
+
   if (closeBtn) {
-    console.log("Attachement d'événement au bouton");
-    closeBtn.onclick = function() {
-      console.log("CLICK DÉTECTÉ !");
+    // Supprimer TOUS les anciens événements
+    const newCloseBtn = closeBtn.cloneNode(true);
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+
+    // Attacher l'événement au NOUVEAU bouton
+    newCloseBtn.onclick = function(event) {
+      console.log("CLICK SUR LA CROIX !");
+      event.stopPropagation();
+      event.preventDefault();
       closeWarehouseModal();
       return false;
     };
+
+    // Aussi en addEventListener
+    newCloseBtn.addEventListener('click', function(event) {
+      console.log("ADD EVENT LISTENER CLICK !");
+      event.stopPropagation();
+      closeWarehouseModal();
+    });
   }
 
   if (!scene) {
@@ -485,7 +504,6 @@ export function openWarehouseModal() {
     animate();
   }
 }
-
 
 window.openWarehouseModal = openWarehouseModal;
 
