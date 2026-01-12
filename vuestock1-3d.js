@@ -464,19 +464,20 @@ function animate() {
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
-  modal.classList.remove('hidden');  // CHANGEMENT ICI
-  modal.classList.add('active');
+  console.log("Ouverture du modal, élément:", modal);
+  modal.classList.remove('hidden');
   isModalOpen = true;
 
-  // Attacher l'événement au bouton de fermeture IMMÉDIATEMENT
-    const closeBtn = document.getElementById('closeWarehouseModal');
-    console.log("Bouton trouvé pour fermeture:", closeBtn); // Pour déboguer
-    if (closeBtn) {
-      // Supprimer d'abord l'ancien événement s'il existe
-      closeBtn.removeEventListener('click', closeWarehouseModal);
-      // Ajouter le nouvel événement
-      closeBtn.addEventListener('click', closeWarehouseModal);
-    }
+  // SOLUTION DIRECTE
+  const closeBtn = document.getElementById('closeWarehouseModal');
+  if (closeBtn) {
+    console.log("Attachement d'événement au bouton");
+    closeBtn.onclick = function() {
+      console.log("CLICK DÉTECTÉ !");
+      closeWarehouseModal();
+      return false;
+    };
+  }
 
   if (!scene) {
     initWarehouse();
