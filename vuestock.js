@@ -1205,14 +1205,20 @@ class QuadViewManager {
             // 4. Mettre à jour les infos
             this.updateInfoPanel(this.currentRacks);
 
-            // 5. Ouvrir le modal d'édition (optionnel)
-            this.openEditModal(clickedRack);
-        } else {
-            // Si on clique ailleurs, on pourrait ouvrir le modal pour créer un nouveau rack
-            console.log('Aucun rack à cette position');
+            // 5. Mettre à jour le panneau Propriétés à gauche
+            this.updatePropertiesPanel(clickedRack);
 
-            // Option : Ouvrir le modal pour créer un nouveau rack ici
-            // this.openCreateModalAtPosition(x, y);
+            // 6. Démarrer le mode déplacement si double-clic ou clic droit
+            if (e.detail === 2) { // Double-clic
+                this.startDragMode(clickedRack, x, y);
+            }
+
+        } else {
+            console.log('Aucun rack à cette position');
+            // Désélectionner si on clique ailleurs
+            this.selectedRack = null;
+            this.clearPropertiesPanel();
+            this.drawTopView(this.currentRacks); // Redessiner sans sélection
         }
     }
 
@@ -1721,6 +1727,411 @@ class QuadViewManager {
         } else if (this.selectedLevel) {
             document.getElementById('selectedElement').textContent =
                 `Étage ${this.selectedLevel.code}`;
+        }
+    }
+
+    // Mettre à jour le panneau Propriétés à gauche
+    updatePropertiesPanel(rack) {
+        const panel = document.getElementById('propertiesPanel');
+        if (!panel) {
+            console.warn('Panneau Propriétés non trouvé');
+            return;
+        }
+
+        // Vérifier si le rack a des niveaux
+        const levelCount = rack.levels ? rack.levels.length : 0;
+        const slotCount = rack.levels ? rack.levels.reduce((sum, level) =>
+            sum + (level.slots ? level.slots.length : 0), 0) : 0;
+
+        panel.innerHTML = `
+            <h4><i class="fas fa-warehouse"></i> Étagère ${rack.code}</h4>
+            <div class="property-group">
+                <div class="property">
+                    <span class="property-label">Nom:</span>
+                    <input type="text" class="property-input" id="quadRackName"
+                           value="${rack.name || 'Étagère ' + rack.code}"
+                           placeholder="Nom de l'étagère">
+                </div>
+                <div class="property">
+                    <span class="property-label">Position:</span>
+                    <div class="property-coords">
+                        <input type="number" class="coord-input" id="quadRackX"
+                               value="${Math.round(rack.position_x / 40)}" min="0" title="Position X">
+                        <span>×</span>
+                        <input type="number" class="coord-input" id="quadRackY"
+                               value="${Math.round(rack.position_y / 40)}" min="0" title="Position Y">
+                    </div>
+                </div>
+                <div class="property">
+                    <span class="property-label">Dimensions:</span>
+                    <div class="property-dimensions">
+                        <input type="number" class="dim-input" id="quadRackWidth"
+                               value="${rack.width}" min="1" max="10" title="Largeur en cases">
+                        <span>×</span>
+                        <input type="number" class="dim-input" id="quadRackDepth"
+                               value="${rack.depth}" min="1" max="10" title="Profondeur en cases">
+                    </div>
+                </div>
+                <div class="property">
+                    <span class="property-label">Rotation:</span>
+                    <div class="property-rotation">
+                        <input type="range" class="rotation-slider" id="quadRackRotation"
+                               value="${rack.rotation || 0}" min="0" max="360" step="15">
+                        <span class="rotation-value">${rack.rotation || 0}°</span>
+                    </div>
+                </div>
+                <div class="property">
+                    <span class="property-label">Couleur:</span>
+                    <input type="color" class="property-color" id="quadRackColor"
+                           value="${rack.color || '#4a90e2'}">
+                </div>
+                <div class="property">
+                    <span class="property-label">Contenu:</span>
+                    <span class="property-value">
+                        ${levelCount} étage(s), ${slotCount} emplacement(s)
+                    </span>
+                </div>
+            </div>
+
+            <div class="property-actions">
+                <button class="btn btn-sm btn-primary btn-block" id="quadSaveRack">
+                    <i class="fas fa-save"></i> Sauvegarder
+                </button>
+                <div class="action-buttons">
+                    <button class="btn btn-sm btn-success" id="quadMoveRack" title="Déplacer">
+                        <i class="fas fa-arrows-alt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" id="quadResizeRack" title="Redimensionner">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-info" id="quadRotateRack" title="Tourner">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" id="quadDeleteRack" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <button class="btn btn-sm btn-secondary btn-block" id="quadViewRackDetails">
+                    <i class="fas fa-eye"></i> Voir les étages
+                </button>
+            </div>
+        `;
+
+        // Ajouter les événements
+        this.bindPropertiesEvents(rack);
+    }
+
+    // Vider le panneau Propriétés
+    clearPropertiesPanel() {
+        const panel = document.getElementById('propertiesPanel');
+        if (panel) {
+            panel.innerHTML = '<p class="no-selection">Sélectionnez un élément pour voir ses propriétés</p>';
+        }
+    }
+
+    // Lier les événements du panneau Propriétés
+    bindPropertiesEvents(rack) {
+        // Mise à jour en temps réel de la rotation
+        const rotationSlider = document.getElementById('quadRackRotation');
+        const rotationValue = document.querySelector('.rotation-value');
+
+        if (rotationSlider && rotationValue) {
+            rotationSlider.addEventListener('input', (e) => {
+                rotationValue.textContent = e.target.value + '°';
+                rack.rotation = parseInt(e.target.value);
+                this.drawTopView(this.currentRacks);
+            });
+        }
+
+        // Mise à jour de la couleur en temps réel
+        const colorInput = document.getElementById('quadRackColor');
+        if (colorInput) {
+            colorInput.addEventListener('input', (e) => {
+                rack.color = e.target.value;
+                this.drawTopView(this.currentRacks);
+            });
+        }
+
+        // Bouton Sauvegarder
+        const saveBtn = document.getElementById('quadSaveRack');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.saveRackChanges(rack);
+            });
+        }
+
+        // Bouton Déplacer
+        const moveBtn = document.getElementById('quadMoveRack');
+        if (moveBtn) {
+            moveBtn.addEventListener('click', () => {
+                this.startMoveMode(rack);
+            });
+        }
+
+        // Bouton Redimensionner
+        const resizeBtn = document.getElementById('quadResizeRack');
+        if (resizeBtn) {
+            resizeBtn.addEventListener('click', () => {
+                this.startResizeMode(rack);
+            });
+        }
+
+        // Bouton Tourner
+        const rotateBtn = document.getElementById('quadRotateRack');
+        if (rotateBtn) {
+            rotateBtn.addEventListener('click', () => {
+                this.startRotationMode(rack);
+            });
+        }
+
+        // Bouton Supprimer
+        const deleteBtn = document.getElementById('quadDeleteRack');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                this.deleteRack(rack);
+            });
+        }
+
+        // Bouton Voir les étages
+        const viewBtn = document.getElementById('quadViewRackDetails');
+        if (viewBtn) {
+            viewBtn.addEventListener('click', () => {
+                this.viewRackDetails(rack);
+            });
+        }
+    }
+
+    // Sauvegarder les modifications du rack
+    async saveRackChanges(rack) {
+        if (!rack) return;
+
+        // Récupérer les valeurs modifiées
+        const nameInput = document.getElementById('quadRackName');
+        const xInput = document.getElementById('quadRackX');
+        const yInput = document.getElementById('quadRackY');
+        const widthInput = document.getElementById('quadRackWidth');
+        const depthInput = document.getElementById('quadRackDepth');
+        const rotationInput = document.getElementById('quadRackRotation');
+        const colorInput = document.getElementById('quadRackColor');
+
+        if (nameInput) rack.name = nameInput.value;
+        if (xInput) rack.position_x = parseInt(xInput.value) * 40; // Convertir en pixels
+        if (yInput) rack.position_y = parseInt(yInput.value) * 40;
+        if (widthInput) rack.width = parseInt(widthInput.value);
+        if (depthInput) rack.depth = parseInt(depthInput.value);
+        if (rotationInput) rack.rotation = parseInt(rotationInput.value);
+        if (colorInput) rack.color = colorInput.value;
+
+        console.log('Sauvegarde du rack:', rack);
+
+        // Redessiner
+        this.drawTopView(this.currentRacks);
+        this.drawFrontView(rack);
+
+        // Sauvegarder via API
+        if (window.vueStock && window.vueStock.api) {
+            try {
+                const result = await window.vueStock.api.saveRack({
+                    id: rack.id,
+                    code: rack.code,
+                    name: rack.name,
+                    position_x: rack.position_x,
+                    position_y: rack.position_y,
+                    rotation: rack.rotation || 0,
+                    width: rack.width,
+                    depth: rack.depth,
+                    color: rack.color
+                });
+
+                console.log('Rack sauvegardé:', result);
+                this.showQuadNotification('Étagère sauvegardée', 'success');
+
+            } catch (error) {
+                console.error('Erreur sauvegarde:', error);
+                this.showQuadNotification('Erreur sauvegarde: ' + error.message, 'error');
+            }
+        } else {
+            this.showQuadNotification('Modifications locales sauvegardées', 'info');
+        }
+    }
+
+    // Démarrer le mode déplacement
+    startMoveMode(rack) {
+        console.log('Mode déplacement pour le rack:', rack.code);
+        this.currentMode = 'move';
+        this.currentRack = rack;
+
+        // Changer le curseur
+        if (this.canvasTop) {
+            this.canvasTop.style.cursor = 'move';
+        }
+
+        // Ajouter l'événement de déplacement
+        this.canvasTop.addEventListener('mousemove', this.handleMove.bind(this));
+        this.canvasTop.addEventListener('mouseup', this.stopMove.bind(this));
+
+        this.showQuadNotification('Mode déplacement activé. Cliquez-glissez pour déplacer.', 'info');
+    }
+
+    // Gérer le déplacement
+    handleMove(e) {
+        if (this.currentMode !== 'move' || !this.currentRack) return;
+
+        const rect = this.canvasTop.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Convertir en coordonnées grille (snap to grid)
+        const gridSize = 20; // Taille d'une case en pixels
+        const scale = 0.8; // Même échelle que drawTopView
+
+        const gridX = Math.round(x / gridSize) * gridSize;
+        const gridY = Math.round(y / gridSize) * gridSize;
+
+        // Mettre à jour la position
+        this.currentRack.position_x = (gridX / scale);
+        this.currentRack.position_y = (gridY / scale);
+
+        // Mettre à jour les champs dans le panneau
+        const xInput = document.getElementById('quadRackX');
+        const yInput = document.getElementById('quadRackY');
+        if (xInput) xInput.value = Math.round(this.currentRack.position_x / 40);
+        if (yInput) yInput.value = Math.round(this.currentRack.position_y / 40);
+
+        // Redessiner
+        this.drawTopView(this.currentRacks);
+    }
+
+    // Arrêter le déplacement
+    stopMove() {
+        if (this.currentMode === 'move') {
+            this.currentMode = null;
+            this.currentRack = null;
+
+            if (this.canvasTop) {
+                this.canvasTop.style.cursor = 'pointer';
+                this.canvasTop.removeEventListener('mousemove', this.handleMove);
+                this.canvasTop.removeEventListener('mouseup', this.stopMove);
+            }
+
+            this.showQuadNotification('Mode déplacement désactivé', 'info');
+        }
+    }
+
+    // Démarrer le mode redimensionnement
+    startResizeMode(rack) {
+        console.log('Mode redimensionnement pour le rack:', rack.code);
+        this.currentMode = 'resize';
+        this.currentRack = rack;
+
+        if (this.canvasTop) {
+            this.canvasTop.style.cursor = 'nwse-resize';
+        }
+
+        this.showQuadNotification('Mode redimensionnement. Utilisez la souris pour redimensionner.', 'info');
+        // À implémenter selon vos besoins
+    }
+
+    // Démarrer le mode rotation
+    startRotationMode(rack) {
+        console.log('Mode rotation pour le rack:', rack.code);
+
+        // Augmenter la rotation de 15 degrés
+        rack.rotation = (rack.rotation || 0) + 15;
+        if (rack.rotation >= 360) rack.rotation = 0;
+
+        // Mettre à jour le slider
+        const rotationSlider = document.getElementById('quadRackRotation');
+        const rotationValue = document.querySelector('.rotation-value');
+        if (rotationSlider) rotationSlider.value = rack.rotation;
+        if (rotationValue) rotationValue.textContent = rack.rotation + '°';
+
+        // Redessiner
+        this.drawTopView(this.currentRacks);
+
+        this.showQuadNotification(`Rotation: ${rack.rotation}°`, 'info');
+    }
+
+    // Supprimer un rack
+    async deleteRack(rack) {
+        if (!rack || !confirm(`Supprimer l'étagère ${rack.code} et tous ses étages/emplacements ?`)) {
+            return;
+        }
+
+        console.log('Suppression du rack:', rack.code);
+
+        try {
+            // Supprimer via API
+            if (window.vueStock && window.vueStock.api) {
+                await window.vueStock.api.deleteRack(rack.id);
+            }
+
+            // Supprimer du tableau local
+            if (this.currentRacks) {
+                const index = this.currentRacks.findIndex(r => r.id === rack.id);
+                if (index !== -1) {
+                    this.currentRacks.splice(index, 1);
+                }
+            }
+
+            // Supprimer de VueStock aussi
+            if (window.vueStock && window.vueStock.racks) {
+                window.vueStock.racks = window.vueStock.racks.filter(r => r.id !== rack.id);
+            }
+
+            // Mettre à jour l'affichage
+            this.selectedRack = null;
+            this.clearPropertiesPanel();
+            this.drawTopView(this.currentRacks);
+            this.updateInfoPanel(this.currentRacks);
+
+            this.showQuadNotification(`Étagère ${rack.code} supprimée`, 'success');
+
+        } catch (error) {
+            console.error('Erreur suppression:', error);
+            this.showQuadNotification('Erreur suppression: ' + error.message, 'error');
+        }
+    }
+
+    // Voir les détails du rack (aller à la vue étagère)
+    viewRackDetails(rack) {
+        console.log('Voir les détails du rack:', rack.code);
+
+        // Utiliser la navigation existante de VueStock
+        if (window.vueStock && window.vueStock.goToRackView) {
+            window.vueStock.goToRackView(rack);
+        } else {
+            this.showQuadNotification('Navigation non disponible', 'warning');
+        }
+    }
+
+    // Afficher une notification dans le contexte Quad
+    showQuadNotification(message, type = 'info') {
+        console.log(`Quad Notification [${type}]:`, message);
+
+        // Utiliser le système de notification existant ou créer un simple alert
+        if (window.vueStock && window.vueStock.showNotification) {
+            window.vueStock.showNotification(message, type);
+        } else {
+            // Notification simple
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'error' ? '#e74c3c' : type === 'success' ? '#2ecc71' : '#3498db'};
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 10000;
+                animation: fadeInOut 3s;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
         }
     }
 
