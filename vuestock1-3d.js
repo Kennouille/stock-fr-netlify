@@ -217,15 +217,22 @@ function createLevelMesh(level, index, rack) {
   group.add(edgesMesh);
 
   const yPos = index * 2 + 1;
-  group.position.set(rack.position_x || 0, yPos, rack.position_y || 0);
 
-  if (rack.rotation) {
-    group.rotation.y = (rack.rotation * Math.PI) / 180;
+  const rackMesh = rackMeshes.find(r => r.userData.data.id === rack.id);
+  if (rackMesh) {
+    group.position.set(rackMesh.position.x, yPos, rackMesh.position.z);
+    group.rotation.y = rackMesh.rotation.y;
+  } else {
+    group.position.set(rack.position_x || 0, yPos, rack.position_y || 0);
+    if (rack.rotation) {
+      group.rotation.y = (rack.rotation * Math.PI) / 180;
+    }
   }
 
   scene.add(group);
   levelMeshes.push(group);
 }
+
 
 async function zoomToLevel(levelGroup) {
   selectedLevel = levelGroup;
@@ -494,10 +501,24 @@ export async function openWarehouseModal() {
     await initWarehouse();
   }
 
-  await loadAllLevels();
+  for (let rackGroup of rackMeshes) {
+    const rack = rackGroup.userData.data;
+
+    const { data: levels, error } = await supabase
+      .from('w_vuestock_levels')
+      .select('*')
+      .eq('rack_id', rack.id)
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+
+    if (!error && levels) {
+      levels.forEach((level, index) => createLevelMesh(level, index, rack));
+    }
+  }
 
   animate();
 }
+
 
 
 window.openWarehouseModal = openWarehouseModal;
