@@ -464,6 +464,7 @@ function animate() {
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
+  modal.classList.remove('hidden');
   modal.classList.add('active');
   isModalOpen = true;
 
@@ -475,25 +476,16 @@ export function openWarehouseModal() {
 }
 
 
+
 window.openWarehouseModal = openWarehouseModal;
 
 export function closeWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
+  modal.classList.remove('active');
   modal.classList.add('hidden');
   isModalOpen = false;
-  viewMode = 'overview';
-  clearLevelMeshes();
-  clearSlotMeshes();
-  hideInfoPanel();
-  selectedRack = null;
-  selectedLevel = null;
-  selectedSlot = null;
-
-  if (camera) {
-    camera.position.set(0, 20, 40);
-    camera.lookAt(0, 0, 0);
-  }
 }
+
 
 const closeBtn = document.getElementById('closeWarehouseModal');  // ← BON ID
 if (closeBtn) {
