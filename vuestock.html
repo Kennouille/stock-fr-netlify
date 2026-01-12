@@ -294,12 +294,12 @@
         <i class="fas fa-cube"></i> Voir l'entrepôt 3D
     </button>
 
-    <div id="warehouse-modal" class="modal-overlay hidden">
-        <div class="modal modal-3d" style="width:95vw; height:95vh;">
-            <button id="closeWarehouseModal" class="modal-close">✕</button>
-            <div id="warehouse3DContainer" style="width:100%; height:100%;"></div>
-        </div>
-    </div>
+     <div id="warehouse-modal" class="modal-overlay hidden">
+          <div class="modal modal-3d">
+              <button id="closeWarehouseModal" class="modal-close">✕</button>
+              <div id="warehouse3DContainer" style="width:75vw; height:75vh;"></div>
+          </div>
+      </div>
 
 
 
@@ -309,13 +309,9 @@
     <script src="vuestock.js"></script>
 
     <script type="module">
-        import { openWarehouseModal } from './vuestock1-3d.js';
-
-        const btn = document.getElementById('btnView3D');
-        if (btn) {
-            btn.addEventListener('click', openWarehouseModal);
-        }
-    </script>
+          import { openWarehouseModal } from './vuestock1-3d.js';
+          document.getElementById('open-warehouse').addEventListener('click', openWarehouseModal);
+      </script>
 
 
 
