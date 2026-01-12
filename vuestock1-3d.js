@@ -142,9 +142,10 @@ function createRackMesh(rack) {
   label.position.set(0, height + 1.5, 0);
   group.add(label);
 
-  const posX = rack.position_x || 0;
-  const posY = rack.position_y || 0;
+  const posX = (rack.position_x || 0) / 50;
+  const posY = (rack.position_y || 0) / 50;
   group.position.set(posX, 0, posY);
+
 
   if (rack.rotation) {
     group.rotation.y = (rack.rotation * Math.PI) / 180;
