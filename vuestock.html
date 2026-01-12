@@ -305,6 +305,13 @@
         }
     </script>
 
+    <script>
+        // Fermer le modal 3D quand on clique sur la croix
+        document.getElementById('closeWarehouseModal').addEventListener('click', function() {
+            document.getElementById('warehouse-modal').classList.add('hidden');
+        });
+    </script>
+
 
 </body>
 </html>
