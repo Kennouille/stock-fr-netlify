@@ -986,6 +986,14 @@ class QuadViewManager {
     init() {
         console.log('QuadViewManager initialisé');
 
+        // DEBUG : Vérifier l'état des canvas
+        console.log('Canvas Top:', this.canvasTop, 'Context:', this.ctxTop);
+        console.log('Canvas Front:', this.canvasFront, 'Context:', this.ctxFront);
+        console.log('Canvas 3D:', this.canvas3D, 'Context:', this.ctx3D);
+
+        // Dessiner un état initial vide
+        this.drawEmptyState();
+
         // Ajuster les dimensions des canvas
         this.resizeCanvases();
 
@@ -1063,28 +1071,95 @@ class QuadViewManager {
 
     // Mettre à jour toutes les vues avec les racks
     updateAllViews(racks) {
-        if (!racks || !racks.length) return;
+        console.log('QuadView.updateAllViews appelé avec', racks ? racks.length : 0, 'racks');
 
-        // 1. Vue du dessus
-        this.drawTopView(racks);
-
-        // 2. Vue de face (si un rack est sélectionné)
-        if (this.selectedRack) {
-            this.drawFrontView(this.selectedRack);
-        } else {
-            this.drawFrontView(racks[0]); // Premier rack par défaut
+        if (!racks || !racks.length) {
+            console.log('QuadView: Aucune donnée, dessin état vide');
+            this.drawEmptyState();
+            return;
         }
 
-        // 3. Vue 3D isométrique
-        this.draw3DView(racks);
+        console.log('QuadView: Dessin de', racks.length, 'racks');
 
-        // 4. Vue étage (si un niveau est sélectionné)
-        if (this.selectedLevel) {
-            this.updateLevelView(this.selectedLevel);
+        try {
+            // 1. Vue du dessus
+            this.drawTopView(racks);
+
+            // 2. Vue de face (si un rack est sélectionné)
+            if (this.selectedRack) {
+                this.drawFrontView(this.selectedRack);
+            } else if (racks.length > 0) {
+                this.drawFrontView(racks[0]); // Premier rack par défaut
+            }
+
+            // 3. Vue 3D isométrique
+            this.draw3DView(racks);
+
+            // 4. Vue étage (si un niveau est sélectionné)
+            if (this.selectedLevel) {
+                this.updateLevelView(this.selectedLevel);
+            }
+
+            // Mettre à jour les infos
+            this.updateInfoPanel(racks);
+
+            console.log('QuadView: Toutes les vues mises à jour');
+        } catch (error) {
+            console.error('Erreur dans updateAllViews:', error);
+        }
+    }
+
+    drawEmptyState() {
+        // Dessiner un état vide pour la vue du dessus
+        if (this.ctxTop && this.canvasTop) {
+            const ctx = this.ctxTop;
+            const width = this.canvasTop.width;
+            const height = this.canvasTop.height;
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.fillStyle = '#6c757d';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Chargement des étagères...', width/2, height/2);
         }
 
-        // Mettre à jour les infos
-        this.updateInfoPanel(racks);
+        // Vue de face
+        if (this.ctxFront && this.canvasFront) {
+            const ctx = this.ctxFront;
+            const width = this.canvasFront.width;
+            const height = this.canvasFront.height;
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.fillStyle = '#6c757d';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Sélectionnez une étagère', width/2, height/2);
+        }
+
+        // Vue 3D
+        if (this.ctx3D && this.canvas3D) {
+            const ctx = this.ctx3D;
+            const width = this.canvas3D.width;
+            const height = this.canvas3D.height;
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = '#667eea';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Vue 3D', width/2, height/2);
+        }
     }
 
     drawTopView(racks) {
@@ -1479,6 +1554,24 @@ class VueStock {
         this.updateStats();
     }
 
+    // AJOUTER CETTE MÉTHODE APRÈS init()
+    initQuadView() {
+        // Initialiser le QuadViewManager seulement si on est en vue plan
+        if (this.currentView === 'plan' && !this.quadViewManager) {
+            setTimeout(() => {
+                console.log('Initialisation de QuadViewManager...');
+                this.quadViewManager = new QuadViewManager();
+
+                // Passer les racks chargés
+                if (this.racks && this.racks.length > 0) {
+                    console.log('QuadView: Passage de', this.racks.length, 'racks');
+                    this.quadViewManager.updateAllViews(this.racks);
+                }
+
+            }, 1500); // Délai pour laisser charger les données
+        }
+    }
+
     // ===== GESTION DES VUES =====
     showView(viewName) {
         // Mettre à jour la vue courante
@@ -1509,25 +1602,6 @@ class VueStock {
             setTimeout(() => {
                 this.initQuadView();
             }, 100);
-        }
-    }
-
-    // AJOUT : Méthode pour initialiser la vue quad
-    initQuadView() {
-        // Initialiser le QuadViewManager seulement si on est en vue plan
-        if (this.currentView === 'plan' && !this.quadViewManager) {
-            setTimeout(() => {
-                this.quadViewManager = new QuadViewManager();
-
-                // Connecter les événements de sélection
-                if (this.canvasManager) {
-                    // Quand une étagère est sélectionnée dans le canvas
-                    // (vous devrez peut-être ajouter un événement personnalisé)
-                }
-
-                // Mettre à jour les vues avec les données actuelles
-                this.quadViewManager.updateAllViews(this.racks);
-            }, 500);
         }
     }
 
@@ -1570,6 +1644,13 @@ class VueStock {
             setTimeout(() => {
                 this.initCanvas();
             }, 100);
+        }
+
+        // AJOUT : Initialiser la vue quad si on est en vue plan
+        if (viewName === 'plan') {
+            setTimeout(() => {
+                this.initQuadView();
+            }, 200);
         }
     }
 
@@ -2122,7 +2203,7 @@ class VueStock {
     }
 
     displayRacksFromAPI() {
-    // Nettoyer le canvas
+        // Nettoyer le canvas
         const overlay = document.getElementById('planOverlay');
         if (overlay) overlay.innerHTML = '';
 
@@ -2160,8 +2241,13 @@ class VueStock {
 
         // Mettre à jour les stats
         this.updateStats();
-    }
 
+        // AJOUT IMPORTANT : Mettre à jour QuadView si actif
+        if (this.quadViewManager && this.currentView === 'plan') {
+            console.log('Mise à jour QuadView depuis displayRacksFromAPI()');
+            this.quadViewManager.updateAllViews(this.racks);
+        }
+    }
 
     showLoader(show) {
         const loader = document.getElementById('loaderOverlay');
@@ -2675,4 +2761,33 @@ document.addEventListener('DOMContentLoaded', () => {
             window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
         }
     }, 1000);
+});
+
+// Debug button pour tester QuadView
+document.addEventListener('DOMContentLoaded', () => {
+    // Ajouter un bouton de debug temporaire
+    const debugBtn = document.createElement('button');
+    debugBtn.id = 'debugQuadBtn';
+    debugBtn.innerHTML = '🔍 Debug Quad';
+    debugBtn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:10000;padding:10px;background:#4a90e2;color:white;border:none;border-radius:5px;cursor:pointer;';
+
+    debugBtn.addEventListener('click', () => {
+        console.log('=== DEBUG QUAD ===');
+        console.log('VueStock:', window.vueStock);
+        console.log('Racks:', window.vueStock?.racks?.length, 'racks');
+        console.log('QuadViewManager:', window.vueStock?.quadViewManager);
+
+        if (window.vueStock?.quadViewManager) {
+            console.log('Mise à jour forcée de QuadView...');
+            window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
+            alert('QuadView mis à jour avec ' + window.vueStock.racks.length + ' racks');
+        } else {
+            alert('QuadViewManager non initialisé. Attendez le chargement ou basculez en vue Plan.');
+        }
+    });
+
+    document.body.appendChild(debugBtn);
+
+    // Initialiser VueStock
+    window.vueStock = new VueStock();
 });
