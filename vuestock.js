@@ -1252,7 +1252,7 @@ class QuadViewManager {
         if (rack) {
             this.canvasTop.style.cursor = 'pointer';
             // Option : afficher une info-bulle
-            this.showTooltip(rack, e.clientX, e.clientY);
+            this.showTooltip(rack, x, y);
         } else {
             this.canvasTop.style.cursor = 'default';
             this.hideTooltip();
@@ -1260,7 +1260,7 @@ class QuadViewManager {
     }
 
     // Montrer une info-bulle
-    showTooltip(rack, x, y) {
+    showTooltip(rack, mouseX, mouseY) {
         // Créer ou mettre à jour l'info-bulle
         let tooltip = document.getElementById('quadTooltip');
 
@@ -1287,15 +1287,9 @@ class QuadViewManager {
             ${rack.width} × ${rack.depth} cases
         `;
 
-        // CORRECTION : Utiliser les coordonnées directement
-        // x et y sont déjà les coordonnées relatives au canvas
-        // On les convertit en coordonnées absolues de la page
-        const canvasRect = this.canvasTop.getBoundingClientRect();
-        const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
-        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-
-        tooltip.style.left = (canvasRect.left + x + scrollX) + 'px';
-        tooltip.style.top = (canvasRect.top + y + scrollY - 10) + 'px';
+        // Positionner près du curseur de la souris
+        tooltip.style.left = (mouseX + 10) + 'px'; // 10px à droite du curseur
+        tooltip.style.top = (mouseY - 10) + 'px'; // 10px au-dessus du curseur
         tooltip.style.display = 'block';
     }
 
