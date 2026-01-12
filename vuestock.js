@@ -1187,6 +1187,28 @@ class QuadViewManager {
 
         console.log('Clic sur canvas Quad à:', x, y);
 
+        // D'abord vérifier si on clique sur une poignette du rack sélectionné
+        if (this.selectedRack && this.selectionHandles) {
+            const handle = this.getClickedHandle(x, y);
+
+            if (handle) {
+                console.log('Poignette cliquée:', handle);
+
+                switch(handle) {
+                    case 'nw':
+                    case 'ne':
+                    case 'sw':
+                    case 'se':
+                        this.startResizeFromHandle(this.selectedRack, handle, x, y);
+                        break;
+                    case 'rotate':
+                        this.startRotationFromHandle(this.selectedRack, x, y);
+                        break;
+                }
+                return; // Ne pas continuer si on a cliqué sur une poignette
+            }
+        }
+
         // Chercher quel rack a été cliqué
         const clickedRack = this.findRackAtPosition(x, y);
 
@@ -1433,11 +1455,76 @@ class QuadViewManager {
             ctx.textBaseline = 'middle';
             ctx.fillText(rack.code, x + w/2, y + d/2);
 
-            // Si sélectionné, mettre en surbrillance
+            // Si sélectionné, mettre en surbrillance et ajouter les poignettes
             if (this.selectedRack && rack.id === this.selectedRack.id) {
+                // Surbrillance
                 ctx.strokeStyle = '#ffeb3b';
                 ctx.lineWidth = 3;
                 ctx.strokeRect(x - 2, y - 2, w + 4, d + 4);
+
+                // Poignettes de redimensionnement (coins)
+                const handleSize = 8;
+                const handleColor = '#007bff';
+                const handleBorder = '#ffffff';
+
+                // Coin supérieur gauche
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Coin supérieur droit
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x + w - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Coin inférieur gauche
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Coin inférieur droit
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x + w - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x + w - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Poignette de rotation (au-dessus du rack)
+                const rotateHandleY = y - 25;
+                ctx.beginPath();
+                ctx.arc(x + w/2, rotateHandleY, 10, 0, Math.PI * 2);
+                ctx.fillStyle = handleBorder;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + w/2, rotateHandleY, 8, 0, Math.PI * 2);
+                ctx.fillStyle = handleColor;
+                ctx.fill();
+
+                // Icône de rotation
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⟳', x + w/2, rotateHandleY);
+
+                // Indicateur de dimensions
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(x + w/2 - 30, y + d + 5, 60, 20);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${rack.width} × ${rack.depth}`, x + w/2, y + d + 16);
+
+                // Stocker les positions des poignettes pour les interactions
+                this.selectionHandles = {
+                    nw: { x: x - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
+                    ne: { x: x + w - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
+                    sw: { x: x - handleSize/2, y: y + d - handleSize/2, width: handleSize, height: handleSize },
+                    se: { x: x + w - handleSize/2, y: y + d - handleSize/2, width: handleSize, height: handleSize },
+                    rotate: { x: x + w/2 - 10, y: rotateHandleY - 10, width: 20, height: 20 }
+                };
             }
         });
 
@@ -2132,6 +2219,216 @@ class QuadViewManager {
             setTimeout(() => {
                 notification.remove();
             }, 3000);
+        }
+    }
+
+    // Vérifier quelle poignette a été cliquée
+    getClickedHandle(clickX, clickY) {
+        if (!this.selectionHandles) return null;
+
+        // Vérifier chaque poignette
+        for (const [handleName, handleRect] of Object.entries(this.selectionHandles)) {
+            if (clickX >= handleRect.x && clickX <= handleRect.x + handleRect.width &&
+                clickY >= handleRect.y && clickY <= handleRect.y + handleRect.height) {
+                return handleName;
+            }
+        }
+
+        return null;
+    }
+
+    // Démarrer le redimensionnement depuis une poignette
+    startResizeFromHandle(rack, handle, startX, startY) {
+        console.log('Redimensionnement depuis', handle, 'pour le rack', rack.code);
+
+        this.currentMode = 'resize';
+        this.currentRack = rack;
+        this.resizeHandle = handle;
+        this.resizeStart = {
+            x: startX,
+            y: startY,
+            width: rack.width,
+            depth: rack.depth,
+            position_x: rack.position_x,
+            position_y: rack.position_y
+        };
+
+        // Changer le curseur selon la poignette
+        const cursorMap = {
+            'nw': 'nw-resize',
+            'ne': 'ne-resize',
+            'sw': 'sw-resize',
+            'se': 'se-resize'
+        };
+
+        if (this.canvasTop && cursorMap[handle]) {
+            this.canvasTop.style.cursor = cursorMap[handle];
+        }
+
+        // Ajouter les événements
+        this.canvasTop.addEventListener('mousemove', this.handleResize.bind(this));
+        this.canvasTop.addEventListener('mouseup', this.stopResize.bind(this));
+
+        this.showQuadNotification('Redimensionnement activé. Glissez pour modifier la taille.', 'info');
+    }
+
+    // Gérer le redimensionnement
+    handleResize(e) {
+        if (this.currentMode !== 'resize' || !this.currentRack || !this.resizeHandle) return;
+
+        const rect = this.canvasTop.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const deltaX = mouseX - this.resizeStart.x;
+        const deltaY = mouseY - this.resizeStart.y;
+
+        // Calculer la différence en cases (chaque case = 20px dans cette vue)
+        const gridSize = 20;
+        const scale = 0.8;
+        const deltaGridX = Math.round(deltaX / gridSize);
+        const deltaGridY = Math.round(deltaY / gridSize);
+
+        let newWidth = this.resizeStart.width;
+        let newDepth = this.resizeStart.depth;
+        let newPosX = this.resizeStart.position_x;
+        let newPosY = this.resizeStart.position_y;
+
+        // Appliquer les changements selon la poignette
+        switch(this.resizeHandle) {
+            case 'se': // Coin inférieur droit
+                newWidth = Math.max(1, this.resizeStart.width + deltaGridX);
+                newDepth = Math.max(1, this.resizeStart.depth + deltaGridY);
+                break;
+
+            case 'sw': // Coin inférieur gauche
+                newWidth = Math.max(1, this.resizeStart.width - deltaGridX);
+                newDepth = Math.max(1, this.resizeStart.depth + deltaGridY);
+                newPosX = this.resizeStart.position_x + (deltaGridX * 40); // 40 = gridSize * 2 (scale inverse)
+                break;
+
+            case 'ne': // Coin supérieur droit
+                newWidth = Math.max(1, this.resizeStart.width + deltaGridX);
+                newDepth = Math.max(1, this.resizeStart.depth - deltaGridY);
+                newPosY = this.resizeStart.position_y + (deltaGridY * 40);
+                break;
+
+            case 'nw': // Coin supérieur gauche
+                newWidth = Math.max(1, this.resizeStart.width - deltaGridX);
+                newDepth = Math.max(1, this.resizeStart.depth - deltaGridY);
+                newPosX = this.resizeStart.position_x + (deltaGridX * 40);
+                newPosY = this.resizeStart.position_y + (deltaGridY * 40);
+                break;
+        }
+
+        // Appliquer les changements
+        this.currentRack.width = newWidth;
+        this.currentRack.depth = newDepth;
+        this.currentRack.position_x = newPosX;
+        this.currentRack.position_y = newPosY;
+
+        // Mettre à jour les champs dans le panneau
+        const widthInput = document.getElementById('quadRackWidth');
+        const depthInput = document.getElementById('quadRackDepth');
+        const xInput = document.getElementById('quadRackX');
+        const yInput = document.getElementById('quadRackY');
+
+        if (widthInput) widthInput.value = newWidth;
+        if (depthInput) depthInput.value = newDepth;
+        if (xInput) xInput.value = Math.round(newPosX / 40);
+        if (yInput) yInput.value = Math.round(newPosY / 40);
+
+        // Redessiner
+        this.drawTopView(this.currentRacks);
+    }
+
+    // Arrêter le redimensionnement
+    stopResize() {
+        if (this.currentMode === 'resize') {
+            this.currentMode = null;
+            this.currentRack = null;
+            this.resizeHandle = null;
+            this.resizeStart = null;
+
+            if (this.canvasTop) {
+                this.canvasTop.style.cursor = 'pointer';
+                this.canvasTop.removeEventListener('mousemove', this.handleResize);
+                this.canvasTop.removeEventListener('mouseup', this.stopResize);
+            }
+
+            this.showQuadNotification('Redimensionnement terminé', 'info');
+        }
+    }
+
+    // Démarrer la rotation depuis la poignette
+    startRotationFromHandle(rack, startX, startY) {
+        console.log('Rotation depuis poignette pour le rack', rack.code);
+
+        this.currentMode = 'rotate';
+        this.currentRack = rack;
+        this.rotateStart = {
+            x: startX,
+            y: startY,
+            centerX: (rack.position_x * 0.8) % this.canvasTop.width + (rack.width * 20 / 2),
+            centerY: (rack.position_y * 0.8) % this.canvasTop.height + (rack.depth * 20 / 2),
+            startRotation: rack.rotation || 0
+        };
+
+        if (this.canvasTop) {
+            this.canvasTop.style.cursor = 'grab';
+        }
+
+        // Ajouter les événements
+        this.canvasTop.addEventListener('mousemove', this.handleRotationDrag.bind(this));
+        this.canvasTop.addEventListener('mouseup', this.stopRotationDrag.bind(this));
+
+        this.showQuadNotification('Rotation activée. Glissez pour tourner le rack.', 'info');
+    }
+
+    // Gérer la rotation par glisser
+    handleRotationDrag(e) {
+        if (this.currentMode !== 'rotate' || !this.currentRack || !this.rotateStart) return;
+
+        const rect = this.canvasTop.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Calculer l'angle
+        const deltaX = mouseX - this.rotateStart.centerX;
+        const deltaY = mouseY - this.rotateStart.centerY;
+        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+        // Snap à 15 degrés
+        let newRotation = Math.round(angle / 15) * 15;
+        if (newRotation < 0) newRotation += 360;
+
+        // Appliquer
+        this.currentRack.rotation = newRotation;
+
+        // Mettre à jour le slider
+        const rotationSlider = document.getElementById('quadRackRotation');
+        const rotationValue = document.querySelector('.rotation-value');
+        if (rotationSlider) rotationSlider.value = newRotation;
+        if (rotationValue) rotationValue.textContent = newRotation + '°';
+
+        // Redessiner
+        this.drawTopView(this.currentRacks);
+    }
+
+    // Arrêter la rotation
+    stopRotationDrag() {
+        if (this.currentMode === 'rotate') {
+            this.currentMode = null;
+            this.currentRack = null;
+            this.rotateStart = null;
+
+            if (this.canvasTop) {
+                this.canvasTop.style.cursor = 'pointer';
+                this.canvasTop.removeEventListener('mousemove', this.handleRotationDrag);
+                this.canvasTop.removeEventListener('mouseup', this.stopRotationDrag);
+            }
+
+            this.showQuadNotification('Rotation terminée', 'info');
         }
     }
 
