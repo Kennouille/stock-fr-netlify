@@ -464,8 +464,17 @@ function animate() {
 
 export function openWarehouseModal() {
   const modal = document.getElementById('warehouse-modal');
+  modal.classList.remove('hidden');  // CHANGEMENT ICI
   modal.classList.add('active');
   isModalOpen = true;
+
+  // Attacher l'événement au bouton de fermeture
+  setTimeout(() => {
+    const closeBtn = document.getElementById('closeWarehouseModal');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeWarehouseModal);
+    }
+  }, 100);
 
   if (!scene) {
     initWarehouse();
@@ -492,26 +501,5 @@ export function closeWarehouseModal() {
   if (camera) {
     camera.position.set(0, 20, 40);
     camera.lookAt(0, 0, 0);
-  }
-}
-
-// Gestion de la fermeture - version corrigée
-export function openWarehouseModal() {
-  const modal = document.getElementById('warehouse-modal');
-  modal.classList.add('active');
-  isModalOpen = true;
-
-  // AJOUTEZ CES LIGNES ICI :
-  setTimeout(() => {
-    const closeBtn = document.getElementById('closeWarehouseModal');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', closeWarehouseModal);
-    }
-  }, 100);
-
-  if (!scene) {
-    initWarehouse();
-  } else {
-    animate();
   }
 }
