@@ -492,7 +492,7 @@ export function closeWarehouseModal() {
   }
 }
 
-const closeBtn = document.getElementById('close-modal');
+const closeBtn = document.getElementById('closeWarehouseModal');  // ← BON ID
 if (closeBtn) {
   closeBtn.addEventListener('click', closeWarehouseModal);
 }
