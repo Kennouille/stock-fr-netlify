@@ -1647,11 +1647,6 @@ class VueStock {
             this.openRackModal(); // Appel direct, pas via window
         });
 
-        // ✅ AJOUTEZ CECI : Bouton Vue 3D
-        document.getElementById('btnView3D').addEventListener('click', () => {
-            this.open3DView();
-        });
-
         // Bouton Ajouter étage
         document.getElementById('btnAddLevel')?.addEventListener('click', () => {
             if (this.selectedRack) {
