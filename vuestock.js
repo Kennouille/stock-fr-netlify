@@ -1000,6 +1000,21 @@ class QuadViewManager {
         // Événements de redimensionnement
         window.addEventListener('resize', () => this.resizeCanvases());
 
+        // AJOUT IMPORTANT : Événement clic sur le canvas haut-gauche
+        if (this.canvasTop) {
+            this.canvasTop.addEventListener('click', (e) => {
+                this.handleCanvasClick(e);
+            });
+
+            // Pour le survol aussi
+            this.canvasTop.addEventListener('mousemove', (e) => {
+                this.handleCanvasHover(e);
+            });
+
+            // Changer le curseur pour indiquer l'interactivité
+            this.canvasTop.style.cursor = 'pointer';
+        }
+
         // Basculement de vue
         document.querySelectorAll('.view-switch-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -1162,8 +1177,220 @@ class QuadViewManager {
         }
     }
 
+    // Méthode pour gérer les clics sur le canvas
+    handleCanvasClick(e) {
+        if (!this.currentRacks || this.currentRacks.length === 0) return;
+
+        const rect = this.canvasTop.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        console.log('Clic sur canvas Quad à:', x, y);
+
+        // Chercher quel rack a été cliqué
+        const clickedRack = this.findRackAtPosition(x, y);
+
+        if (clickedRack) {
+            console.log('Rack cliqué:', clickedRack.code);
+
+            // 1. Mettre à jour la sélection
+            this.selectedRack = clickedRack;
+
+            // 2. Redessiner avec la sélection mise en évidence
+            this.drawTopView(this.currentRacks);
+
+            // 3. Mettre à jour la vue de face
+            this.drawFrontView(clickedRack);
+
+            // 4. Mettre à jour les infos
+            this.updateInfoPanel(this.currentRacks);
+
+            // 5. Ouvrir le modal d'édition (optionnel)
+            this.openEditModal(clickedRack);
+        } else {
+            // Si on clique ailleurs, on pourrait ouvrir le modal pour créer un nouveau rack
+            console.log('Aucun rack à cette position');
+
+            // Option : Ouvrir le modal pour créer un nouveau rack ici
+            // this.openCreateModalAtPosition(x, y);
+        }
+    }
+
+    // Trouver un rack à une position donnée
+    findRackAtPosition(x, y) {
+        if (!this.currentRacks) return null;
+
+        const scale = 0.8; // Même échelle que dans drawTopView
+        const gridSize = 20; // Même taille que dans drawTopView
+
+        for (const rack of this.currentRacks) {
+            const rackX = (rack.position_x * scale) % this.canvasTop.width;
+            const rackY = (rack.position_y * scale) % this.canvasTop.height;
+            const rackWidth = rack.width * gridSize;
+            const rackHeight = rack.depth * gridSize;
+
+            // Vérifier si le clic est dans les limites du rack
+            if (x >= rackX && x <= rackX + rackWidth &&
+                y >= rackY && y <= rackY + rackHeight) {
+                return rack;
+            }
+        }
+
+        return null;
+    }
+
+    // Gestion du survol (pour changer le curseur)
+    handleCanvasHover(e) {
+        if (!this.currentRacks || this.currentRacks.length === 0) return;
+
+        const rect = this.canvasTop.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const rack = this.findRackAtPosition(x, y);
+
+        if (rack) {
+            this.canvasTop.style.cursor = 'pointer';
+            // Option : afficher une info-bulle
+            this.showTooltip(rack, x, y);
+        } else {
+            this.canvasTop.style.cursor = 'default';
+            this.hideTooltip();
+        }
+    }
+
+    // Montrer une info-bulle
+    showTooltip(rack, x, y) {
+        // Créer ou mettre à jour l'info-bulle
+        let tooltip = document.getElementById('quadTooltip');
+
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'quadTooltip';
+            tooltip.style.cssText = `
+                position: fixed;
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                pointer-events: none;
+                z-index: 1000;
+                transform: translate(-50%, -100%);
+            `;
+            document.body.appendChild(tooltip);
+        }
+
+        tooltip.innerHTML = `
+            <strong>${rack.code}</strong><br>
+            ${rack.name || 'Étagère ' + rack.code}<br>
+            ${rack.width} × ${rack.depth} cases
+        `;
+
+        tooltip.style.left = (x + rect.left) + 'px';
+        tooltip.style.top = (y + rect.top - 10) + 'px';
+        tooltip.style.display = 'block';
+    }
+
+    // Cacher l'info-bulle
+    hideTooltip() {
+        const tooltip = document.getElementById('quadTooltip');
+        if (tooltip) {
+            tooltip.style.display = 'none';
+        }
+    }
+
+    // Ouvrir le modal d'édition
+    openEditModal(rack) {
+        console.log('Ouverture du modal pour éditer le rack:', rack.code);
+
+        // Utiliser votre modal existant via VueStock
+        if (window.vueStock && window.vueStock.openRackModal) {
+            window.vueStock.openRackModal(rack);
+        } else if (window.openRackModal) {
+            window.openRackModal(rack);
+        } else {
+            console.warn('Fonction openRackModal non disponible');
+            // Option : créer un modal simple
+            this.createSimpleEditModal(rack);
+        }
+    }
+
+    // Modal simple si le modal principal n'est pas disponible
+    createSimpleEditModal(rack) {
+        const modal = document.createElement('div');
+        modal.innerHTML = `
+            <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;">
+                <div style="background:white;padding:20px;border-radius:8px;min-width:300px;">
+                    <h3>Éditer ${rack.code}</h3>
+                    <div style="margin:10px 0;">
+                        <label>Code: <input type="text" value="${rack.code}" id="editRackCode"></label>
+                    </div>
+                    <div style="margin:10px 0;">
+                        <label>Largeur: <input type="number" value="${rack.width}" id="editRackWidth"></label>
+                    </div>
+                    <div style="margin:10px 0;">
+                        <label>Profondeur: <input type="number" value="${rack.depth}" id="editRackDepth"></label>
+                    </div>
+                    <div style="margin:10px 0;">
+                        <label>Couleur: <input type="color" value="${rack.color || '#4a90e2'}" id="editRackColor"></label>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-top:20px;">
+                        <button id="cancelEdit">Annuler</button>
+                        <button id="saveEdit" style="background:#4a90e2;color:white;">Sauvegarder</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Événements
+        document.getElementById('cancelEdit').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        document.getElementById('saveEdit').addEventListener('click', async () => {
+            const newCode = document.getElementById('editRackCode').value;
+            const newWidth = parseInt(document.getElementById('editRackWidth').value);
+            const newDepth = parseInt(document.getElementById('editRackDepth').value);
+            const newColor = document.getElementById('editRackColor').value;
+
+            // Mettre à jour localement
+            rack.code = newCode;
+            rack.width = newWidth;
+            rack.depth = newDepth;
+            rack.color = newColor;
+
+            // Redessiner
+            this.drawTopView(this.currentRacks);
+
+            // Fermer le modal
+            modal.remove();
+
+            // Sauvegarder via API (si disponible)
+            if (window.vueStock && window.vueStock.api) {
+                try {
+                    await window.vueStock.api.saveRack({
+                        id: rack.id,
+                        code: newCode,
+                        width: newWidth,
+                        depth: newDepth,
+                        color: newColor
+                    });
+                    console.log('Rack mis à jour via API');
+                } catch (error) {
+                    console.error('Erreur API:', error);
+                }
+            }
+        });
+    }
+
     drawTopView(racks) {
         if (!this.ctxTop || !this.canvasTop) return;
+
+        // Stocker les racks pour les interactions
+        this.currentRacks = racks;
 
         const ctx = this.ctxTop;
         const width = this.canvasTop.width;
