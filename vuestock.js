@@ -1854,7 +1854,12 @@ class QuadViewManager {
     }
 
     handleFrontViewClick(e) {
-        if (!this.selectedRack || !this.selectedRack.levels || !this.selectedRack.levels.length) return;
+        console.log('🎯 CLIC DÉTECTÉ sur canvas Front !', e.clientX, e.clientY);
+
+        if (!this.selectedRack || !this.selectedRack.levels || !this.selectedRack.levels.length) {
+            console.log('❌ Pas de rack sélectionné ou pas d\'étages');
+            return;
+        }
 
         const rect = this.canvasFront.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
