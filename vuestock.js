@@ -1202,7 +1202,7 @@ class QuadViewManager {
     }
 
     // Méthode pour gérer les clics sur le canvas
-    handleCanvasClick(e) {
+     handleCanvasClick(e) {
         console.log('=== handleCanvasClick ===');
 
         e.preventDefault();
@@ -1217,46 +1217,37 @@ class QuadViewManager {
         console.log(`🎯 Clic à: ${x}, ${y}`);
         console.log(`📌 État actuel: selectedRack = ${this.selectedRack ? this.selectedRack.code : 'null'}`);
 
-        // 1. D'ABORD vérifier si on clique sur un rack normal
+        // 1. TOUJOURS vérifier les poignettes si un rack est sélectionné
+        if (this.selectedRack) {
+            console.log(`🔄 Rack ${this.selectedRack.code} sélectionné, vérification des poignettes...`);
+            const handle = this.getClickedHandle(x, y);
+            console.log(`🔍 Résultat getClickedHandle: ${handle ? handle : 'null'}`);
+            if (handle) {
+                console.log(`🔄 Poignette ${handle} cliquée`);
+
+                switch(handle) {
+                    case 'nw':
+                    case 'ne':
+                    case 'sw':
+                    case 'se':
+                        this.startResizeFromHandle(this.selectedRack, handle, x, y);
+                        return; // NE PAS CONTINUER
+                    case 'rotate':
+                        this.startRotationFromHandle(this.selectedRack, x, y);
+                        return; // NE PAS CONTINUER
+                }
+            } else {
+                console.log(`❌ Aucune poignette détectée`);
+            }
+        }
+
+        // 2. Ensuite, vérifier si on clique sur un rack normal
         const clickedRack = this.findRackAtPosition(x, y);
 
         if (clickedRack) {
             console.log(`✅ Rack ${clickedRack.code} trouvé!`);
 
-            // 2. Si on a UN rack sélectionné (peu importe lequel), vérifier les poignettes
-            //    AVANT de sélectionner un nouveau rack
-            if (this.selectedRack) {
-                console.log(`🔄 Un rack (${this.selectedRack.code}) est déjà sélectionné, vérification des poignettes...`);
-                const handle = this.getClickedHandle(x, y);
-                console.log(`🔍 Résultat getClickedHandle: ${handle ? handle : 'null'}`);
-                if (handle) {
-                    console.log(`🔄 Poignette ${handle} cliquée`);
-
-                    // Vérifier si la poignette appartient au rack sélectionné
-                    if (this.selectedRack.id === clickedRack.id) {
-                        console.log(`✅ Poignette appartient au rack sélectionné (${this.selectedRack.code})`);
-                        switch(handle) {
-                            case 'nw':
-                            case 'ne':
-                            case 'sw':
-                            case 'se':
-                                this.startResizeFromHandle(this.selectedRack, handle, x, y);
-                                return; // NE PAS CONTINUER
-                            case 'rotate':
-                                this.startRotationFromHandle(this.selectedRack, x, y);
-                                return; // NE PAS CONTINUER
-                        }
-                    } else {
-                        console.log(`⚠️ Poignette appartient à un autre rack`);
-                    }
-                } else {
-                    console.log(`❌ Aucune poignette détectée`);
-                }
-            } else {
-                console.log(`ℹ️ Aucun rack sélectionné auparavant`);
-            }
-
-            // 3. Si pas de poignette cliquée, sélectionner le rack normalement
+            // Sélectionner le rack
             console.log(`📌 Sélection du rack ${clickedRack.code}`);
             this.selectedRack = clickedRack;
             this.drawTopView(this.currentRacks);
@@ -1265,9 +1256,10 @@ class QuadViewManager {
 
         } else {
             console.log('❌ Aucun rack à cette position');
-            this.selectedRack = null;
-            this.drawTopView(this.currentRacks);
-            this.clearPropertiesPanel();
+            // Ne pas désélectionner automatiquement - laisser l'utilisateur cliquer ailleurs
+            // this.selectedRack = null;
+            // this.drawTopView(this.currentRacks);
+            // this.clearPropertiesPanel();
         }
     }
 
