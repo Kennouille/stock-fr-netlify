@@ -1881,76 +1881,20 @@ class QuadViewManager {
                 // 1. Mettre à jour la sélection
                 this.selectedLevel = level;
 
-                // 2. Ouvrir le tiroir "Détail étage"
-                const detailDrawer = document.getElementById('detailDrawer');
-                if (detailDrawer) {
-                    detailDrawer.classList.add('open');
+                // 2. Mettre à jour le panneau "Détail étage" de la vue Quad
+                const levelInfo = document.getElementById('quadLevelInfo');
+                if (levelInfo) {
+                    levelInfo.textContent = `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
                 }
 
-                // 3. Mettre à jour le titre du tiroir
-                const drawerTitle = document.getElementById('drawerLevelTitle');
-                if (drawerTitle) {
-                    drawerTitle.textContent = `Étage ${level.code} - Rack ${this.selectedRack.code}`;
-                }
-
-                // 4. Afficher les emplacements dans le tiroir
-                this.displayLevelSlotsInDrawer(level);
+                // 3. Afficher les emplacements dans le panneau existant
+                this.updateLevelView(level);
 
                 break;
             }
 
             currentY -= levelHeight;
         }
-    }
-
-    displayLevelSlotsInDrawer(level) {
-        const slotsContainer = document.getElementById('drawerSlotsContainer');
-        if (!slotsContainer) return;
-
-        // Vider le conteneur
-        slotsContainer.innerHTML = '';
-
-        if (!level.slots || level.slots.length === 0) {
-            slotsContainer.innerHTML = `
-                <div class="empty-slots">
-                    <i class="fas fa-box-open"></i>
-                    <p>Aucun emplacement dans cet étage</p>
-                </div>
-            `;
-            return;
-        }
-
-        // Trier les emplacements par code
-        const sortedSlots = [...level.slots].sort((a, b) => {
-            return parseInt(a.code) - parseInt(b.code);
-        });
-
-        // Créer les cartes d'emplacement
-        sortedSlots.forEach(slot => {
-            const slotCard = document.createElement('div');
-            slotCard.className = 'slot-card';
-            slotCard.dataset.slotId = slot.id;
-
-            // Déterminer la couleur selon le statut
-            let statusClass = 'free';
-            let statusText = 'Libre';
-            if (slot.status === 'occupied' || slot.status === 'partially_occupied') {
-                statusClass = 'occupied';
-                statusText = 'Occupé';
-            }
-
-            slotCard.innerHTML = `
-                <div class="slot-header">
-                    <span class="slot-code">${slot.code}</span>
-                    <span class="slot-status ${statusClass}">${statusText}</span>
-                </div>
-                <div class="slot-info">
-                    <div>${slot.full_code || `${this.selectedRack.code}-${level.code}-${slot.code}`}</div>
-                </div>
-            `;
-
-            slotsContainer.appendChild(slotCard);
-        });
     }
 
     draw3DView(racks) {
