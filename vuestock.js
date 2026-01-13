@@ -2109,13 +2109,13 @@ class QuadViewManager {
             `;
         });
 
-        return html;
-    }
+        // APRÈS avoir créé le HTML, ajouter les événements avec setTimeout
+        setTimeout(() => {
+            this.bindSlotEvents();
+        }, 300);
 
-    // Après avoir créé les slots, ajoutez les événements
-    setTimeout(() => {
-        this.bindSlotEvents();
-    }, 300);
+        return html; // <-- AJOUTEZ CETTE LIGNE
+    } // <-- FERMETURE DE LA FONCTION ICI
 
     // NOUVELLE MÉTHODE - Événements sur les slots
     bindSlotEvents() {
