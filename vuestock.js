@@ -2011,22 +2011,9 @@ class QuadViewManager {
         const container = document.getElementById('quadLevelSlots');
         if (!container || !level) return;
 
-        // Sauvegarder l'élément ouvert actuel pour animation de fermeture
-        const currentDrawer = container.querySelector('.quad-drawer-container');
-        if (currentDrawer && currentDrawer.classList.contains('open')) {
-            // Fermer avec animation
-            currentDrawer.classList.remove('open');
-            setTimeout(() => {
-                container.innerHTML = '';
-                this.createDrawer(container, level);
-            }, 400); // Délai pour la fermeture
-        } else {
-            container.innerHTML = '';
-            this.createDrawer(container, level);
-        }
-    }
+        // Nettoyer le container
+        container.innerHTML = '';
 
-    createDrawer(container, level) {
         // Créer la structure du tiroir
         const drawerContainer = document.createElement('div');
         drawerContainer.className = 'quad-drawer-container';
@@ -2047,27 +2034,21 @@ class QuadViewManager {
 
         container.appendChild(drawerContainer);
 
-        // Animation d'ouverture progressive
+        // Ouvrir le tiroir après un court délai
         setTimeout(() => {
-            requestAnimationFrame(() => {
-                drawerContainer.classList.add('open');
-            });
+            drawerContainer.classList.add('open');
         }, 100);
 
         // Ajouter l'événement sur la poignée pour basculer
         const handle = drawerContainer.querySelector('.drawer-handle');
         handle.addEventListener('click', (e) => {
             e.stopPropagation();
+            drawerContainer.classList.toggle('open');
 
-            if (drawerContainer.classList.contains('open')) {
-                // Fermer avec effet de "remontée"
-                drawerContainer.classList.remove('open');
-                handle.style.transform = 'translateY(0)';
-            } else {
-                // Ouvrir avec effet de "descente"
-                drawerContainer.classList.add('open');
-                handle.style.transform = 'translateY(5px)';
-            }
+            // Changer le curseur
+            handle.style.cursor = drawerContainer.classList.contains('open')
+                ? 'pointer'
+                : 'grab';
         });
 
         // Mettre à jour l'info
