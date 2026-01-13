@@ -1865,12 +1865,12 @@ class QuadViewManager {
 
         const rect = this.canvasFront.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
-        const clickY = e.clientY - rect.top;
+        const clickY = (e.clientY - rect.top) * scaleY;
 
         const rackWidth = this.selectedRack.width * 30;
         const startX = (this.canvasFront.width - rackWidth) / 2;
         const baseHeight = 10; // hauteur de la base du rack (DOIT matcher le draw)
-        const startY = this.canvasFront.height - 20 - baseHeight;
+        const scaleY = this.canvasFront.height / rect.height;
 
         const levelHeight = 40;
         let currentY = startY;
