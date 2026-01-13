@@ -1235,6 +1235,13 @@ class QuadViewManager {
             });
 
             this.canvasTop.style.cursor = 'default';
+
+            // Événement clic sur le canvas de face
+            if (this.canvasFront) {
+                this.canvasFront.addEventListener('click', (e) => {
+                    this.handleFrontViewClick(e);
+                });
+            }
         }
 
         // Basculement de vue
@@ -2610,13 +2617,6 @@ class QuadViewManager {
         // Ajouter les événements
         this.canvasTop.addEventListener('mousemove', this.handleRotationDrag.bind(this));
         this.canvasTop.addEventListener('mouseup', this.stopRotationDrag.bind(this));
-
-        // Événement clic sur le canvas de face
-        if (this.canvasFront) {
-            this.canvasFront.addEventListener('click', (e) => {
-                this.handleFrontViewClick(e);
-            });
-        }
 
         this.showQuadNotification('Rotation activée. Glissez pour tourner le rack.', 'info');
     }
