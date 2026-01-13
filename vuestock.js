@@ -3901,100 +3901,287 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ===== PATCH URGENCE - SAUVE QUI PEUT =====
+// ===== SOLUTION RADICALE =====
 document.addEventListener('DOMContentLoaded', () => {
+    // Attendre que tout soit chargé
     setTimeout(() => {
-        if (!window.vueStock?.quadViewManager) return;
+        console.log('🔧 RECONSTRUCTION COMPLÈTE DE QUADVIEW');
 
-        const qvm = window.vueStock.quadViewManager;
-
-        // Remplacer drawTopView par version simple
-        qvm.drawTopView = function(racks) {
-            if (!this.ctxTop || !this.canvasTop) return;
-
-            const ctx = this.ctxTop;
-            const width = this.canvasTop.width;
-            const height = this.canvasTop.height;
-
-            ctx.clearRect(0, 0, width, height);
-
-            // Grille basique
-            const gridSize = 20;
-            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-            for (let x = 0; x < width; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-                ctx.stroke();
-            }
-            for (let y = 0; y < height; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-                ctx.stroke();
+        // 1. DÉTRUIRE l'ancien QuadViewManager
+        if (window.vueStock?.quadViewManager) {
+            // Supprimer tous les écouteurs d'événements
+            const canvas = document.getElementById('canvasTop');
+            if (canvas) {
+                canvas.replaceWith(canvas.cloneNode(true));
             }
 
-            // Positions fixes et ordonnées
-            const startX = 50;
-            let currentX = startX;
-            const startY = 50;
-            const spacing = 30;
-
-            racks.forEach((rack, index) => {
-                const x = currentX;
-                const y = startY + (Math.floor(index / 3) * 100); // 3 par ligne
-                const w = Math.max(rack.width * 15, 60); // Minimum 60px
-                const h = Math.max(rack.depth * 15, 40);
-
-                // Stocker pour les clics
-                rack.quadX = x;
-                rack.quadY = y;
-                rack.quadW = w;
-                rack.quadH = h;
-
-                // Dessiner
-                ctx.fillStyle = rack.color || '#4a90e2';
-                ctx.fillRect(x, y, w, h);
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x, y, w, h);
-
-                // Texte
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 14px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(rack.code, x + w/2, y + h/2);
-
-                // Avancer horizontalement
-                currentX += w + spacing;
-                if (currentX + w > width - 50) {
-                    currentX = startX;
-                }
-            });
-        };
-
-        // Remplacer findRackAtPosition
-        qvm.findRackAtPosition = function(x, y) {
-            if (!this.currentRacks) return null;
-
-            for (const rack of this.currentRacks) {
-                if (!rack.quadX) continue;
-
-                if (x >= rack.quadX && x <= rack.quadX + rack.quadW &&
-                    y >= rack.quadY && y <= rack.quadY + rack.quadH) {
-                    console.log(`🎯 ${rack.code} cliqué à ${x},${y}`);
-                    return rack;
-                }
-            }
-            return null;
-        };
-
-        // Redessiner
-        if (window.vueStock.racks.length > 0) {
-            qvm.drawTopView(window.vueStock.racks);
+            window.vueStock.quadViewManager = null;
+            console.log('🗑️ Ancien QuadViewManager supprimé');
         }
 
-        console.log('✅ Patch appliqué - racks positionnés proprement');
-    }, 2000);
+        // 2. CRÉER un nouveau QuadViewManager SIMPLIFIÉ
+        class SimpleQuadView {
+            constructor() {
+                this.canvas = document.getElementById('canvasTop');
+                this.ctx = this.canvas?.getContext('2d');
+                this.racks = [];
+                this.selectedRack = null;
+
+                if (!this.canvas || !this.ctx) {
+                    console.error('Canvas non trouvé');
+                    return;
+                }
+
+                this.init();
+                console.log('✅ SimpleQuadView créé');
+            }
+
+            init() {
+                // Taille
+                this.canvas.width = this.canvas.offsetWidth;
+                this.canvas.height = this.canvas.offsetHeight;
+
+                // Événements
+                this.canvas.addEventListener('click', (e) => this.handleClick(e));
+                this.canvas.style.cursor = 'pointer';
+
+                // Dessiner un état vide
+                this.drawEmpty();
+            }
+
+            drawEmpty() {
+                if (!this.ctx) return;
+
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+
+                this.ctx.clearRect(0, 0, width, height);
+                this.ctx.fillStyle = '#f8f9fa';
+                this.ctx.fillRect(0, 0, width, height);
+
+                this.ctx.fillStyle = '#6c757d';
+                this.ctx.font = '14px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText('Chargement...', width/2, height/2);
+            }
+
+            update(racks) {
+                if (!racks || !racks.length) {
+                    this.drawEmpty();
+                    return;
+                }
+
+                this.racks = racks;
+                this.drawRacks();
+                console.log(`📊 ${racks.length} racks dessinés`);
+            }
+
+            drawRacks() {
+                if (!this.ctx) return;
+
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+
+                // Effacer
+                this.ctx.clearRect(0, 0, width, height);
+
+                // Grille simple
+                this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                for (let x = 0; x < width; x += 40) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, height);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y < height; y += 40) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(width, y);
+                    this.ctx.stroke();
+                }
+
+                // Positions organisées
+                const startX = 60;
+                const startY = 60;
+                const spacing = 30;
+                const rackWidth = 100;
+                const rackHeight = 60;
+
+                let currentX = startX;
+                let currentY = startY;
+
+                this.racks.forEach((rack, index) => {
+                    // Position
+                    const x = currentX;
+                    const y = currentY;
+
+                    // Stocker pour les clics
+                    rack.displayX = x;
+                    rack.displayY = y;
+                    rack.displayW = rackWidth;
+                    rack.displayH = rackHeight;
+
+                    // Couleur
+                    const colors = ['#4a90e2', '#7b68ee', '#2ecc71', '#f39c12', '#e74c3c', '#9b59b6'];
+                    const color = rack.color || colors[index % colors.length];
+
+                    // Dessiner le rack
+                    this.ctx.fillStyle = color;
+                    this.ctx.fillRect(x, y, rackWidth, rackHeight);
+
+                    // Bordure
+                    this.ctx.strokeStyle = this.selectedRack?.id === rack.id ? '#ffeb3b' : '#333';
+                    this.ctx.lineWidth = this.selectedRack?.id === rack.id ? 3 : 2;
+                    this.ctx.strokeRect(x, y, rackWidth, rackHeight);
+
+                    // Texte
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = 'bold 16px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(rack.code, x + rackWidth/2, y + rackHeight/2);
+
+                    // Infos
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    this.ctx.font = '11px Arial';
+                    this.ctx.fillText(`${rack.width}×${rack.depth}`, x + rackWidth/2, y + rackHeight + 15);
+
+                    // Avancer
+                    currentX += rackWidth + spacing;
+                    if (currentX + rackWidth > width - 60) {
+                        currentX = startX;
+                        currentY += rackHeight + 60;
+                    }
+                });
+
+                // Mettre à jour le compteur
+                const counter = document.getElementById('quadRackCount');
+                if (counter) {
+                    counter.textContent = `${this.racks.length} racks`;
+                }
+            }
+
+            handleClick(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                console.log(`🎯 Clic à: ${x}, ${y}`);
+
+                // Chercher le rack cliqué
+                const clickedRack = this.findRackAt(x, y);
+
+                if (clickedRack) {
+                    console.log(`✅ Rack ${clickedRack.code} sélectionné!`);
+                    this.selectedRack = clickedRack;
+                    this.drawRacks(); // Redessiner avec sélection
+
+                    // Mettre à jour le panneau propriétés
+                    this.updatePropertiesPanel(clickedRack);
+
+                    // Mettre à jour VueStock aussi
+                    if (window.vueStock) {
+                        window.vueStock.selectedRack = clickedRack;
+                    }
+                } else {
+                    console.log('❌ Aucun rack cliqué');
+                    this.selectedRack = null;
+                    this.drawRacks();
+                    this.clearPropertiesPanel();
+                }
+            }
+
+            findRackAt(x, y) {
+                for (const rack of this.racks) {
+                    if (!rack.displayX) continue;
+
+                    const left = rack.displayX;
+                    const right = left + rack.displayW;
+                    const top = rack.displayY;
+                    const bottom = top + rack.displayH;
+
+                    console.log(`  ${rack.code}: ${left}-${right}, ${top}-${bottom}`);
+
+                    if (x >= left && x <= right && y >= top && y <= bottom) {
+                        return rack;
+                    }
+                }
+                return null;
+            }
+
+            updatePropertiesPanel(rack) {
+                const panel = document.getElementById('propertiesPanel');
+                if (!panel) {
+                    console.warn('Panneau Propriétés non trouvé');
+                    return;
+                }
+
+                panel.innerHTML = `
+                    <h4><i class="fas fa-warehouse"></i> Étagère ${rack.code}</h4>
+                    <div class="property-group">
+                        <div class="property">
+                            <span class="property-label">Nom:</span>
+                            <span class="property-value">${rack.name || 'Sans nom'}</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-label">Dimensions:</span>
+                            <span class="property-value">${rack.width} × ${rack.depth} cases</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-label">Position:</span>
+                            <span class="property-value">${rack.position_x}, ${rack.position_y}</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-label">Couleur:</span>
+                            <span class="property-value" style="color:${rack.color || '#4a90e2'}">■</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-primary btn-block" onclick="window.vueStock?.goToRackView(${JSON.stringify(rack).replace(/"/g, '&quot;')})">
+                        <i class="fas fa-eye"></i> Voir les étages
+                    </button>
+                    <button class="btn btn-sm btn-danger btn-block" onclick="if(confirm('Supprimer ?')) { window.vueStock?.deleteRack(${rack.id}) }">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </button>
+                `;
+            }
+
+            clearPropertiesPanel() {
+                const panel = document.getElementById('propertiesPanel');
+                if (panel) {
+                    panel.innerHTML = '<p class="no-selection">Sélectionnez un élément pour voir ses propriétés</p>';
+                }
+            }
+        }
+
+        // 3. ATTENDRE que VueStock ait ses racks
+        const waitForRacks = setInterval(() => {
+            if (window.vueStock?.racks?.length > 0) {
+                clearInterval(waitForRacks);
+
+                // Créer le nouveau manager
+                window.simpleQuadView = new SimpleQuadView();
+                window.vueStock.quadViewManager = window.simpleQuadView;
+
+                // Mettre à jour avec les racks
+                window.simpleQuadView.update(window.vueStock.racks);
+
+                console.log('✅ SimpleQuadView prêt avec', window.vueStock.racks.length, 'racks');
+
+                // Cacher l'ancien canvas Front et 3D pour l'instant
+                document.getElementById('canvasFront')?.style.setProperty('display', 'none');
+                document.getElementById('canvas3D')?.style.setProperty('display', 'none');
+            }
+        }, 500);
+
+        // Timeout de sécurité
+        setTimeout(() => {
+            clearInterval(waitForRacks);
+            console.log('⏱️ Timeout atteint');
+        }, 5000);
+
+    }, 3000); // Attendre 3 secondes après le chargement
 });
