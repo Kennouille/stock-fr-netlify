@@ -1189,11 +1189,41 @@ class QuadViewManager {
                 }
             });
 
-            // Mouseup pour terminer le drag
+            // Mouseup pour terminer le drag, resize et rotation
             this.canvasTop.addEventListener('mouseup', (e) => {
+                // Terminer le drag
                 if (this.isDragging) {
                     this.isDragging = false;
                     this.canvasTop.style.cursor = 'default';
+                    console.log('⏹️ Drag terminé');
+                }
+
+                // Terminer le resize
+                else if (this.isResizing && this.selectedRack) {
+                    this.isResizing = false;
+                    this.resizeHandle = null;
+                    this.canvasTop.style.cursor = 'default';
+
+                    // Mettre à jour position_x/y depuis displayX/Y
+                    const scale = 0.8;
+                    this.selectedRack.position_x = this.selectedRack.displayX / scale;
+                    this.selectedRack.position_y = this.selectedRack.displayY / scale;
+
+                    // Redessiner une dernière fois
+                    this.drawTopView(this.currentRacks);
+
+                    console.log('⏹️ Resize terminé:', this.selectedRack.width, 'x', this.selectedRack.depth);
+                }
+
+                // Terminer la rotation
+                else if (this.isRotating && this.selectedRack) {
+                    this.isRotating = false;
+                    this.canvasTop.style.cursor = 'default';
+
+                    // Redessiner une dernière fois
+                    this.drawTopView(this.currentRacks);
+
+                    console.log('⏹️ Rotation terminée:', this.selectedRack.rotation, '°');
                 }
             });
 
