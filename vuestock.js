@@ -1267,6 +1267,10 @@ class QuadViewManager {
 
         // Démarrer avec la vue quad
         this.switchView('quad');
+        this.selectedRack = null;
+        this.selectedLevel = null;
+        this.clearFrontView();
+
     }
 
     resizeCanvases() {
@@ -1312,6 +1316,12 @@ class QuadViewManager {
             document.getElementById('viewMode').textContent = 'Simple';
         }
     }
+
+    clearFrontView() {
+        const ctx = this.canvasFront.getContext('2d');
+        ctx.clearRect(0, 0, this.canvasFront.width, this.canvasFront.height);
+    }
+
 
     // Mettre à jour toutes les vues avec les racks
     updateAllViews(racks) {
