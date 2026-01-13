@@ -1887,7 +1887,7 @@ class QuadViewManager {
             const levelBottom = currentY;
 
             // Augmenter la zone de clic
-            const clickMargin = 5;
+            const clickMargin = 20;
             const expandedTop = levelTop - clickMargin;
             const expandedBottom = levelBottom + clickMargin;
 
