@@ -2010,18 +2010,18 @@ class QuadViewManager {
         const container = document.getElementById('quadLevelSlots');
         if (!container || !level) return;
 
-        // CHANGEMENT ICI : Vérifier s'il y a déjà un tiroir ouvert
+        // Vérifier s'il y a déjà un tiroir ouvert
         const currentDrawer = container.querySelector('.quad-drawer-container');
 
         if (currentDrawer && currentDrawer.classList.contains('open')) {
-            // Fermer le tiroir actuel
+            // Fermer le tiroir actuel avec animation
             currentDrawer.classList.remove('open');
 
-            // Attendre la fermeture avant de créer le nouveau
+            // Attendre LA FIN de l'animation de fermeture (700ms)
             setTimeout(() => {
                 container.innerHTML = '';
                 this.createDrawer(container, level);
-            }, 500);
+            }, 700); // 700ms = durée de l'animation
         } else {
             // Pas de tiroir ouvert, créer directement
             container.innerHTML = '';

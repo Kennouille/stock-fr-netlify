@@ -1311,9 +1311,11 @@ canvas {
     transform: translateY(-100%);
     opacity: 0;
 
+    /* MÊME TEMPS OUVERTURE/FERMETURE */
     transition:
         transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-        opacity 0.5s ease;
+        opacity 0.5s ease,
+        max-height 0.7s ease; /* AJOUTER max-height */
 
     position: relative;
     z-index: 1;
@@ -1325,7 +1327,7 @@ canvas {
 .quad-drawer-container.open .drawer-body {
     transform: translateY(0);
     opacity: 1;
-    max-height: 400px;
+    max-height: 300px; /* MOINS HAUT : 300px au lieu de 400px */
 }
 
 /* Intérieur du tiroir avec texture bois */
