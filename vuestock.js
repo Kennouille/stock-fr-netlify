@@ -1208,37 +1208,44 @@ class QuadViewManager {
         e.preventDefault();
         e.stopPropagation();
 
-        // VÉRIFIER currentRacks
-        if (!this.currentRacks || this.currentRacks.length === 0) {
-            console.log('❌ currentRacks vide ou undefined');
-            console.log('this.currentRacks:', this.currentRacks);
-            return;
-        }
+        if (!this.currentRacks || this.currentRacks.length === 0) return;
 
         const rect = this.canvasTop.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
         console.log(`🎯 Clic à: ${x}, ${y}`);
-        console.log(`📦 ${this.currentRacks.length} racks disponibles`);
 
+        // 1. D'ABORD vérifier si on clique sur une poignette du rack sélectionné
+        if (this.selectedRack && this.selectionHandles) {
+            const handle = this.getClickedHandle(x, y);
+            if (handle) {
+                console.log(`🔄 Poignette ${handle} cliquée`);
+
+                switch(handle) {
+                    case 'nw':
+                    case 'ne':
+                    case 'sw':
+                    case 'se':
+                        this.startResizeFromHandle(this.selectedRack, handle, x, y);
+                        break;
+                    case 'rotate':
+                        this.startRotationFromHandle(this.selectedRack, x, y);
+                        break;
+                }
+                return; // NE PAS CONTINUER
+            }
+        }
+
+        // 2. Sinon, chercher un rack normal
         const clickedRack = this.findRackAtPosition(x, y);
 
         if (clickedRack) {
             console.log(`✅ Rack ${clickedRack.code} sélectionné!`);
-
-            // 1. Mettre à jour la sélection
             this.selectedRack = clickedRack;
-
-            // 2. Redessiner avec sélection visible
             this.drawTopView(this.currentRacks);
-
-            // 3. Afficher la vue de face
             this.drawFrontView(clickedRack);
-
-            // 4. Mettre à jour le panneau Propriétés
             this.updatePropertiesPanel(clickedRack);
-
         } else {
             console.log('❌ Aucun rack à cette position');
             this.selectedRack = null;
@@ -1471,6 +1478,70 @@ class QuadViewManager {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(rack.code, x + w/2, y + d/2);
+
+            // AJOUT : POIGNETTES QUAND RACK SÉLECTIONNÉ
+            if (this.selectedRack && rack.id === this.selectedRack.id) {
+                // Surbrillance
+                ctx.strokeStyle = '#ffeb3b';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x - 2, y - 2, w + 4, d + 4);
+
+                // Poignettes de redimensionnement (coins)
+                const handleSize = 8;
+                const handleColor = '#007bff';
+                const handleBorder = '#ffffff';
+
+                // Coin supérieur gauche
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Coin supérieur droit
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x + w - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Coin inférieur gauche
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Coin inférieur droit
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x + w - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x + w - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Poignette de rotation (au-dessus du rack)
+                const rotateHandleY = y - 25;
+                ctx.beginPath();
+                ctx.arc(x + w/2, rotateHandleY, 10, 0, Math.PI * 2);
+                ctx.fillStyle = handleBorder;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + w/2, rotateHandleY, 8, 0, Math.PI * 2);
+                ctx.fillStyle = handleColor;
+                ctx.fill();
+
+                // Icône de rotation
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⟳', x + w/2, rotateHandleY);
+
+                // Stocker les positions des poignettes pour les interactions
+                this.selectionHandles = {
+                    nw: { x: x - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
+                    ne: { x: x + w - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
+                    sw: { x: x - handleSize/2, y: y + d - handleSize/2, width: handleSize, height: handleSize },
+                    se: { x: x + w - handleSize/2, y: y + d - handleSize/2, width: handleSize, height: handleSize },
+                    rotate: { x: x + w/2 - 10, y: rotateHandleY - 10, width: 20, height: 20 }
+                };
+            }
 
             currentX += w + spacing;
         });
@@ -2172,14 +2243,12 @@ class QuadViewManager {
     getClickedHandle(clickX, clickY) {
         if (!this.selectionHandles || !this.selectedRack) return null;
 
-        const scale = 0.8; // Même échelle que drawTopView
-        const gridSize = 20;
 
         // Recalculer la position du rack avec la même logique que drawTopView
-        const rackX = (this.selectedRack.position_x * scale) % this.canvasTop.width;
-        const rackY = (this.selectedRack.position_y * scale) % this.canvasTop.height;
-        const rackWidth = this.selectedRack.width * gridSize;
-        const rackHeight = this.selectedRack.depth * gridSize;
+        const rackX = this.selectedRack.displayX;
+        const rackY = this.selectedRack.displayY;
+        const rackWidth = this.selectedRack.displayWidth;
+        const rackHeight = this.selectedRack.displayHeight;
 
         // Redéfinir les poignettes avec les bonnes coordonnées
         const handleSize = 8;
