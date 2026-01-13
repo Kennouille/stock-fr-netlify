@@ -1059,15 +1059,38 @@ class QuadViewManager {
                     const x = e.clientX - rect.left;
                     const y = e.clientY - rect.top;
 
-                    const newX = x - this.dragStartX;
-                    const newY = y - this.dragStartY;
+                    // Calculer la nouvelle position avec l'offset du clic
+                    let newDisplayX = x - this.dragStartX;
+                    let newDisplayY = y - this.dragStartY;
 
-                    // Mettre à jour la position
-                    this.selectedRack.displayX = newX;
-                    this.selectedRack.displayY = newY;
+                    // Snap to grid (optionnel)
+                    const gridSize = 20;
+                    newDisplayX = Math.round(newDisplayX / gridSize) * gridSize;
+                    newDisplayY = Math.round(newDisplayY / gridSize) * gridSize;
+
+                    // Limites du canvas
+                    newDisplayX = Math.max(0, Math.min(newDisplayX, this.canvasTop.width - this.selectedRack.displayWidth));
+                    newDisplayY = Math.max(0, Math.min(newDisplayY, this.canvasTop.height - this.selectedRack.displayHeight));
+
+                    // Mettre à jour displayX/Y (pour l'affichage)
+                    this.selectedRack.displayX = newDisplayX;
+                    this.selectedRack.displayY = newDisplayY;
+
+                    // Mettre à jour aussi position_x/y (pour la sauvegarde)
+                    const scale = 0.8;
+                    this.selectedRack.position_x = newDisplayX / scale;
+                    this.selectedRack.position_y = newDisplayY / scale;
+
+                    // Mettre à jour les inputs dans le panneau
+                    const xInput = document.getElementById('quadRackX');
+                    const yInput = document.getElementById('quadRackY');
+                    if (xInput) xInput.value = Math.round(this.selectedRack.position_x / 40);
+                    if (yInput) yInput.value = Math.round(this.selectedRack.position_y / 40);
 
                     // Redessiner
                     this.drawTopView(this.currentRacks);
+
+                    console.log('📍 Nouvelle position:', newDisplayX, newDisplayY);
                 }
             });
 
