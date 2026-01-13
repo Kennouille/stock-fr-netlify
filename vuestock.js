@@ -1286,9 +1286,8 @@ class QuadViewManager {
 
         console.log(`🔍 Recherche à: ${x},${y}`);
 
-        // Simple vérification sur les positions d'affichage
         for (const rack of this.currentRacks) {
-            if (!rack.displayX) continue; // Si pas encore dessiné
+            if (!rack.displayX) continue;
 
             const left = rack.displayX;
             const right = left + rack.displayWidth;
