@@ -2088,18 +2088,97 @@ class QuadViewManager {
         });
 
         let html = '';
+
+        // Calculer la classe de zoom selon le nombre de slots
+        const slotCount = sortedSlots.length;
+        let zoomClass = 'zoom-large';
+        if (slotCount > 14) zoomClass = 'zoom-small';
+        else if (slotCount > 9) zoomClass = 'zoom-medium';
+
         sortedSlots.forEach(slot => {
+            // Un seul article par slot
+            const article = slot.articles && slot.articles.length > 0 ? slot.articles[0] : null;
+            const stockLevel = article ? this.getStockLevel(article) : '';
+
             html += `
-                <div class="quad-slot ${slot.status !== 'free' ? 'occupied' : ''}"
+                <div class="quad-slot ${zoomClass} ${article ? 'occupied ' + stockLevel : ''}"
                      data-slot-id="${slot.id}"
-                     title="Emplacement ${slot.code} - ${slot.status === 'free' ? 'Libre' : 'Occupé'}">
-                    <div class="quad-slot-code">${slot.code}</div>
-                    <div class="quad-slot-status">${slot.status === 'free' ? 'Libre' : 'Occupé'}</div>
+                     title="${this.generateSlotTooltip(slot, article)}">
+                    ${this.generateSlotContent(slot, article, zoomClass)}
                 </div>
             `;
         });
 
         return html;
+    }
+
+    // Tooltip amélioré avec info stock_minimum
+    generateSlotTooltip(slot, article) {
+        const baseText = `Emplacement ${slot.code}`;
+
+        if (!article) {
+            return `${baseText} - Libre`;
+        }
+
+        const stockActuel = article.stock_actuel || 0;
+        const stockMinimum = article.stock_minimum || 0;
+        const articleName = article.nom || 'Article';
+
+        let status = '';
+        if (stockActuel === 0) {
+            status = 'Stock épuisé';
+        } else if (stockActuel <= stockMinimum) {
+            status = `Stock faible (min: ${stockMinimum})`;
+        } else {
+            status = `Stock OK (min: ${stockMinimum})`;
+        }
+
+        return `${baseText} - ${articleName}\n${stockActuel} unités - ${status}`;
+    }
+
+    // Contenu du slot
+    generateSlotContent(slot, article, zoomClass) {
+        if (!article) {
+            // Slot vide
+            return `
+                <div class="quad-slot-code">${slot.code}</div>
+                <div class="quad-slot-status">Libre</div>
+            `;
+        }
+
+        // Slot avec article
+        const imageUrl = article.photo_url || 'https://via.placeholder.com/40x40/cccccc/666666?text=📦';
+        const stock = article.stock_actuel || 0;
+        const articleName = article.nom || 'Article';
+
+        return `
+            <div class="slot-content">
+                <div class="slot-article-image">
+                    <img src="${imageUrl}" alt="${articleName}"
+                         onerror="this.src='https://via.placeholder.com/40x40/cccccc/666666?text=📦'">
+                </div>
+                <div class="slot-article-info">
+                    <div class="slot-code-small">${slot.code}</div>
+                    <div class="article-quantity">${stock}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Fonction pour déterminer le niveau de stock
+    getStockLevel(article) {
+        if (!article) return '';
+
+        const stockActuel = article.stock_actuel || 0;
+        const stockMinimum = article.stock_minimum || 0;
+
+        if (stockActuel === 0) {
+            return 'stock-zero'; // Rouge
+        } else if (stockActuel <= stockMinimum) {
+            return 'stock-low'; // Orange
+        } else {
+            return 'stock-good'; // Vert
+        }
     }
 
     showSlotArticles(slot) {
