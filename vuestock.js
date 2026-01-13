@@ -2064,7 +2064,8 @@ class QuadViewManager {
                 }
             });
 
-            container.appendChild(slotEl);
+            drawer.appendChild(slotEl);
+
         });
 
         // Mettre à jour l'info
