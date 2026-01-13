@@ -1031,26 +1031,13 @@ canvas {
 
 /* Vue de face */
 .view-front {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-/* Contrôles de la vue de face (optionnel) */
-.quad-front-elevation {
-    padding: 10px;
-    background: white;
-    border-top: 1px solid var(--gray-light);
-    font-size: 0.9rem;
-    color: var(--gray);
-}
-
-/* Canvas de la vue de face */
-#canvasFront {
-    flex: 1; /* Prendre toute la place disponible */
-    width: 100%;
-    background: #f8f9fa;
-    cursor: default;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 39px,
+        rgba(0,0,0,0.05) 39px,
+        rgba(0,0,0,0.05) 40px
+    );
 }
 
 /* Vue 3D isométrique */
