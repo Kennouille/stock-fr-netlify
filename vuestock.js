@@ -1222,23 +1222,28 @@ class QuadViewManager {
         if (clickedRack) {
             console.log(`✅ Rack ${clickedRack.code} trouvé!`);
 
-            // 2. Si ce rack EST DÉJÀ sélectionné, vérifier les poignettes
-            if (this.selectedRack && clickedRack.id === this.selectedRack.id) {
-                console.log(`🔄 Rack ${clickedRack.code} déjà sélectionné, vérification des poignettes...`);
+            // 2. Si on a UN rack sélectionné (peu importe lequel), vérifier les poignettes
+            //    AVANT de sélectionner un nouveau rack
+            if (this.selectedRack) {
+                console.log(`🔄 Un rack (${this.selectedRack.code}) est déjà sélectionné, vérification des poignettes...`);
                 const handle = this.getClickedHandle(x, y);
                 if (handle) {
                     console.log(`🔄 Poignette ${handle} cliquée`);
 
-                    switch(handle) {
-                        case 'nw':
-                        case 'ne':
-                        case 'sw':
-                        case 'se':
-                            this.startResizeFromHandle(this.selectedRack, handle, x, y);
-                            return; // NE PAS CONTINUER
-                        case 'rotate':
-                            this.startRotationFromHandle(this.selectedRack, x, y);
-                            return; // NE PAS CONTINUER
+                    // Vérifier si la poignette appartient au rack sélectionné
+                    // (on peut cliquer sur une poignette même si on clique sur un autre rack)
+                    if (this.selectedRack.id === clickedRack.id) {
+                        switch(handle) {
+                            case 'nw':
+                            case 'ne':
+                            case 'sw':
+                            case 'se':
+                                this.startResizeFromHandle(this.selectedRack, handle, x, y);
+                                return; // NE PAS CONTINUER
+                            case 'rotate':
+                                this.startRotationFromHandle(this.selectedRack, x, y);
+                                return; // NE PAS CONTINUER
+                        }
                     }
                 }
             }
