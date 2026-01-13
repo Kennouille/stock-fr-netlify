@@ -1438,7 +1438,7 @@ class QuadViewManager {
 
         // RÉGLAGE POUR UNE SEULE LIGNE
         const startX = 50;
-        const startY = 50;
+        const startY = height / 2 - 40; // milieu de l'écran
         const spacing = 40; // Réduit encore
         let currentX = startX;
 
