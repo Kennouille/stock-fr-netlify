@@ -1878,40 +1878,38 @@ class QuadViewManager {
         const startY = this.canvasFront.height - 20;
 
         const levelHeight = 40;
-        let currentY = startY - 10 + levelHeight;
+        let currentY = startY - 10;
+
+        console.log(`DEBUG: startY=${startY}, clickY=${clickY}`);
 
         for (const level of this.selectedRack.levels.sort((a, b) => a.display_order - b.display_order)) {
             const levelTop = currentY - levelHeight;
             const levelBottom = currentY;
 
-            // Augmenter la zone de clic : toute la hauteur du niveau
-            // plus une marge de 5px en haut et en bas pour faciliter le clic
+            // Augmenter la zone de clic
             const clickMargin = 5;
             const expandedTop = levelTop - clickMargin;
             const expandedBottom = levelBottom + clickMargin;
 
+            console.log(`Étage ${level.code}: currentY=${currentY}, levelTop=${levelTop}, levelBottom=${levelBottom}, clickY=${clickY}, dansZone=${clickY >= expandedTop && clickY <= expandedBottom}`);
+
             if (clickY >= expandedTop && clickY <= expandedBottom &&
                 clickX >= startX && clickX <= startX + rackWidth) {
 
-                // Étage cliqué !
-                console.log('Étage cliqué:', level.code);
-
-                // 1. Mettre à jour la sélection
+                console.log('✅ Étage cliqué:', level.code);
                 this.selectedLevel = level;
 
-                // 2. Mettre à jour le panneau "Détail étage" de la vue Quad
                 const levelInfo = document.getElementById('quadLevelInfo');
                 if (levelInfo) {
                     levelInfo.textContent = `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
                 }
 
-                // 3. Afficher les emplacements dans le panneau existant
                 this.updateLevelView(level);
-
                 break;
             }
 
-            currentY += levelHeight;  // Aller vers le HAUT
+            currentY -= levelHeight;
+            console.log(`Passage au niveau suivant, nouveau currentY=${currentY}`);
         }
     }
 
