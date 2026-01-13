@@ -1534,8 +1534,6 @@ class QuadViewManager {
         const startX = 50;
         const startY = height / 2 - 40; // milieu de l'écran
         const spacing = 40; // Réduit encore
-        let currentX = startX;
-
         racks.forEach((rack) => {
             const w = rack.width * 20;
             const d = rack.depth * 20;
@@ -1546,8 +1544,18 @@ class QuadViewManager {
             if (this.isDragging && this.selectedRack && rack.id === this.selectedRack.id) {
                 x = rack.displayX;
                 y = rack.displayY;
-            } else {
-                // Sinon, calculer normalement
+            }
+            // Si le rack a déjà une position sauvegardée (position_x/y), l'utiliser
+            else if (rack.position_x !== undefined && rack.position_y !== undefined) {
+                const scale = 0.8;
+                x = rack.position_x * scale;
+                y = rack.position_y * scale;
+
+                rack.displayX = x;
+                rack.displayY = y;
+            }
+            // Sinon, calculer automatiquement (nouveaux racks uniquement)
+            else {
                 if (currentX + w > width - 50) {
                     currentX = Math.max(startX, width - 50 - w);
                 }
@@ -1557,6 +1565,8 @@ class QuadViewManager {
 
                 rack.displayX = x;
                 rack.displayY = y;
+
+                currentX += w + spacing;
             }
 
             rack.displayWidth = w;
@@ -2110,6 +2120,13 @@ class QuadViewManager {
                 });
 
                 console.log('Rack sauvegardé:', result);
+
+                // IMPORTANT : Mettre à jour position_x/y depuis displayX/Y
+                // pour que la prochaine fois qu'on redessine, on garde la position
+                const scale = 0.8;
+                rack.position_x = rack.displayX / scale;
+                rack.position_y = rack.displayY / scale;
+
                 this.showQuadNotification('Étagère sauvegardée', 'success');
 
             } catch (error) {
