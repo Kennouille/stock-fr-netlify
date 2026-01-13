@@ -1853,6 +1853,38 @@ class QuadViewManager {
         document.getElementById('quadSelectedRack').textContent = `Rack ${rack.code} - ${rack.levels?.length || 0} étages`;
     }
 
+    handleFrontViewClick(e) {
+        if (!this.selectedRack || !this.selectedRack.levels || !this.selectedRack.levels.length) return;
+
+        const rect = this.canvasFront.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        // Calculer quel étage a été cliqué
+        const rackWidth = this.selectedRack.width * 30;
+        const startX = (this.canvasFront.width - rackWidth) / 2;
+        const startY = this.canvasFront.height - 20;
+
+        const levelHeight = 40;
+        let currentY = startY - 10;
+
+        for (const level of this.selectedRack.levels.sort((a, b) => a.display_order - b.display_order)) {
+            const levelTop = currentY - levelHeight;
+            const levelBottom = currentY;
+
+            if (clickY >= levelTop && clickY <= levelBottom &&
+                clickX >= startX && clickX <= startX + rackWidth) {
+
+                // Étage cliqué !
+                console.log('Étage cliqué:', level.code);
+                // Ici, plus tard, nous ouvrirons le tiroir
+                break;
+            }
+
+            currentY -= levelHeight;
+        }
+    }
+
     draw3DView(racks) {
         if (!this.ctx3D || !this.canvas3D) return;
 
@@ -2561,6 +2593,13 @@ class QuadViewManager {
         // Ajouter les événements
         this.canvasTop.addEventListener('mousemove', this.handleRotationDrag.bind(this));
         this.canvasTop.addEventListener('mouseup', this.stopRotationDrag.bind(this));
+
+        // Événement clic sur le canvas de face
+        if (this.canvasFront) {
+            this.canvasFront.addEventListener('click', (e) => {
+                this.handleFrontViewClick(e);
+            });
+        }
 
         this.showQuadNotification('Rotation activée. Glissez pour tourner le rack.', 'info');
     }
