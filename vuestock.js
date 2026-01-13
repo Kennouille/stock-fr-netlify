@@ -1295,7 +1295,13 @@ class QuadViewManager {
         if (clickedRack) {
             console.log(`✅ Rack ${clickedRack.code} trouvé!`);
 
-            // Sélectionner le rack
+            // Si c'est le même rack déjà sélectionné, ne rien faire (le mousedown gérera le drag)
+            if (this.selectedRack && this.selectedRack.id === clickedRack.id) {
+                console.log(`📌 Rack ${clickedRack.code} déjà sélectionné`);
+                return; // Ne pas redessiner
+            }
+
+            // Sélectionner le nouveau rack
             console.log(`📌 Sélection du rack ${clickedRack.code}`);
             this.selectedRack = clickedRack;
             this.drawTopView(this.currentRacks);
@@ -1304,10 +1310,6 @@ class QuadViewManager {
 
         } else {
             console.log('❌ Aucun rack à cette position');
-            // Ne pas désélectionner automatiquement - laisser l'utilisateur cliquer ailleurs
-            // this.selectedRack = null;
-            // this.drawTopView(this.currentRacks);
-            // this.clearPropertiesPanel();
         }
     }
 
