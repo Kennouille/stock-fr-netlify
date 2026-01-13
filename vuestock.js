@@ -2091,9 +2091,10 @@ class QuadViewManager {
         if (slotCount > 14) zoomClass = 'zoom-small';
         else if (slotCount > 9) zoomClass = 'zoom-medium';
 
+        // Dans generateSlotElements() - MODIFIEZ :
         sortedSlots.forEach(slot => {
-            // UN SEUL ARTICLE par slot
-            const article = slot.w_articles && slot.w_articles.length > 0 ? slot.w_articles[0] : null;
+            // CORRECTION : c'est 'articles' pas 'w_articles'
+            const article = slot.articles && slot.articles.length > 0 ? slot.articles[0] : null;
             const stockLevel = article ? this.getStockLevel(article) : '';
 
             html += `
