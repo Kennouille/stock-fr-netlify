@@ -359,6 +359,69 @@
         </div>
     </div>
 
+    <!-- Modal Édition Stock -->
+    <div class="modal-overlay" id="stockModalOverlay">
+        <div class="modal" id="stockModal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Éditer le stock</h3>
+                <button class="modal-close" id="closeStockModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="stock-edit-container">
+                    <div class="article-photo-large">
+                        <img id="modalArticlePhoto" src="" alt="Article">
+                    </div>
+
+                    <div class="article-info">
+                        <h4 id="modalArticleName"></h4>
+                        <div class="article-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Emplacement:</span>
+                                <span id="modalSlotCode" class="detail-value"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Code-barres:</span>
+                                <span id="modalBarcode" class="detail-value"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Stock actuel:</span>
+                                <span id="modalCurrentStock" class="detail-value"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Stock minimum:</span>
+                                <span id="modalMinStock" class="detail-value"></span>
+                            </div>
+                        </div>
+
+                        <div class="stock-edit-controls">
+                            <label>Nouvelle quantité:</label>
+                            <div class="quantity-controls">
+                                <button class="btn btn-sm" id="btnDecrease">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number"
+                                       id="modalStockInput"
+                                       min="0"
+                                       step="1"
+                                       class="form-control">
+                                <button class="btn btn-sm" id="btnIncrease">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">Entrez la quantité réelle après inventaire</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelStockModal">Annuler</button>
+                <button class="btn btn-primary" id="saveStockModal">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
 
 
 

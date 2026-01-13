@@ -623,6 +623,92 @@ exports.handler = async (event) => {
         }
     }
 
+
+    if (action === 'update-stock') {
+        try {
+            const body = JSON.parse(event.body || '{}');
+            const { article_id, new_quantity } = body;
+
+            console.log('📊 Mise à jour stock:', { article_id, new_quantity });
+
+            if (!article_id || new_quantity === undefined) {
+                return {
+                    statusCode: 400,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    body: JSON.stringify({
+                        success: false,
+                        error: 'article_id et new_quantity sont requis'
+                    })
+                };
+            }
+
+            const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+
+            // Mettre à jour la table w_articles
+            const response = await fetch(`${supabaseUrl}/rest/v1/w_articles?id=eq.${article_id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': supabaseKey,
+                    'Authorization': `Bearer ${supabaseKey}`,
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({
+                    stock_actuel: new_quantity,
+                    updated_at: new Date().toISOString(),
+                    date_maj_stock: new Date().toISOString()
+                })
+            });
+
+            const text = await response.text();
+            console.log(`📥 Supabase PATCH response:`, response.status, text);
+
+            if (!response.ok) {
+                throw new Error(`Supabase error: ${response.status} - ${text}`);
+            }
+
+            let result;
+            try {
+                result = text ? JSON.parse(text) : null;
+            } catch (e) {
+                console.error('❌ Error parsing JSON:', e);
+                result = { raw: text };
+            }
+
+            const responseData = Array.isArray(result) && result.length > 0 ? result[0] : result;
+
+            return {
+                statusCode: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    success: true,
+                    message: 'Stock mis à jour avec succès',
+                    data: responseData
+                })
+            };
+
+        } catch (error) {
+            console.error('❌ Error in update-stock:', error);
+            return {
+                statusCode: 500,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    success: false,
+                    error: error.message
+                })
+            };
+        }
+    }
+
   // Si aucune action reconnue
   return {
     statusCode: 200,

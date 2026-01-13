@@ -988,6 +988,8 @@ class QuadViewManager {
         this.selectedRack = null;
         this.selectedLevel = null;
 
+        this.initStockModal();
+
 
         // Canvases
         this.canvasTop = document.getElementById('canvasTop');
@@ -2068,6 +2070,8 @@ class QuadViewManager {
             `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
     }
 
+    // Dans QuadViewManager - Modifiez generateSlotElements() :
+
     generateSlotElements(slots) {
         if (!slots || slots.length === 0) {
             return `
@@ -2078,28 +2082,27 @@ class QuadViewManager {
             `;
         }
 
-        // Trier les emplacements par code
         const sortedSlots = [...slots].sort((a, b) => {
             return parseInt(a.code) - parseInt(b.code);
         });
 
         let html = '';
 
-        // Calculer la classe de zoom selon le nombre de slots
         const slotCount = sortedSlots.length;
         let zoomClass = 'zoom-large';
         if (slotCount > 14) zoomClass = 'zoom-small';
         else if (slotCount > 9) zoomClass = 'zoom-medium';
 
-        // Dans generateSlotElements() - MODIFIEZ :
         sortedSlots.forEach(slot => {
-            // CORRECTION : c'est 'articles' pas 'w_articles'
             const article = slot.articles && slot.articles.length > 0 ? slot.articles[0] : null;
             const stockLevel = article ? this.getStockLevel(article) : '';
 
             html += `
                 <div class="quad-slot ${zoomClass} ${article ? 'occupied ' + stockLevel : ''}"
                      data-slot-id="${slot.id}"
+                     data-slot-code="${slot.code}"
+                     data-full-code="${slot.full_code}"
+                     data-article-id="${article ? article.id : ''}"
                      title="${this.generateSlotTooltip(slot, article)}">
                     ${this.generateSlotContent(slot, article, zoomClass)}
                 </div>
@@ -2107,6 +2110,246 @@ class QuadViewManager {
         });
 
         return html;
+    }
+
+    // Après avoir créé les slots, ajoutez les événements
+    setTimeout(() => {
+        this.bindSlotEvents();
+    }, 300);
+
+    // NOUVELLE MÉTHODE - Événements sur les slots
+    bindSlotEvents() {
+        const slots = document.querySelectorAll('.quad-slot.occupied');
+
+        slots.forEach(slot => {
+            slot.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openStockModal(slot);
+            });
+        });
+    }
+
+    // NOUVELLE MÉTHODE - Ouvrir le modal
+    openStockModal(slotElement) {
+        const slotId = slotElement.dataset.slotId;
+        const slotCode = slotElement.dataset.slotCode;
+        const fullCode = slotElement.dataset.fullCode;
+        const articleId = slotElement.dataset.articleId;
+
+        if (!articleId) return;
+
+        // Trouver l'article dans les données
+        const article = this.findArticleById(articleId);
+        if (!article) return;
+
+        // Remplir le modal
+        document.getElementById('modalArticlePhoto').src =
+            article.photo || article.photo_url || 'https://via.placeholder.com/150x150/cccccc/666666?text=📦';
+
+        document.getElementById('modalArticleName').textContent =
+            article.name || article.nom || 'Article';
+
+        document.getElementById('modalSlotCode').textContent = fullCode;
+        document.getElementById('modalBarcode').textContent =
+            article.barcode || article.code_barre || 'N/A';
+
+        const currentStock = article.quantity || article.stock_actuel || 0;
+        document.getElementById('modalCurrentStock').textContent = currentStock;
+        document.getElementById('modalCurrentStock').className =
+            'detail-value ' + this.getStockLevel(article);
+
+        const minStock = article.stock_minimum || 0;
+        document.getElementById('modalMinStock').textContent = minStock;
+
+        // Définir la valeur de l'input
+        const stockInput = document.getElementById('modalStockInput');
+        stockInput.value = currentStock;
+        stockInput.dataset.articleId = articleId;
+        stockInput.dataset.currentStock = currentStock;
+
+        // Ouvrir le modal
+        document.getElementById('stockModalOverlay').classList.add('active');
+    }
+
+    // NOUVELLE MÉTHODE - Trouver un article par ID
+    findArticleById(articleId) {
+        // Parcourir tous les racks, niveaux et slots
+        if (!window.vueStock || !window.vueStock.racks) return null;
+
+        for (const rack of window.vueStock.racks) {
+            if (!rack.levels) continue;
+
+            for (const level of rack.levels) {
+                if (!level.slots) continue;
+
+                for (const slot of level.slots) {
+                    if (!slot.articles || slot.articles.length === 0) continue;
+
+                    const article = slot.articles[0];
+                    if (article.id === articleId) {
+                        return article;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // Initialiser les événements du modal (à appeler une fois au chargement)
+    initStockModal() {
+        const overlay = document.getElementById('stockModalOverlay');
+        const modal = document.getElementById('stockModal');
+
+        // Fermer le modal
+        document.getElementById('closeStockModal').addEventListener('click', () => {
+            overlay.classList.remove('active');
+        });
+
+        document.getElementById('cancelStockModal').addEventListener('click', () => {
+            overlay.classList.remove('active');
+        });
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.remove('active');
+            }
+        });
+
+        // Boutons +/-
+        document.getElementById('btnIncrease').addEventListener('click', () => {
+            const input = document.getElementById('modalStockInput');
+            input.value = parseInt(input.value || 0) + 1;
+        });
+
+        document.getElementById('btnDecrease').addEventListener('click', () => {
+            const input = document.getElementById('modalStockInput');
+            const current = parseInt(input.value || 0);
+            if (current > 0) {
+                input.value = current - 1;
+            }
+        });
+
+        // Sauvegarder
+        document.getElementById('saveStockModal').addEventListener('click', async () => {
+            await this.saveStockChanges();
+        });
+    }
+
+    // NOUVELLE MÉTHODE - Sauvegarder les changements
+    async saveStockChanges() {
+        const input = document.getElementById('modalStockInput');
+        const articleId = input.dataset.articleId;
+        const newQuantity = parseInt(input.value || 0);
+        const oldQuantity = parseInt(input.dataset.currentStock || 0);
+
+        if (newQuantity === oldQuantity) {
+            alert('Aucun changement détecté');
+            return;
+        }
+
+        if (newQuantity < 0) {
+            alert('La quantité ne peut pas être négative');
+            return;
+        }
+
+        try {
+            // Désactiver le bouton pendant la sauvegarde
+            const saveBtn = document.getElementById('saveStockModal');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+            saveBtn.disabled = true;
+
+            // Appeler l'API pour mettre à jour
+            if (window.vueStock && window.vueStock.api) {
+                const result = await window.vueStock.api.updateStock({
+                    article_id: articleId,
+                    new_quantity: newQuantity
+                });
+
+                if (result.success) {
+                    // Mettre à jour localement
+                    this.updateLocalStock(articleId, newQuantity);
+
+                    // Mettre à jour l'affichage
+                    this.refreshSlotDisplay(articleId, newQuantity);
+
+                    // Fermer le modal
+                    document.getElementById('stockModalOverlay').classList.remove('active');
+
+                    // Notification
+                    if (window.vueStock.showNotification) {
+                        window.vueStock.showNotification(`Stock mis à jour: ${oldQuantity} → ${newQuantity}`);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Erreur mise à jour stock:', error);
+            alert('Erreur: ' + error.message);
+        } finally {
+            const saveBtn = document.getElementById('saveStockModal');
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    }
+
+    // NOUVELLE MÉTHODE - Mettre à jour localement
+    updateLocalStock(articleId, newQuantity) {
+        if (!window.vueStock || !window.vueStock.racks) return;
+
+        for (const rack of window.vueStock.racks) {
+            if (!rack.levels) continue;
+
+            for (const level of rack.levels) {
+                if (!level.slots) continue;
+
+                for (const slot of level.slots) {
+                    if (!slot.articles || slot.articles.length === 0) continue;
+
+                    const article = slot.articles[0];
+                    if (article.id === articleId) {
+                        article.quantity = newQuantity;
+                        article.stock_actuel = newQuantity;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // NOUVELLE MÉTHODE - Rafraîchir l'affichage
+    refreshSlotDisplay(articleId, newQuantity) {
+        // Trouver le slot correspondant
+        const slotElement = document.querySelector(`[data-article-id="${articleId}"]`);
+        if (!slotElement) return;
+
+        // Mettre à jour la quantité affichée
+        const quantityElement = slotElement.querySelector('.article-quantity');
+        if (quantityElement) {
+            quantityElement.textContent = newQuantity;
+        }
+
+        // Mettre à jour la couleur selon le nouveau stock
+        const article = this.findArticleById(articleId);
+        if (article) {
+            const newStockLevel = this.getStockLevel(article);
+
+            // Retirer les anciennes classes
+            slotElement.classList.remove('stock-good', 'stock-low', 'stock-zero');
+
+            // Ajouter la nouvelle classe
+            if (newStockLevel) {
+                slotElement.classList.add(newStockLevel);
+            }
+
+            // Mettre à jour le tooltip
+            const slotData = {
+                code: slotElement.dataset.slotCode,
+                full_code: slotElement.dataset.fullCode,
+                articles: [article]
+            };
+            slotElement.title = this.generateSlotTooltip(slotData, article);
+        }
     }
 
     getStockLevel(article) {
