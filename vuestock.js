@@ -1869,10 +1869,12 @@ class QuadViewManager {
 
         const rackWidth = this.selectedRack.width * 30;
         const startX = (this.canvasFront.width - rackWidth) / 2;
-        const startY = this.canvasFront.height - 20;
+        const baseHeight = 10; // hauteur de la base du rack (DOIT matcher le draw)
+        const startY = this.canvasFront.height - 20 - baseHeight;
 
         const levelHeight = 40;
-        let currentY = startY - 10;
+        let currentY = startY;
+
 
         // 🔑 MÊME ORDRE QUE LE DESSIN
         const levels = [...this.selectedRack.levels]
