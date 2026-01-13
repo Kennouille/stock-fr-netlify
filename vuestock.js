@@ -1344,9 +1344,8 @@ class QuadViewManager {
             // 2. Vue de face (si un rack est sélectionné)
             if (this.selectedRack) {
                 this.drawFrontView(this.selectedRack);
-            } else if (racks.length > 0) {
-                this.drawFrontView(racks[0]); // Premier rack par défaut
             }
+
 
             // 3. Vue 3D isométrique
             this.draw3DView(racks);
