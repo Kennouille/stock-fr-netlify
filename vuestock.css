@@ -1327,7 +1327,7 @@ canvas {
 .quad-drawer-container.open .drawer-body {
     transform: translateY(0);
     opacity: 1;
-    max-height: 300px; /* MOINS HAUT : 300px au lieu de 400px */
+    max-height: 250px; /* MOINS HAUT : 300px au lieu de 400px */
 }
 
 /* Intérieur du tiroir avec texture bois */
