@@ -2243,62 +2243,71 @@ class QuadViewManager {
     }
 
     // Vérifier quelle poignette a été cliquée
+    // Dans la méthode getClickedHandle de la classe QuadViewManager
     getClickedHandle(clickX, clickY) {
-        if (!this.selectionHandles || !this.selectedRack) return null;
+        if (!this.selectedRack) return null;
 
+        const rack = this.selectedRack;
 
-        // Recalculer la position du rack avec la même logique que drawTopView
-        const rackX = this.selectedRack.displayX;
-        const rackY = this.selectedRack.displayY;
-        const rackWidth = this.selectedRack.displayWidth;
-        const rackHeight = this.selectedRack.displayHeight;
+        // Recalculer la position du rack (comme dans drawTopView)
+        const rackX = rack.displayX;
+        const rackY = rack.displayY;
+        const rackWidth = rack.displayWidth;
+        const rackHeight = rack.displayHeight;
 
-        // Redéfinir les poignettes avec les bonnes coordonnées
+        // Taille des poignettes
         const handleSize = 8;
-        const rotateHandleY = rackY - 25;
 
+        // Calculer les positions des poignettes
         const handles = {
-            nw: {
+            nw: { // Coin supérieur gauche
                 x: rackX - handleSize/2,
                 y: rackY - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
-            ne: {
+            ne: { // Coin supérieur droit
                 x: rackX + rackWidth - handleSize/2,
                 y: rackY - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
-            sw: {
+            sw: { // Coin inférieur gauche
                 x: rackX - handleSize/2,
                 y: rackY + rackHeight - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
-            se: {
+            se: { // Coin inférieur droit
                 x: rackX + rackWidth - handleSize/2,
                 y: rackY + rackHeight - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
-            rotate: {
+            rotate: { // Poignette de rotation
                 x: rackX + rackWidth/2 - 10,
-                y: rotateHandleY - 10,
+                y: rackY - 25 - 10, // 25px au-dessus du rack, moins la moitié de la taille
                 width: 20,
                 height: 20
             }
         };
 
+        console.log('🔍 Vérification des poignettes aux coordonnées:', clickX, clickY);
+
         // Vérifier chaque poignette
         for (const [handleName, handleRect] of Object.entries(handles)) {
-            if (clickX >= handleRect.x && clickX <= handleRect.x + handleRect.width &&
-                clickY >= handleRect.y && clickY <= handleRect.y + handleRect.height) {
-                console.log('Poignette détectée:', handleName, 'à', clickX, clickY);
+            const inX = clickX >= handleRect.x && clickX <= handleRect.x + handleRect.width;
+            const inY = clickY >= handleRect.y && clickY <= handleRect.y + handleRect.height;
+
+            console.log(`  ${handleName}: ${handleRect.x}-${handleRect.x + handleRect.width}, ${handleRect.y}-${handleRect.y + handleRect.height} -> ${inX && inY ? 'HIT!' : 'miss'}`);
+
+            if (inX && inY) {
+                console.log('✅ Poignette détectée:', handleName);
                 return handleName;
             }
         }
 
+        console.log('❌ Aucune poignette détectée');
         return null;
     }
 
