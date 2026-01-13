@@ -1110,6 +1110,8 @@ class QuadViewManager {
     updateAllViews(racks) {
         console.log('QuadView.updateAllViews appelé avec', racks ? racks.length : 0, 'racks');
 
+        this.currentRacks = racks;
+
         if (!racks || !racks.length) {
             debugLog('quadView', 'Aucune donnée, dessin état vide');
             this.drawEmptyState();
@@ -1202,30 +1204,33 @@ class QuadViewManager {
     // Méthode pour gérer les clics sur le canvas
     handleCanvasClick(e) {
         console.log('=== handleCanvasClick ===');
-        console.log('currentRacks:', this.currentRacks?.length);
 
         e.preventDefault();
         e.stopPropagation();
 
-        if (!this.currentRacks || this.currentRacks.length === 0) return;
+        // VÉRIFIER currentRacks
+        if (!this.currentRacks || this.currentRacks.length === 0) {
+            console.log('❌ currentRacks vide ou undefined');
+            console.log('this.currentRacks:', this.currentRacks);
+            return;
+        }
 
         const rect = this.canvasTop.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        console.log('Clic à:', x, y);
+        console.log(`🎯 Clic à: ${x}, ${y}`);
+        console.log(`📦 ${this.currentRacks.length} racks disponibles`);
 
-        // Chercher le rack cliqué
         const clickedRack = this.findRackAtPosition(x, y);
-        console.log('clickedRack:', clickedRack?.code);
 
         if (clickedRack) {
-            console.log('EXÉCUTION DU CODE POUR', clickedRack.code);
+            console.log(`✅ Rack ${clickedRack.code} sélectionné!`);
 
             // 1. Mettre à jour la sélection
             this.selectedRack = clickedRack;
 
-            // 2. Redessiner avec sélection
+            // 2. Redessiner avec sélection visible
             this.drawTopView(this.currentRacks);
 
             // 3. Afficher la vue de face
@@ -1235,7 +1240,7 @@ class QuadViewManager {
             this.updatePropertiesPanel(clickedRack);
 
         } else {
-            console.log('Aucun rack cliqué');
+            console.log('❌ Aucun rack à cette position');
             this.selectedRack = null;
             this.drawTopView(this.currentRacks);
         }
