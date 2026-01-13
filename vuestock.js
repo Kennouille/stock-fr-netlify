@@ -1861,57 +1861,47 @@ class QuadViewManager {
     }
 
     handleFrontViewClick(e) {
-        console.log('🎯 CLIC DÉTECTÉ sur canvas Front !', e.clientX, e.clientY);
-
-        if (!this.selectedRack || !this.selectedRack.levels || !this.selectedRack.levels.length) {
-            console.log('❌ Pas de rack sélectionné ou pas d\'étages');
-            return;
-        }
+        if (!this.selectedRack || !this.selectedRack.levels?.length) return;
 
         const rect = this.canvasFront.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
         const clickY = e.clientY - rect.top;
 
-        // Calculer quel étage a été cliqué
         const rackWidth = this.selectedRack.width * 30;
         const startX = (this.canvasFront.width - rackWidth) / 2;
         const startY = this.canvasFront.height - 20;
 
         const levelHeight = 40;
-        let currentY = startY - 10 - levelHeight;
+        let currentY = startY - 10;
 
-        console.log(`DEBUG: startY=${startY}, clickY=${clickY}`);
+        // 🔑 MÊME ORDRE QUE LE DESSIN
+        const levels = [...this.selectedRack.levels]
+            .sort((a, b) => a.display_order - b.display_order);
 
-        for (const level of this.selectedRack.levels.sort((a, b) => b.display_order - a.display_order)) {
+        for (const level of levels) {
             const levelTop = currentY - levelHeight;
             const levelBottom = currentY;
 
-            // Augmenter la zone de clic
-            const clickMargin = 20;
-            const expandedTop = levelTop - clickMargin;
-            const expandedBottom = levelBottom + clickMargin;
-
-            console.log(`Étage ${level.code}: currentY=${currentY}, levelTop=${levelTop}, levelBottom=${levelBottom}, clickY=${clickY}, dansZone=${clickY >= expandedTop && clickY <= expandedBottom}`);
-
-            if (clickY >= expandedTop && clickY <= expandedBottom &&
-                clickX >= startX && clickX <= startX + rackWidth) {
-
+            if (
+                clickX >= startX &&
+                clickX <= startX + rackWidth &&
+                clickY >= levelTop &&
+                clickY <= levelBottom
+            ) {
                 console.log('✅ Étage cliqué:', level.code);
                 this.selectedLevel = level;
 
-                const levelInfo = document.getElementById('quadLevelInfo');
-                if (levelInfo) {
-                    levelInfo.textContent = `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
-                }
+                document.getElementById('quadLevelInfo').textContent =
+                    `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
 
                 this.updateLevelView(level);
-                break;
+                return;
             }
 
             currentY -= levelHeight;
-            console.log(`Passage au niveau suivant, nouveau currentY=${currentY}`);
         }
     }
+
 
     draw3DView(racks) {
         if (!this.ctx3D || !this.canvas3D) return;
