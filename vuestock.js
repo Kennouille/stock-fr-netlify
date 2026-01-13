@@ -1201,82 +1201,41 @@ class QuadViewManager {
 
     // Méthode pour gérer les clics sur le canvas
     handleCanvasClick(e) {
-        e.preventDefault(); // Empêche le comportement par défaut
-        e.stopPropagation(); // Empêche la propagation
+        console.log('handleCanvasClick appelé');
 
-        console.log('handleCanvasClick appelé, detail:', e.detail, 'type:', e.type);
+        e.preventDefault();
+        e.stopPropagation();
 
         if (!this.currentRacks || this.currentRacks.length === 0) return;
 
         const rect = this.canvasTop.getBoundingClientRect();
-        const scale = 0.8;
-        const x = (e.clientX - rect.left) / scale * (40/20); // Ajuster pour l'échelle
-        const y = (e.clientY - rect.top) / scale * (40/20);
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
 
-        console.log('Clic corrigé à:', x, y);
+        console.log('Clic à:', x, y);
 
-        // D'abord vérifier si on clique sur une poignette du rack sélectionné
-        if (this.selectedRack) {
-            const handle = this.getClickedHandle(x, y);
-
-            if (handle) {
-                console.log('Poignette cliquée:', handle);
-
-                switch(handle) {
-                    case 'nw':
-                    case 'ne':
-                    case 'sw':
-                    case 'se':
-                        this.startResizeFromHandle(this.selectedRack, handle, x, y);
-                        break;
-                    case 'rotate':
-                        this.startRotationFromHandle(this.selectedRack, x, y);
-                        break;
-                }
-                return; // Ne pas continuer si on a cliqué sur une poignette
-            }
-        }
-
-        // Chercher quel rack a été cliqué
+        // Chercher le rack cliqué
         const clickedRack = this.findRackAtPosition(x, y);
 
         if (clickedRack) {
             console.log('Rack cliqué:', clickedRack.code);
 
-            // Empêcher la sélection multiple rapide
-            if (this._lastClickTime && Date.now() - this._lastClickTime < 300) {
-                console.log('Clic trop rapide, ignoré');
-                return;
-            }
-            this._lastClickTime = Date.now();
-
-            // Si c'est le même rack, ignorer
-            if (this.selectedRack && this.selectedRack.id === clickedRack.id) {
-                console.log('Même rack déjà sélectionné');
-                return;
-            }
-
             // 1. Mettre à jour la sélection
             this.selectedRack = clickedRack;
 
-            // 2. Redessiner avec la sélection mise en évidence
+            // 2. Redessiner avec sélection
             this.drawTopView(this.currentRacks);
 
-            // 3. Mettre à jour la vue de face
+            // 3. Afficher la vue de face
             this.drawFrontView(clickedRack);
 
-            // 4. Mettre à jour les infos
-            this.updateInfoPanel(this.currentRacks);
-
-            // 5. Mettre à jour le panneau Propriétés à gauche
+            // 4. Mettre à jour le panneau Propriétés
             this.updatePropertiesPanel(clickedRack);
 
         } else {
-            console.log('Aucun rack à cette position');
-            // Désélectionner si on clique ailleurs
+            console.log('Aucun rack cliqué');
             this.selectedRack = null;
-            this.clearPropertiesPanel();
-            this.drawTopView(this.currentRacks); // Redessiner sans sélection
+            this.drawTopView(this.currentRacks);
         }
     }
 
@@ -1467,47 +1426,48 @@ class QuadViewManager {
         // Grille
         this.drawGrid(ctx, width, height, 20);
 
-        // POSITIONNEMENT SIMPLE : un rack tous les 150px
-        let currentX = 50;
+        // RÉGLAGES
+        const startX = 50;
         const startY = 50;
-        const spacing = 150;
+        const spacing = 60; // Réduit de 150 à 60
+        let currentX = startX;
+        let currentY = startY;
 
         racks.forEach((rack, index) => {
-            // Position fixe, ordonnée
-            const x = currentX;
-            const y = startY;
             const w = rack.width * 20;
             const d = rack.depth * 20;
 
-            // SAUVEGARDER la position d'affichage pour les clics
+            // SI TROP À DROITE, ALLER À LA LIGNE
+            if (currentX + w > width - 50) {
+                currentX = startX;
+                currentY += d + 80; // Nouvelle ligne
+            }
+
+            const x = currentX;
+            const y = currentY;
+
+            // SAUVEGARDER pour les clics
             rack.displayX = x;
             rack.displayY = y;
             rack.displayWidth = w;
             rack.displayHeight = d;
 
-            // Rectangle
+            // Dessiner le rack (TON CODE ORIGINAL)
             ctx.fillStyle = rack.color || '#4a90e2';
             ctx.fillRect(x, y, w, d);
 
-            // Bordure
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, w, d);
 
-            // Code
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(rack.code, x + w/2, y + d/2);
 
+            // Avancer
             currentX += w + spacing;
-
-            // Si dépasse la largeur, passer à la ligne
-            if (currentX + w > width - 50) {
-                currentX = 50;
-                // Pas besoin de changer y pour le moment
-            }
         });
 
         document.getElementById('quadRackCount').textContent = `${racks.length} racks`;
