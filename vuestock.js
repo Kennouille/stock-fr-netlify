@@ -1202,7 +1202,6 @@ class QuadViewManager {
     }
 
     // Méthode pour gérer les clics sur le canvas
-    // Dans la méthode handleCanvasClick de la classe QuadViewManager
     handleCanvasClick(e) {
         console.log('=== handleCanvasClick ===');
 
@@ -1221,10 +1220,11 @@ class QuadViewManager {
         const clickedRack = this.findRackAtPosition(x, y);
 
         if (clickedRack) {
-            console.log(`✅ Rack ${clickedRack.code} sélectionné!`);
+            console.log(`✅ Rack ${clickedRack.code} trouvé!`);
 
-            // 2. SI un rack est sélectionné, ALORS vérifier les poignettes
+            // 2. Si ce rack EST DÉJÀ sélectionné, vérifier les poignettes
             if (this.selectedRack && clickedRack.id === this.selectedRack.id) {
+                console.log(`🔄 Rack ${clickedRack.code} déjà sélectionné, vérification des poignettes...`);
                 const handle = this.getClickedHandle(x, y);
                 if (handle) {
                     console.log(`🔄 Poignette ${handle} cliquée`);
@@ -1235,15 +1235,16 @@ class QuadViewManager {
                         case 'sw':
                         case 'se':
                             this.startResizeFromHandle(this.selectedRack, handle, x, y);
-                            return;
+                            return; // NE PAS CONTINUER
                         case 'rotate':
                             this.startRotationFromHandle(this.selectedRack, x, y);
-                            return;
+                            return; // NE PAS CONTINUER
                     }
                 }
             }
 
-            // Si pas de poignette cliquée, sélectionner le rack normalement
+            // 3. Si pas de poignette cliquée, sélectionner le rack normalement
+            console.log(`📌 Sélection du rack ${clickedRack.code}`);
             this.selectedRack = clickedRack;
             this.drawTopView(this.currentRacks);
             this.drawFrontView(clickedRack);
@@ -1253,6 +1254,7 @@ class QuadViewManager {
             console.log('❌ Aucun rack à cette position');
             this.selectedRack = null;
             this.drawTopView(this.currentRacks);
+            this.clearPropertiesPanel();
         }
     }
 
