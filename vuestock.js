@@ -1878,7 +1878,7 @@ class QuadViewManager {
         const startY = this.canvasFront.height - 20;
 
         const levelHeight = 40;
-        let currentY = startY - 10;
+        let currentY = startY - 10 - levelHeight;
 
         console.log(`DEBUG: startY=${startY}, clickY=${clickY}`);
 
