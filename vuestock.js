@@ -1,3 +1,19 @@
+// ===== CONFIGURATION DEBUG =====
+const DEBUG = {
+    enabled: true,
+    quadView: false,    // Mettre à false pour désactiver logs QuadView
+    canvas: false,      // Mettre à false pour désactiver logs Canvas
+    api: true,          // Garder true pour les erreurs API
+    clics: false        // Mettre à false pour désactiver logs clics
+};
+
+// Fonction helper pour les logs
+function debugLog(category, ...args) {
+    if (DEBUG.enabled && DEBUG[category]) {
+        console.log(`[${category}]`, ...args);
+    }
+}
+
 // ===== DÉBOGAGE =====
 console.log('vuestock.js chargé');
 
@@ -283,7 +299,7 @@ class CanvasManager {
 
     // === MÉTHODES POUR LES ÉTAGÈRES ===
     addRackToCanvas(rack) {
-        console.log('🟢 [CanvasManager] addRackToCanvas called for rack:', rack.id, rack.code);
+        debugLog('canvas', addRackToCanvas called for rack:', rack.id, rack.code);
 
         // Vérifier si l'étagère existe déjà
         const existingElement = this.overlay.querySelector(`[data-rack-id="${rack.id}"]`);
@@ -1095,12 +1111,12 @@ class QuadViewManager {
         console.log('QuadView.updateAllViews appelé avec', racks ? racks.length : 0, 'racks');
 
         if (!racks || !racks.length) {
-            console.log('QuadView: Aucune donnée, dessin état vide');
+            debugLog('quadView', 'Aucune donnée, dessin état vide');
             this.drawEmptyState();
             return;
         }
 
-        console.log('QuadView: Dessin de', racks.length, 'racks');
+        debugLog('quadView', 'Dessin de', racks.length, 'racks');
 
         try {
             // 1. Vue du dessus
@@ -1124,7 +1140,7 @@ class QuadViewManager {
             // Mettre à jour les infos
             this.updateInfoPanel(racks);
 
-            console.log('QuadView: Toutes les vues mises à jour');
+            debugLog('quadView', 'Toutes les vues mises à jour');
         } catch (error) {
             console.error('Erreur dans updateAllViews:', error);
         }
@@ -1268,22 +1284,33 @@ class QuadViewManager {
     findRackAtPosition(x, y) {
         if (!this.currentRacks) return null;
 
-        const scale = 0.8; // Même échelle que dans drawTopView
-        const gridSize = 20; // Même taille que dans drawTopView
+        // FACTEUR DE CORRECTION - ESSAYE CES VALEURS
+        const scaleFactorX = 2.0;  // À ajuster
+        const scaleFactorY = 2.0;  // À ajuster
+
+        const adjustedX = x * scaleFactorX;
+        const adjustedY = y * scaleFactorY;
+
+        // DEBUG LIMITÉ
+        if (Math.random() < 0.1) { // Seulement 10% des logs
+            console.log(`🔍 Clic: ${x},${y} -> Ajusté: ${adjustedX},${adjustedY}`);
+        }
 
         for (const rack of this.currentRacks) {
-            const rackX = (rack.position_x * 0.8) / 40 * 20;
-            const rackY = (rack.position_y * 0.8) / 40 * 20;
-            const rackWidth = rack.width * gridSize;
-            const rackHeight = rack.depth * gridSize;
+            // Les racks sont stockés en pixels (gridSize = 40)
+            const rackX = rack.position_x * 0.5;  // Réduire l'échelle
+            const rackY = rack.position_y * 0.5;
+            const rackWidth = rack.width * 40;
+            const rackHeight = rack.depth * 40;
 
-            console.log(`Vérification rack ${rack.code}: x=${rackX}, y=${rackY}, w=${rackWidth}, h=${rackHeight}`);
-            console.log(`Clic à: x=${x}, y=${y}`);
+            // DEBUG LIMITÉ
+            if (Math.random() < 0.05) {
+                console.log(`  Rack ${rack.code}: pos=${rackX},${rackY} size=${rackWidth}x${rackHeight}`);
+            }
 
-            // Vérifier si le clic est dans les limites du rack
-            if (x >= rackX && x <= rackX + rackWidth &&
-                y >= rackY && y <= rackY + rackHeight) {
-                console.log(`Rack ${rack.code} trouvé!`);
+            if (adjustedX >= rackX && adjustedX <= rackX + rackWidth &&
+                adjustedY >= rackY && adjustedY <= rackY + rackHeight) {
+                console.log(`✅ Rack ${rack.code} trouvé!`);
                 return rack;
             }
         }
@@ -2530,11 +2557,12 @@ class QuadViewManager {
 // vuestock.js - Version 1.0 - Structure de base
 class VueStock {
     constructor() {
-        if (window.vueStockInitialized) {
-            console.log('⚠️ VueStock déjà initialisé, arrêt...');
-            return;
+        // EMPÊCHER L'INITIALISATION MULTIPLE
+        if (window.vueStockInstance) {
+            console.warn('⚠️ VueStock déjà initialisé, retour de l\'instance existante');
+            return window.vueStockInstance;
         }
-        window.vueStockInitialized = true;
+        window.vueStockInstance = this;
 
         this.currentView = 'plan'; // plan, rack, level
         this.selectedRack = null;
@@ -2583,7 +2611,7 @@ class VueStock {
 
                 // Passer les racks chargés
                 if (this.racks && this.racks.length > 0) {
-                    console.log('QuadView: Passage de', this.racks.length, 'racks');
+                    debugLog('quadView', 'Passage de', this.racks.length, 'racks');
                     this.quadViewManager.updateAllViews(this.racks);
                 }
 
@@ -3874,4 +3902,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialiser VueStock
     window.vueStock = new VueStock();
+});
+
+// ===== PATCH IMMÉDIAT =====
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== PATCH APPLIQUÉ ===');
+
+    // 1. Réduire les logs
+    const oldLog = console.log;
+    console.log = function(...args) {
+        const msg = args[0] || '';
+        // Filtrer les logs ennuyeux
+        if (msg.includes('Vérification rack') ||
+            msg.includes('Clic à:') ||
+            (msg.includes('QuadView:') && !msg.includes('ERROR'))) {
+            return; // Ne pas afficher
+        }
+        oldLog.apply(console, args);
+    };
+
+    // 2. Corriger findRackAtPosition après chargement
+    setTimeout(() => {
+        if (window.vueStock?.quadViewManager?.findRackAtPosition) {
+            const original = window.vueStock.quadViewManager.findRackAtPosition;
+
+            window.vueStock.quadViewManager.findRackAtPosition = function(x, y) {
+                // Conversion simple
+                const gridSize = 40;
+                const scale = 0.5;
+
+                const gridX = Math.round((x / scale) / gridSize);
+                const gridY = Math.round((y / scale) / gridSize);
+
+                const pixelX = gridX * gridSize;
+                const pixelY = gridY * gridSize;
+
+                console.log(`🎯 Recherche: clic(${x},${y}) -> grid(${gridX},${gridY}) -> pixel(${pixelX},${pixelY})`);
+
+                for (const rack of (this.currentRacks || [])) {
+                    const rackLeft = rack.position_x;
+                    const rackRight = rackLeft + (rack.width * gridSize);
+                    const rackTop = rack.position_y;
+                    const rackBottom = rackTop + (rack.depth * gridSize);
+
+                    console.log(`  Rack ${rack.code}: ${rackLeft}-${rackRight}, ${rackTop}-${rackBottom}`);
+
+                    if (pixelX >= rackLeft && pixelX <= rackRight &&
+                        pixelY >= rackTop && pixelY <= rackBottom) {
+                        console.log(`🎯 RACK TROUVÉ: ${rack.code}`);
+                        return rack;
+                    }
+                }
+
+                console.log('🎯 Aucun rack trouvé');
+                return null;
+            };
+
+            console.log('✅ findRackAtPosition corrigé');
+        }
+    }, 1000);
+
+    // 3. Forcer un seul événement DOMContentLoaded
+    if (window.vueStock) {
+        console.warn('VueStock déjà chargé, nettoyage...');
+        // Supprimer les anciens écouteurs
+        document.removeEventListener('DOMContentLoaded', arguments.callee);
+    }
 });
