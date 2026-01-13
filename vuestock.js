@@ -1284,37 +1284,26 @@ class QuadViewManager {
     findRackAtPosition(x, y) {
         if (!this.currentRacks) return null;
 
-        // FACTEUR DE CORRECTION - ESSAYE CES VALEURS
-        const scaleFactorX = 2.0;  // À ajuster
-        const scaleFactorY = 2.0;  // À ajuster
+        console.log(`🔍 Recherche à: ${x},${y}`);
 
-        const adjustedX = x * scaleFactorX;
-        const adjustedY = y * scaleFactorY;
-
-        // DEBUG LIMITÉ
-        if (Math.random() < 0.1) { // Seulement 10% des logs
-            console.log(`🔍 Clic: ${x},${y} -> Ajusté: ${adjustedX},${adjustedY}`);
-        }
-
+        // Simple vérification sur les positions d'affichage
         for (const rack of this.currentRacks) {
-            // Les racks sont stockés en pixels (gridSize = 40)
-            const rackX = rack.position_x * 0.5;  // Réduire l'échelle
-            const rackY = rack.position_y * 0.5;
-            const rackWidth = rack.width * 40;
-            const rackHeight = rack.depth * 40;
+            if (!rack.displayX) continue; // Si pas encore dessiné
 
-            // DEBUG LIMITÉ
-            if (Math.random() < 0.05) {
-                console.log(`  Rack ${rack.code}: pos=${rackX},${rackY} size=${rackWidth}x${rackHeight}`);
-            }
+            const left = rack.displayX;
+            const right = left + rack.displayWidth;
+            const top = rack.displayY;
+            const bottom = top + rack.displayHeight;
 
-            if (adjustedX >= rackX && adjustedX <= rackX + rackWidth &&
-                adjustedY >= rackY && adjustedY <= rackY + rackHeight) {
-                console.log(`✅ Rack ${rack.code} trouvé!`);
+            console.log(`  Rack ${rack.code}: ${left}-${right}, ${top}-${bottom}`);
+
+            if (x >= left && x <= right && y >= top && y <= bottom) {
+                console.log(`✅ ${rack.code} trouvé!`);
                 return rack;
             }
         }
 
+        console.log('❌ Aucun rack');
         return null;
     }
 
@@ -1469,9 +1458,6 @@ class QuadViewManager {
     drawTopView(racks) {
         if (!this.ctxTop || !this.canvasTop) return;
 
-        // Stocker les racks pour les interactions
-        this.currentRacks = racks;
-
         const ctx = this.ctxTop;
         const width = this.canvasTop.width;
         const height = this.canvasTop.height;
@@ -1479,18 +1465,28 @@ class QuadViewManager {
         // Effacer
         ctx.clearRect(0, 0, width, height);
 
-        // Grille légère
+        // Grille
         this.drawGrid(ctx, width, height, 20);
 
-        // Dessiner chaque rack
-        racks.forEach(rack => {
-            const scale = 0.8; // Réduire pour la vue quad
-            const x = (rack.position_x * 0.8) / 40 * 20;
-            const y = (rack.position_y * 0.8) / 40 * 20;
-            const w = rack.width * 20; // 20px par case
+        // POSITIONNEMENT SIMPLE : un rack tous les 150px
+        let currentX = 50;
+        const startY = 50;
+        const spacing = 150;
+
+        racks.forEach((rack, index) => {
+            // Position fixe, ordonnée
+            const x = currentX;
+            const y = startY;
+            const w = rack.width * 20;
             const d = rack.depth * 20;
 
-            // Rectangle du rack
+            // SAUVEGARDER la position d'affichage pour les clics
+            rack.displayX = x;
+            rack.displayY = y;
+            rack.displayWidth = w;
+            rack.displayHeight = d;
+
+            // Rectangle
             ctx.fillStyle = rack.color || '#4a90e2';
             ctx.fillRect(x, y, w, d);
 
@@ -1499,87 +1495,22 @@ class QuadViewManager {
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, w, d);
 
-            // Code du rack
+            // Code
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(rack.code, x + w/2, y + d/2);
 
-            // Si sélectionné, mettre en surbrillance et ajouter les poignettes
-            if (this.selectedRack && rack.id === this.selectedRack.id) {
-                // Surbrillance
-                ctx.strokeStyle = '#ffeb3b';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(x - 2, y - 2, w + 4, d + 4);
+            currentX += w + spacing;
 
-                // Poignettes de redimensionnement (coins)
-                const handleSize = 8;
-                const handleColor = '#007bff';
-                const handleBorder = '#ffffff';
-
-                // Coin supérieur gauche
-                ctx.fillStyle = handleBorder;
-                ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
-                ctx.fillStyle = handleColor;
-                ctx.fillRect(x - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
-
-                // Coin supérieur droit
-                ctx.fillStyle = handleBorder;
-                ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
-                ctx.fillStyle = handleColor;
-                ctx.fillRect(x + w - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
-
-                // Coin inférieur gauche
-                ctx.fillStyle = handleBorder;
-                ctx.fillRect(x - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
-                ctx.fillStyle = handleColor;
-                ctx.fillRect(x - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
-
-                // Coin inférieur droit
-                ctx.fillStyle = handleBorder;
-                ctx.fillRect(x + w - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
-                ctx.fillStyle = handleColor;
-                ctx.fillRect(x + w - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
-
-                // Poignette de rotation (au-dessus du rack)
-                const rotateHandleY = y - 25;
-                ctx.beginPath();
-                ctx.arc(x + w/2, rotateHandleY, 10, 0, Math.PI * 2);
-                ctx.fillStyle = handleBorder;
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(x + w/2, rotateHandleY, 8, 0, Math.PI * 2);
-                ctx.fillStyle = handleColor;
-                ctx.fill();
-
-                // Icône de rotation
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 10px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('⟳', x + w/2, rotateHandleY);
-
-                // Indicateur de dimensions
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(x + w/2 - 30, y + d + 5, 60, 20);
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 11px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(`${rack.width} × ${rack.depth}`, x + w/2, y + d + 16);
-
-                // Stocker les positions des poignettes pour les interactions
-                this.selectionHandles = {
-                    nw: { x: x - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
-                    ne: { x: x + w - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
-                    sw: { x: x - handleSize/2, y: y + d - handleSize/2, width: handleSize, height: handleSize },
-                    se: { x: x + w - handleSize/2, y: y + d - handleSize/2, width: handleSize, height: handleSize },
-                    rotate: { x: x + w/2 - 10, y: rotateHandleY - 10, width: 20, height: 20 }
-                };
+            // Si dépasse la largeur, passer à la ligne
+            if (currentX + w > width - 50) {
+                currentX = 50;
+                // Pas besoin de changer y pour le moment
             }
         });
 
-        // Mettre à jour le compteur
         document.getElementById('quadRackCount').textContent = `${racks.length} racks`;
     }
 
@@ -3968,4 +3899,102 @@ document.addEventListener('DOMContentLoaded', function() {
         // Supprimer les anciens écouteurs
         document.removeEventListener('DOMContentLoaded', arguments.callee);
     }
+});
+
+// ===== PATCH URGENCE - SAUVE QUI PEUT =====
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (!window.vueStock?.quadViewManager) return;
+
+        const qvm = window.vueStock.quadViewManager;
+
+        // Remplacer drawTopView par version simple
+        qvm.drawTopView = function(racks) {
+            if (!this.ctxTop || !this.canvasTop) return;
+
+            const ctx = this.ctxTop;
+            const width = this.canvasTop.width;
+            const height = this.canvasTop.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Grille basique
+            const gridSize = 20;
+            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+            for (let x = 0; x < width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            // Positions fixes et ordonnées
+            const startX = 50;
+            let currentX = startX;
+            const startY = 50;
+            const spacing = 30;
+
+            racks.forEach((rack, index) => {
+                const x = currentX;
+                const y = startY + (Math.floor(index / 3) * 100); // 3 par ligne
+                const w = Math.max(rack.width * 15, 60); // Minimum 60px
+                const h = Math.max(rack.depth * 15, 40);
+
+                // Stocker pour les clics
+                rack.quadX = x;
+                rack.quadY = y;
+                rack.quadW = w;
+                rack.quadH = h;
+
+                // Dessiner
+                ctx.fillStyle = rack.color || '#4a90e2';
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, w, h);
+
+                // Texte
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(rack.code, x + w/2, y + h/2);
+
+                // Avancer horizontalement
+                currentX += w + spacing;
+                if (currentX + w > width - 50) {
+                    currentX = startX;
+                }
+            });
+        };
+
+        // Remplacer findRackAtPosition
+        qvm.findRackAtPosition = function(x, y) {
+            if (!this.currentRacks) return null;
+
+            for (const rack of this.currentRacks) {
+                if (!rack.quadX) continue;
+
+                if (x >= rack.quadX && x <= rack.quadX + rack.quadW &&
+                    y >= rack.quadY && y <= rack.quadY + rack.quadH) {
+                    console.log(`🎯 ${rack.code} cliqué à ${x},${y}`);
+                    return rack;
+                }
+            }
+            return null;
+        };
+
+        // Redessiner
+        if (window.vueStock.racks.length > 0) {
+            qvm.drawTopView(window.vueStock.racks);
+        }
+
+        console.log('✅ Patch appliqué - racks positionnés proprement');
+    }, 2000);
 });
