@@ -1534,6 +1534,8 @@ class QuadViewManager {
         const startX = 50;
         const startY = height / 2 - 40; // milieu de l'écran
         const spacing = 40; // Réduit encore
+        let currentX = startX; // ← AJOUTER CETTE LIGNE ICI
+
         racks.forEach((rack) => {
             const w = rack.width * 20;
             const d = rack.depth * 20;
