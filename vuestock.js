@@ -2006,6 +2006,8 @@ class QuadViewManager {
         ctx.fill();
     }
 
+    // Dans QuadViewManager
+
     updateLevelView(level) {
         const container = document.getElementById('quadLevelSlots');
         if (!container || !level) return;
@@ -2021,7 +2023,7 @@ class QuadViewManager {
             setTimeout(() => {
                 container.innerHTML = '';
                 this.createDrawer(container, level);
-            }, 700); // 700ms = durée de l'animation
+            }, 700);
         } else {
             // Pas de tiroir ouvert, créer directement
             container.innerHTML = '';
@@ -2034,12 +2036,12 @@ class QuadViewManager {
         const drawerContainer = document.createElement('div');
         drawerContainer.className = 'quad-drawer-container';
 
-        // Ajouter la face avant avec la poignée
+        // Titre sur une ligne
         drawerContainer.innerHTML = `
             <div class="drawer-front">
-                <div class="drawer-handle" title="Cliquez pour ouvrir/fermer"></div>
                 <div>Étage ${level.code}</div>
                 <div class="level-label">${level.slots?.length || 0} emplacements</div>
+                <div class="drawer-handle" title="Cliquez pour ouvrir/fermer"></div>
             </div>
             <div class="drawer-body">
                 <div class="drawer-interior">
@@ -2055,19 +2057,13 @@ class QuadViewManager {
             drawerContainer.classList.add('open');
         }, 100);
 
-        // Ajouter l'événement sur la poignée pour basculer
+        // Événement sur la poignée
         const handle = drawerContainer.querySelector('.drawer-handle');
         handle.addEventListener('click', (e) => {
             e.stopPropagation();
             drawerContainer.classList.toggle('open');
-
-            // Changer le curseur
-            handle.style.cursor = drawerContainer.classList.contains('open')
-                ? 'pointer'
-                : 'grab';
         });
 
-        // Mettre à jour l'info
         document.getElementById('quadLevelInfo').textContent =
             `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
     }
@@ -2096,8 +2092,8 @@ class QuadViewManager {
         else if (slotCount > 9) zoomClass = 'zoom-medium';
 
         sortedSlots.forEach(slot => {
-            // Un seul article par slot
-            const article = slot.articles && slot.articles.length > 0 ? slot.articles[0] : null;
+            // UN SEUL ARTICLE par slot
+            const article = slot.w_articles && slot.w_articles.length > 0 ? slot.w_articles[0] : null;
             const stockLevel = article ? this.getStockLevel(article) : '';
 
             html += `
@@ -2112,7 +2108,21 @@ class QuadViewManager {
         return html;
     }
 
-    // Tooltip amélioré avec info stock_minimum
+    getStockLevel(article) {
+        if (!article) return '';
+
+        const stockActuel = article.stock_actuel || 0;
+        const stockMinimum = article.stock_minimum || 0;
+
+        if (stockActuel === 0) {
+            return 'stock-zero';
+        } else if (stockActuel <= stockMinimum) {
+            return 'stock-low';
+        } else {
+            return 'stock-good';
+        }
+    }
+
     generateSlotTooltip(slot, article) {
         const baseText = `Emplacement ${slot.code}`;
 
@@ -2136,7 +2146,6 @@ class QuadViewManager {
         return `${baseText} - ${articleName}\n${stockActuel} unités - ${status}`;
     }
 
-    // Contenu du slot
     generateSlotContent(slot, article, zoomClass) {
         if (!article) {
             // Slot vide
