@@ -1030,21 +1030,25 @@ class QuadViewManager {
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
-                // Vérifier si on clique sur un rack sélectionné
-                if (this.selectedRack) {
-                    const rack = this.selectedRack;
-                    const rackX = rack.displayX;
-                    const rackY = rack.displayY;
-                    const rackW = rack.displayWidth;
-                    const rackH = rack.displayHeight;
+                // Vérifier si on clique sur un rack (sélectionné ou pas)
+                const clickedRack = this.findRackAtPosition(x, y);
 
-                    if (x >= rackX && x <= rackX + rackW && y >= rackY && y <= rackY + rackH) {
-                        // On clique sur le rack sélectionné → démarrer le drag
-                        this.isDragging = true;
-                        this.dragStartX = x - rackX;
-                        this.dragStartY = y - rackY;
-                        this.canvasTop.style.cursor = 'grabbing';
+                if (clickedRack && this.selectedRack && clickedRack.id === this.selectedRack.id) {
+                    // On clique sur le rack déjà sélectionné
+
+                    // D'abord vérifier si c'est sur une poignée
+                    const handle = this.getClickedHandle(x, y);
+                    if (handle) {
+                        // C'est une poignée, on ne démarre pas le drag
+                        return;
                     }
+
+                    // Sinon, démarrer le drag du rack
+                    this.isDragging = true;
+                    this.dragStartX = x - clickedRack.displayX;
+                    this.dragStartY = y - clickedRack.displayY;
+                    this.canvasTop.style.cursor = 'grabbing';
+                    console.log('🚀 Drag démarré pour', clickedRack.code);
                 }
             });
 
@@ -1961,20 +1965,9 @@ class QuadViewManager {
                 <button class="btn btn-sm btn-primary btn-block" id="quadSaveRack">
                     <i class="fas fa-save"></i> Sauvegarder
                 </button>
-                <div class="action-buttons">
-                    <button class="btn btn-sm btn-success" id="quadMoveRack" title="Déplacer">
-                        <i class="fas fa-arrows-alt"></i>
-                    </button>
-                    <button class="btn btn-sm btn-warning" id="quadResizeRack" title="Redimensionner">
-                        <i class="fas fa-expand-alt"></i>
-                    </button>
-                    <button class="btn btn-sm btn-info" id="quadRotateRack" title="Tourner">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" id="quadDeleteRack" title="Supprimer">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+                <button class="btn btn-sm btn-danger btn-block" id="quadDeleteRack">
+                    <i class="fas fa-trash"></i> Supprimer
+                </button>
                 <button class="btn btn-sm btn-secondary btn-block" id="quadViewRackDetails">
                     <i class="fas fa-eye"></i> Voir les étages
                 </button>
@@ -2021,30 +2014,6 @@ class QuadViewManager {
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
                 this.saveRackChanges(rack);
-            });
-        }
-
-        // Bouton Déplacer
-        const moveBtn = document.getElementById('quadMoveRack');
-        if (moveBtn) {
-            moveBtn.addEventListener('click', () => {
-                this.startMoveMode(rack);
-            });
-        }
-
-        // Bouton Redimensionner
-        const resizeBtn = document.getElementById('quadResizeRack');
-        if (resizeBtn) {
-            resizeBtn.addEventListener('click', () => {
-                this.startResizeMode(rack);
-            });
-        }
-
-        // Bouton Tourner
-        const rotateBtn = document.getElementById('quadRotateRack');
-        if (rotateBtn) {
-            rotateBtn.addEventListener('click', () => {
-                this.startRotationMode(rack);
             });
         }
 
@@ -2117,103 +2086,6 @@ class QuadViewManager {
         } else {
             this.showQuadNotification('Modifications locales sauvegardées', 'info');
         }
-    }
-
-    // Démarrer le mode déplacement
-    startMoveMode(rack) {
-        console.log('Mode déplacement pour le rack:', rack.code);
-        this.currentMode = 'move';
-        this.currentRack = rack;
-
-        // Changer le curseur
-        if (this.canvasTop) {
-            this.canvasTop.style.cursor = 'move';
-        }
-
-        // Ajouter l'événement de déplacement
-        this.canvasTop.addEventListener('mousemove', this.handleMove.bind(this));
-        this.canvasTop.addEventListener('mouseup', this.stopMove.bind(this));
-
-        this.showQuadNotification('Mode déplacement activé. Cliquez-glissez pour déplacer.', 'info');
-    }
-
-    // Gérer le déplacement
-    handleMove(e) {
-        if (this.currentMode !== 'move' || !this.currentRack) return;
-
-        const rect = this.canvasTop.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        // Convertir en coordonnées grille (snap to grid)
-        const gridSize = 20; // Taille d'une case en pixels
-        const scale = 0.8; // Même échelle que drawTopView
-
-        const gridX = Math.round(x / gridSize) * gridSize;
-        const gridY = Math.round(y / gridSize) * gridSize;
-
-        // Mettre à jour la position
-        this.currentRack.position_x = (gridX / scale);
-        this.currentRack.position_y = (gridY / scale);
-
-        // Mettre à jour les champs dans le panneau
-        const xInput = document.getElementById('quadRackX');
-        const yInput = document.getElementById('quadRackY');
-        if (xInput) xInput.value = Math.round(this.currentRack.position_x / 40);
-        if (yInput) yInput.value = Math.round(this.currentRack.position_y / 40);
-
-        // Redessiner
-        this.drawTopView(this.currentRacks);
-    }
-
-    // Arrêter le déplacement
-    stopMove() {
-        if (this.currentMode === 'move') {
-            this.currentMode = null;
-            this.currentRack = null;
-
-            if (this.canvasTop) {
-                this.canvasTop.style.cursor = 'pointer';
-                this.canvasTop.removeEventListener('mousemove', this.handleMove);
-                this.canvasTop.removeEventListener('mouseup', this.stopMove);
-            }
-
-            this.showQuadNotification('Mode déplacement désactivé', 'info');
-        }
-    }
-
-    // Démarrer le mode redimensionnement
-    startResizeMode(rack) {
-        console.log('Mode redimensionnement pour le rack:', rack.code);
-        this.currentMode = 'resize';
-        this.currentRack = rack;
-
-        if (this.canvasTop) {
-            this.canvasTop.style.cursor = 'nwse-resize';
-        }
-
-        this.showQuadNotification('Mode redimensionnement. Utilisez la souris pour redimensionner.', 'info');
-        // À implémenter selon vos besoins
-    }
-
-    // Démarrer le mode rotation
-    startRotationMode(rack) {
-        console.log('Mode rotation pour le rack:', rack.code);
-
-        // Augmenter la rotation de 15 degrés
-        rack.rotation = (rack.rotation || 0) + 15;
-        if (rack.rotation >= 360) rack.rotation = 0;
-
-        // Mettre à jour le slider
-        const rotationSlider = document.getElementById('quadRackRotation');
-        const rotationValue = document.querySelector('.rotation-value');
-        if (rotationSlider) rotationSlider.value = rack.rotation;
-        if (rotationValue) rotationValue.textContent = rack.rotation + '°';
-
-        // Redessiner
-        this.drawTopView(this.currentRacks);
-
-        this.showQuadNotification(`Rotation: ${rack.rotation}°`, 'info');
     }
 
     // Supprimer un rack
