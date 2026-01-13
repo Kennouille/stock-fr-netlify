@@ -2006,14 +2006,30 @@ class QuadViewManager {
         ctx.fill();
     }
 
-    // Dans QuadViewManager.updateLevelView()
     updateLevelView(level) {
         const container = document.getElementById('quadLevelSlots');
         if (!container || !level) return;
 
-        // Nettoyer le container
-        container.innerHTML = '';
+        // CHANGEMENT ICI : Vérifier s'il y a déjà un tiroir ouvert
+        const currentDrawer = container.querySelector('.quad-drawer-container');
 
+        if (currentDrawer && currentDrawer.classList.contains('open')) {
+            // Fermer le tiroir actuel
+            currentDrawer.classList.remove('open');
+
+            // Attendre la fermeture avant de créer le nouveau
+            setTimeout(() => {
+                container.innerHTML = '';
+                this.createDrawer(container, level);
+            }, 500);
+        } else {
+            // Pas de tiroir ouvert, créer directement
+            container.innerHTML = '';
+            this.createDrawer(container, level);
+        }
+    }
+
+    createDrawer(container, level) {
         // Créer la structure du tiroir
         const drawerContainer = document.createElement('div');
         drawerContainer.className = 'quad-drawer-container';
