@@ -1297,9 +1297,6 @@ class QuadViewManager {
         });
     }
 
-    // Appeler resizeCanvases() au redimensionnement
-    window.addEventListener('resize', () => this.resizeCanvases());
-
     switchView(viewType) {
         this.currentView = viewType;
 
