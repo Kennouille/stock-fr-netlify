@@ -1024,17 +1024,65 @@ class QuadViewManager {
 
         // AJOUT IMPORTANT : Événement clic sur le canvas haut-gauche
         if (this.canvasTop) {
-            this.canvasTop.addEventListener('click', (e) => {
-                this.handleCanvasClick(e);
+            // Mousedown pour démarrer le drag
+            this.canvasTop.addEventListener('mousedown', (e) => {
+                const rect = this.canvasTop.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // Vérifier si on clique sur un rack sélectionné
+                if (this.selectedRack) {
+                    const rack = this.selectedRack;
+                    const rackX = rack.displayX;
+                    const rackY = rack.displayY;
+                    const rackW = rack.displayWidth;
+                    const rackH = rack.displayHeight;
+
+                    if (x >= rackX && x <= rackX + rackW && y >= rackY && y <= rackY + rackH) {
+                        // On clique sur le rack sélectionné → démarrer le drag
+                        this.isDragging = true;
+                        this.dragStartX = x - rackX;
+                        this.dragStartY = y - rackY;
+                        this.canvasTop.style.cursor = 'grabbing';
+                    }
+                }
             });
 
-            // Pour le survol aussi
+            // Mousemove pour le drag
             this.canvasTop.addEventListener('mousemove', (e) => {
-                this.handleCanvasHover(e);
+                if (this.isDragging && this.selectedRack) {
+                    const rect = this.canvasTop.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    const newX = x - this.dragStartX;
+                    const newY = y - this.dragStartY;
+
+                    // Mettre à jour la position
+                    this.selectedRack.displayX = newX;
+                    this.selectedRack.displayY = newY;
+
+                    // Redessiner
+                    this.drawTopView(this.currentRacks);
+                }
             });
 
-            // Changer le curseur pour indiquer l'interactivité
-            this.canvasTop.style.cursor = 'pointer';
+            // Mouseup pour terminer le drag
+            this.canvasTop.addEventListener('mouseup', (e) => {
+                if (this.isDragging) {
+                    this.isDragging = false;
+                    this.canvasTop.style.cursor = 'default';
+                }
+            });
+
+            // Click pour sélectionner
+            this.canvasTop.addEventListener('click', (e) => {
+                if (!this.isDragging) {
+                    this.handleCanvasClick(e);
+                }
+            });
+
+            this.canvasTop.style.cursor = 'default';
         }
 
         // Basculement de vue
