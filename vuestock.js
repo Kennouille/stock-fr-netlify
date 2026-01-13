@@ -2253,10 +2253,12 @@ class QuadViewManager {
             return;
         }
 
+        // SAUVEGARDER originalText AVANT try
+        const saveBtn = document.getElementById('saveStockModal');
+        const originalText = saveBtn.innerHTML; // <-- DÉPLACÉ ICI
+
         try {
             // Désactiver le bouton pendant la sauvegarde
-            const saveBtn = document.getElementById('saveStockModal');
-            const originalText = saveBtn.innerHTML;
             saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
             saveBtn.disabled = true;
 
@@ -2287,8 +2289,8 @@ class QuadViewManager {
             console.error('Erreur mise à jour stock:', error);
             alert('Erreur: ' + error.message);
         } finally {
-            const saveBtn = document.getElementById('saveStockModal');
-            saveBtn.innerHTML = originalText;
+            // Réactiver le bouton - originalText est maintenant accessible
+            saveBtn.innerHTML = originalText; // <-- CORRECT
             saveBtn.disabled = false;
         }
     }
