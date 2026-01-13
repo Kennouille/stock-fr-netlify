@@ -2006,71 +2006,84 @@ class QuadViewManager {
         ctx.fill();
     }
 
+    // Dans QuadViewManager.updateLevelView()
     updateLevelView(level) {
         const container = document.getElementById('quadLevelSlots');
         if (!container || !level) return;
 
-        // Reset complet avec animation tiroir
-        container.innerHTML = `
-            <div class="quad-level-drawer"></div>
+        // Nettoyer le container
+        container.innerHTML = '';
+
+        // Créer la structure du tiroir
+        const drawerContainer = document.createElement('div');
+        drawerContainer.className = 'quad-drawer-container';
+
+        // Ajouter la face avant avec la poignée
+        drawerContainer.innerHTML = `
+            <div class="drawer-front">
+                <div class="drawer-handle" title="Cliquez pour ouvrir/fermer"></div>
+                <div>Étage ${level.code}</div>
+                <div class="level-label">${level.slots?.length || 0} emplacements</div>
+            </div>
+            <div class="drawer-body">
+                <div class="drawer-interior">
+                    ${this.generateSlotElements(level.slots)}
+                </div>
+            </div>
         `;
 
-        const drawer = container.querySelector('.quad-level-drawer');
+        container.appendChild(drawerContainer);
 
-        // ouverture du tiroir (frame suivante)
-        requestAnimationFrame(() => {
-            drawer.classList.add('open');
-        });
+        // Ouvrir le tiroir après un court délai
+        setTimeout(() => {
+            drawerContainer.classList.add('open');
+        }, 100);
 
-        if (!level.slots || level.slots.length === 0) {
-            container.innerHTML = `
-                <div class="empty-quad">
-                    <i class="fas fa-box-open fa-2x"></i>
-                    <p>Aucun emplacement</p>
-                </div>
-            `;
-            return;
-        }
+        // Ajouter l'événement sur la poignée pour basculer
+        const handle = drawerContainer.querySelector('.drawer-handle');
+        handle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            drawerContainer.classList.toggle('open');
 
-        // Trier les emplacements par code
-        const sortedSlots = [...level.slots].sort((a, b) => {
-            return parseInt(a.code) - parseInt(b.code);
-        });
-
-        // Créer les éléments d'emplacement
-        sortedSlots.forEach(slot => {
-            const slotEl = document.createElement('div');
-            slotEl.className = `quad-slot ${slot.status !== 'free' ? 'occupied' : ''}`;
-            slotEl.title = `Emplacement ${slot.code} - ${slot.status}`;
-
-            slotEl.innerHTML = `
-                <div class="quad-slot-code">${slot.code}</div>
-                <div class="quad-slot-status">${slot.status === 'free' ? 'Libre' : 'Occupé'}</div>
-            `;
-
-            // Événement clic
-            slotEl.addEventListener('click', () => {
-                console.log('Emplacement sélectionné:', slot.full_code);
-
-                // Mettre en surbrillance
-                container.querySelectorAll('.quad-slot').forEach(s => {
-                    s.classList.remove('selected');
-                });
-                slotEl.classList.add('selected');
-
-                // Afficher les articles si besoin
-                if (slot.articles && slot.articles.length > 0) {
-                    this.showSlotArticles(slot);
-                }
-            });
-
-            drawer.appendChild(slotEl);
-
+            // Changer le curseur
+            handle.style.cursor = drawerContainer.classList.contains('open')
+                ? 'pointer'
+                : 'grab';
         });
 
         // Mettre à jour l'info
         document.getElementById('quadLevelInfo').textContent =
-            `Étage ${level.code} - ${level.slots.length} emplacements`;
+            `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
+    }
+
+    generateSlotElements(slots) {
+        if (!slots || slots.length === 0) {
+            return `
+                <div class="empty-drawer-message">
+                    <i class="fas fa-box-open"></i>
+                    <p>Tiroir vide</p>
+                </div>
+            `;
+        }
+
+        // Trier les emplacements par code
+        const sortedSlots = [...slots].sort((a, b) => {
+            return parseInt(a.code) - parseInt(b.code);
+        });
+
+        let html = '';
+        sortedSlots.forEach(slot => {
+            html += `
+                <div class="quad-slot ${slot.status !== 'free' ? 'occupied' : ''}"
+                     data-slot-id="${slot.id}"
+                     title="Emplacement ${slot.code} - ${slot.status === 'free' ? 'Libre' : 'Occupé'}">
+                    <div class="quad-slot-code">${slot.code}</div>
+                    <div class="quad-slot-status">${slot.status === 'free' ? 'Libre' : 'Occupé'}</div>
+                </div>
+            `;
+        });
+
+        return html;
     }
 
     showSlotArticles(slot) {
