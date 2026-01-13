@@ -1039,7 +1039,27 @@ class QuadViewManager {
                     // D'abord vérifier si c'est sur une poignée
                     const handle = this.getClickedHandle(x, y);
                     if (handle) {
-                        // C'est une poignée, on ne démarre pas le drag
+                        // C'est une poignée
+                        if (handle === 'rotate') {
+                            // Démarrer la rotation
+                            this.isRotating = true;
+                            this.rotateStartX = x;
+                            this.rotateStartY = y;
+                            this.rotateStartAngle = this.selectedRack.rotation || 0;
+                            this.canvasTop.style.cursor = 'grab';
+                            console.log('🔄 Rotation démarrée pour', this.selectedRack.code);
+                        } else {
+                            // Démarrer le redimensionnement (nw, ne, sw, se)
+                            this.isResizing = true;
+                            this.resizeHandle = handle;
+                            this.resizeStartX = x;
+                            this.resizeStartY = y;
+                            this.resizeStartWidth = this.selectedRack.displayWidth;
+                            this.resizeStartHeight = this.selectedRack.displayHeight;
+                            this.resizeStartPosX = this.selectedRack.displayX;
+                            this.resizeStartPosY = this.selectedRack.displayY;
+                            console.log('📏 Redimensionnement démarré pour', this.selectedRack.code, 'poignée:', handle);
+                        }
                         return;
                     }
 
@@ -1053,44 +1073,119 @@ class QuadViewManager {
             });
 
             // Mousemove pour le drag
+            // Mousemove pour le drag, resize et rotation
             this.canvasTop.addEventListener('mousemove', (e) => {
-                if (this.isDragging && this.selectedRack) {
-                    const rect = this.canvasTop.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
+                const rect = this.canvasTop.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
 
-                    // Calculer la nouvelle position avec l'offset du clic
+                // === DRAG ===
+                if (this.isDragging && this.selectedRack) {
+                    // ... garder tout le code existant du drag ...
                     let newDisplayX = x - this.dragStartX;
                     let newDisplayY = y - this.dragStartY;
 
-                    // Snap to grid (optionnel)
                     const gridSize = 20;
                     newDisplayX = Math.round(newDisplayX / gridSize) * gridSize;
                     newDisplayY = Math.round(newDisplayY / gridSize) * gridSize;
 
-                    // Limites du canvas
                     newDisplayX = Math.max(0, Math.min(newDisplayX, this.canvasTop.width - this.selectedRack.displayWidth));
                     newDisplayY = Math.max(0, Math.min(newDisplayY, this.canvasTop.height - this.selectedRack.displayHeight));
 
-                    // Mettre à jour displayX/Y (pour l'affichage)
                     this.selectedRack.displayX = newDisplayX;
                     this.selectedRack.displayY = newDisplayY;
 
-                    // Mettre à jour aussi position_x/y (pour la sauvegarde)
                     const scale = 0.8;
                     this.selectedRack.position_x = newDisplayX / scale;
                     this.selectedRack.position_y = newDisplayY / scale;
 
-                    // Mettre à jour les inputs dans le panneau
                     const xInput = document.getElementById('quadRackX');
                     const yInput = document.getElementById('quadRackY');
                     if (xInput) xInput.value = Math.round(this.selectedRack.position_x / 40);
                     if (yInput) yInput.value = Math.round(this.selectedRack.position_y / 40);
 
-                    // Redessiner
                     this.drawTopView(this.currentRacks);
+                }
 
-                    console.log('📍 Nouvelle position:', newDisplayX, newDisplayY);
+                // === RESIZE ===
+                else if (this.isResizing && this.selectedRack) {
+                    const deltaX = x - this.resizeStartX;
+                    const deltaY = y - this.resizeStartY;
+
+                    const gridSize = 20;
+                    let newWidth = this.resizeStartWidth;
+                    let newHeight = this.resizeStartHeight;
+                    let newX = this.resizeStartPosX;
+                    let newY = this.resizeStartPosY;
+
+                    // Selon la poignée, calculer nouvelles dimensions
+                    switch(this.resizeHandle) {
+                        case 'se': // Coin bas-droit
+                            newWidth = Math.max(20, this.resizeStartWidth + deltaX);
+                            newHeight = Math.max(20, this.resizeStartHeight + deltaY);
+                            break;
+                        case 'sw': // Coin bas-gauche
+                            newWidth = Math.max(20, this.resizeStartWidth - deltaX);
+                            newHeight = Math.max(20, this.resizeStartHeight + deltaY);
+                            newX = this.resizeStartPosX + (this.resizeStartWidth - newWidth);
+                            break;
+                        case 'ne': // Coin haut-droit
+                            newWidth = Math.max(20, this.resizeStartWidth + deltaX);
+                            newHeight = Math.max(20, this.resizeStartHeight - deltaY);
+                            newY = this.resizeStartPosY + (this.resizeStartHeight - newHeight);
+                            break;
+                        case 'nw': // Coin haut-gauche
+                            newWidth = Math.max(20, this.resizeStartWidth - deltaX);
+                            newHeight = Math.max(20, this.resizeStartHeight - deltaY);
+                            newX = this.resizeStartPosX + (this.resizeStartWidth - newWidth);
+                            newY = this.resizeStartPosY + (this.resizeStartHeight - newHeight);
+                            break;
+                    }
+
+                    // Snap to grid
+                    newWidth = Math.round(newWidth / gridSize) * gridSize;
+                    newHeight = Math.round(newHeight / gridSize) * gridSize;
+
+                    // Appliquer
+                    this.selectedRack.displayWidth = newWidth;
+                    this.selectedRack.displayHeight = newHeight;
+                    this.selectedRack.displayX = newX;
+                    this.selectedRack.displayY = newY;
+
+                    // Mettre à jour width/depth réels (en cases)
+                    this.selectedRack.width = Math.round(newWidth / 20);
+                    this.selectedRack.depth = Math.round(newHeight / 20);
+
+                    // Mettre à jour les inputs
+                    const widthInput = document.getElementById('quadRackWidth');
+                    const depthInput = document.getElementById('quadRackDepth');
+                    if (widthInput) widthInput.value = this.selectedRack.width;
+                    if (depthInput) depthInput.value = this.selectedRack.depth;
+
+                    this.drawTopView(this.currentRacks);
+                }
+
+                // === ROTATION ===
+                else if (this.isRotating && this.selectedRack) {
+                    // Calculer l'angle depuis le centre du rack
+                    const centerX = this.selectedRack.displayX + this.selectedRack.displayWidth / 2;
+                    const centerY = this.selectedRack.displayY + this.selectedRack.displayHeight / 2;
+
+                    const angle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
+
+                    // Snap à 15 degrés
+                    let newRotation = Math.round(angle / 15) * 15;
+                    if (newRotation < 0) newRotation += 360;
+
+                    this.selectedRack.rotation = newRotation;
+
+                    // Mettre à jour le slider
+                    const rotationSlider = document.getElementById('quadRackRotation');
+                    const rotationValue = document.querySelector('.rotation-value');
+                    if (rotationSlider) rotationSlider.value = newRotation;
+                    if (rotationValue) rotationValue.textContent = newRotation + '°';
+
+                    this.drawTopView(this.currentRacks);
                 }
             });
 
