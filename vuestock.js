@@ -2146,6 +2146,7 @@ class QuadViewManager {
         return `${baseText} - ${articleName}\n${stockActuel} unités - ${status}`;
     }
 
+
     generateSlotContent(slot, article, zoomClass) {
         if (!article) {
             // Slot vide
@@ -2155,10 +2156,10 @@ class QuadViewManager {
             `;
         }
 
-        // Slot avec article
-        const imageUrl = article.photo_url || 'https://via.placeholder.com/40x40/cccccc/666666?text=📦';
-        const stock = article.stock_actuel || 0;
-        const articleName = article.nom || 'Article';
+        // CORRECTION DES NOMS DE COLONNES :
+        const imageUrl = article.photo || article.photo_url || 'https://via.placeholder.com/40x40/cccccc/666666?text=📦';
+        const stock = article.quantity || article.stock_actuel || 0;
+        const articleName = article.name || article.nom || 'Article';
 
         return `
             <div class="slot-content">
@@ -2174,42 +2175,49 @@ class QuadViewManager {
         `;
     }
 
-    // Fonction pour déterminer le niveau de stock
+    // Modifiez getStockLevel() :
     getStockLevel(article) {
         if (!article) return '';
 
-        const stockActuel = article.stock_actuel || 0;
-        const stockMinimum = article.stock_minimum || 0;
+        // CORRECTION : vos colonnes sont 'quantity' et pas 'stock_actuel'
+        // Mais je ne vois pas 'stock_minimum' dans vos données...
+        const stockActuel = article.quantity || article.stock_actuel || 0;
+
+        // Vous devez avoir 'stock_minimum' dans vos données Supabase
+        // Si non, utilisez une valeur par défaut ou ajoutez la colonne
+        const stockMinimum = article.stock_minimum || 3; // 3 par défaut selon votre INSERT
 
         if (stockActuel === 0) {
-            return 'stock-zero'; // Rouge
+            return 'stock-zero';
         } else if (stockActuel <= stockMinimum) {
-            return 'stock-low'; // Orange
+            return 'stock-low';
         } else {
-            return 'stock-good'; // Vert
+            return 'stock-good';
         }
     }
 
-    showSlotArticles(slot) {
-        // Pourrait ouvrir un popup ou mettre à jour la sidebar
-        console.log('Articles dans l\'emplacement:', slot.articles);
+    // Modifiez generateSlotTooltip() :
+    generateSlotTooltip(slot, article) {
+        const baseText = `Emplacement ${slot.code}`;
 
-        // Exemple: mettre à jour la sidebar existante
-        const sidebar = document.getElementById('slotContents');
-        if (sidebar) {
-            let html = `<h4>${slot.full_code}</h4>`;
-
-            slot.articles.forEach(article => {
-                html += `
-                    <div class="article-item">
-                        <div>${article.nom}</div>
-                        <div>${article.stock_actuel} unités</div>
-                    </div>
-                `;
-            });
-
-            sidebar.innerHTML = html;
+        if (!article) {
+            return `${baseText} - Libre`;
         }
+
+        const stockActuel = article.quantity || article.stock_actuel || 0;
+        const stockMinimum = article.stock_minimum || 3; // Valeur par défaut
+        const articleName = article.name || article.nom || 'Article';
+
+        let status = '';
+        if (stockActuel === 0) {
+            status = 'Stock épuisé';
+        } else if (stockActuel <= stockMinimum) {
+            status = `Stock faible (min: ${stockMinimum})`;
+        } else {
+            status = `Stock OK (min: ${stockMinimum})`;
+        }
+
+        return `${baseText} - ${articleName}\n${stockActuel} unités - ${status}`;
     }
 
     drawGrid(ctx, width, height, size) {
