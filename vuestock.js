@@ -1797,7 +1797,7 @@ class QuadViewManager {
         const startY = height - 20; // Bas du canvas
 
         // Base du rack
-        ctx.fillStyle = '#8b7355';
+        ctx.fillStyle = rack.color || '#4a90e2';  // ← Couleur du rack
         ctx.fillRect(startX, startY - 10, rackWidth, 10);
 
         // Niveaux (du bas vers le haut)
@@ -1843,8 +1843,8 @@ class QuadViewManager {
             ctx.fillText(`${levels.length} étages`, startX - 35, currentY + totalHeight/2);
         }
 
-        // Code du rack en bas AVEC LA COULEUR DU RACK
-        ctx.fillStyle = rack.color || '#4a90e2';  // ← Maintenant utilise la couleur du rack
+        // Code du rack en bas
+        ctx.fillStyle = '#333';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(`Rack ${rack.code}`, width/2, height - 5);
