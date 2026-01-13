@@ -1882,7 +1882,7 @@ class QuadViewManager {
 
         console.log(`DEBUG: startY=${startY}, clickY=${clickY}`);
 
-        for (const level of this.selectedRack.levels.sort((a, b) => a.display_order - b.display_order)) {
+        for (const level of this.selectedRack.levels.sort((a, b) => b.display_order - a.display_order)) {
             const levelTop = currentY - levelHeight;
             const levelBottom = currentY;
 
