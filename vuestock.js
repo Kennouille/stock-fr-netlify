@@ -2089,8 +2089,10 @@ class QuadViewManager {
         console.log('Sauvegarde du rack:', rack);
 
         // Redessiner
-        this.drawTopView(this.currentRacks);
         this.drawFrontView(rack);
+
+        // Mettre à jour uniquement le panneau sans redessiner
+        this.updatePropertiesPanel(rack);
 
         // Sauvegarder via API
         if (window.vueStock && window.vueStock.api) {
