@@ -1396,7 +1396,7 @@ class QuadViewManager {
             ctx.font = '14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('Sélectionnez une étagère', width/2, height/2);
+            ctx.fillText('Sélectionnez en premier un rack', width/2, height/2);
         }
 
         // Vue 3D
