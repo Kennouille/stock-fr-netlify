@@ -1884,7 +1884,13 @@ class QuadViewManager {
             const levelTop = currentY - levelHeight;
             const levelBottom = currentY;
 
-            if (clickY >= levelTop && clickY <= levelBottom &&
+            // Augmenter la zone de clic : toute la hauteur du niveau
+            // plus une marge de 5px en haut et en bas pour faciliter le clic
+            const clickMargin = 5;
+            const expandedTop = levelTop - clickMargin;
+            const expandedBottom = levelBottom + clickMargin;
+
+            if (clickY >= expandedTop && clickY <= expandedBottom &&
                 clickX >= startX && clickX <= startX + rackWidth) {
 
                 // Étage cliqué !
