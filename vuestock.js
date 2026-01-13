@@ -1878,7 +1878,7 @@ class QuadViewManager {
         const startY = this.canvasFront.height - 20;
 
         const levelHeight = 40;
-        let currentY = startY - 10;
+        let currentY = startY - 10 + levelHeight;
 
         for (const level of this.selectedRack.levels.sort((a, b) => a.display_order - b.display_order)) {
             const levelTop = currentY - levelHeight;
@@ -1911,7 +1911,7 @@ class QuadViewManager {
                 break;
             }
 
-            currentY -= levelHeight;
+            currentY += levelHeight;  // Aller vers le HAUT
         }
     }
 
