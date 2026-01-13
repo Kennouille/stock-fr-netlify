@@ -299,7 +299,7 @@ class CanvasManager {
 
     // === MÉTHODES POUR LES ÉTAGÈRES ===
     addRackToCanvas(rack) {
-        debugLog('canvas', addRackToCanvas called for rack:', rack.id, rack.code);
+        debugLog('canvas', 'addRackToCanvas called for rack:', rack.id, rack.code);
 
         // Vérifier si l'étagère existe déjà
         const existingElement = this.overlay.querySelector(`[data-rack-id="${rack.id}"]`);
