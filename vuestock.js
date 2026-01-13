@@ -988,6 +988,7 @@ class QuadViewManager {
         this.selectedRack = null;
         this.selectedLevel = null;
 
+
         // Canvases
         this.canvasTop = document.getElementById('canvasTop');
         this.canvasFront = document.getElementById('canvasFront');
@@ -2009,7 +2010,17 @@ class QuadViewManager {
         const container = document.getElementById('quadLevelSlots');
         if (!container || !level) return;
 
-        container.innerHTML = '';
+        // Reset complet avec animation tiroir
+        container.innerHTML = `
+            <div class="quad-level-drawer"></div>
+        `;
+
+        const drawer = container.querySelector('.quad-level-drawer');
+
+        // ouverture du tiroir (frame suivante)
+        requestAnimationFrame(() => {
+            drawer.classList.add('open');
+        });
 
         if (!level.slots || level.slots.length === 0) {
             container.innerHTML = `
