@@ -1276,6 +1276,7 @@ class QuadViewManager {
 
     }
 
+    // Dans la méthode init() ou resizeCanvases() de QuadViewManager
     resizeCanvases() {
         const quadViews = document.querySelectorAll('.quad-view-content');
 
@@ -1285,9 +1286,19 @@ class QuadViewManager {
                 const rect = container.getBoundingClientRect();
                 canvas.width = rect.width;
                 canvas.height = rect.height;
+
+                // Redessiner si nécessaire
+                if (canvas.id === 'canvasFront' && this.selectedRack) {
+                    setTimeout(() => {
+                        this.drawFrontView(this.selectedRack);
+                    }, 50);
+                }
             }
         });
     }
+
+    // Appeler resizeCanvases() au redimensionnement
+    window.addEventListener('resize', () => this.resizeCanvases());
 
     switchView(viewType) {
         this.currentView = viewType;
@@ -1811,65 +1822,107 @@ class QuadViewManager {
         ctx.clearRect(0, 0, width, height);
 
         // Dessiner le rack en élévation
-        const rackWidth = rack.width * 30; // 30px par case en largeur
+        const rackWidth = Math.min(rack.width * 30, width * 0.8); // 30px par case, max 80% largeur
         const startX = (width - rackWidth) / 2;
-        const startY = height - 20; // Bas du canvas
+        const startY = height - 40; // 40px du bas pour la légende
+
+        // Calculer la hauteur totale
+        const levelCount = rack.levels?.length || 0;
+        const totalHeight = (levelCount * 40) + 20; // 40px par niveau + 20px base
+
+        // Ajuster l'échelle si trop haut
+        const maxHeight = height * 0.8; // Max 80% de la hauteur
+        let scale = 1;
+        if (totalHeight > maxHeight) {
+            scale = maxHeight / totalHeight;
+        }
+
+        const scaledLevelHeight = 40 * scale;
+        const scaledBaseHeight = 20 * scale;
+
+        let currentY = startY;
 
         // Base du rack
-        ctx.fillStyle = rack.color || '#4a90e2';  // ← Couleur du rack
-        ctx.fillRect(startX, startY - 10, rackWidth, 10);
+        ctx.fillStyle = rack.color || '#4a90e2';
+        ctx.fillRect(startX, currentY - scaledBaseHeight, rackWidth, scaledBaseHeight);
 
         // Niveaux (du bas vers le haut)
         if (rack.levels && rack.levels.length) {
             const levels = [...rack.levels].sort((a, b) => a.display_order - b.display_order);
 
-            let currentY = startY - 10;
-
             levels.forEach(level => {
                 // Étage
-                ctx.fillStyle = level.code % 20 === 0 ? '#6c757d' : '#adb5bd';
-                const levelHeight = 40; // Hauteur fixe par niveau
+                const levelHeight = scaledLevelHeight;
+                currentY -= levelHeight;
 
-                ctx.fillRect(startX, currentY - levelHeight, rackWidth, levelHeight);
+                // Couleur alternée pour meilleure visibilité
+                const levelIndex = levels.indexOf(level);
+                ctx.fillStyle = levelIndex % 2 === 0 ? 'rgba(108, 117, 125, 0.8)' : 'rgba(173, 181, 189, 0.8)';
+
+                ctx.fillRect(startX, currentY, rackWidth, levelHeight);
 
                 // Séparateur
                 ctx.strokeStyle = '#495057';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(startX, currentY - levelHeight);
-                ctx.lineTo(startX + rackWidth, currentY - levelHeight);
+                ctx.moveTo(startX, currentY);
+                ctx.lineTo(startX + rackWidth, currentY);
                 ctx.stroke();
 
                 // Code de l'étage
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 12px Arial';
+                ctx.font = `bold ${Math.max(10, 12 * scale)}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText(level.code, startX + rackWidth/2, currentY - levelHeight/2);
+                ctx.textBaseline = 'middle';
+                ctx.fillText(
+                    level.code,
+                    startX + rackWidth/2,
+                    currentY + levelHeight/2
+                );
 
-                currentY -= levelHeight;
+                // Indicateur de sélection si c'est l'étage sélectionné
+                if (this.selectedLevel && this.selectedLevel.id === level.id) {
+                    ctx.strokeStyle = '#ffeb3b';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(startX - 2, currentY - 2, rackWidth + 4, levelHeight + 4);
+                }
             });
 
-            // Hauteur totale
-            const totalHeight = startY - currentY;
-            ctx.fillStyle = 'rgba(0,0,0,0.1)';
-            ctx.fillRect(startX - 30, currentY, 25, totalHeight);
+            // Légende de hauteur
+            if (scale < 1) {
+                ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                ctx.fillRect(startX - 30, currentY, 25, startY - currentY - scaledBaseHeight);
 
-            // Étiquette de hauteur
-            ctx.fillStyle = '#333';
-            ctx.font = '10px Arial';
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(`${levels.length} étages`, startX - 35, currentY + totalHeight/2);
+                ctx.fillStyle = '#333';
+                ctx.font = `${10 * scale}px Arial`;
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(
+                    `${levels.length} étages`,
+                    startX - 35,
+                    currentY + (startY - currentY - scaledBaseHeight)/2
+                );
+            }
         }
 
         // Code du rack en bas
         ctx.fillStyle = '#333';
-        ctx.font = 'bold 16px Arial';
+        ctx.font = `bold ${Math.max(14, 16 * scale)}px Arial`;
         ctx.textAlign = 'center';
-        ctx.fillText(`Rack ${rack.code}`, width/2, height - 5);
+        ctx.fillText(`Rack ${rack.code}`, width/2, height - 10);
+
+        // Info nombre d'étages
+        ctx.fillStyle = '#666';
+        ctx.font = `${10 * scale}px Arial`;
+        ctx.fillText(
+            `${levelCount} étage(s)`,
+            width/2,
+            startY + 15
+        );
 
         // Mettre à jour l'info
-        document.getElementById('quadSelectedRack').textContent = `Rack ${rack.code} - ${rack.levels?.length || 0} étages`;
+        document.getElementById('quadSelectedRack').textContent =
+            `Rack ${rack.code} - ${levelCount} étages`;
     }
 
     handleFrontViewClick(e) {
