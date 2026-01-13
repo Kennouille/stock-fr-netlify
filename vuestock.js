@@ -1540,17 +1540,25 @@ class QuadViewManager {
             const w = rack.width * 20;
             const d = rack.depth * 20;
 
-            // SI TROP À DROITE, on réduit le spacing au lieu de sauter
-            if (currentX + w > width - 50) {
-                // Au lieu de sauter, on serre les racks
-                currentX = Math.max(startX, width - 50 - w);
+            let x, y;
+
+            // Si ce rack est en cours de drag, utiliser displayX/Y existants
+            if (this.isDragging && this.selectedRack && rack.id === this.selectedRack.id) {
+                x = rack.displayX;
+                y = rack.displayY;
+            } else {
+                // Sinon, calculer normalement
+                if (currentX + w > width - 50) {
+                    currentX = Math.max(startX, width - 50 - w);
+                }
+
+                x = currentX;
+                y = startY;
+
+                rack.displayX = x;
+                rack.displayY = y;
             }
 
-            const x = currentX;
-            const y = startY; // TOUJOURS LA MÊME LIGNE
-
-            rack.displayX = x;
-            rack.displayY = y;
             rack.displayWidth = w;
             rack.displayHeight = d;
 
