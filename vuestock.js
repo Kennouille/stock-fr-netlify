@@ -1202,6 +1202,7 @@ class QuadViewManager {
     }
 
     // Méthode pour gérer les clics sur le canvas
+    // Dans la méthode handleCanvasClick de la classe QuadViewManager
     handleCanvasClick(e) {
         console.log('=== handleCanvasClick ===');
 
@@ -1216,36 +1217,38 @@ class QuadViewManager {
 
         console.log(`🎯 Clic à: ${x}, ${y}`);
 
-        // 1. D'ABORD vérifier si on clique sur une poignette du rack sélectionné
-        if (this.selectedRack && this.selectionHandles) {
-            const handle = this.getClickedHandle(x, y);
-            if (handle) {
-                console.log(`🔄 Poignette ${handle} cliquée`);
-
-                switch(handle) {
-                    case 'nw':
-                    case 'ne':
-                    case 'sw':
-                    case 'se':
-                        this.startResizeFromHandle(this.selectedRack, handle, x, y);
-                        break;
-                    case 'rotate':
-                        this.startRotationFromHandle(this.selectedRack, x, y);
-                        break;
-                }
-                return; // NE PAS CONTINUER
-            }
-        }
-
-        // 2. Sinon, chercher un rack normal
+        // 1. D'ABORD vérifier si on clique sur un rack normal
         const clickedRack = this.findRackAtPosition(x, y);
 
         if (clickedRack) {
             console.log(`✅ Rack ${clickedRack.code} sélectionné!`);
+
+            // 2. SI un rack est sélectionné, ALORS vérifier les poignettes
+            if (this.selectedRack && clickedRack.id === this.selectedRack.id) {
+                const handle = this.getClickedHandle(x, y);
+                if (handle) {
+                    console.log(`🔄 Poignette ${handle} cliquée`);
+
+                    switch(handle) {
+                        case 'nw':
+                        case 'ne':
+                        case 'sw':
+                        case 'se':
+                            this.startResizeFromHandle(this.selectedRack, handle, x, y);
+                            return;
+                        case 'rotate':
+                            this.startRotationFromHandle(this.selectedRack, x, y);
+                            return;
+                    }
+                }
+            }
+
+            // Si pas de poignette cliquée, sélectionner le rack normalement
             this.selectedRack = clickedRack;
             this.drawTopView(this.currentRacks);
             this.drawFrontView(clickedRack);
             this.updatePropertiesPanel(clickedRack);
+
         } else {
             console.log('❌ Aucun rack à cette position');
             this.selectedRack = null;
