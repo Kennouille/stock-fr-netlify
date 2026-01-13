@@ -1215,6 +1215,7 @@ class QuadViewManager {
         const y = e.clientY - rect.top;
 
         console.log(`🎯 Clic à: ${x}, ${y}`);
+        console.log(`📌 État actuel: selectedRack = ${this.selectedRack ? this.selectedRack.code : 'null'}`);
 
         // 1. D'ABORD vérifier si on clique sur un rack normal
         const clickedRack = this.findRackAtPosition(x, y);
@@ -1227,12 +1228,13 @@ class QuadViewManager {
             if (this.selectedRack) {
                 console.log(`🔄 Un rack (${this.selectedRack.code}) est déjà sélectionné, vérification des poignettes...`);
                 const handle = this.getClickedHandle(x, y);
+                console.log(`🔍 Résultat getClickedHandle: ${handle ? handle : 'null'}`);
                 if (handle) {
                     console.log(`🔄 Poignette ${handle} cliquée`);
 
                     // Vérifier si la poignette appartient au rack sélectionné
-                    // (on peut cliquer sur une poignette même si on clique sur un autre rack)
                     if (this.selectedRack.id === clickedRack.id) {
+                        console.log(`✅ Poignette appartient au rack sélectionné (${this.selectedRack.code})`);
                         switch(handle) {
                             case 'nw':
                             case 'ne':
@@ -1244,8 +1246,14 @@ class QuadViewManager {
                                 this.startRotationFromHandle(this.selectedRack, x, y);
                                 return; // NE PAS CONTINUER
                         }
+                    } else {
+                        console.log(`⚠️ Poignette appartient à un autre rack`);
                     }
+                } else {
+                    console.log(`❌ Aucune poignette détectée`);
                 }
+            } else {
+                console.log(`ℹ️ Aucun rack sélectionné auparavant`);
             }
 
             // 3. Si pas de poignette cliquée, sélectionner le rack normalement
