@@ -1201,7 +1201,8 @@ class QuadViewManager {
 
     // Méthode pour gérer les clics sur le canvas
     handleCanvasClick(e) {
-        console.log('handleCanvasClick appelé');
+        console.log('=== handleCanvasClick ===');
+        console.log('currentRacks:', this.currentRacks?.length);
 
         e.preventDefault();
         e.stopPropagation();
@@ -1216,9 +1217,10 @@ class QuadViewManager {
 
         // Chercher le rack cliqué
         const clickedRack = this.findRackAtPosition(x, y);
+        console.log('clickedRack:', clickedRack?.code);
 
         if (clickedRack) {
-            console.log('Rack cliqué:', clickedRack.code);
+            console.log('EXÉCUTION DU CODE POUR', clickedRack.code);
 
             // 1. Mettre à jour la sélection
             this.selectedRack = clickedRack;
@@ -1241,12 +1243,18 @@ class QuadViewManager {
 
     // Trouver un rack à une position donnée
     findRackAtPosition(x, y) {
-        if (!this.currentRacks) return null;
+        if (!this.currentRacks) {
+            console.log('❌ currentRacks est null/undefined');
+            return null;
+        }
 
-        console.log(`🔍 Recherche à: ${x},${y}`);
+        console.log(`🔍 Recherche parmi ${this.currentRacks.length} racks à: ${x},${y}`);
 
         for (const rack of this.currentRacks) {
-            if (!rack.displayX) continue;
+            if (!rack.displayX) {
+                console.log(`  Rack ${rack.code}: PAS de displayX`);
+                continue;
+            }
 
             const left = rack.displayX;
             const right = left + rack.displayWidth;
@@ -1256,12 +1264,12 @@ class QuadViewManager {
             console.log(`  Rack ${rack.code}: ${left}-${right}, ${top}-${bottom}`);
 
             if (x >= left && x <= right && y >= top && y <= bottom) {
-                console.log(`✅ ${rack.code} trouvé!`);
+                console.log(`✅ ${rack.code} TROUVÉ!`);
                 return rack;
             }
         }
 
-        console.log('❌ Aucun rack');
+        console.log('❌ Aucun rack correspond');
         return null;
     }
 
@@ -1420,53 +1428,45 @@ class QuadViewManager {
         const width = this.canvasTop.width;
         const height = this.canvasTop.height;
 
-        // Effacer
         ctx.clearRect(0, 0, width, height);
-
-        // Grille
         this.drawGrid(ctx, width, height, 20);
 
-        // RÉGLAGES
+        // RÉGLAGE POUR UNE SEULE LIGNE
         const startX = 50;
         const startY = 50;
-        const spacing = 60; // Réduit de 150 à 60
+        const spacing = 40; // Réduit encore
         let currentX = startX;
-        let currentY = startY;
 
-        racks.forEach((rack, index) => {
+        racks.forEach((rack) => {
             const w = rack.width * 20;
             const d = rack.depth * 20;
 
-            // SI TROP À DROITE, ALLER À LA LIGNE
+            // SI TROP À DROITE, on réduit le spacing au lieu de sauter
             if (currentX + w > width - 50) {
-                currentX = startX;
-                currentY += d + 80; // Nouvelle ligne
+                // Au lieu de sauter, on serre les racks
+                currentX = Math.max(startX, width - 50 - w);
             }
 
             const x = currentX;
-            const y = currentY;
+            const y = startY; // TOUJOURS LA MÊME LIGNE
 
-            // SAUVEGARDER pour les clics
             rack.displayX = x;
             rack.displayY = y;
             rack.displayWidth = w;
             rack.displayHeight = d;
 
-            // Dessiner le rack (TON CODE ORIGINAL)
+            // Ton dessin original
             ctx.fillStyle = rack.color || '#4a90e2';
             ctx.fillRect(x, y, w, d);
-
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, w, d);
-
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(rack.code, x + w/2, y + d/2);
 
-            // Avancer
             currentX += w + spacing;
         });
 
