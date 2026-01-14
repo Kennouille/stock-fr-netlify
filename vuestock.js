@@ -1810,25 +1810,25 @@ class QuadViewManager {
         // Effacer
         ctx.clearRect(0, 0, width, height);
 
-        // Dessiner le rack en élévation - PLUS GRAND
-        const rackWidth = rack.width * 40; // 40px par case (au lieu de 30)
+        // Dessiner le rack en élévation
+        const rackWidth = rack.width * 30; // 30px par case en largeur
         const startX = (width - rackWidth) / 2;
-        const startY = height - 100; // 100px du bas (au lieu de 20)
+        const startY = height - 20; // Bas du canvas
 
         // Base du rack
-        ctx.fillStyle = rack.color || '#4a90e2';
-        ctx.fillRect(startX, startY - 15, rackWidth, 15); // Plus épais
+        ctx.fillStyle = rack.color || '#4a90e2';  // ← Couleur du rack
+        ctx.fillRect(startX, startY - 10, rackWidth, 10);
 
         // Niveaux (du bas vers le haut)
         if (rack.levels && rack.levels.length) {
             const levels = [...rack.levels].sort((a, b) => a.display_order - b.display_order);
 
-            let currentY = startY - 15;
+            let currentY = startY - 10;
 
             levels.forEach(level => {
-                // Étage - PLUS HAUT
+                // Étage
                 ctx.fillStyle = level.code % 20 === 0 ? '#6c757d' : '#adb5bd';
-                const levelHeight = 50; // 50px au lieu de 40
+                const levelHeight = 40; // Hauteur fixe par niveau
 
                 ctx.fillRect(startX, currentY - levelHeight, rackWidth, levelHeight);
 
@@ -1840,9 +1840,9 @@ class QuadViewManager {
                 ctx.lineTo(startX + rackWidth, currentY - levelHeight);
                 ctx.stroke();
 
-                // Code de l'étage - PLUS GROS
+                // Code de l'étage
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 14px Arial'; // 14px au lieu de 12
+                ctx.font = 'bold 12px Arial';
                 ctx.textAlign = 'center';
                 ctx.fillText(level.code, startX + rackWidth/2, currentY - levelHeight/2);
 
@@ -1852,21 +1852,21 @@ class QuadViewManager {
             // Hauteur totale
             const totalHeight = startY - currentY;
             ctx.fillStyle = 'rgba(0,0,0,0.1)';
-            ctx.fillRect(startX - 40, currentY, 30, totalHeight); // Plus large
+            ctx.fillRect(startX - 30, currentY, 25, totalHeight);
 
-            // Étiquette de hauteur - PLUS GROS
+            // Étiquette de hauteur
             ctx.fillStyle = '#333';
-            ctx.font = '12px Arial'; // 12px au lieu de 10
+            ctx.font = '10px Arial';
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`${levels.length} étages`, startX - 45, currentY + totalHeight/2);
+            ctx.fillText(`${levels.length} étages`, startX - 35, currentY + totalHeight/2);
         }
 
-        // Code du rack en bas - PLUS GROS
+        // Code du rack en bas
         ctx.fillStyle = '#333';
-        ctx.font = 'bold 18px Arial'; // 18px au lieu de 16
+        ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`Rack ${rack.code}`, width/2, height - 10); // Plus haut
+        ctx.fillText(`Rack ${rack.code}`, width/2, height - 5);
 
         // Mettre à jour l'info
         document.getElementById('quadSelectedRack').textContent = `Rack ${rack.code} - ${rack.levels?.length || 0} étages`;
