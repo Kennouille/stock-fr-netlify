@@ -1017,18 +1017,6 @@ canvas {
     overflow: auto;
 }
 
-/* ===== VUE DE FACE - HAUTEUR CORRECTE ===== */
-.quad-view.view-front {
-    display: flex;
-    flex-direction: column;
-}
-
-#canvasFront {
-    flex: 1; /* Prend toute la hauteur restante */
-    width: 100%;
-    min-height: 200px;
-}
-
 /* Canvas spécifiques pour chaque vue */
 .quad-canvas {
     width: 100%;
