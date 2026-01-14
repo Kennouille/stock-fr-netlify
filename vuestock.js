@@ -1472,6 +1472,22 @@ class QuadViewManager {
                 return; // Ne pas redessiner
             }
 
+            // FERMER LE TIROIR AVANT DE CHANGER DE RACK
+            const container = document.getElementById('quadLevelSlots');
+            if (container) {
+                const currentDrawer = container.querySelector('.quad-drawer-container');
+                if (currentDrawer && currentDrawer.classList.contains('open')) {
+                    currentDrawer.classList.remove('open');
+                    setTimeout(() => {
+                        container.innerHTML = '';
+                        this.selectedLevel = null;
+                    }, 700);
+                } else {
+                    container.innerHTML = '';
+                    this.selectedLevel = null;
+                }
+            }
+
             // Sélectionner le nouveau rack
             console.log(`📌 Sélection du rack ${clickedRack.code}`);
             this.selectedRack = clickedRack;
