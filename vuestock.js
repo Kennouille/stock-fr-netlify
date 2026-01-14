@@ -1811,7 +1811,7 @@ class QuadViewManager {
         ctx.clearRect(0, 0, width, height);
 
         // Dessiner le rack en élévation
-        const rackWidth = rack.width * 30; // 30px par case en largeur
+        const rackWidth = rack.width * 50; // 30px par case en largeur
         const startX = (width - rackWidth) / 2;
         const startY = height - 20; // Bas du canvas
 
