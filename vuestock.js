@@ -1970,7 +1970,9 @@ class QuadViewManager {
             ctx.fillStyle = rack.color + 'CC';
 
             // Dessiner le prisme 3D simple
-            this.drawIsoPrism(ctx, isoX, isoY, isoWidth, isoDepth, isoHeight);
+            const levels = rack.levels?.length || 1;
+            const isSelected = (this.selectedRack && rack.id === this.selectedRack.id);
+            this.drawIsoPrism(ctx, isoX, isoY, isoWidth, isoDepth, isoHeight, levels, isSelected);
 
             // Code du rack (si assez grand)
             if (isoWidth > 30) {
@@ -1989,39 +1991,55 @@ class QuadViewManager {
         ctx.fillText(`Vue 3D - ${racks.length} racks`, 10, 20);
     }
 
-    drawIsoPrism(ctx, x, y, w, d, h) {
-        // Faces avant et droite simplifiées
-        const isoAngle = 0.5; // Ratio isométrique
+    drawIsoPrism(ctx, x, y, w, d, h, levels = 1, isSelected = false) {
+        const isoAngle = 0.5;
+        const levelHeight = 15; // hauteur par niveau
 
-        // Face avant
+        // Sol/ombre portée
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
         ctx.beginPath();
         ctx.moveTo(x - w/2, y + d/2);
-        ctx.lineTo(x - w/2, y - d/2);
-        ctx.lineTo(x - w/2 + h * isoAngle, y - d/2 - h * isoAngle);
-        ctx.lineTo(x - w/2 + h * isoAngle, y + d/2 - h * isoAngle);
+        ctx.lineTo(x + w/2, y + d/2);
+        ctx.lineTo(x + w/2 - w * 0.3, y + d/2 - d * 0.3);
+        ctx.lineTo(x - w/2 - w * 0.3, y + d/2 - d * 0.3);
         ctx.closePath();
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
         ctx.fill();
 
-        // Face droite
-        ctx.beginPath();
-        ctx.moveTo(x + w/2, y + d/2);
-        ctx.lineTo(x + w/2, y - d/2);
-        ctx.lineTo(x + w/2 - h * isoAngle, y - d/2 - h * isoAngle);
-        ctx.lineTo(x + w/2 - h * isoAngle, y + d/2 - h * isoAngle);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.fill();
+        // Dessiner chaque niveau (du bas vers le haut)
+        for (let level = 0; level < levels; level++) {
+            const currentY = y - (level * levelHeight * isoAngle);
+            const currentH = levelHeight;
 
-        // Face du dessus
-        ctx.beginPath();
-        ctx.moveTo(x - w/2, y - d/2);
-        ctx.lineTo(x + w/2, y - d/2);
-        ctx.lineTo(x + w/2 - h * isoAngle, y - d/2 - h * isoAngle);
-        ctx.lineTo(x - w/2 + h * isoAngle, y - d/2 - h * isoAngle);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        ctx.fill();
+            // Face avant
+            ctx.fillStyle = isSelected ? '#ffeb3b' : '#4a90e2';
+            ctx.beginPath();
+            ctx.moveTo(x - w/2, currentY + d/2);
+            ctx.lineTo(x - w/2 + currentH * isoAngle, currentY + d/2 - currentH * isoAngle);
+            ctx.lineTo(x - w/2 + currentH * isoAngle, currentY - d/2 - currentH * isoAngle);
+            ctx.lineTo(x - w/2, currentY - d/2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Face droite
+            ctx.fillStyle = isSelected ? '#fbc02d' : '#357abd';
+            ctx.beginPath();
+            ctx.moveTo(x + w/2, currentY + d/2);
+            ctx.lineTo(x + w/2 - currentH * isoAngle, currentY + d/2 - currentH * isoAngle);
+            ctx.lineTo(x + w/2 - currentH * isoAngle, currentY - d/2 - currentH * isoAngle);
+            ctx.lineTo(x + w/2, currentY - d/2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Dessus du niveau
+            ctx.fillStyle = isSelected ? '#fff176' : '#7fbfff';
+            ctx.beginPath();
+            ctx.moveTo(x - w/2, currentY - d/2);
+            ctx.lineTo(x + w/2, currentY - d/2);
+            ctx.lineTo(x + w/2 - currentH * isoAngle, currentY - d/2 - currentH * isoAngle);
+            ctx.lineTo(x - w/2 + currentH * isoAngle, currentY - d/2 - currentH * isoAngle);
+            ctx.closePath();
+            ctx.fill();
+        }
     }
 
     // Dans QuadViewManager
