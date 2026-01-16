@@ -2942,7 +2942,8 @@ class AccueilQuadManager {
         try {
             console.log('📡 Chargement des racks depuis Supabase...');
 
-            const { data: racks, error } = await supabase
+            // 1. Charger les racks avec leurs niveaux et emplacements
+            const { data: racks, error: racksError } = await supabase
                 .from('w_vuestock_racks')
                 .select(`
                     *,
@@ -2957,13 +2958,58 @@ class AccueilQuadManager {
                             level_id,
                             display_order,
                             status,
-                            w_vuestock_slots_articles (
-                                w_articles (*)
-                            )
+                            full_code
                         )
                     )
                 `)
                 .order('rack_code');
+
+            if (racksError) throw racksError;
+
+            // 2. Charger TOUS les articles (pour les associer ensuite)
+            const { data: allArticles, error: articlesError } = await supabase
+                .from('w_articles')
+                .select('*')
+                .not('slot_id', 'is', null); // On ne prend que les articles placés
+
+            if (articlesError) throw articlesError;
+
+            // 3. Assembler manuellement : placer les articles dans leurs emplacements
+            if (racks && allArticles) {
+                this.racks = racks.map(rack => {
+                    // Parcourir chaque niveau...
+                    const levelsWithSlots = rack.w_vuestock_levels?.map(level => {
+                        // Parcourir chaque emplacement de ce niveau...
+                        const slotsWithArticles = level.w_vuestock_slots?.map(slot => {
+                            // Trouver l'article qui correspond à cet emplacement
+                            const articleInSlot = allArticles.find(article =>
+                                article.slot_id === slot.id &&
+                                article.level_id === level.id &&
+                                article.rack_id === rack.id
+                            );
+
+                            return {
+                                ...slot,
+                                code: slot.slot_code,
+                                articles: articleInSlot ? [articleInSlot] : []
+                            };
+                        }) || [];
+
+                        return {
+                            ...level,
+                            code: level.level_code,
+                            slots: slotsWithArticles
+                        };
+                    }) || [];
+
+                    return {
+                        ...rack,
+                        code: rack.rack_code,
+                        name: rack.display_name,
+                        levels: levelsWithSlots
+                    };
+                });
+            }
 
             if (error) {
                 console.error('Erreur Supabase:', error);
