@@ -2407,6 +2407,23 @@ class QuadViewManager {
         ctx.restore();
     }
 
+    // Ajuster la luminosité d'une couleur
+    adjustColor(color, amount) {
+        // Convertir hex en RGB
+        const hex = color.replace('#', '');
+        let r = parseInt(hex.substr(0, 2), 16);
+        let g = parseInt(hex.substr(2, 2), 16);
+        let b = parseInt(hex.substr(4, 2), 16);
+
+        // Ajuster
+        r = Math.max(0, Math.min(255, r + amount));
+        g = Math.max(0, Math.min(255, g + amount));
+        b = Math.max(0, Math.min(255, b + amount));
+
+        // Reconvertir en hex
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+
     // Dans QuadViewManager
 
     updateLevelView(level) {
