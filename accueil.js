@@ -3538,29 +3538,50 @@ class AccueilQuadManager {
     }
 
     // Ajouter cette méthode dans AccueilQuadManager
-    highlightArticleLocationFromArticle(article) {
-        // UN SEUL LOG IMPORTANT
-        console.log('QUAD DEBUG - Article:', {
+        highlightArticleLocationFromArticle(article) {
+        console.log('QUAD DEBUG - Article avec IDs:', {
             id: article.id,
             nom: article.nom,
-            emplacement: article.emplacement
+            rack_id: article.rack_id,
+            level_id: article.level_id,
+            slot_id: article.slot_id
         });
 
-        if (!article.emplacement || article.emplacement.trim() === '') {
+        // Si pas d'IDs, on ne peut pas localiser
+        if (!article.rack_id || !article.level_id || !article.slot_id) {
+            console.warn('Article sans IDs de localisation');
+            this.showNotification('Article non localisé dans le stock', 'warning');
             return false;
         }
 
-        // Essayez de parser différents formats
-        const fullCode = article.emplacement;
-
-        // Format 1: "A-10-20" (standard)
-        if (fullCode.includes('-')) {
-            return this.highlightArticleLocation(fullCode);
+        // 1. Trouver le rack
+        const rack = this.racks.find(r => r.id === article.rack_id);
+        if (!rack) {
+            console.error(`Rack ID ${article.rack_id} non trouvé`);
+            return false;
         }
 
-        // Format 2: "A10-20" ou autres variantes
-        console.log('QUAD DEBUG - Format d\'emplacement non standard:', fullCode);
-        return false;
+        // 2. Trouver le niveau
+        const level = rack.levels?.find(l => l.id === article.level_id);
+        if (!level) {
+            console.error(`Level ID ${article.level_id} non trouvé dans rack ${rack.code}`);
+            return false;
+        }
+
+        // 3. Trouver l'emplacement
+        const slot = level.slots?.find(s => s.id === article.slot_id);
+        if (!slot) {
+            console.error(`Slot ID ${article.slot_id} non trouvé dans level ${level.code}`);
+            return false;
+        }
+
+        // 4. Sélectionner et mettre en évidence
+        this.selectRack(rack);
+        this.selectLevel(level);
+        this.updateDrawerWithHighlight(level, slot.code);
+
+        console.log(`✅ Article localisé: ${rack.code}-${level.code}-${slot.code}`);
+        return true;
     }
 }
 
