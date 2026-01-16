@@ -1312,8 +1312,16 @@ class QuadViewManager {
         // Contrôles 3D
         document.querySelectorAll('.quad-3d-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const angle = parseInt(e.target.dataset.angle);
-                this.set3DAngle(angle);
+                // Chercher le dataset sur le bouton ou son parent
+                const button = e.target.closest('.quad-3d-btn');
+                const angle = parseInt(button?.dataset?.angle);
+
+                // Vérifier que l'angle est valide
+                if (!isNaN(angle) && angle > 0) {
+                    this.set3DAngle(angle);
+                } else {
+                    console.warn('Angle invalide détecté:', angle, 'depuis:', button);
+                }
             });
         });
 
@@ -2690,6 +2698,11 @@ class QuadViewManager {
     }
 
     set3DAngle(angle) {
+        if (!angle || isNaN(angle) || !isFinite(angle)) {
+            console.error('Angle invalide reçu:', angle);
+            return;
+        }
+
         // Annuler toute animation en cours
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
