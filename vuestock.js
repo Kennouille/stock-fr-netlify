@@ -1375,14 +1375,6 @@ class QuadViewManager {
             }
         }
 
-        // Basculement de vue
-        document.querySelectorAll('.view-switch-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const view = e.target.dataset.view;
-                this.switchView(view);
-            });
-        });
-
         // Contrôles 3D
         document.querySelectorAll('.quad-3d-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -1427,11 +1419,6 @@ class QuadViewManager {
 
     switchView(viewType) {
         this.currentView = viewType;
-
-        // Mettre à jour les boutons
-        document.querySelectorAll('.view-switch-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.view === viewType);
-        });
 
         // Afficher/masquer les vues
         const quadView = document.getElementById('quadView');
