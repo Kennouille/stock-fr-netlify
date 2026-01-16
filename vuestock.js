@@ -1999,14 +1999,12 @@ class QuadViewManager {
         // Effacer
         ctx.clearRect(0, 0, width, height);
 
-        // Fond gradient animé selon la rotation
-        const gradientAngle = this.rotation3D / 360;
-        const gradient = ctx.createLinearGradient(
-            0,
-            0,
-            width * Math.cos(gradientAngle * Math.PI * 2),
-            height * Math.sin(gradientAngle * Math.PI * 2)
-        );
+        // Fond gradient animé selon la rotation (CORRIGÉ)
+        const gradientAngle = (this.rotation3D % 360) * Math.PI / 180;
+        const gx = Math.max(0, Math.min(width, width * 0.5 + Math.cos(gradientAngle) * width * 0.3));
+        const gy = Math.max(0, Math.min(height, height * 0.5 + Math.sin(gradientAngle) * height * 0.3));
+
+        const gradient = ctx.createLinearGradient(0, 0, gx, gy);
         gradient.addColorStop(0, '#667eea');
         gradient.addColorStop(0.5, '#764ba2');
         gradient.addColorStop(1, '#667eea');
