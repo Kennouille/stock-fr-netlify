@@ -3452,7 +3452,7 @@ class AccueilQuadManager {
                 <div class="article-display">
                     <div class="article-image-large">
                         <img src="${imageUrl}" alt="${articleName}"
-                             onerror="this.src='https://via.placeholder.com/150x150/cccccc/666666?text=📦'">
+                             onerror="this.src='https://via.placeholder.com/70x70/cccccc/666666?text=📦'">
                     </div>
                     <div class="article-info-large">
                         <h5>${articleName}</h5>
