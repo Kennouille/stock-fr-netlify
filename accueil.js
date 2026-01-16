@@ -3693,7 +3693,7 @@ class AccueilQuadManager {
     }
 
     // Affiche UN SEUL slot avec la photo
-    updateSingleSlotView(level, slot, article) {
+    updateSingleSlotView(level, slot, article, rack) {
         if (!this.drawerContainer) return;
 
         const articleInSlot = article || slot.articles?.[0];
@@ -3778,14 +3778,14 @@ class AccueilQuadManager {
             return false;
         }
 
-        // 4. Afficher UNIQUEMENT ce rack dans la vue du dessus
-        this.drawSingleRack(rack);  // <-- Nouvelle méthode
+        // 4. D'ABORD définir les sélections
+        this.selectedRack = rack;     // <-- AJOUTER
+        this.selectedLevel = level;   // <-- AJOUTER
 
-        // 5. Afficher UNIQUEMENT cet étage dans la vue de face
-        this.drawSingleLevel(rack, level);  // <-- Nouvelle méthode
-
-        // 6. Afficher UNIQUEMENT ce slot dans le tiroir
-        this.updateSingleSlotView(level, slot, article);  // <-- Nouvelle méthode
+        // 5. Ensuite afficher les vues
+        this.drawSingleRack(rack);
+        this.drawSingleLevel(rack, level);
+        this.updateSingleSlotView(level, slot, article, rack);
 
         console.log(`✅ Article localisé: ${rack.code}-${level.code}-${slot.code}`);
         return true;
