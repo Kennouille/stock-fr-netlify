@@ -362,7 +362,7 @@ function openSearchPopup(results, searchType) {
             <div class="popup-content">
                 <div class="results-list">
                     ${results.map((article, index) => `
-                        `<div class="result-item" data-id="${article.id}" data-index="${index}">
+                        <div class="result-item" data-id="${article.id}" data-index="${index}">
                             <div class="result-main">
                                 <h4>${article.nom}</h4>
                                 <div class="result-details">
