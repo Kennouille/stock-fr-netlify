@@ -999,6 +999,21 @@ class QuadViewManager {
             offsetY: 0  // Décalage vertical
         };
 
+        // Propriétés pour Vision Rayons X
+        this.hoveredRack = null; // Rack actuellement survolé
+        this.xrayProgress = 0; // Progression de l'effet rayons X (0 à 1)
+        this.xrayAnimFrame = null; // Frame d'animation rayons X
+
+        // Propriétés pour Zoom sur clic
+        this.focusedRack = null; // Rack actuellement en focus (zoom)
+        this.zoomProgress = 0; // Progression du zoom (0 à 1)
+        this.zoomAnimFrame = null; // Frame d'animation zoom
+        this.camera = {
+            targetRotation: 0, // Rotation cible de la caméra
+            targetScale: 1, // Échelle cible (1 = normal, 2 = zoom x2)
+            currentScale: 1 // Échelle actuelle
+        };
+
         this.initStockModal();
 
 
@@ -1261,13 +1276,24 @@ class QuadViewManager {
             if (this.canvas3D) {
                 // Démarrer la rotation au mousedown
                 this.canvas3D.addEventListener('mousedown', (e) => {
-                    this.isDragging3D = true;
                     this.drag3DStartX = e.clientX;
+                    this.drag3DStartTime = Date.now();
+                    this.drag3DTotalDistance = 0;
                     this.canvas3D.style.cursor = 'grabbing';
                 });
 
                 // Continuer la rotation pendant le mousemove
                 this.canvas3D.addEventListener('mousemove', (e) => {
+                    // Démarrer le drag seulement si on bouge de plus de 5px
+                    if (this.drag3DStartX !== undefined) {
+                        const distance = Math.abs(e.clientX - this.drag3DStartX);
+                        this.drag3DTotalDistance += distance;
+
+                        if (this.drag3DTotalDistance > 5) {
+                            this.isDragging3D = true;
+                        }
+                    }
+
                     if (!this.isDragging3D) return;
 
                     const deltaX = e.clientX - this.drag3DStartX;
@@ -1287,6 +1313,7 @@ class QuadViewManager {
                 // Arrêter la rotation au mouseup
                 this.canvas3D.addEventListener('mouseup', () => {
                     this.isDragging3D = false;
+                    this.drag3DStartX = undefined;
                     this.canvas3D.style.cursor = 'grab';
                 });
 
@@ -1298,6 +1325,53 @@ class QuadViewManager {
 
                 // Curseur initial
                 this.canvas3D.style.cursor = 'grab';
+
+                // NOUVEAU : Détection du survol pour Vision Rayons X
+                this.canvas3D.addEventListener('mousemove', (e) => {
+                    if (this.isDragging3D) return; // Ne pas détecter si on est en train de faire tourner
+
+                    const rect = this.canvas3D.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+
+                    // Trouver quel rack est sous la souris
+                    const hoveredRack = this.findRackAt3DPosition(mouseX, mouseY);
+
+                    // Si on change de rack survolé
+                    if (hoveredRack !== this.hoveredRack) {
+                        this.hoveredRack = hoveredRack;
+
+                        // Démarrer/arrêter l'animation rayons X
+                        if (hoveredRack) {
+                            this.startXRayEffect();
+                        } else {
+                            this.stopXRayEffect();
+                        }
+                    }
+                });
+
+                // Clic pour zoomer sur un rack
+                this.canvas3D.addEventListener('click', (e) => {
+                    // Ignorer si c'était un drag (distance > 5px ou durée > 200ms)
+                    const clickDuration = Date.now() - this.drag3DStartTime;
+                    if (this.drag3DTotalDistance > 5 || clickDuration > 200) {
+                        return;
+                    }
+
+                    const rect = this.canvas3D.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+
+                    const clickedRack = this.findRackAt3DPosition(mouseX, mouseY);
+
+                    if (clickedRack) {
+                        // Zoomer sur ce rack
+                        this.zoomOnRack(clickedRack);
+                    } else if (this.focusedRack) {
+                        // Dézoomer si on clique en dehors
+                        this.resetZoom();
+                    }
+                });
             }
         }
 
@@ -2043,11 +2117,14 @@ class QuadViewManager {
             return { rack, x, z, angle };
         }).sort((a, b) => b.z - a.z); // Trier du plus loin au plus proche
 
-        // Dessiner chaque rack
+        // Dessiner chaque rack avec effets Rayons X et Zoom
         racksWithDepth.forEach(({ rack, x, z, angle }) => {
-            // Projection isométrique
-            const isoX = centerX + x * this.isometric.scale;
-            const isoY = centerY - z * this.isometric.scale * 0.5;
+            // Appliquer le zoom de la caméra
+            const zoomScale = this.camera.currentScale;
+
+            // Projection isométrique avec zoom
+            const isoX = centerX + x * this.isometric.scale * zoomScale;
+            const isoY = centerY - z * this.isometric.scale * 0.5 * zoomScale;
 
             // Hauteur du rack (selon nombre d'étages)
             const rackHeight = (rack.levels?.length || 1) * 12;
@@ -2056,11 +2133,33 @@ class QuadViewManager {
             const rackWidth = rack.width * 20;
             const rackDepth = rack.depth * 20;
 
-            // Échelle selon la distance (effet de profondeur)
-            const scale = 1 - (z / radius) * 0.3;
+            // Échelle selon la distance (effet de profondeur) + zoom
+            const depthScale = 1 - (z / radius) * 0.3;
+            const scale = depthScale * zoomScale;
 
-            // Dessiner le rack en 3D isométrique
-            this.drawIsoRack(ctx, isoX, isoY, rackWidth * scale, rackDepth * scale, rackHeight * scale, rack, angle);
+            // Déterminer l'opacité (flouter les autres racks si un est en focus)
+            let opacity = 1;
+            if (this.focusedRack && rack !== this.focusedRack) {
+                opacity = 0.3; // Racks non focusés deviennent semi-transparents
+            }
+
+            // Effet Rayons X si c'est le rack survolé
+            const isHovered = (rack === this.hoveredRack);
+            const xrayAlpha = isHovered ? this.xrayProgress : 0;
+
+            // Dessiner le rack en 3D isométrique avec effets
+            this.drawIsoRack(
+                ctx,
+                isoX,
+                isoY,
+                rackWidth * scale,
+                rackDepth * scale,
+                rackHeight * scale,
+                rack,
+                angle,
+                opacity,
+                xrayAlpha
+            );
         });
 
         // Indicateur de rotation
@@ -2108,9 +2207,12 @@ class QuadViewManager {
         ctx.restore();
     }
 
-    // Dessiner un rack en vue isométrique
-    drawIsoRack(ctx, x, y, width, depth, height, rack, angle) {
+    // Dessiner un rack en vue isométrique avec effets Rayons X et Opacité
+    drawIsoRack(ctx, x, y, width, depth, height, rack, angle, opacity = 1, xrayAlpha = 0) {
         ctx.save();
+
+        // Appliquer l'opacité globale
+        ctx.globalAlpha = opacity;
 
         // Angle isométrique standard (30°)
         const iso = Math.PI / 6; // 30 degrés
@@ -2129,8 +2231,12 @@ class QuadViewManager {
             y: y + (p.x * Math.sin(iso) + p.z * Math.sin(iso))
         }));
 
+        // Calculer les couleurs avec effet Rayons X (plus transparent = plus clair)
+        const faceOpacity = 1 - (xrayAlpha * 0.7); // Max 70% de transparence
+
         // Face avant (plus sombre)
         ctx.fillStyle = this.adjustColor(rack.color, -30);
+        ctx.globalAlpha = opacity * faceOpacity;
         ctx.beginPath();
         ctx.moveTo(isoPoints[0].x, isoPoints[0].y);
         ctx.lineTo(isoPoints[1].x, isoPoints[1].y);
@@ -2139,10 +2245,12 @@ class QuadViewManager {
         ctx.closePath();
         ctx.fill();
         ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.globalAlpha = opacity;
         ctx.stroke();
 
         // Face droite (encore plus sombre)
         ctx.fillStyle = this.adjustColor(rack.color, -50);
+        ctx.globalAlpha = opacity * faceOpacity;
         ctx.beginPath();
         ctx.moveTo(isoPoints[1].x, isoPoints[1].y);
         ctx.lineTo(isoPoints[2].x, isoPoints[2].y);
@@ -2150,10 +2258,12 @@ class QuadViewManager {
         ctx.lineTo(isoPoints[1].x, isoPoints[1].y - height);
         ctx.closePath();
         ctx.fill();
+        ctx.globalAlpha = opacity;
         ctx.stroke();
 
         // Face du dessus (plus claire)
         ctx.fillStyle = this.adjustColor(rack.color, 20);
+        ctx.globalAlpha = opacity * faceOpacity;
         ctx.beginPath();
         ctx.moveTo(isoPoints[0].x, isoPoints[0].y - height);
         ctx.lineTo(isoPoints[1].x, isoPoints[1].y - height);
@@ -2161,27 +2271,36 @@ class QuadViewManager {
         ctx.lineTo(isoPoints[3].x, isoPoints[3].y - height);
         ctx.closePath();
         ctx.fill();
+        ctx.globalAlpha = opacity;
         ctx.stroke();
 
-        // Dessiner les étages
+        // Dessiner les étages (VISIBLES avec Rayons X)
         if (rack.levels && rack.levels.length > 0) {
             const levelHeight = height / rack.levels.length;
 
             rack.levels.forEach((level, index) => {
                 const levelY = y - (index + 1) * levelHeight;
 
-                // Ligne de séparation
-                ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+                // Ligne de séparation (plus visible avec rayons X)
+                const lineAlpha = 0.5 + (xrayAlpha * 0.5); // Plus visible avec rayons X
+                ctx.strokeStyle = `rgba(0,0,0,${lineAlpha})`;
                 ctx.lineWidth = 2;
+                ctx.globalAlpha = opacity;
                 ctx.beginPath();
                 ctx.moveTo(isoPoints[0].x, levelY);
                 ctx.lineTo(isoPoints[1].x, levelY);
                 ctx.lineTo(isoPoints[2].x, levelY);
                 ctx.stroke();
+
+                // EFFET RAYONS X : Montrer le contenu de l'étage
+                if (xrayAlpha > 0.3) {
+                    this.drawLevelContents(ctx, isoPoints, levelY, levelHeight, level, xrayAlpha, opacity);
+                }
             });
         }
 
         // Code du rack
+        ctx.globalAlpha = opacity;
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
@@ -2198,24 +2317,94 @@ class QuadViewManager {
             ctx.fillText(`${rack.levels.length} étages`, x, y - height - 10);
         }
 
+        // Effet de glow si rayons X actif
+        if (xrayAlpha > 0) {
+            ctx.globalAlpha = xrayAlpha * 0.5;
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 10;
+
+            // Contour brillant
+            ctx.beginPath();
+            ctx.moveTo(isoPoints[0].x, isoPoints[0].y);
+            ctx.lineTo(isoPoints[1].x, isoPoints[1].y);
+            ctx.lineTo(isoPoints[1].x, isoPoints[1].y - height);
+            ctx.lineTo(isoPoints[0].x, isoPoints[0].y - height);
+            ctx.closePath();
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+        }
+
         ctx.restore();
     }
 
-    // Ajuster la luminosité d'une couleur
-    adjustColor(color, amount) {
-        // Convertir hex en RGB
-        const hex = color.replace('#', '');
-        let r = parseInt(hex.substr(0, 2), 16);
-        let g = parseInt(hex.substr(2, 2), 16);
-        let b = parseInt(hex.substr(4, 2), 16);
+    // Dessiner le contenu d'un étage (visible en mode Rayons X)
+    drawLevelContents(ctx, isoPoints, levelY, levelHeight, level, xrayAlpha, opacity) {
+        if (!level.slots || level.slots.length === 0) return;
 
-        // Ajuster
-        r = Math.max(0, Math.min(255, r + amount));
-        g = Math.max(0, Math.min(255, g + amount));
-        b = Math.max(0, Math.min(255, b + amount));
+        ctx.save();
 
-        // Reconvertir en hex
-        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        // Calculer la largeur de l'étage
+        const levelWidth = Math.abs(isoPoints[1].x - isoPoints[0].x);
+        const slotWidth = levelWidth / Math.max(level.slots.length, 1);
+
+        // Parcourir les emplacements
+        level.slots.forEach((slot, index) => {
+            const slotX = isoPoints[0].x + (index + 0.5) * slotWidth;
+            const slotY = levelY - levelHeight / 2;
+
+            // Vérifier si l'emplacement contient des articles
+            const hasArticles = slot.articles && slot.articles.length > 0;
+
+            if (hasArticles) {
+                const article = slot.articles[0];
+                const quantity = article.quantity || article.stock_actuel || 0;
+
+                // Couleur selon le stock
+                let stockColor = '#2ecc71'; // Vert par défaut
+                if (quantity === 0) {
+                    stockColor = '#e74c3c'; // Rouge
+                } else if (quantity <= (article.stock_minimum || 3)) {
+                    stockColor = '#f39c12'; // Orange
+                }
+
+                // Dessiner une petite boîte pour l'article
+                const boxSize = Math.min(slotWidth * 0.6, 8);
+
+                ctx.globalAlpha = opacity * xrayAlpha;
+                ctx.fillStyle = stockColor;
+                ctx.beginPath();
+                ctx.arc(slotX, slotY, boxSize / 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Bordure brillante
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Afficher la quantité si assez de place
+                if (boxSize > 5 && xrayAlpha > 0.7) {
+                    ctx.globalAlpha = opacity * xrayAlpha;
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 7px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(quantity.toString(), slotX, slotY);
+                }
+            } else {
+                // Emplacement vide - petit point gris
+                ctx.globalAlpha = opacity * xrayAlpha * 0.3;
+                ctx.fillStyle = '#95a5a6';
+                const emptySize = Math.min(slotWidth * 0.3, 4);
+                ctx.beginPath();
+                ctx.arc(slotX, slotY, emptySize / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        ctx.restore();
     }
 
     // Dans QuadViewManager
@@ -2791,6 +2980,185 @@ class QuadViewManager {
                     this.draw3DView(this.currentRacks);
                 }
                 this.animationFrame = null;
+            }
+        };
+
+        animate();
+    }
+
+    // Trouver quel rack est sous une position de souris
+    findRackAt3DPosition(mouseX, mouseY) {
+        if (!this.currentRacks || this.currentRacks.length === 0) return null;
+
+        const width = this.canvas3D.width;
+        const height = this.canvas3D.height;
+        const centerX = width / 2;
+        const centerY = height / 2 + 50;
+        const radius = 180;
+
+        // Parcourir tous les racks
+        for (let i = 0; i < this.currentRacks.length; i++) {
+            const rack = this.currentRacks[i];
+
+            // Calculer la position du rack
+            const baseAngle = (i / this.currentRacks.length) * 360;
+            const angle = (baseAngle + this.rotation3D) % 360;
+            const angleRad = (angle * Math.PI) / 180;
+
+            const x = Math.cos(angleRad) * radius;
+            const z = Math.sin(angleRad) * radius;
+
+            // Projection isométrique
+            const isoX = centerX + x * this.isometric.scale;
+            const isoY = centerY - z * this.isometric.scale * 0.5;
+
+            // Échelle selon profondeur
+            const scale = 1 - (z / radius) * 0.3;
+            const rackWidth = rack.width * 20 * scale;
+            const rackHeight = (rack.levels?.length || 1) * 12 * scale;
+
+            // Zone de détection (rectangle)
+            const left = isoX - rackWidth / 2;
+            const right = isoX + rackWidth / 2;
+            const top = isoY - rackHeight;
+            const bottom = isoY;
+
+            // Vérifier si la souris est dans cette zone
+            if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom) {
+                return rack;
+            }
+        }
+
+        return null;
+    }
+
+    // Démarrer l'effet Rayons X
+    startXRayEffect() {
+        // Annuler l'animation précédente si existe
+        if (this.xrayAnimFrame) {
+            cancelAnimationFrame(this.xrayAnimFrame);
+        }
+
+        // Animation progressive
+        const animate = () => {
+            this.xrayProgress += 0.08; // Vitesse d'apparition
+            if (this.xrayProgress > 1) this.xrayProgress = 1;
+
+            if (this.currentRacks) {
+                this.draw3DView(this.currentRacks);
+            }
+
+            if (this.xrayProgress < 1) {
+                this.xrayAnimFrame = requestAnimationFrame(animate);
+            }
+        };
+
+        animate();
+    }
+
+    // Arrêter l'effet Rayons X
+    stopXRayEffect() {
+        // Annuler l'animation
+        if (this.xrayAnimFrame) {
+            cancelAnimationFrame(this.xrayAnimFrame);
+        }
+
+        // Animation de disparition
+        const animate = () => {
+            this.xrayProgress -= 0.1; // Vitesse de disparition
+            if (this.xrayProgress < 0) this.xrayProgress = 0;
+
+            if (this.currentRacks) {
+                this.draw3DView(this.currentRacks);
+            }
+
+            if (this.xrayProgress > 0) {
+                this.xrayAnimFrame = requestAnimationFrame(animate);
+            }
+        };
+
+        animate();
+    }
+
+    // Zoomer sur un rack
+    zoomOnRack(rack) {
+        // Si c'est déjà le rack en focus, dézoomer
+        if (this.focusedRack === rack) {
+            this.resetZoom();
+            return;
+        }
+
+        this.focusedRack = rack;
+
+        // Annuler animation précédente
+        if (this.zoomAnimFrame) {
+            cancelAnimationFrame(this.zoomAnimFrame);
+        }
+
+        // Trouver l'angle du rack
+        const rackIndex = this.currentRacks.indexOf(rack);
+        const baseAngle = (rackIndex / this.currentRacks.length) * 360;
+        this.camera.targetRotation = -baseAngle; // Rotation pour mettre le rack face caméra
+        this.camera.targetScale = 1.8; // Zoom x1.8
+
+        // Animation
+        const startRotation = this.rotation3D;
+        const startScale = this.camera.currentScale;
+        let step = 0;
+        const steps = 40;
+
+        const animate = () => {
+            step++;
+            const progress = step / steps;
+            const easeProgress = 1 - Math.pow(1 - progress, 3); // Easing
+
+            // Rotation fluide
+            this.rotation3D = startRotation + (this.camera.targetRotation - startRotation) * easeProgress;
+
+            // Zoom fluide
+            this.camera.currentScale = startScale + (this.camera.targetScale - startScale) * easeProgress;
+            this.zoomProgress = easeProgress;
+
+            if (this.currentRacks) {
+                this.draw3DView(this.currentRacks);
+            }
+
+            if (step < steps) {
+                this.zoomAnimFrame = requestAnimationFrame(animate);
+            }
+        };
+
+        animate();
+    }
+
+    // Réinitialiser le zoom
+    resetZoom() {
+        this.focusedRack = null;
+
+        // Annuler animation précédente
+        if (this.zoomAnimFrame) {
+            cancelAnimationFrame(this.zoomAnimFrame);
+        }
+
+        this.camera.targetScale = 1;
+        const startScale = this.camera.currentScale;
+        let step = 0;
+        const steps = 30;
+
+        const animate = () => {
+            step++;
+            const progress = step / steps;
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+            this.camera.currentScale = startScale + (1 - startScale) * easeProgress;
+            this.zoomProgress = 1 - easeProgress;
+
+            if (this.currentRacks) {
+                this.draw3DView(this.currentRacks);
+            }
+
+            if (step < steps) {
+                this.zoomAnimFrame = requestAnimationFrame(animate);
             }
         };
 
