@@ -2877,3 +2877,576 @@ style.textContent = `
     .text-danger { color: var(--danger-color); font-weight: 600; }
 `;
 document.head.appendChild(style);
+
+// ============================================
+// VUE QUAD POUR ACCUEIL - CODE DE PRODUCTION
+// ============================================
+
+// Utiliser exactement le même ApiManager que vuestock.js
+class AccueilQuadManager {
+    constructor() {
+        console.log('🎯 Initialisation AccueilQuadManager');
+
+        // Références aux éléments HTML
+        this.canvasTop = document.getElementById('accueilCanvasTop');
+        this.canvasFront = document.getElementById('accueilCanvasFront');
+        this.drawerContainer = document.getElementById('accueilDrawer');
+
+        if (!this.canvasTop || !this.canvasFront || !this.drawerContainer) {
+            console.error('❌ Éléments QuadView non trouvés dans accueil.html');
+            return;
+        }
+
+        // Contextes canvas
+        this.ctxTop = this.canvasTop.getContext('2d');
+        this.ctxFront = this.canvasFront.getContext('2d');
+
+        // Initialiser ApiManager (le même que vuestock.js)
+        this.api = new ApiManager();
+
+        // Données
+        this.racks = [];
+        this.selectedRack = null;
+        this.selectedLevel = null;
+
+        // Variables pour le dessin
+        this.gridSize = 20;
+        this.rackHeightPerLevel = 40;
+        this.slotSize = 60;
+
+        // Initialiser
+        this.init();
+    }
+
+    async init() {
+        console.log('🔧 Configuration AccueilQuadManager');
+
+        // 1. Ajuster les dimensions des canvas
+        this.resizeCanvases();
+        window.addEventListener('resize', () => this.resizeCanvases());
+
+        // 2. Charger les données RÉELLES depuis l'API
+        await this.loadRealData();
+
+        // 3. Connecter aux événements de recherche RÉELS
+        this.connectToRealSearchSystem();
+
+        // 4. Dessiner l'état initial
+        this.drawAllViews();
+
+        console.log('✅ AccueilQuadManager prêt');
+    }
+
+    async loadRealData() {
+        try {
+            console.log('📡 Chargement des données depuis API...');
+
+            // Appel API RÉEL - même endpoint que vuestock.js
+            const result = await this.api.getFullConfig();
+
+            if (result.success && result.data) {
+                // Structure exactement comme dans vuestock.js
+                this.racks = result.data.racks || result.data;
+
+                // Normaliser les données comme dans vuestock.js
+                this.normalizeRackData();
+
+                // Mettre à jour le compteur
+                this.updateRackCount();
+
+                console.log(`✅ ${this.racks.length} racks chargés depuis API`);
+
+                // Sélection automatique du premier rack pour démo
+                if (this.racks.length > 0) {
+                    this.selectRack(this.racks[0]);
+
+                    // Sélectionner le premier niveau s'il existe
+                    if (this.selectedRack.levels && this.selectedRack.levels.length > 0) {
+                        const sortedLevels = [...this.selectedRack.levels]
+                            .sort((a, b) => a.display_order - b.display_order);
+                        this.selectLevel(sortedLevels[0]);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('❌ Erreur chargement données réelles:', error);
+            this.showError('Impossible de charger les racks. Vérifiez la connexion API.');
+        }
+    }
+
+    normalizeRackData() {
+        // Normaliser les données comme dans QuadViewManager
+        this.racks.forEach(rack => {
+            // S'assurer que les propriétés existent
+            rack.displayX = rack.position_x || 0;
+            rack.displayY = rack.position_y || 0;
+            rack.displayWidth = (rack.width || 3) * this.gridSize;
+            rack.displayHeight = (rack.depth || 2) * this.gridSize;
+            rack.rotation = rack.rotation || 0;
+
+            // Normaliser les niveaux
+            if (rack.levels) {
+                rack.levels.forEach(level => {
+                    level.code = level.level_code || level.code;
+
+                    // Normaliser les emplacements
+                    if (level.slots) {
+                        level.slots.forEach(slot => {
+                            slot.code = slot.slot_code || slot.code;
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    connectToRealSearchSystem() {
+        console.log('🔗 Connexion au système de recherche...');
+
+        // 1. Recherche par nom (votre système existant)
+        const searchNomBtn = document.getElementById('searchNomBtn');
+        const searchNomInput = document.getElementById('searchNomInput');
+
+        if (searchNomBtn && searchNomInput) {
+            searchNomBtn.addEventListener('click', async () => {
+                await this.handleRealSearch(searchNomInput.value, 'nom');
+            });
+
+            searchNomInput.addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter') {
+                    await this.handleRealSearch(searchNomInput.value, 'nom');
+                }
+            });
+        }
+
+        // 2. Recherche par code-barre (votre système existant)
+        const searchCodebarreBtn = document.getElementById('searchCodebarreBtn');
+        const searchCodebarreInput = document.getElementById('searchCodebarreInput');
+
+        if (searchCodebarreBtn && searchCodebarreInput) {
+            searchCodebarreBtn.addEventListener('click', async () => {
+                await this.handleRealSearch(searchCodebarreInput.value, 'codebarre');
+            });
+
+            searchCodebarreInput.addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter') {
+                    await this.handleRealSearch(searchCodebarreInput.value, 'codebarre');
+                }
+            });
+        }
+    }
+
+    async handleRealSearch(searchTerm, searchType) {
+        if (!searchTerm || searchTerm.trim() === '') {
+            this.showNotification('Veuillez entrer un terme de recherche', 'warning');
+            return;
+        }
+
+        console.log(`🔍 Recherche réelle: "${searchTerm}" (type: ${searchType})`);
+
+        try {
+            // Utiliser l'API de recherche RÉELLE (comme dans vuestock.js)
+            const results = await this.api.searchArticles(searchTerm);
+
+            if (results && results.length > 0) {
+                // Prendre le premier résultat (comme dans vuestock.js)
+                const article = results[0];
+
+                if (article.full_code) {
+                    console.log(`✅ Article trouvé: ${article.full_code}`);
+
+                    // Mettre en évidence dans la vue Quad
+                    this.highlightArticleLocation(article.full_code);
+
+                    this.showNotification(`Article trouvé dans ${article.full_code}`, 'success');
+                } else {
+                    this.showNotification('Article trouvé mais non localisé', 'warning');
+                }
+            } else {
+                this.showNotification('Aucun article trouvé', 'warning');
+            }
+        } catch (error) {
+            console.error('❌ Erreur recherche:', error);
+            this.showNotification('Erreur lors de la recherche', 'error');
+        }
+    }
+
+    highlightArticleLocation(fullCode) {
+        // Parser le code complet: A-10-20
+        const parts = fullCode.split('-');
+        if (parts.length !== 3) {
+            console.error('Format de code invalide:', fullCode);
+            return;
+        }
+
+        const [rackCode, levelCode, slotCode] = parts;
+
+        // 1. Trouver le rack
+        const rack = this.racks.find(r => r.code === rackCode);
+        if (!rack) {
+            console.error(`Rack ${rackCode} non trouvé`);
+            this.showNotification(`Rack ${rackCode} non trouvé`, 'error');
+            return;
+        }
+
+        // 2. Sélectionner le rack
+        this.selectRack(rack);
+
+        // 3. Trouver le niveau
+        const level = rack.levels?.find(l => l.code === levelCode);
+        if (!level) {
+            console.error(`Étage ${levelCode} non trouvé dans rack ${rackCode}`);
+            this.showNotification(`Étage ${levelCode} non trouvé`, 'error');
+            return;
+        }
+
+        // 4. Sélectionner le niveau
+        this.selectLevel(level);
+
+        // 5. Mettre à jour le tiroir avec mise en évidence
+        this.updateDrawerWithHighlight(level, slotCode);
+
+        // 6. Ajouter effet visuel
+        this.addHighlightEffect(rack, level, slotCode);
+    }
+
+    selectRack(rack) {
+        this.selectedRack = rack;
+        this.selectedLevel = null;
+
+        // Mettre à jour l'affichage
+        document.getElementById('accueilSelectedRack').textContent =
+            `Rack ${rack.code}`;
+
+        // Redessiner les vues
+        this.drawAllViews();
+    }
+
+    selectLevel(level) {
+        this.selectedLevel = level;
+
+        document.getElementById('accueilLevelInfo').textContent =
+            `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
+    }
+
+    drawAllViews() {
+        this.drawTopView();
+
+        if (this.selectedRack) {
+            this.drawFrontView();
+        }
+
+        if (this.selectedLevel) {
+            this.updateDrawer(this.selectedLevel);
+        }
+    }
+
+    drawTopView() {
+        if (!this.ctxTop) return;
+
+        const ctx = this.ctxTop;
+        const width = this.canvasTop.width;
+        const height = this.canvasTop.height;
+
+        // Effacer
+        ctx.clearRect(0, 0, width, height);
+
+        // Dessiner la grille
+        this.drawGrid(ctx, width, height, this.gridSize);
+
+        // Calculer la position de départ (centré)
+        const totalRackWidth = this.racks.reduce((sum, rack) =>
+            sum + rack.displayWidth + 40, 0);
+        let currentX = Math.max(20, (width - totalRackWidth) / 2);
+        const startY = height / 2 - 40;
+
+        // Dessiner chaque rack
+        this.racks.forEach(rack => {
+            const x = currentX;
+            const y = startY;
+            const w = rack.displayWidth;
+            const h = rack.displayHeight;
+
+            // Mettre à jour les coordonnées d'affichage
+            rack.displayX = x;
+            rack.displayY = y;
+
+            // Couleur
+            ctx.fillStyle = rack === this.selectedRack ? '#ffc107' : (rack.color || '#4a90e2');
+            ctx.fillRect(x, y, w, h);
+
+            // Bordure
+            ctx.strokeStyle = rack === this.selectedRack ? '#fd7e14' : '#333';
+            ctx.lineWidth = rack === this.selectedRack ? 3 : 2;
+            ctx.strokeRect(x, y, w, h);
+
+            // Code du rack
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(rack.code, x + w/2, y + h/2);
+
+            // Avancer pour le prochain rack
+            currentX += w + 40;
+        });
+    }
+
+    drawFrontView() {
+        if (!this.ctxFront || !this.selectedRack) return;
+
+        const ctx = this.ctxFront;
+        const width = this.canvasFront.width;
+        const height = this.canvasFront.height;
+
+        // Effacer
+        ctx.clearRect(0, 0, width, height);
+
+        const rack = this.selectedRack;
+        const rackWidth = (rack.width || 3) * 30;
+        const startX = (width - rackWidth) / 2;
+        const startY = height - 20;
+
+        // Base du rack
+        ctx.fillStyle = rack.color || '#4a90e2';
+        ctx.fillRect(startX, startY - 10, rackWidth, 10);
+
+        // Niveaux (du bas vers le haut)
+        if (rack.levels && rack.levels.length) {
+            const levels = [...rack.levels].sort((a, b) => a.display_order - b.display_order);
+            let currentY = startY - 10;
+
+            levels.forEach(level => {
+                const levelHeight = this.rackHeightPerLevel;
+                const isSelected = level === this.selectedLevel;
+
+                // Étage
+                ctx.fillStyle = isSelected ? '#ffc107' : '#adb5bd';
+                ctx.fillRect(startX, currentY - levelHeight, rackWidth, levelHeight);
+
+                // Séparateur
+                ctx.strokeStyle = '#495057';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(startX, currentY - levelHeight);
+                ctx.lineTo(startX + rackWidth, currentY - levelHeight);
+                ctx.stroke();
+
+                // Code de l'étage
+                ctx.fillStyle = isSelected ? '#000' : '#fff';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(level.code, startX + rackWidth/2, currentY - levelHeight/2);
+
+                currentY -= levelHeight;
+            });
+        }
+    }
+
+    updateDrawer(level) {
+        if (!this.drawerContainer) return;
+
+        let html = '';
+
+        if (!level.slots || level.slots.length === 0) {
+            html = `
+                <div class="empty-drawer-message">
+                    <i class="fas fa-box-open"></i>
+                    <p>Aucun emplacement dans cet étage</p>
+                </div>
+            `;
+        } else {
+            // Trier les emplacements par code
+            const sortedSlots = [...level.slots].sort((a, b) =>
+                parseInt(a.code) - parseInt(b.code));
+
+            // Calculer la classe de zoom
+            const slotCount = sortedSlots.length;
+            let zoomClass = 'zoom-large';
+            if (slotCount > 14) zoomClass = 'zoom-small';
+            else if (slotCount > 9) zoomClass = 'zoom-medium';
+
+            html = '<div class="quad-slot-grid">';
+
+            sortedSlots.forEach(slot => {
+                const article = slot.articles && slot.articles.length > 0 ? slot.articles[0] : null;
+                const hasArticle = !!article;
+                const stockLevel = this.getStockLevel(article);
+
+                html += `
+                    <div class="quad-slot ${zoomClass} ${hasArticle ? 'occupied ' + stockLevel : ''}"
+                         data-slot-code="${slot.code}"
+                         title="${this.generateSlotTooltip(slot, article)}">
+                        ${this.generateSlotContent(slot, article, zoomClass)}
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+        }
+
+        this.drawerContainer.innerHTML = html;
+    }
+
+    updateDrawerWithHighlight(level, highlightedSlotCode) {
+        this.updateDrawer(level);
+
+        // Ajouter la mise en évidence sur le slot spécifique
+        const highlightedSlot = this.drawerContainer.querySelector(
+            `[data-slot-code="${highlightedSlotCode}"]`
+        );
+
+        if (highlightedSlot) {
+            highlightedSlot.classList.add('highlighted', 'pulse');
+
+            // Scroll vers le slot
+            highlightedSlot.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+    }
+
+    getStockLevel(article) {
+        if (!article) return '';
+
+        const stockActuel = article.stock_actuel || article.quantity || 0;
+        const stockMinimum = article.stock_minimum || 3;
+
+        if (stockActuel === 0) return 'stock-zero';
+        if (stockActuel <= stockMinimum) return 'stock-low';
+        return 'stock-good';
+    }
+
+    generateSlotTooltip(slot, article) {
+        const baseText = `Emplacement ${slot.code}`;
+
+        if (!article) return `${baseText} - Libre`;
+
+        const stockActuel = article.stock_actuel || article.quantity || 0;
+        const stockMinimum = article.stock_minimum || 3;
+        const articleName = article.nom || article.name || 'Article';
+
+        let status = '';
+        if (stockActuel === 0) status = 'Stock épuisé';
+        else if (stockActuel <= stockMinimum) status = `Stock faible (min: ${stockMinimum})`;
+        else status = `Stock OK (min: ${stockMinimum})`;
+
+        return `${baseText} - ${articleName}\n${stockActuel} unités - ${status}`;
+    }
+
+    generateSlotContent(slot, article, zoomClass) {
+        if (!article) {
+            return `
+                <div class="quad-slot-code">${slot.code}</div>
+                <div class="quad-slot-status">Libre</div>
+            `;
+        }
+
+        const imageUrl = article.photo || article.photo_url ||
+            'https://via.placeholder.com/40x40/cccccc/666666?text=📦';
+        const stock = article.quantity || article.stock_actuel || 0;
+        const articleName = article.name || article.nom || 'Article';
+
+        return `
+            <div class="slot-content">
+                <div class="slot-article-image">
+                    <img src="${imageUrl}" alt="${articleName}"
+                         onerror="this.src='https://via.placeholder.com/40x40/cccccc/666666?text=📦'">
+                </div>
+                <div class="slot-article-info">
+                    <div class="slot-code-small">${slot.code}</div>
+                    <div class="article-quantity">${stock}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    addHighlightEffect(rack, level, slotCode) {
+        // Animation sur le rack dans la vue du dessus
+        const rackIndex = this.racks.indexOf(rack);
+        if (rackIndex !== -1) {
+            this.drawTopView(); // Redessiner avec mise en évidence
+        }
+
+        // Animation sur le niveau dans la vue de face
+        if (level && this.selectedLevel === level) {
+            this.drawFrontView(); // Redessiner avec mise en évidence
+        }
+
+        console.log(`🎯 Emplacement ${slotCode} mis en évidence`);
+    }
+
+    drawGrid(ctx, width, height, size) {
+        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+        ctx.lineWidth = 1;
+
+        // Lignes verticales
+        for (let x = 0; x < width; x += size) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+
+        // Lignes horizontales
+        for (let y = 0; y < height; y += size) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+    }
+
+    resizeCanvases() {
+        const containers = [
+            { canvas: this.canvasTop, container: this.canvasTop?.parentElement },
+            { canvas: this.canvasFront, container: this.canvasFront?.parentElement }
+        ];
+
+        containers.forEach(item => {
+            if (item.canvas && item.container) {
+                const rect = item.container.getBoundingClientRect();
+                item.canvas.width = rect.width - 30; // Padding
+                item.canvas.height = rect.height - 30;
+            }
+        });
+
+        // Redessiner après redimensionnement
+        this.drawAllViews();
+    }
+
+    updateRackCount() {
+        const countElement = document.getElementById('accueilRackCount');
+        if (countElement) {
+            countElement.textContent = `${this.racks.length} racks`;
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+
+        // Vous pouvez intégrer votre système de notification existant
+        // ou utiliser alert() temporairement
+        if (type === 'error') {
+            console.error(message);
+        }
+    }
+
+    showError(message) {
+        console.error(`❌ ${message}`);
+        // Afficher dans l'interface si nécessaire
+    }
+}
+
+// Initialiser quand la page est chargée
+document.addEventListener('DOMContentLoaded', () => {
+    // Vérifier si la section Quad existe
+    const quadSection = document.querySelector('.quad-section');
+    if (quadSection) {
+        // Délai pour s'assurer que tout est chargé
+        setTimeout(() => {
+            window.accueilQuadManager = new AccueilQuadManager();
+        }, 500);
+    }
+});
