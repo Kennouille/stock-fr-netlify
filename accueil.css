@@ -1829,3 +1829,24 @@ body {
     border-color: #fd7e14;
     transform: scale(1.05);
 }
+
+/* Alternative : style qui correspond aux boutons existants */
+.btn-inventaire {
+    background: var(--primary-color, #4a90e2);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-inventaire:hover {
+    background: var(--primary-dark, #357abd);
+    color: white;
+    text-decoration: none;
+}
