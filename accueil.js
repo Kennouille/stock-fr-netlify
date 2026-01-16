@@ -981,6 +981,13 @@ async function searchByName() {
 
         openSearchPopup(articles, 'nom');
 
+        // ========== AJOUTER CES 3 LIGNES ==========
+        // Mettre à jour la vue Quad avec le premier article trouvé
+        if (articles[0] && window.accueilQuadManager) {
+            window.accueilQuadManager.highlightArticleLocationFromArticle(articles[0]);
+        }
+        // ========== FIN AJOUT ==========
+
     } catch (error) {
         console.error('Erreur de recherche:', error);
         alert('Erreur lors de la recherche');
@@ -2939,38 +2946,89 @@ class AccueilQuadManager {
 
     async loadRealData() {
         try {
-            console.log('📡 Chargement des données depuis API...');
+            console.log('📡 Chargement des racks depuis Supabase...');
 
-            // Appel API RÉEL - même endpoint que vuestock.js
-            const result = await this.api.getFullConfig();
+            const { data: racks, error } = await supabase
+                .from('w_racks')
+                .select(`
+                    *,
+                    w_levels (
+                        id,
+                        level_code,
+                        display_order,
+                        rack_id,
+                        w_slots (
+                            id,
+                            slot_code,
+                            level_id,
+                            display_order,
+                            status,
+                            w_slots_articles (
+                                w_articles (*)
+                            )
+                        )
+                    )
+                `)
+                .order('rack_code');
 
-            if (result.success && result.data) {
-                // Structure exactement comme dans vuestock.js
-                this.racks = result.data.racks || result.data;
+            if (error) {
+                console.error('Erreur Supabase:', error);
+                throw error;
+            }
 
-                // Normaliser les données comme dans vuestock.js
+            if (racks && racks.length > 0) {
+                console.log(`✅ ${racks.length} racks chargés depuis Supabase`);
+
+                // Transformer les données au format attendu
+                this.racks = racks.map(rack => ({
+                    id: rack.id,
+                    code: rack.rack_code,
+                    name: rack.display_name,
+                    position_x: rack.position_x,
+                    position_y: rack.position_y,
+                    rotation: rack.rotation,
+                    width: rack.width,
+                    depth: rack.depth,
+                    color: rack.color,
+                    levels: rack.w_levels?.map(level => ({
+                        id: level.id,
+                        code: level.level_code,
+                        level_code: level.level_code,
+                        display_order: level.display_order,
+                        rack_id: level.rack_id,
+                        slots: level.w_slots?.map(slot => ({
+                            id: slot.id,
+                            code: slot.slot_code,
+                            slot_code: slot.slot_code,
+                            level_id: slot.level_id,
+                            display_order: slot.display_order,
+                            status: slot.status,
+                            articles: slot.w_slots_articles?.map(sa => sa.w_articles) || []
+                        })) || []
+                    })) || []
+                }));
+
                 this.normalizeRackData();
-
-                // Mettre à jour le compteur
                 this.updateRackCount();
 
-                console.log(`✅ ${this.racks.length} racks chargés depuis API`);
-
-                // Sélection automatique du premier rack pour démo
+                // Sélectionner le premier rack
                 if (this.racks.length > 0) {
                     this.selectRack(this.racks[0]);
 
-                    // Sélectionner le premier niveau s'il existe
                     if (this.selectedRack.levels && this.selectedRack.levels.length > 0) {
                         const sortedLevels = [...this.selectedRack.levels]
                             .sort((a, b) => a.display_order - b.display_order);
                         this.selectLevel(sortedLevels[0]);
                     }
                 }
+            } else {
+                console.warn('⚠️ Aucun rack trouvé dans Supabase');
+                this.showNotification('Aucun rack configuré', 'warning');
             }
+
         } catch (error) {
-            console.error('❌ Erreur chargement données réelles:', error);
-            this.showError('Impossible de charger les racks. Vérifiez la connexion API.');
+            console.error('❌ Erreur chargement Supabase:', error);
+            this.showError('Impossible de charger les racks. Erreur base de données.');
         }
     }
 
@@ -3436,6 +3494,32 @@ class AccueilQuadManager {
     showError(message) {
         console.error(`❌ ${message}`);
         // Afficher dans l'interface si nécessaire
+    }
+
+    // Ajouter cette méthode dans AccueilQuadManager
+    highlightArticleLocationFromArticle(article) {
+        // UN SEUL LOG IMPORTANT
+        console.log('QUAD DEBUG - Article:', {
+            id: article.id,
+            nom: article.nom,
+            emplacement: article.emplacement
+        });
+
+        if (!article.emplacement || article.emplacement.trim() === '') {
+            return false;
+        }
+
+        // Essayez de parser différents formats
+        const fullCode = article.emplacement;
+
+        // Format 1: "A-10-20" (standard)
+        if (fullCode.includes('-')) {
+            return this.highlightArticleLocation(fullCode);
+        }
+
+        // Format 2: "A10-20" ou autres variantes
+        console.log('QUAD DEBUG - Format d\'emplacement non standard:', fullCode);
+        return false;
     }
 }
 
