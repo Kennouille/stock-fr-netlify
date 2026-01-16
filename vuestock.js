@@ -2690,12 +2690,18 @@ class QuadViewManager {
     }
 
     set3DAngle(angle) {
+        // Annuler toute animation en cours
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+        }
+
         // Changer l'angle isométrique (30°, 45°, 60°)
         this.isometric.angle = angle;
 
         // Animation fluide de rotation
         const targetRotation = angle * 3; // Rotation proportionnelle à l'angle
-        const currentRotation = this.rotation3D;
+        const currentRotation = this.rotation3D || 0; // Protection contre NaN
         const diff = targetRotation - currentRotation;
 
         // Animer la rotation
@@ -2703,14 +2709,26 @@ class QuadViewManager {
         const steps = 30; // 30 frames d'animation
         const animate = () => {
             step++;
-            this.rotation3D = currentRotation + (diff * step / steps);
+            const newRotation = currentRotation + (diff * step / steps);
+
+            // Vérifier que la valeur est valide
+            if (!isNaN(newRotation) && isFinite(newRotation)) {
+                this.rotation3D = newRotation;
+            }
 
             if (this.currentRacks) {
                 this.draw3DView(this.currentRacks);
             }
 
             if (step < steps) {
-                requestAnimationFrame(animate);
+                this.animationFrame = requestAnimationFrame(animate);
+            } else {
+                // Forcer la valeur finale exacte
+                this.rotation3D = targetRotation;
+                if (this.currentRacks) {
+                    this.draw3DView(this.currentRacks);
+                }
+                this.animationFrame = null;
             }
         };
 
@@ -2722,16 +2740,27 @@ class QuadViewManager {
     reset3DView() {
         console.log('Vue 3D réinitialisée');
 
+        // Annuler toute animation en cours
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+        }
+
         // Animation de retour à la position initiale
         const targetRotation = 0;
-        const currentRotation = this.rotation3D;
+        const currentRotation = this.rotation3D || 0;
         const diff = targetRotation - currentRotation;
 
         let step = 0;
         const steps = 40; // Animation plus longue pour le reset
         const animate = () => {
             step++;
-            this.rotation3D = currentRotation + (diff * step / steps);
+            const newRotation = currentRotation + (diff * step / steps);
+
+            // Vérifier que la valeur est valide
+            if (!isNaN(newRotation) && isFinite(newRotation)) {
+                this.rotation3D = newRotation;
+            }
 
             // Réinitialiser aussi l'angle isométrique
             this.isometric.angle = 30;
@@ -2741,13 +2770,14 @@ class QuadViewManager {
             }
 
             if (step < steps) {
-                requestAnimationFrame(animate);
+                this.animationFrame = requestAnimationFrame(animate);
             } else {
                 // Forcer exactement 0 à la fin
                 this.rotation3D = 0;
                 if (this.currentRacks) {
                     this.draw3DView(this.currentRacks);
                 }
+                this.animationFrame = null;
             }
         };
 
