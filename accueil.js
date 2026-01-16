@@ -2908,9 +2908,6 @@ class AccueilQuadManager {
         this.ctxTop = this.canvasTop.getContext('2d');
         this.ctxFront = this.canvasFront.getContext('2d');
 
-        // Initialiser ApiManager (le même que vuestock.js)
-        this.api = new ApiManager();
-
         // Données
         this.racks = [];
         this.selectedRack = null;
@@ -2934,9 +2931,6 @@ class AccueilQuadManager {
 
         // 2. Charger les données RÉELLES depuis l'API
         await this.loadRealData();
-
-        // 3. Connecter aux événements de recherche RÉELS
-        this.connectToRealSearchSystem();
 
         // 4. Dessiner l'état initial
         this.drawAllViews();
@@ -3091,41 +3085,6 @@ class AccueilQuadManager {
                     await this.handleRealSearch(searchCodebarreInput.value, 'codebarre');
                 }
             });
-        }
-    }
-
-    async handleRealSearch(searchTerm, searchType) {
-        if (!searchTerm || searchTerm.trim() === '') {
-            this.showNotification('Veuillez entrer un terme de recherche', 'warning');
-            return;
-        }
-
-        console.log(`🔍 Recherche réelle: "${searchTerm}" (type: ${searchType})`);
-
-        try {
-            // Utiliser l'API de recherche RÉELLE (comme dans vuestock.js)
-            const results = await this.api.searchArticles(searchTerm);
-
-            if (results && results.length > 0) {
-                // Prendre le premier résultat (comme dans vuestock.js)
-                const article = results[0];
-
-                if (article.full_code) {
-                    console.log(`✅ Article trouvé: ${article.full_code}`);
-
-                    // Mettre en évidence dans la vue Quad
-                    this.highlightArticleLocation(article.full_code);
-
-                    this.showNotification(`Article trouvé dans ${article.full_code}`, 'success');
-                } else {
-                    this.showNotification('Article trouvé mais non localisé', 'warning');
-                }
-            } else {
-                this.showNotification('Aucun article trouvé', 'warning');
-            }
-        } catch (error) {
-            console.error('❌ Erreur recherche:', error);
-            this.showNotification('Erreur lors de la recherche', 'error');
         }
     }
 
