@@ -2997,7 +2997,7 @@ class AccueilQuadManager {
         try {
             console.log('📡 Chargement des racks depuis Supabase...');
 
-            // 1. Charger les racks avec leurs niveaux et emplacements
+            // Charger seulement les données (sans afficher)
             const { data: racks, error: racksError } = await supabase
                 .from('w_vuestock_racks')
                 .select(`
@@ -3021,22 +3021,18 @@ class AccueilQuadManager {
 
             if (racksError) throw racksError;
 
-            // 2. Charger TOUS les articles (pour les associer ensuite)
             const { data: allArticles, error: articlesError } = await supabase
                 .from('w_articles')
                 .select('*')
-                .not('slot_id', 'is', null); // On ne prend que les articles placés
+                .not('slot_id', 'is', null);
 
             if (articlesError) throw articlesError;
 
-            // 3. Assembler manuellement : placer les articles dans leurs emplacements
+            // Stocker les données SANS les afficher
             if (racks && allArticles) {
                 this.racks = racks.map(rack => {
-                    // Parcourir chaque niveau...
                     const levelsWithSlots = rack.w_vuestock_levels?.map(level => {
-                        // Parcourir chaque emplacement de ce niveau...
                         const slotsWithArticles = level.w_vuestock_slots?.map(slot => {
-                            // Trouver l'article qui correspond à cet emplacement
                             const articleInSlot = allArticles.find(article =>
                                 article.slot_id === slot.id &&
                                 article.level_id === level.id &&
@@ -3061,51 +3057,64 @@ class AccueilQuadManager {
                         ...rack,
                         code: rack.rack_code,
                         name: rack.display_name,
+                        color: rack.color || '#4a90e2', // <-- GARDEZ LA COULEUR
                         levels: levelsWithSlots
                     };
                 });
 
-                // AJOUTER CES LIGNES (manquantes dans votre code) :
-                console.log(`✅ ${this.racks.length} racks chargés depuis Supabase`);
-                this.normalizeRackData();
-                this.updateRackCount();
+                console.log(`✅ ${this.racks.length} racks chargés (non affichés)`);
 
-                // Afficher la vue du dessus seulement (racks sans sélection)
-                this.drawTopView();
-
-                // Réinitialiser les autres vues
-                if (this.ctxFront) {
-                    const width = this.canvasFront.width;
-                    const height = this.canvasFront.height;
-                    this.ctxFront.clearRect(0, 0, width, height);
-                    this.ctxFront.fillStyle = '#f8f9fa';
-                    this.ctxFront.fillRect(0, 0, width, height);
-                    this.ctxFront.fillStyle = '#6c757d';
-                    this.ctxFront.font = '14px Arial';
-                    this.ctxFront.textAlign = 'center';
-                    this.ctxFront.fillText('Sélectionnez un rack dans la vue du dessus', width/2, height/2);
-                }
-
-                // Vider le tiroir
-                if (this.drawerContainer) {
-                    this.drawerContainer.innerHTML = `
-                        <div class="empty-drawer-state">
-                            <div class="drawer-front-placeholder">
-                                <i class="fas fa-drawer fa-3x"></i>
-                                <p>Sélectionnez un étage dans la vue de face</p>
-                            </div>
-                        </div>
-                    `;
-                }
-            } else {
-                console.warn('⚠️ Aucun rack trouvé dans Supabase');
-                this.showNotification('Aucun rack configuré', 'warning');
+                // NE PAS DESSINER - laisser les canvas vides
+                this.clearAllViews();
             }
 
         } catch (error) {
-            console.error('❌ Erreur chargement Supabase:', error);
-            this.showError('Impossible de charger les racks. Erreur base de données.');
+            console.error('❌ Erreur chargement:', error);
         }
+    }
+
+    clearAllViews() {
+        // 1. Vue du dessus - canvas blanc
+        if (this.ctxTop && this.canvasTop) {
+            this.ctxTop.clearRect(0, 0, this.canvasTop.width, this.canvasTop.height);
+            this.ctxTop.fillStyle = '#f8f9fa';
+            this.ctxTop.fillRect(0, 0, this.canvasTop.width, this.canvasTop.height);
+            this.ctxTop.fillStyle = '#6c757d';
+            this.ctxTop.font = '14px Arial';
+            this.ctxTop.textAlign = 'center';
+            this.ctxTop.fillText('Effectuez une recherche pour localiser un article',
+                               this.canvasTop.width/2, this.canvasTop.height/2);
+        }
+
+        // 2. Vue de face - canvas blanc
+        if (this.ctxFront && this.canvasFront) {
+            this.ctxFront.clearRect(0, 0, this.canvasFront.width, this.canvasFront.height);
+            this.ctxFront.fillStyle = '#f8f9fa';
+            this.ctxFront.fillRect(0, 0, this.canvasFront.width, this.canvasFront.height);
+            this.ctxFront.fillStyle = '#6c757d';
+            this.ctxFront.font = '14px Arial';
+            this.ctxFront.textAlign = 'center';
+            this.ctxFront.fillText('Sélectionnez un article dans les résultats',
+                                 this.canvasFront.width/2, this.canvasFront.height/2);
+        }
+
+        // 3. Détail étage - vide
+        if (this.drawerContainer) {
+            this.drawerContainer.innerHTML = `
+                <div class="empty-drawer-state">
+                    <div class="drawer-front-placeholder">
+                        <i class="fas fa-search fa-3x"></i>
+                        <p>Recherchez un article pour voir son emplacement</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 4. Réinitialiser les sélections
+        this.selectedRack = null;
+        this.selectedLevel = null;
+        document.getElementById('accueilSelectedRack').textContent = 'Aucun rack sélectionné';
+        document.getElementById('accueilLevelInfo').textContent = 'Aucun étage';
     }
 
     normalizeRackData() {
@@ -3606,8 +3615,133 @@ class AccueilQuadManager {
         // Afficher dans l'interface si nécessaire
     }
 
+    // Affiche UN SEUL rack (pas tous)
+    drawSingleRack(rack) {
+        if (!this.ctxTop) return;
+
+        const ctx = this.ctxTop;
+        const width = this.canvasTop.width;
+        const height = this.canvasTop.height;
+
+        // Effacer tout
+        ctx.clearRect(0, 0, width, height);
+
+        // Dessiner UN SEUL rack au centre
+        const w = (rack.width || 3) * 20;
+        const h = (rack.depth || 2) * 20;
+        const x = (width - w) / 2;
+        const y = (height - h) / 2;
+
+        // Couleur ORIGINALE du rack
+        ctx.fillStyle = rack.color || '#4a90e2';
+        ctx.fillRect(x, y, w, h);
+
+        // Bordure de mise en évidence
+        ctx.strokeStyle = '#fd7e14';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(x, y, w, h);
+
+        // Code du rack
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`RACK ${rack.code}`, x + w/2, y + h/2);
+
+        // Légende
+        ctx.fillStyle = '#333';
+        ctx.font = '12px Arial';
+        ctx.fillText(`Article localisé ici`, width/2, y + h + 20);
+    }
+
+    // Affiche UN SEUL étage
+    drawSingleLevel(rack, level) {
+        if (!this.ctxFront) return;
+
+        const ctx = this.ctxFront;
+        const width = this.canvasFront.width;
+        const height = this.canvasFront.height;
+
+        ctx.clearRect(0, 0, width, height);
+
+        // Afficher uniquement l'étage concerné au centre
+        const levelHeight = 100; // Hauteur fixe
+        const levelWidth = 200;  // Largeur fixe
+        const x = (width - levelWidth) / 2;
+        const y = (height - levelHeight) / 2;
+
+        // Étage
+        ctx.fillStyle = rack.color || '#4a90e2';
+        ctx.fillRect(x, y, levelWidth, levelHeight);
+
+        // Bordure
+        ctx.strokeStyle = '#fd7e14';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x, y, levelWidth, levelHeight);
+
+        // Texte
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`ÉTAGE ${level.code}`, x + levelWidth/2, y + levelHeight/2);
+
+        // Info rack
+        ctx.fillStyle = '#666';
+        ctx.font = '11px Arial';
+        ctx.fillText(`Rack: ${rack.code}`, width/2, y + levelHeight + 15);
+    }
+
+    // Affiche UN SEUL slot avec la photo
+    updateSingleSlotView(level, slot, article) {
+        if (!this.drawerContainer) return;
+
+        const articleInSlot = article || slot.articles?.[0];
+        const imageUrl = articleInSlot?.photo_url ||
+                        articleInSlot?.photo ||
+                        'https://via.placeholder.com/200x200/cccccc/666666?text=📦';
+
+        this.drawerContainer.innerHTML = `
+            <div class="single-slot-view">
+                <div class="slot-header">
+                    <h3>📍 Emplacement ${slot.full_code || `${level.code}-${slot.code}`}</h3>
+                    <div class="location-badges">
+                        <span class="badge">Rack ${this.selectedRack.code}</span>
+                        <span class="badge">Étage ${level.code}</span>
+                        <span class="badge">Slot ${slot.code}</span>
+                    </div>
+                </div>
+
+                <div class="slot-main">
+                    <div class="article-photo-container">
+                        <img src="${imageUrl}"
+                             alt="${articleInSlot?.nom || 'Article'}"
+                             class="article-photo"
+                             onerror="this.src='https://via.placeholder.com/200x200/cccccc/666666?text=📦'">
+                    </div>
+
+                    ${articleInSlot ? `
+                    <div class="article-info">
+                        <h4>${articleInSlot.nom}</h4>
+                        <div class="article-details">
+                            <div><strong>Numéro:</strong> ${articleInSlot.numero || 'N/A'}</div>
+                            <div><strong>Stock:</strong> ${articleInSlot.stock_actuel || 0} unités</div>
+                            ${articleInSlot.code_barre ? `<div><strong>Code-barres:</strong> ${articleInSlot.code_barre}</div>` : ''}
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="empty-slot-info">
+                        <i class="fas fa-box-open fa-2x"></i>
+                        <p>Emplacement vide</p>
+                    </div>
+                    `}
+                </div>
+            </div>
+        `;
+    }
+
     // Ajouter cette méthode dans AccueilQuadManager
-        highlightArticleLocationFromArticle(article) {
+    highlightArticleLocationFromArticle(article) {
         console.log('QUAD DEBUG - Article avec IDs:', {
             id: article.id,
             nom: article.nom,
@@ -3644,10 +3778,14 @@ class AccueilQuadManager {
             return false;
         }
 
-        // 4. Sélectionner et mettre en évidence
-        this.selectRack(rack);
-        this.selectLevel(level);
-        this.updateDrawerWithHighlight(level, slot.code, article);
+        // 4. Afficher UNIQUEMENT ce rack dans la vue du dessus
+        this.drawSingleRack(rack);  // <-- Nouvelle méthode
+
+        // 5. Afficher UNIQUEMENT cet étage dans la vue de face
+        this.drawSingleLevel(rack, level);  // <-- Nouvelle méthode
+
+        // 6. Afficher UNIQUEMENT ce slot dans le tiroir
+        this.updateSingleSlotView(level, slot, article);  // <-- Nouvelle méthode
 
         console.log(`✅ Article localisé: ${rack.code}-${level.code}-${slot.code}`);
         return true;
