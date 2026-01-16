@@ -3444,7 +3444,7 @@ class AccueilQuadManager {
 
         if (articleInSlot) {
             const imageUrl = articleInSlot.photo_url || articleInSlot.photo ||
-                'https://via.placeholder.com/150x150/cccccc/666666?text=📦';
+                'https://via.placeholder.com/100x100/cccccc/666666?text=📦';
             const articleName = articleInSlot.nom || articleInSlot.name || 'Article';
             const stock = articleInSlot.stock_actuel || articleInSlot.quantity || 0;
 
@@ -3452,7 +3452,8 @@ class AccueilQuadManager {
                 <div class="article-display">
                     <div class="article-image-large">
                         <img src="${imageUrl}" alt="${articleName}"
-                             onerror="this.src='https://via.placeholder.com/70x70/cccccc/666666?text=📦'">
+                         style="max-width: 100px; max-height: 100px;"
+                         onerror="this.src='https://via.placeholder.com/100x100/cccccc/666666?text=📦'">
                     </div>
                     <div class="article-info-large">
                         <h5>${articleName}</h5>
