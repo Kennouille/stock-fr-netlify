@@ -362,7 +362,7 @@ function openSearchPopup(results, searchType) {
             <div class="popup-content">
                 <div class="results-list">
                     ${results.map((article, index) => `
-                        <div class="result-item" data-id="${article.id}">
+                        `<div class="result-item" data-id="${article.id}" data-index="${index}">
                             <div class="result-main">
                                 <h4>${article.nom}</h4>
                                 <div class="result-details">
@@ -370,6 +370,7 @@ function openSearchPopup(results, searchType) {
                                     <span>${article.code_barre || 'Pas de code-barre'}</span>
                                     <span>Stock: ${article.stock_actuel || 0}</span>
                                     <span>${article.prix_unitaire ? article.prix_unitaire + '€' : ''}</span>
+                                    ${article.emplacement ? `<span class="article-location">📍 ${article.emplacement}</span>` : ''}
                                 </div>
                             </div>
                             <div class="result-actions">
@@ -382,8 +383,11 @@ function openSearchPopup(results, searchType) {
                                 <button class="btn-action print-label" data-id="${article.id}">
                                     <i class="fas fa-print"></i> Étiquette
                                 </button>
+                                <button class="btn-action show-location" data-index="${index}">
+                                    <i class="fas fa-map-marker-alt"></i> Localiser
+                                </button>
                             </div>
-                        </div>
+                        </div>`
                     `).join('')}
                 </div>
             </div>
@@ -429,6 +433,51 @@ function openSearchPopup(results, searchType) {
         btn.addEventListener('click', function() {
             const articleId = this.dataset.id;
             openPrintLabelPopup(results.find(a => a.id === articleId));
+        });
+    });
+
+    // Événement pour cliquer sur l'article lui-même (toute la ligne)
+    popup.querySelectorAll('.result-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            // Éviter de déclencher quand on clique sur les boutons
+            if (e.target.closest('.btn-action')) return;
+
+            const index = this.dataset.index;
+            const article = results[index];
+
+            // Fermer le popup
+            document.body.removeChild(popup);
+
+            // Mettre à jour la vue Quad
+            if (window.accueilQuadManager && article) {
+                const success = window.accueilQuadManager.highlightArticleLocationFromArticle(article);
+                if (success) {
+                    window.accueilQuadManager.drawAllViews();
+                    // Option: faire un effet visuel
+                    showNotification(`Article localisé: ${article.emplacement || 'Emplacement inconnu'}`);
+                }
+            }
+        });
+    });
+
+    // Bouton "Localiser" spécifique
+    popup.querySelectorAll('.show-location').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Empêcher le clic sur la ligne
+            const index = this.dataset.index;
+            const article = results[index];
+
+            // Fermer le popup
+            document.body.removeChild(popup);
+
+            // Mettre à jour la vue Quad
+            if (window.accueilQuadManager && article) {
+                const success = window.accueilQuadManager.highlightArticleLocationFromArticle(article);
+                if (success) {
+                    window.accueilQuadManager.drawAllViews();
+                    showNotification(`Article localisé dans ${article.emplacement}`);
+                }
+            }
         });
     });
 }
