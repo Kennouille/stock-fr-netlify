@@ -436,50 +436,32 @@ function openSearchPopup(results, searchType) {
         });
     });
 
-    // Événement pour cliquer sur l'article lui-même (toute la ligne)
-    popup.querySelectorAll('.result-item').forEach(item => {
-        item.addEventListener('click', function(e) {
-            // Éviter de déclencher quand on clique sur les boutons
-            if (e.target.closest('.btn-action')) return;
-
-            const index = this.dataset.index;
-            const article = results[index];
-
-            // Fermer le popup
-            document.body.removeChild(popup);
-
-            // Mettre à jour la vue Quad
-            if (window.accueilQuadManager && article) {
-                const success = window.accueilQuadManager.highlightArticleLocationFromArticle(article);
-                if (success) {
-                    window.accueilQuadManager.drawAllViews();
-                    // Option: faire un effet visuel
-                    console.log(`Article localisé: ${article.emplacement || 'Emplacement inconnu'}`);
-                }
-            }
-        });
-    });
-
-    // Bouton "Localiser" spécifique
+    // Événement POUR LE BOUTON "Localiser" SEULEMENT
     popup.querySelectorAll('.show-location').forEach(btn => {
         btn.addEventListener('click', function(e) {
-            e.stopPropagation(); // Empêcher le clic sur la ligne
+            e.stopPropagation(); // IMPORTANT : empêcher le clic sur la ligne
             const index = this.dataset.index;
             const article = results[index];
 
             // Fermer le popup
             document.body.removeChild(popup);
 
-            // Mettre à jour la vue Quad
+            // Mettre à jour la vue Quad (affichage UNIQUE)
             if (window.accueilQuadManager && article) {
-                const success = window.accueilQuadManager.highlightArticleLocationFromArticle(article);
-                if (success) {
-                    window.accueilQuadManager.drawAllViews();
-                    showNotification(`Article localisé dans ${article.emplacement}`);
-                }
+                window.accueilQuadManager.showSingleArticleLocation(article);
             }
         });
     });
+
+    // DÉSACTIVER le clic sur la ligne entière - COMMENTEZ ou SUPPRIMEZ ce bloc :
+    /*
+    popup.querySelectorAll('.result-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-action')) return;
+            // ... tout ce code ...
+        });
+    });
+    */
 }
 
 // ===== POPUP DÉTAILS ARTICLE =====
@@ -1030,11 +1012,7 @@ async function searchByName() {
 
         openSearchPopup(articles, 'nom');
 
-        // ========== AJOUTER CES 3 LIGNES ==========
-        // Mettre à jour la vue Quad avec le premier article trouvé
-        if (articles[0] && window.accueilQuadManager) {
-            window.accueilQuadManager.highlightArticleLocationFromArticle(articles[0]);
-        }
+
         // ========== FIN AJOUT ==========
 
     } catch (error) {
@@ -3250,6 +3228,37 @@ class AccueilQuadManager {
         if (this.selectedLevel) {
             this.updateDrawer(this.selectedLevel);
         }
+    }
+
+    showSingleArticleLocation(article) {
+        console.log('🎯 Affichage UNIQUE de l\'article:', article.nom);
+
+        // 1. Trouver l'emplacement (sans changer les sélections)
+        if (!article.rack_id || !article.level_id || !article.slot_id) {
+            console.warn('Article sans localisation');
+            return false;
+        }
+
+        const rack = this.racks.find(r => r.id === article.rack_id);
+        if (!rack) return false;
+
+        const level = rack.levels?.find(l => l.id === article.level_id);
+        if (!level) return false;
+
+        const slot = level.slots?.find(s => s.id === article.slot_id);
+        if (!slot) return false;
+
+        // 2. Afficher UNIQUEMENT les vues (sans modifier l'état interne)
+        this.drawSingleRack(rack);
+        this.drawSingleLevel(rack, level);
+        this.updateSingleSlotView(level, slot, article);
+
+        // 3. MAIS NE PAS changer les sélections globales
+        // this.selectedRack = rack;     // <-- NE PAS FAIRE
+        // this.selectedLevel = level;   // <-- NE PAS FAIRE
+
+        console.log(`✅ Affichage unique: ${rack.code}-${level.code}-${slot.code}`);
+        return true;
     }
 
     drawTopView() {
