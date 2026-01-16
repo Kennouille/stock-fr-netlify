@@ -3015,14 +3015,32 @@ class AccueilQuadManager {
                 this.normalizeRackData();
                 this.updateRackCount();
 
-                // Sélectionner le premier rack
-                if (this.racks.length > 0) {
-                    this.selectRack(this.racks[0]);
-                    if (this.selectedRack.levels && this.selectedRack.levels.length > 0) {
-                        const sortedLevels = [...this.selectedRack.levels]
-                            .sort((a, b) => a.display_order - b.display_order);
-                        this.selectLevel(sortedLevels[0]);
-                    }
+                // Afficher la vue du dessus seulement (racks sans sélection)
+                this.drawTopView();
+
+                // Réinitialiser les autres vues
+                if (this.ctxFront) {
+                    const width = this.canvasFront.width;
+                    const height = this.canvasFront.height;
+                    this.ctxFront.clearRect(0, 0, width, height);
+                    this.ctxFront.fillStyle = '#f8f9fa';
+                    this.ctxFront.fillRect(0, 0, width, height);
+                    this.ctxFront.fillStyle = '#6c757d';
+                    this.ctxFront.font = '14px Arial';
+                    this.ctxFront.textAlign = 'center';
+                    this.ctxFront.fillText('Sélectionnez un rack dans la vue du dessus', width/2, height/2);
+                }
+
+                // Vider le tiroir
+                if (this.drawerContainer) {
+                    this.drawerContainer.innerHTML = `
+                        <div class="empty-drawer-state">
+                            <div class="drawer-front-placeholder">
+                                <i class="fas fa-drawer fa-3x"></i>
+                                <p>Sélectionnez un étage dans la vue de face</p>
+                            </div>
+                        </div>
+                    `;
                 }
             } else {
                 console.warn('⚠️ Aucun rack trouvé dans Supabase');
@@ -3144,8 +3162,11 @@ class AccueilQuadManager {
         document.getElementById('accueilSelectedRack').textContent =
             `Rack ${rack.code}`;
 
-        // Redessiner les vues
-        this.drawAllViews();
+        // Dessiner la vue de face
+        this.drawFrontView(); // <-- IMPORTANT
+
+        // Redessiner la vue du dessus pour la surbrillance
+        this.drawTopView();
     }
 
     selectLevel(level) {
@@ -3153,6 +3174,9 @@ class AccueilQuadManager {
 
         document.getElementById('accueilLevelInfo').textContent =
             `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
+
+        // Mettre à jour le tiroir
+        this.updateDrawer(level); // <-- IMPORTANT
     }
 
     drawAllViews() {
