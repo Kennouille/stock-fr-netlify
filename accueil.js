@@ -3611,12 +3611,7 @@ class AccueilQuadManager {
         this.drawAllViews();
     }
 
-    updateRackCount() {
-        const countElement = document.getElementById('accueilRackCount');
-        if (countElement) {
-            countElement.textContent = `${this.racks.length} racks`;
-        }
-    }
+
 
     showNotification(message, type = 'info') {
         console.log(`[${type.toUpperCase()}] ${message}`);
