@@ -3260,7 +3260,7 @@ class AccueilQuadManager {
         // 2. Afficher UNIQUEMENT les vues (sans modifier l'état interne)
         this.drawSingleRack(rack);
         this.drawSingleLevel(rack, level);
-        this.updateSingleSlotView(level, slot, article);
+        this.updateSingleSlotView(level, slot, article, rack);
 
         // 3. MAIS NE PAS changer les sélections globales
         // this.selectedRack = rack;     // <-- NE PAS FAIRE
@@ -3724,7 +3724,7 @@ class AccueilQuadManager {
                 <div class="slot-header">
                     <h3>📍 Emplacement ${slot.full_code || `${level.code}-${slot.code}`}</h3>
                     <div class="location-badges">
-                        <span class="badge">Rack ${this.selectedRack.code}</span>
+                        <span class="badge">Rack ${rack.code}</span>
                         <span class="badge">Étage ${level.code}</span>
                         <span class="badge">Slot ${slot.code}</span>
                     </div>
