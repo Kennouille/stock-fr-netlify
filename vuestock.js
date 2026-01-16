@@ -3112,11 +3112,26 @@ class QuadViewManager {
             cancelAnimationFrame(this.zoomAnimFrame);
         }
 
-        // Trouver l'angle du rack
+        // Trouver l'angle du rack pour le centrer
         const rackIndex = this.currentRacks.indexOf(rack);
         const baseAngle = (rackIndex / this.currentRacks.length) * 360;
-        this.camera.targetRotation = -baseAngle; // Rotation pour mettre le rack face caméra
-        this.camera.targetScale = 1.8; // Zoom x1.8
+
+        // Calculer la rotation nécessaire pour centrer le rack
+        // On veut que le rack soit à 0° (face à nous)
+        let targetRotation = -baseAngle;
+
+        // Normaliser l'angle pour trouver le chemin le plus court
+        const currentRotation = this.rotation3D;
+        let diff = targetRotation - currentRotation;
+
+        // Prendre le chemin le plus court (éviter de tourner 350° au lieu de 10°)
+        if (diff > 180) diff -= 360;
+        if (diff < -180) diff += 360;
+
+        targetRotation = currentRotation + diff;
+
+        this.camera.targetRotation = targetRotation;
+        this.camera.targetScale = 1.4; // Zoom plus modéré (au lieu de 1.8)
 
         // Animation
         const startRotation = this.rotation3D;
@@ -3130,7 +3145,7 @@ class QuadViewManager {
             const easeProgress = 1 - Math.pow(1 - progress, 3); // Easing
 
             // Rotation fluide
-            this.rotation3D = startRotation + (this.camera.targetRotation - startRotation) * easeProgress;
+            this.rotation3D = startRotation + (targetRotation - startRotation) * easeProgress;
 
             // Zoom fluide
             this.camera.currentScale = startScale + (this.camera.targetScale - startScale) * easeProgress;
@@ -3146,6 +3161,8 @@ class QuadViewManager {
         };
 
         animate();
+
+        console.log(`🔍 Zoom sur rack ${rack.code} - Rotation: ${Math.round(targetRotation)}°, Scale: 1.4x`);
     }
 
     // Réinitialiser le zoom
