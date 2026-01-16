@@ -1041,8 +1041,44 @@ canvas {
 }
 
 /* Vue 3D isométrique */
+/* Vue 3D isométrique */
 .view-3d {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animation de fond pour la vue 3D */
+.view-3d::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: rotate3DBg 20s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes rotate3DBg {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Canvas 3D avec curseur interactif */
+.view-3d .quad-canvas {
+    cursor: grab;
+    transition: filter 0.3s ease;
+}
+
+.view-3d .quad-canvas:active {
+    cursor: grabbing;
+}
+
+/* Effet de glow quand on survole */
+.view-3d:hover .quad-canvas {
+    filter: brightness(1.1);
 }
 
 /* Vue étage */
@@ -1981,4 +2017,57 @@ function getStockLevel(stock) {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Contrôles 3D améliorés */
+.quad-3d-controls {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 15px;
+    border-radius: 25px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+
+.quad-3d-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.quad-3d-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.quad-3d-btn:active {
+    transform: translateY(0);
+}
+
+.quad-3d-btn i {
+    font-size: 1rem;
+}
+
+/* Bouton Reset spécial */
+#quad3DReset {
+    background: rgba(231, 76, 60, 0.3);
+    border-color: rgba(231, 76, 60, 0.5);
+}
+
+#quad3DReset:hover {
+    background: rgba(231, 76, 60, 0.5);
 }

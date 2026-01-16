@@ -988,6 +988,17 @@ class QuadViewManager {
         this.selectedRack = null;
         this.selectedLevel = null;
 
+        // Propriétés pour la vue 3D isométrique rotative
+        this.rotation3D = 0; // Angle de rotation actuel (0-360°)
+        this.isDragging3D = false; // Est-ce qu'on fait tourner la vue
+        this.drag3DStartX = 0; // Position X de départ du drag
+        this.isometric = {
+            angle: 30, // Angle isométrique (30° par défaut)
+            scale: 0.8, // Échelle de rendu
+            offsetX: 0, // Décalage horizontal
+            offsetY: 0  // Décalage vertical
+        };
+
         this.initStockModal();
 
 
@@ -1006,17 +1017,6 @@ class QuadViewManager {
         this.slotSize = 60; // px par emplacement
 
         this.init();
-
-        // Variables pour la caméra 3D
-        this.cameraAngleX = 30; // angle en degrés
-        this.cameraAngleY = 45;
-        this.cameraZoom = 1.0;
-        this.isDragging3D = false;
-        this.dragStartX = 0;
-        this.dragStartY = 0;
-
-        // Initialiser les événements 3D
-        this.init3DEvents();
     }
 
     init() {
@@ -1256,6 +1256,49 @@ class QuadViewManager {
                     this.handleFrontViewClick(e);
                 });
             }
+
+            // NOUVEAU : Événements pour la rotation 3D interactive
+            if (this.canvas3D) {
+                // Démarrer la rotation au mousedown
+                this.canvas3D.addEventListener('mousedown', (e) => {
+                    this.isDragging3D = true;
+                    this.drag3DStartX = e.clientX;
+                    this.canvas3D.style.cursor = 'grabbing';
+                });
+
+                // Continuer la rotation pendant le mousemove
+                this.canvas3D.addEventListener('mousemove', (e) => {
+                    if (!this.isDragging3D) return;
+
+                    const deltaX = e.clientX - this.drag3DStartX;
+                    this.rotation3D += deltaX * 0.5; // Sensibilité de rotation
+                    this.drag3DStartX = e.clientX;
+
+                    // Garder l'angle entre 0 et 360
+                    this.rotation3D = this.rotation3D % 360;
+                    if (this.rotation3D < 0) this.rotation3D += 360;
+
+                    // Redessiner la scène 3D
+                    if (this.currentRacks) {
+                        this.draw3DView(this.currentRacks);
+                    }
+                });
+
+                // Arrêter la rotation au mouseup
+                this.canvas3D.addEventListener('mouseup', () => {
+                    this.isDragging3D = false;
+                    this.canvas3D.style.cursor = 'grab';
+                });
+
+                // Arrêter aussi si la souris quitte le canvas
+                this.canvas3D.addEventListener('mouseleave', () => {
+                    this.isDragging3D = false;
+                    this.canvas3D.style.cursor = 'grab';
+                });
+
+                // Curseur initial
+                this.canvas3D.style.cursor = 'grab';
+            }
         }
 
         // Basculement de vue
@@ -1285,68 +1328,6 @@ class QuadViewManager {
         this.selectedLevel = null;
         this.clearFrontView();
 
-    }
-
-    init3DEvents() {
-        if (!this.canvas3D) return;
-
-        // Rotation avec drag
-        this.canvas3D.addEventListener('mousedown', (e) => {
-            if (e.button === 0) { // Clic gauche seulement
-                this.isDragging3D = true;
-                this.dragStartX = e.clientX;
-                this.dragStartY = e.clientY;
-                this.canvas3D.style.cursor = 'grabbing';
-            }
-        });
-
-        this.canvas3D.addEventListener('mousemove', (e) => {
-            if (this.isDragging3D) {
-                const deltaX = e.clientX - this.dragStartX;
-                const deltaY = e.clientY - this.dragStartY;
-
-                // Mettre à jour les angles (sensibilité réglable)
-                this.cameraAngleY += deltaX * 0.5;
-                this.cameraAngleX = Math.max(-90, Math.min(90, this.cameraAngleX - deltaY * 0.3));
-
-                this.dragStartX = e.clientX;
-                this.dragStartY = e.clientY;
-
-                // Redessiner
-                if (window.vueStock) {
-                    this.draw3DView(window.vueStock.racks);
-                }
-            }
-        });
-
-        this.canvas3D.addEventListener('mouseup', () => {
-            this.isDragging3D = false;
-            this.canvas3D.style.cursor = 'grab';
-        });
-
-        this.canvas3D.addEventListener('mouseleave', () => {
-            this.isDragging3D = false;
-            this.canvas3D.style.cursor = 'default';
-        });
-
-        // Zoom avec molette
-        this.canvas3D.addEventListener('wheel', (e) => {
-            e.preventDefault();
-
-            const zoomIntensity = 0.1;
-            if (e.deltaY < 0) {
-                this.cameraZoom = Math.min(2.0, this.cameraZoom * (1 + zoomIntensity));
-            } else {
-                this.cameraZoom = Math.max(0.3, this.cameraZoom * (1 - zoomIntensity));
-            }
-
-            // Redessiner
-            if (window.vueStock) {
-                this.draw3DView(window.vueStock.racks);
-            }
-        });
-
-        this.canvas3D.style.cursor = 'grab';
     }
 
     resizeCanvases() {
@@ -2015,138 +1996,220 @@ class QuadViewManager {
         const width = this.canvas3D.width;
         const height = this.canvas3D.height;
 
-        // Effacer avec un dégradé de fond
-        const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, '#1a2980');
-        gradient.addColorStop(1, '#26d0ce');
+        // Effacer
+        ctx.clearRect(0, 0, width, height);
+
+        // Fond gradient animé selon la rotation
+        const gradientAngle = this.rotation3D / 360;
+        const gradient = ctx.createLinearGradient(
+            0,
+            0,
+            width * Math.cos(gradientAngle * Math.PI * 2),
+            height * Math.sin(gradientAngle * Math.PI * 2)
+        );
+        gradient.addColorStop(0, '#667eea');
+        gradient.addColorStop(0.5, '#764ba2');
+        gradient.addColorStop(1, '#667eea');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
-        // Centre de la scène
+        // Grille de sol en perspective
+        this.drawFloorGrid(ctx, width, height);
+
+        // Centre de l'écran
         const centerX = width / 2;
-        const centerY = height / 2;
+        const centerY = height / 2 + 50; // Décalé vers le bas
 
-        // Convertir les angles en radians
-        const angleX = this.cameraAngleX * Math.PI / 180;
-        const angleY = this.cameraAngleY * Math.PI / 180;
+        // Rayon du cercle sur lequel disposer les racks
+        const radius = 180;
 
-        // Dessiner un sol en damier
-        this.draw3DGrid(ctx, width, height, angleX, angleY);
+        // Trier les racks par profondeur (z) pour affichage correct
+        const racksWithDepth = racks.map((rack, index) => {
+            // Angle de base + rotation actuelle
+            const baseAngle = (index / racks.length) * 360;
+            const angle = (baseAngle + this.rotation3D) % 360;
+            const angleRad = (angle * Math.PI) / 180;
+
+            // Position sur le cercle
+            const x = Math.cos(angleRad) * radius;
+            const z = Math.sin(angleRad) * radius;
+
+            return { rack, x, z, angle };
+        }).sort((a, b) => b.z - a.z); // Trier du plus loin au plus proche
 
         // Dessiner chaque rack
-        racks.forEach((rack, index) => {
-            // Calcul de la position en fonction de l'angle de caméra
-            const distance = 200 * this.cameraZoom;
-            const posX = rack.position_x || (index * 120);
-            const posY = rack.position_y || 0;
+        racksWithDepth.forEach(({ rack, x, z, angle }) => {
+            // Projection isométrique
+            const isoX = centerX + x * this.isometric.scale;
+            const isoY = centerY - z * this.isometric.scale * 0.5;
 
-            // Transformation 3D simple
-            const isoX = centerX + (posX * Math.cos(angleY) - posY * Math.sin(angleY)) * 0.3;
-            const isoY = centerY + (posX * Math.sin(angleY) * Math.sin(angleX) +
-                                   posY * Math.cos(angleY) * Math.sin(angleX) -
-                                   (rack.levels?.length || 1) * 10) * 0.3;
+            // Hauteur du rack (selon nombre d'étages)
+            const rackHeight = (rack.levels?.length || 1) * 12;
 
-            // Dimensions
-            const isoWidth = rack.width * 15 * this.cameraZoom;
-            const isoDepth = rack.depth * 15 * this.cameraZoom;
-            const levels = rack.levels?.length || 1;
-            const isSelected = (this.selectedRack && rack.id === this.selectedRack.id);
+            // Dimensions du rack
+            const rackWidth = rack.width * 20;
+            const rackDepth = rack.depth * 20;
 
-            // Dessiner le rack 3D
-            this.drawIsoPrism(ctx, isoX, isoY, isoWidth, isoDepth, 20, levels, isSelected);
+            // Échelle selon la distance (effet de profondeur)
+            const scale = 1 - (z / radius) * 0.3;
 
-            // Nom du rack (si assez proche)
-            if (this.cameraZoom > 0.5 && isoWidth > 30) {
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 10px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(rack.code, isoX, isoY - (levels * 10) - 10);
-            }
+            // Dessiner le rack en 3D isométrique
+            this.drawIsoRack(ctx, isoX, isoY, rackWidth * scale, rackDepth * scale, rackHeight * scale, rack, angle);
         });
 
-        // Légende avec contrôles
+        // Indicateur de rotation
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        ctx.font = '12px Arial';
+        ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText(`Vue 3D - ${racks.length} racks`, 10, 20);
-        ctx.font = '10px Arial';
-        ctx.fillText('←→ Rotation | Molette: Zoom', 10, 40);
+        ctx.fillText(`🔄 ${Math.round(this.rotation3D)}°`, 10, 25);
+
+        ctx.font = '12px Arial';
+        ctx.fillText(`${racks.length} racks - Glissez pour tourner`, 10, 45);
     }
 
-    draw3DGrid(ctx, width, height, angleX, angleY) {
-        const gridSize = 50 * this.cameraZoom;
-        const centerX = width / 2;
-        const centerY = height / 2 + 100;
+    // Dessiner la grille du sol en perspective
+    drawFloorGrid(ctx, width, height) {
+        ctx.save();
 
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        const gridSize = 40;
+        const centerX = width / 2;
+        const centerY = height / 2 + 50;
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.lineWidth = 1;
 
-        // Lignes en X
-        for (let x = -200; x <= 200; x += gridSize) {
-            for (let z = -200; z <= 200; z += gridSize) {
-                const screenX1 = centerX + (x * Math.cos(angleY) - (-200) * Math.sin(angleY)) * 0.3;
-                const screenY1 = centerY + (x * Math.sin(angleY) * Math.sin(angleX) + (-200) * Math.cos(angleY) * Math.sin(angleX)) * 0.3;
-                const screenX2 = centerX + (x * Math.cos(angleY) - (200) * Math.sin(angleY)) * 0.3;
-                const screenY2 = centerY + (x * Math.sin(angleY) * Math.sin(angleX) + (200) * Math.cos(angleY) * Math.sin(angleX)) * 0.3;
+        // Lignes radiales
+        for (let i = 0; i < 12; i++) {
+            const angle = (i * 30 + this.rotation3D) * Math.PI / 180;
+            const x1 = centerX + Math.cos(angle) * 50;
+            const y1 = centerY + Math.sin(angle) * 25;
+            const x2 = centerX + Math.cos(angle) * 250;
+            const y2 = centerY + Math.sin(angle) * 125;
 
-                ctx.beginPath();
-                ctx.moveTo(screenX1, screenY1);
-                ctx.lineTo(screenX2, screenY2);
-                ctx.stroke();
-            }
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
         }
+
+        // Cercles concentriques
+        for (let r = 50; r <= 250; r += 50) {
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, r, r * 0.5, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        ctx.restore();
     }
 
-    drawIsoPrism(ctx, x, y, w, d, h, levels = 1, isSelected = false) {
-        const isoAngle = 0.5;
-        const levelHeight = 15; // hauteur par niveau
+    // Dessiner un rack en vue isométrique
+    drawIsoRack(ctx, x, y, width, depth, height, rack, angle) {
+        ctx.save();
 
-        // Sol/ombre portée
-        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        // Angle isométrique standard (30°)
+        const iso = Math.PI / 6; // 30 degrés
+
+        // Points de base du rack (au sol)
+        const basePoints = [
+            { x: -width/2, z: -depth/2 },
+            { x: width/2, z: -depth/2 },
+            { x: width/2, z: depth/2 },
+            { x: -width/2, z: depth/2 }
+        ];
+
+        // Convertir en coordonnées isométriques
+        const isoPoints = basePoints.map(p => ({
+            x: x + (p.x * Math.cos(iso) - p.z * Math.cos(iso)),
+            y: y + (p.x * Math.sin(iso) + p.z * Math.sin(iso))
+        }));
+
+        // Face avant (plus sombre)
+        ctx.fillStyle = this.adjustColor(rack.color, -30);
         ctx.beginPath();
-        ctx.moveTo(x - w/2, y + d/2);
-        ctx.lineTo(x + w/2, y + d/2);
-        ctx.lineTo(x + w/2 - w * 0.3, y + d/2 - d * 0.3);
-        ctx.lineTo(x - w/2 - w * 0.3, y + d/2 - d * 0.3);
+        ctx.moveTo(isoPoints[0].x, isoPoints[0].y);
+        ctx.lineTo(isoPoints[1].x, isoPoints[1].y);
+        ctx.lineTo(isoPoints[1].x, isoPoints[1].y - height);
+        ctx.lineTo(isoPoints[0].x, isoPoints[0].y - height);
         ctx.closePath();
         ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.stroke();
 
-        // Dessiner chaque niveau (du bas vers le haut)
-        for (let level = 0; level < levels; level++) {
-            const currentY = y - (level * levelHeight * isoAngle);
-            const currentH = levelHeight;
+        // Face droite (encore plus sombre)
+        ctx.fillStyle = this.adjustColor(rack.color, -50);
+        ctx.beginPath();
+        ctx.moveTo(isoPoints[1].x, isoPoints[1].y);
+        ctx.lineTo(isoPoints[2].x, isoPoints[2].y);
+        ctx.lineTo(isoPoints[2].x, isoPoints[2].y - height);
+        ctx.lineTo(isoPoints[1].x, isoPoints[1].y - height);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
 
-            // Face avant
-            ctx.fillStyle = isSelected ? '#ffeb3b' : '#4a90e2';
-            ctx.beginPath();
-            ctx.moveTo(x - w/2, currentY + d/2);
-            ctx.lineTo(x - w/2 + currentH * isoAngle, currentY + d/2 - currentH * isoAngle);
-            ctx.lineTo(x - w/2 + currentH * isoAngle, currentY - d/2 - currentH * isoAngle);
-            ctx.lineTo(x - w/2, currentY - d/2);
-            ctx.closePath();
-            ctx.fill();
+        // Face du dessus (plus claire)
+        ctx.fillStyle = this.adjustColor(rack.color, 20);
+        ctx.beginPath();
+        ctx.moveTo(isoPoints[0].x, isoPoints[0].y - height);
+        ctx.lineTo(isoPoints[1].x, isoPoints[1].y - height);
+        ctx.lineTo(isoPoints[2].x, isoPoints[2].y - height);
+        ctx.lineTo(isoPoints[3].x, isoPoints[3].y - height);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
 
-            // Face droite
-            ctx.fillStyle = isSelected ? '#fbc02d' : '#357abd';
-            ctx.beginPath();
-            ctx.moveTo(x + w/2, currentY + d/2);
-            ctx.lineTo(x + w/2 - currentH * isoAngle, currentY + d/2 - currentH * isoAngle);
-            ctx.lineTo(x + w/2 - currentH * isoAngle, currentY - d/2 - currentH * isoAngle);
-            ctx.lineTo(x + w/2, currentY - d/2);
-            ctx.closePath();
-            ctx.fill();
+        // Dessiner les étages
+        if (rack.levels && rack.levels.length > 0) {
+            const levelHeight = height / rack.levels.length;
 
-            // Dessus du niveau
-            ctx.fillStyle = isSelected ? '#fff176' : '#7fbfff';
-            ctx.beginPath();
-            ctx.moveTo(x - w/2, currentY - d/2);
-            ctx.lineTo(x + w/2, currentY - d/2);
-            ctx.lineTo(x + w/2 - currentH * isoAngle, currentY - d/2 - currentH * isoAngle);
-            ctx.lineTo(x - w/2 + currentH * isoAngle, currentY - d/2 - currentH * isoAngle);
-            ctx.closePath();
-            ctx.fill();
+            rack.levels.forEach((level, index) => {
+                const levelY = y - (index + 1) * levelHeight;
+
+                // Ligne de séparation
+                ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(isoPoints[0].x, levelY);
+                ctx.lineTo(isoPoints[1].x, levelY);
+                ctx.lineTo(isoPoints[2].x, levelY);
+                ctx.stroke();
+            });
         }
+
+        // Code du rack
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(rack.code, x, y - height/2);
+        ctx.shadowBlur = 0;
+
+        // Indicateur du nombre d'étages
+        if (rack.levels && rack.levels.length > 0) {
+            ctx.font = '10px Arial';
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillText(`${rack.levels.length} étages`, x, y - height - 10);
+        }
+
+        ctx.restore();
+    }
+
+    // Ajuster la luminosité d'une couleur
+    adjustColor(color, amount) {
+        // Convertir hex en RGB
+        const hex = color.replace('#', '');
+        let r = parseInt(hex.substr(0, 2), 16);
+        let g = parseInt(hex.substr(2, 2), 16);
+        let b = parseInt(hex.substr(4, 2), 16);
+
+        // Ajuster
+        r = Math.max(0, Math.min(255, r + amount));
+        g = Math.max(0, Math.min(255, g + amount));
+        b = Math.max(0, Math.min(255, b + amount));
+
+        // Reconvertir en hex
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
 
     // Dans QuadViewManager
@@ -2629,16 +2692,68 @@ class QuadViewManager {
     }
 
     set3DAngle(angle) {
-        // Implémentation pour changer l'angle de vue 3D
-        console.log('Angle 3D changé à:', angle);
-        // À implémenter selon vos besoins
+        // Changer l'angle isométrique (30°, 45°, 60°)
+        this.isometric.angle = angle;
+
+        // Animation fluide de rotation
+        const targetRotation = angle * 3; // Rotation proportionnelle à l'angle
+        const currentRotation = this.rotation3D;
+        const diff = targetRotation - currentRotation;
+
+        // Animer la rotation
+        let step = 0;
+        const steps = 30; // 30 frames d'animation
+        const animate = () => {
+            step++;
+            this.rotation3D = currentRotation + (diff * step / steps);
+
+            if (this.currentRacks) {
+                this.draw3DView(this.currentRacks);
+            }
+
+            if (step < steps) {
+                requestAnimationFrame(animate);
+            }
+        };
+
+        animate();
+
+        console.log(`Vue 3D: angle isométrique ${angle}°, rotation ${targetRotation}°`);
     }
 
     reset3DView() {
         console.log('Vue 3D réinitialisée');
-        if (window.vueStock) {
-            this.draw3DView(window.vueStock.racks);
-        }
+
+        // Animation de retour à la position initiale
+        const targetRotation = 0;
+        const currentRotation = this.rotation3D;
+        const diff = targetRotation - currentRotation;
+
+        let step = 0;
+        const steps = 40; // Animation plus longue pour le reset
+        const animate = () => {
+            step++;
+            this.rotation3D = currentRotation + (diff * step / steps);
+
+            // Réinitialiser aussi l'angle isométrique
+            this.isometric.angle = 30;
+
+            if (this.currentRacks) {
+                this.draw3DView(this.currentRacks);
+            }
+
+            if (step < steps) {
+                requestAnimationFrame(animate);
+            } else {
+                // Forcer exactement 0 à la fin
+                this.rotation3D = 0;
+                if (this.currentRacks) {
+                    this.draw3DView(this.currentRacks);
+                }
+            }
+        };
+
+        animate();
     }
 
     updateInfoPanel(racks) {
