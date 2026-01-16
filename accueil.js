@@ -3611,7 +3611,12 @@ class AccueilQuadManager {
         this.drawAllViews();
     }
 
-
+    updateRackCount() {
+        const countElement = document.getElementById('accueilRackCount');
+        if (countElement) {
+            countElement.textContent = `${this.racks.length} racks`;
+        }
+    }
 
     showNotification(message, type = 'info') {
         console.log(`[${type.toUpperCase()}] ${message}`);
@@ -3665,6 +3670,62 @@ class AccueilQuadManager {
         ctx.fillStyle = '#333';
         ctx.font = '12px Arial';
         ctx.fillText(`Article localisé ici`, width/2, y + h + 20);
+    }
+
+    enlargePhoto(imageUrl, title) {
+        // Créer l'overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            cursor: pointer;
+        `;
+
+        // Créer l'image agrandie
+        const enlargedImg = document.createElement('img');
+        enlargedImg.src = imageUrl;
+        enlargedImg.alt = title;
+        enlargedImg.style.cssText = `
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            cursor: default;
+        `;
+
+        // Titre
+        const titleDiv = document.createElement('div');
+        titleDiv.style.cssText = `
+            position: absolute;
+            bottom: 20px;
+            color: white;
+            text-align: center;
+            width: 100%;
+            font-size: 16px;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+        `;
+        titleDiv.textContent = title;
+
+        // Fermer au clic
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+            }
+        });
+
+        // Ajouter à la page
+        overlay.appendChild(enlargedImg);
+        overlay.appendChild(titleDiv);
+        document.body.appendChild(overlay);
     }
 
     // Affiche UN SEUL étage
@@ -3731,6 +3792,7 @@ class AccueilQuadManager {
                          alt="${articleInSlot?.nom || 'Article'}"
                          class="article-photo"
                          style="width: 120px; height: 120px; object-fit: contain;"
+                         onclick="window.accueilQuadManager.enlargePhoto('${imageUrl}', '${articleInSlot?.nom || 'Article'}')"
                          onerror="this.src='https://via.placeholder.com/120x120/cccccc/666666?text=📦'">
                     </div>
 
