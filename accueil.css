@@ -1852,8 +1852,8 @@ body {
 }
 
 .article-photo {
-    max-width: 80px !important;
-    max-height: 80px !important;
+    max-width: 120px !important;
+    max-height: 120px !important;
 }
 .article-photo-container {
     display: flex;

@@ -3717,7 +3717,7 @@ class AccueilQuadManager {
         const articleInSlot = article || slot.articles?.[0];
         const imageUrl = articleInSlot?.photo_url ||
                         articleInSlot?.photo ||
-                        'https://via.placeholder.com/80x80/cccccc/666666?text=📦';
+                        'https://via.placeholder.com/120x120/cccccc/666666?text=📦';
 
         this.drawerContainer.innerHTML = `
             <div class="single-slot-view">
@@ -3736,7 +3736,7 @@ class AccueilQuadManager {
                          alt="${articleInSlot?.nom || 'Article'}"
                          class="article-photo"
                          style="width: 80px; height: 80px; object-fit: contain;"
-                         onerror="this.src='https://via.placeholder.com/80x80/cccccc/666666?text=📦'">
+                         onerror="this.src='https://via.placeholder.com/120x120/cccccc/666666?text=📦'">
                     </div>
 
                     ${articleInSlot ? `
