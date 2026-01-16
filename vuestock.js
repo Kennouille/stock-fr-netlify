@@ -1006,6 +1006,17 @@ class QuadViewManager {
         this.slotSize = 60; // px par emplacement
 
         this.init();
+
+        // Variables pour la caméra 3D
+        this.cameraAngleX = 30; // angle en degrés
+        this.cameraAngleY = 45;
+        this.cameraZoom = 1.0;
+        this.isDragging3D = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+
+        // Initialiser les événements 3D
+        this.init3DEvents();
     }
 
     init() {
@@ -1274,6 +1285,68 @@ class QuadViewManager {
         this.selectedLevel = null;
         this.clearFrontView();
 
+    }
+
+    init3DEvents() {
+        if (!this.canvas3D) return;
+
+        // Rotation avec drag
+        this.canvas3D.addEventListener('mousedown', (e) => {
+            if (e.button === 0) { // Clic gauche seulement
+                this.isDragging3D = true;
+                this.dragStartX = e.clientX;
+                this.dragStartY = e.clientY;
+                this.canvas3D.style.cursor = 'grabbing';
+            }
+        });
+
+        this.canvas3D.addEventListener('mousemove', (e) => {
+            if (this.isDragging3D) {
+                const deltaX = e.clientX - this.dragStartX;
+                const deltaY = e.clientY - this.dragStartY;
+
+                // Mettre à jour les angles (sensibilité réglable)
+                this.cameraAngleY += deltaX * 0.5;
+                this.cameraAngleX = Math.max(-90, Math.min(90, this.cameraAngleX - deltaY * 0.3));
+
+                this.dragStartX = e.clientX;
+                this.dragStartY = e.clientY;
+
+                // Redessiner
+                if (window.vueStock) {
+                    this.draw3DView(window.vueStock.racks);
+                }
+            }
+        });
+
+        this.canvas3D.addEventListener('mouseup', () => {
+            this.isDragging3D = false;
+            this.canvas3D.style.cursor = 'grab';
+        });
+
+        this.canvas3D.addEventListener('mouseleave', () => {
+            this.isDragging3D = false;
+            this.canvas3D.style.cursor = 'default';
+        });
+
+        // Zoom avec molette
+        this.canvas3D.addEventListener('wheel', (e) => {
+            e.preventDefault();
+
+            const zoomIntensity = 0.1;
+            if (e.deltaY < 0) {
+                this.cameraZoom = Math.min(2.0, this.cameraZoom * (1 + zoomIntensity));
+            } else {
+                this.cameraZoom = Math.max(0.3, this.cameraZoom * (1 - zoomIntensity));
+            }
+
+            // Redessiner
+            if (window.vueStock) {
+                this.draw3DView(window.vueStock.racks);
+            }
+        });
+
+        this.canvas3D.style.cursor = 'grab';
     }
 
     resizeCanvases() {
@@ -1942,53 +2015,87 @@ class QuadViewManager {
         const width = this.canvas3D.width;
         const height = this.canvas3D.height;
 
-        // Effacer
-        ctx.clearRect(0, 0, width, height);
-
-        // Fond gradient
+        // Effacer avec un dégradé de fond
         const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, '#667eea');
-        gradient.addColorStop(1, '#764ba2');
+        gradient.addColorStop(0, '#1a2980');
+        gradient.addColorStop(1, '#26d0ce');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
-        // Dessiner les racks en perspective isométrique
+        // Centre de la scène
         const centerX = width / 2;
         const centerY = height / 2;
 
+        // Convertir les angles en radians
+        const angleX = this.cameraAngleX * Math.PI / 180;
+        const angleY = this.cameraAngleY * Math.PI / 180;
+
+        // Dessiner un sol en damier
+        this.draw3DGrid(ctx, width, height, angleX, angleY);
+
+        // Dessiner chaque rack
         racks.forEach((rack, index) => {
-            // Position isométrique
-            const isoX = centerX + (rack.position_x * 0.5 - rack.position_y * 0.5) * 0.3;
-            const isoY = centerY + (rack.position_x * 0.25 + rack.position_y * 0.25 - (rack.levels?.length || 0) * 5) * 0.3;
+            // Calcul de la position en fonction de l'angle de caméra
+            const distance = 200 * this.cameraZoom;
+            const posX = rack.position_x || (index * 120);
+            const posY = rack.position_y || 0;
 
-            // Dimensions projetées
-            const isoWidth = rack.width * 15;
-            const isoDepth = rack.depth * 15;
-            const isoHeight = (rack.levels?.length || 1) * 8;
+            // Transformation 3D simple
+            const isoX = centerX + (posX * Math.cos(angleY) - posY * Math.sin(angleY)) * 0.3;
+            const isoY = centerY + (posX * Math.sin(angleY) * Math.sin(angleX) +
+                                   posY * Math.cos(angleY) * Math.sin(angleX) -
+                                   (rack.levels?.length || 1) * 10) * 0.3;
 
-            // Couleur avec transparence
-            ctx.fillStyle = rack.color + 'CC';
-
-            // Dessiner le prisme 3D simple
+            // Dimensions
+            const isoWidth = rack.width * 15 * this.cameraZoom;
+            const isoDepth = rack.depth * 15 * this.cameraZoom;
             const levels = rack.levels?.length || 1;
             const isSelected = (this.selectedRack && rack.id === this.selectedRack.id);
-            this.drawIsoPrism(ctx, isoX, isoY, isoWidth, isoDepth, isoHeight, levels, isSelected);
 
-            // Code du rack (si assez grand)
-            if (isoWidth > 30) {
+            // Dessiner le rack 3D
+            this.drawIsoPrism(ctx, isoX, isoY, isoWidth, isoDepth, 20, levels, isSelected);
+
+            // Nom du rack (si assez proche)
+            if (this.cameraZoom > 0.5 && isoWidth > 30) {
                 ctx.fillStyle = '#fff';
                 ctx.font = 'bold 10px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(rack.code, isoX, isoY - isoHeight/2);
+                ctx.fillText(rack.code, isoX, isoY - (levels * 10) - 10);
             }
         });
 
-        // Légende
+        // Légende avec contrôles
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
         ctx.font = '12px Arial';
         ctx.textAlign = 'left';
         ctx.fillText(`Vue 3D - ${racks.length} racks`, 10, 20);
+        ctx.font = '10px Arial';
+        ctx.fillText('←→ Rotation | Molette: Zoom', 10, 40);
+    }
+
+    draw3DGrid(ctx, width, height, angleX, angleY) {
+        const gridSize = 50 * this.cameraZoom;
+        const centerX = width / 2;
+        const centerY = height / 2 + 100;
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 1;
+
+        // Lignes en X
+        for (let x = -200; x <= 200; x += gridSize) {
+            for (let z = -200; z <= 200; z += gridSize) {
+                const screenX1 = centerX + (x * Math.cos(angleY) - (-200) * Math.sin(angleY)) * 0.3;
+                const screenY1 = centerY + (x * Math.sin(angleY) * Math.sin(angleX) + (-200) * Math.cos(angleY) * Math.sin(angleX)) * 0.3;
+                const screenX2 = centerX + (x * Math.cos(angleY) - (200) * Math.sin(angleY)) * 0.3;
+                const screenY2 = centerY + (x * Math.sin(angleY) * Math.sin(angleX) + (200) * Math.cos(angleY) * Math.sin(angleX)) * 0.3;
+
+                ctx.beginPath();
+                ctx.moveTo(screenX1, screenY1);
+                ctx.lineTo(screenX2, screenY2);
+                ctx.stroke();
+            }
+        }
     }
 
     drawIsoPrism(ctx, x, y, w, d, h, levels = 1, isSelected = false) {
