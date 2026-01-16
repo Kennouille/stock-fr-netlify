@@ -3444,7 +3444,7 @@ class AccueilQuadManager {
 
         if (articleInSlot) {
             const imageUrl = articleInSlot.photo_url || articleInSlot.photo ||
-                'https://via.placeholder.com/50x50/cccccc/666666?text=📦';
+                'https://via.placeholder.com/150x150/cccccc/666666?text=📦';
             const articleName = articleInSlot.nom || articleInSlot.name || 'Article';
             const stock = articleInSlot.stock_actuel || articleInSlot.quantity || 0;
 
@@ -3452,8 +3452,7 @@ class AccueilQuadManager {
                 <div class="article-display">
                     <div class="article-image-large">
                         <img src="${imageUrl}" alt="${articleName}"
-                         style="max-width: 50px; max-height: 50px;"
-                         onerror="this.src='https://via.placeholder.com/100x100/cccccc/666666?text=📦'">
+                             onerror="this.src='https://via.placeholder.com/150x150/cccccc/666666?text=📦'">
                     </div>
                     <div class="article-info-large">
                         <h5>${articleName}</h5>
@@ -3718,7 +3717,7 @@ class AccueilQuadManager {
         const articleInSlot = article || slot.articles?.[0];
         const imageUrl = articleInSlot?.photo_url ||
                         articleInSlot?.photo ||
-                        'https://via.placeholder.com/200x200/cccccc/666666?text=📦';
+                        'https://via.placeholder.com/75x75/cccccc/666666?text=📦';
 
         this.drawerContainer.innerHTML = `
             <div class="single-slot-view">
@@ -3736,7 +3735,7 @@ class AccueilQuadManager {
                         <img src="${imageUrl}"
                              alt="${articleInSlot?.nom || 'Article'}"
                              class="article-photo"
-                             onerror="this.src='https://via.placeholder.com/200x200/cccccc/666666?text=📦'">
+                             onerror="this.src='https://via.placeholder.com/75x75/cccccc/666666?text=📦'">
                     </div>
 
                     ${articleInSlot ? `
