@@ -3009,52 +3009,15 @@ class AccueilQuadManager {
                         levels: levelsWithSlots
                     };
                 });
-            }
 
-            if (error) {
-                console.error('Erreur Supabase:', error);
-                throw error;
-            }
-
-            if (racks && racks.length > 0) {
-                console.log(`✅ ${racks.length} racks chargés depuis Supabase`);
-
-                // Transformer les données au format attendu
-                this.racks = racks.map(rack => ({
-                    id: rack.id,
-                    code: rack.rack_code,
-                    name: rack.display_name,
-                    position_x: rack.position_x,
-                    position_y: rack.position_y,
-                    rotation: rack.rotation,
-                    width: rack.width,
-                    depth: rack.depth,
-                    color: rack.color,
-                    levels: rack.w_levels?.map(level => ({
-                        id: level.id,
-                        code: level.level_code,
-                        level_code: level.level_code,
-                        display_order: level.display_order,
-                        rack_id: level.rack_id,
-                        slots: level.w_slots?.map(slot => ({
-                            id: slot.id,
-                            code: slot.slot_code,
-                            slot_code: slot.slot_code,
-                            level_id: slot.level_id,
-                            display_order: slot.display_order,
-                            status: slot.status,
-                            articles: slot.w_articles?.map(sa => sa.w_articles) || []
-                        })) || []
-                    })) || []
-                }));
-
+                // AJOUTER CES LIGNES (manquantes dans votre code) :
+                console.log(`✅ ${this.racks.length} racks chargés depuis Supabase`);
                 this.normalizeRackData();
                 this.updateRackCount();
 
                 // Sélectionner le premier rack
                 if (this.racks.length > 0) {
                     this.selectRack(this.racks[0]);
-
                     if (this.selectedRack.levels && this.selectedRack.levels.length > 0) {
                         const sortedLevels = [...this.selectedRack.levels]
                             .sort((a, b) => a.display_order - b.display_order);
