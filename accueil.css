@@ -1850,3 +1850,13 @@ body {
     color: white;
     text-decoration: none;
 }
+
+.article-photo {
+    max-width: 80px !important;
+    max-height: 80px !important;
+}
+.article-photo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
