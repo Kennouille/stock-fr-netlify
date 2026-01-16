@@ -3444,7 +3444,7 @@ class AccueilQuadManager {
 
         if (articleInSlot) {
             const imageUrl = articleInSlot.photo_url || articleInSlot.photo ||
-                'https://via.placeholder.com/100x100/cccccc/666666?text=📦';
+                'https://via.placeholder.com/50x50/cccccc/666666?text=📦';
             const articleName = articleInSlot.nom || articleInSlot.name || 'Article';
             const stock = articleInSlot.stock_actuel || articleInSlot.quantity || 0;
 
@@ -3452,7 +3452,7 @@ class AccueilQuadManager {
                 <div class="article-display">
                     <div class="article-image-large">
                         <img src="${imageUrl}" alt="${articleName}"
-                         style="max-width: 100px; max-height: 100px;"
+                         style="max-width: 50px; max-height: 50px;"
                          onerror="this.src='https://via.placeholder.com/100x100/cccccc/666666?text=📦'">
                     </div>
                     <div class="article-info-large">
