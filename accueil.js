@@ -454,7 +454,7 @@ function openSearchPopup(results, searchType) {
                 if (success) {
                     window.accueilQuadManager.drawAllViews();
                     // Option: faire un effet visuel
-                    showNotification(`Article localisé: ${article.emplacement || 'Emplacement inconnu'}`);
+                    console.log(`Article localisé: ${article.emplacement || 'Emplacement inconnu'}`);
                 }
             }
         });
@@ -2987,6 +2987,12 @@ class AccueilQuadManager {
         console.log('✅ AccueilQuadManager prêt');
     }
 
+    showAllSlotsForLevel(level) {
+        this.selectedLevel = level;
+        // Réafficher tous les slots (comme avant)
+        this.updateDrawer(level);
+    }
+
     async loadRealData() {
         try {
             console.log('📡 Chargement des racks depuis Supabase...');
@@ -3207,15 +3213,12 @@ class AccueilQuadManager {
         this.selectedRack = rack;
         this.selectedLevel = null;
 
-        // Mettre à jour l'affichage
         document.getElementById('accueilSelectedRack').textContent =
             `Rack ${rack.code}`;
 
-        // Dessiner la vue de face
-        this.drawFrontView(); // <-- IMPORTANT
-
-        // Redessiner la vue du dessus pour la surbrillance
+        // Dessiner avec surbrillance
         this.drawTopView();
+        this.drawFrontView();
     }
 
     selectLevel(level) {
@@ -3387,23 +3390,89 @@ class AccueilQuadManager {
         this.drawerContainer.innerHTML = html;
     }
 
-    updateDrawerWithHighlight(level, highlightedSlotCode) {
-        this.updateDrawer(level);
+    updateDrawerWithHighlight(level, highlightedSlotCode, article) {
+        if (!this.drawerContainer) return;
 
-        // Ajouter la mise en évidence sur le slot spécifique
-        const highlightedSlot = this.drawerContainer.querySelector(
-            `[data-slot-code="${highlightedSlotCode}"]`
-        );
+        // 1. Trouver le slot spécifique
+        const slot = level.slots?.find(s => s.code === highlightedSlotCode);
+        if (!slot) return;
 
-        if (highlightedSlot) {
-            highlightedSlot.classList.add('highlighted', 'pulse');
+        // 2. N'afficher que CE slot (pas tous)
+        let html = `
+            <div class="single-slot-view">
+                <div class="slot-header">
+                    <h4>Emplacement ${slot.full_code || `${level.code}-${slot.code}`}</h4>
+                    <div class="slot-location">
+                        <span class="rack-badge">Rack ${this.selectedRack.code}</span>
+                        <span class="level-badge">Étage ${level.code}</span>
+                        <span class="slot-badge">Slot ${slot.code}</span>
+                    </div>
+                </div>
 
-            // Scroll vers le slot
-            highlightedSlot.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
+                <div class="slot-content-large">
+        `;
+
+        // 3. Afficher l'article s'il y en a un
+        const articleInSlot = slot.articles?.[0] || article;
+
+        if (articleInSlot) {
+            const imageUrl = articleInSlot.photo_url || articleInSlot.photo ||
+                'https://via.placeholder.com/150x150/cccccc/666666?text=📦';
+            const articleName = articleInSlot.nom || articleInSlot.name || 'Article';
+            const stock = articleInSlot.stock_actuel || articleInSlot.quantity || 0;
+
+            html += `
+                <div class="article-display">
+                    <div class="article-image-large">
+                        <img src="${imageUrl}" alt="${articleName}"
+                             onerror="this.src='https://via.placeholder.com/150x150/cccccc/666666?text=📦'">
+                    </div>
+                    <div class="article-info-large">
+                        <h5>${articleName}</h5>
+                        <div class="article-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Numéro:</span>
+                                <span class="detail-value">${articleInSlot.numero || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Stock:</span>
+                                <span class="detail-value ${stock === 0 ? 'stock-zero' : (stock <= (articleInSlot.stock_minimum || 3) ? 'stock-low' : 'stock-good')}">
+                                    ${stock} unités
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Code-barres:</span>
+                                <span class="detail-value">${articleInSlot.code_barre || 'N/A'}</span>
+                            </div>
+                            ${articleInSlot.prix_unitaire ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Prix:</span>
+                                <span class="detail-value">${articleInSlot.prix_unitaire}€</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="empty-slot-large">
+                    <i class="fas fa-box-open fa-4x"></i>
+                    <p>Emplacement vide</p>
+                </div>
+            `;
         }
+
+        html += `
+                </div>
+                <div class="slot-footer">
+                    <button class="btn btn-sm btn-secondary" onclick="window.accueilQuadManager.showAllSlotsForLevel(${JSON.stringify(level)})">
+                        <i class="fas fa-th-large"></i> Voir tous les emplacements
+                    </button>
+                </div>
+            </div>
+        `;
+
+        this.drawerContainer.innerHTML = html;
     }
 
     getStockLevel(article) {
@@ -3578,7 +3647,7 @@ class AccueilQuadManager {
         // 4. Sélectionner et mettre en évidence
         this.selectRack(rack);
         this.selectLevel(level);
-        this.updateDrawerWithHighlight(level, slot.code);
+        this.updateDrawerWithHighlight(level, slot.code, article);
 
         console.log(`✅ Article localisé: ${rack.code}-${level.code}-${slot.code}`);
         return true;
