@@ -436,10 +436,10 @@ function openSearchPopup(results, searchType) {
         });
     });
 
-    // Événement POUR LE BOUTON "Localiser" SEULEMENT
+    // Bouton "Localiser" spécifique
     popup.querySelectorAll('.show-location').forEach(btn => {
         btn.addEventListener('click', function(e) {
-            e.stopPropagation(); // IMPORTANT : empêcher le clic sur la ligne
+            e.stopPropagation(); // Empêcher le clic sur la ligne
             const index = this.dataset.index;
             const article = results[index];
 
@@ -453,15 +453,24 @@ function openSearchPopup(results, searchType) {
         });
     });
 
-    // DÉSACTIVER le clic sur la ligne entière - COMMENTEZ ou SUPPRIMEZ ce bloc :
-    /*
+    // Événement pour cliquer sur l'article lui-même (toute la ligne)
     popup.querySelectorAll('.result-item').forEach(item => {
         item.addEventListener('click', function(e) {
+            // Éviter de déclencher quand on clique sur les boutons
             if (e.target.closest('.btn-action')) return;
-            // ... tout ce code ...
+
+            const index = this.dataset.index;
+            const article = results[index];
+
+            // Fermer le popup
+            document.body.removeChild(popup);
+
+            // Mettre à jour la vue Quad (affichage UNIQUE)
+            if (window.accueilQuadManager && article) {
+                window.accueilQuadManager.showSingleArticleLocation(article);
+            }
         });
     });
-    */
 }
 
 // ===== POPUP DÉTAILS ARTICLE =====
@@ -1012,11 +1021,7 @@ async function searchByName() {
 
         openSearchPopup(articles, 'nom');
 
-        // ========== AJOUTER CES 3 LIGNES ==========
-        // Mettre à jour la vue Quad avec le premier article trouvé
-        if (articles[0] && window.accueilQuadManager) {
-            window.accueilQuadManager.highlightArticleLocationFromArticle(articles[0]);
-        }
+
         // ========== FIN AJOUT ==========
 
     } catch (error) {
