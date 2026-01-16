@@ -387,7 +387,7 @@ function openSearchPopup(results, searchType) {
                                     <i class="fas fa-map-marker-alt"></i> Localiser
                                 </button>
                             </div>
-                        </div>`
+                        </div>
                     `).join('')}
                 </div>
             </div>
