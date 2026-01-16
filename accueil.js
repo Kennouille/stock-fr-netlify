@@ -1012,7 +1012,11 @@ async function searchByName() {
 
         openSearchPopup(articles, 'nom');
 
-
+        // ========== AJOUTER CES 3 LIGNES ==========
+        // Mettre à jour la vue Quad avec le premier article trouvé
+        if (articles[0] && window.accueilQuadManager) {
+            window.accueilQuadManager.highlightArticleLocationFromArticle(articles[0]);
+        }
         // ========== FIN AJOUT ==========
 
     } catch (error) {
