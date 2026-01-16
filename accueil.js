@@ -2943,21 +2943,21 @@ class AccueilQuadManager {
             console.log('📡 Chargement des racks depuis Supabase...');
 
             const { data: racks, error } = await supabase
-                .from('w_racks')
+                .from('w_vuestock_racks')
                 .select(`
                     *,
-                    w_levels (
+                    w_vuestock_levels (
                         id,
                         level_code,
                         display_order,
                         rack_id,
-                        w_slots (
+                        w_vuestock_slots (
                             id,
                             slot_code,
                             level_id,
                             display_order,
                             status,
-                            w_slots_articles (
+                            w_vuestock_slots_articles (
                                 w_articles (*)
                             )
                         )
@@ -2997,7 +2997,7 @@ class AccueilQuadManager {
                             level_id: slot.level_id,
                             display_order: slot.display_order,
                             status: slot.status,
-                            articles: slot.w_slots_articles?.map(sa => sa.w_articles) || []
+                            articles: slot.w_articles?.map(sa => sa.w_articles) || []
                         })) || []
                     })) || []
                 }));
