@@ -3735,7 +3735,7 @@ class AccueilQuadManager {
                         <img src="${imageUrl}"
                          alt="${articleInSlot?.nom || 'Article'}"
                          class="article-photo"
-                         style="width: 80px; height: 80px; object-fit: contain;"
+                         style="width: 120px; height: 120px; object-fit: contain;"
                          onerror="this.src='https://via.placeholder.com/120x120/cccccc/666666?text=📦'">
                     </div>
 
