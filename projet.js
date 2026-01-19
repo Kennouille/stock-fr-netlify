@@ -1628,9 +1628,9 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                                 <label><i class="fas fa-exclamation-triangle"></i> Raison de la différence</label>
                                 <select id="missingReason" class="form-select">
                                     <option value="">Sélectionner une raison...</option>
-                                    <option value="perdu">Perdu</option>
-                                    <option value="casse">Cassé</option>
-                                    <option value="vole">Volé</option>
+                                    <option value="perdu">Perdu(s)</option>
+                                    <option value="cassé">Cassé(s)</option>
+                                    <option value="vole">Volé(s)</option>
                                     <option value="fin_vie">Fin de vie utile</option>
                                 </select>
                             </div>
