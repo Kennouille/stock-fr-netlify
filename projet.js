@@ -636,7 +636,7 @@ function updateStatistics() {
     let totalValue = 0;
 
     state.projects.forEach(project => {
-        const projectReservations = state.reservations.filter(r => r.id_projet === project.id);
+        const projectReservations = state.reservations.filter(r => r.projet_id === project.id);
         totalItems += projectReservations.reduce((sum, r) => sum + r.quantite, 0);
 
         projectReservations.forEach(reservation => {
@@ -727,7 +727,7 @@ function updateProjectsDisplay() {
 
     let html = '';
     filteredProjects.forEach(project => {
-        const projectReservations = state.reservations.filter(r => r.id_projet === project.id);
+        const projectReservations = state.reservations.filter(r => r.projet_id === project.id);
 
         // DEBUG : Voir ce qui est dans state.movements
         console.log('=== DEBUG PROJET ===');
