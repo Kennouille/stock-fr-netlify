@@ -607,7 +607,7 @@ async function fetchMovements() {
         const { data, error } = await supabase
             .from('w_mouvements')
             .select('*')
-            .eq('type', 'sortie');
+            .or('type.eq.sortie,type.eq.retour_projet');
 
         if (error) {
             console.error('Erreur:', error);
@@ -1172,6 +1172,11 @@ function updateProjectReservations(sorties, reservations) {
                     </td>
                     <td>
                         <div class="action-buttons">
+                            ${state.movements?.some(m =>
+                                m.type === 'retour_projet' &&
+                                m.article_id === sortie.article_id &&
+                                (m.projet_id === state.currentProject.id || m.projet === state.currentProject.nom)
+                            ) ? '' : `
                             <button class="btn-action btn-small return-to-stock"
                                     data-id="${sortie.id}"
                                     data-article-id="${sortie.article_id}"
@@ -1179,9 +1184,78 @@ function updateProjectReservations(sorties, reservations) {
                                     title="Retour au stock">
                                 <i class="fas fa-arrow-left"></i>
                             </button>
+                            `}
                             <button class="btn-action btn-small view-details"
                                     data-id="${sortie.id}"
                                     data-type="sortie"
+                                    title="Voir les détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // 3. AFFICHER LES RETOURS (après les sorties mais avant les réservations)
+    const retours = state.movements?.filter(m =>
+        m.type === 'retour_projet' &&
+        (m.projet_id === state.currentProject.id || m.projet === state.currentProject.nom)
+    ) || [];
+
+    if (retours.length > 0) {
+        html += `
+            <tr>
+                <td colspan="7" class="section-header retour-header">
+                    <i class="fas fa-check-circle text-success"></i> Articles retournés au stock
+                </td>
+            </tr>
+        `;
+
+        retours.forEach(retour => {
+            const article = state.articles.find(a => a.id === retour.article_id);
+            const valeurTotale = article?.prix_unitaire ?
+                (article.prix_unitaire * retour.quantite).toFixed(2) : '0.00';
+
+            html += `
+                <tr data-id="${retour.id}" class="returned-row">
+                    <td>
+                        <div class="article-info">
+                            <strong>${article?.nom || 'Article inconnu'}</strong>
+                            <small>${article?.numero || ''}</small>
+                        </div>
+                    </td>
+                    <td>${article?.numero || 'N/A'}</td>
+                    <td>
+                        <span class="quantity-badge retour">
+                            ${retour.quantite}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="date-info">
+                            ${formatDate(retour.created_at)}
+                            <small>${formatDateTime(retour.created_at).split(' ')[1] || ''}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="price-info">
+                            ${article?.prix_unitaire ?
+                                `${article.prix_unitaire.toFixed(2)} €` :
+                                'Prix N/A'}
+                            <small>Total: ${valeurTotale} €</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="user-info">
+                            ${retour.utilisateur || 'Utilisateur inconnu'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-small view-details"
+                                    data-id="${retour.id}"
+                                    data-type="retour"
                                     title="Voir les détails">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -1454,6 +1528,217 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
             modal.remove();
         }
     });
+}
+
+async function openReturnToStockModal(mouvementId, articleId, originalQuantity) {
+    try {
+        // Récupérer l'article pour l'emplacement
+        const { data: article, error: articleError } = await supabase
+            .from('w_articles')
+            .select('nom, numero, rack_id, level_id, slot_id')
+            .eq('id', articleId)
+            .single();
+
+        if (articleError) throw articleError;
+
+        // Créer le modal
+        const modalHTML = `
+            <div class="modal-overlay return-stock-modal">
+                <div class="modal" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-arrow-left"></i> Retour au stock</h3>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="article-summary">
+                            <h4>${article.nom} (${article.numero})</h4>
+                            <p>Sorti : ${originalQuantity} unité(s)</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-boxes"></i> Quantité retournée *</label>
+                            <input type="number"
+                                   id="returnQuantity"
+                                   value="${originalQuantity}"
+                                   min="0"
+                                   max="${originalQuantity}"
+                                   class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-map-marker-alt"></i> Emplacement de retour</label>
+                            <input type="text"
+                                   id="returnLocation"
+                                   placeholder="Zone, rayon, étagère..."
+                                   class="form-input">
+                            <small>Laisser vide pour emplacement d'origine</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-clipboard-check"></i> État des articles</label>
+                            <select id="itemCondition" class="form-select">
+                                <option value="parfait">Parfait état</option>
+                                <option value="raye">Rayé/Usé</option>
+                                <option value="reparation">En réparation</option>
+                                <option value="casse">Cassé</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-comment"></i> Commentaire</label>
+                            <textarea id="returnComment"
+                                      rows="3"
+                                      placeholder="Détails du retour..."
+                                      class="form-textarea"></textarea>
+                        </div>
+
+                        <div class="error-message" id="returnError" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="returnErrorText"></span>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button id="confirmReturnBtn" class="btn-success">
+                                <i class="fas fa-check"></i> Confirmer le retour
+                            </button>
+                            <button type="button" class="btn-secondary close-return-modal">
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Ajouter le modal au DOM
+        const modalContainer = document.createElement('div');
+        modalContainer.innerHTML = modalHTML;
+        document.body.appendChild(modalContainer);
+
+        const modal = modalContainer.querySelector('.return-stock-modal');
+
+        // Gérer la fermeture
+        modal.querySelector('.close-modal').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.querySelector('.close-return-modal').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+
+        // Gérer la confirmation du retour
+        modal.querySelector('#confirmReturnBtn').addEventListener('click', async () => {
+            await processReturnToStock(mouvementId, articleId, modal);
+        });
+
+    } catch (error) {
+        console.error('Erreur ouverture modal retour:', error);
+        showAlert('Erreur lors de l\'ouverture du formulaire de retour', 'error');
+    }
+}
+
+async function processReturnToStock(mouvementId, articleId, modalElement) {
+    try {
+        const modal = modalElement.closest('.modal-overlay');
+        const returnQuantity = parseInt(modal.querySelector('#returnQuantity').value);
+        const returnLocation = modal.querySelector('#returnLocation').value.trim();
+        const itemCondition = modal.querySelector('#itemCondition').value;
+        const returnComment = modal.querySelector('#returnComment').value.trim();
+
+        // Validation
+        if (!returnQuantity || returnQuantity < 0) {
+            modal.querySelector('#returnErrorText').textContent = 'La quantité retournée est invalide';
+            modal.querySelector('#returnError').style.display = 'flex';
+            return;
+        }
+
+        // Demander confirmation
+        if (!confirm(`Confirmer le retour de ${returnQuantity} unité(s) au stock ?`)) {
+            return;
+        }
+
+        showLoading();
+
+        // 1. RÉCUPÉRER LE STOCK ACTUEL
+        const { data: currentArticle, error: articleError } = await supabase
+            .from('w_articles')
+            .select('stock_actuel')
+            .eq('id', articleId)
+            .single();
+
+        if (articleError) throw articleError;
+
+        // 2. CRÉER LE MOUVEMENT DE RETOUR
+        const { data: returnMovement, error: movementError } = await supabase
+            .from('w_mouvements')
+            .insert([{
+                article_id: articleId,
+                type: 'retour_projet',
+                quantite: returnQuantity,
+                projet: state.currentProject?.nom || '',
+                projet_id: state.currentProject?.id || null,
+                commentaire: returnComment,
+                utilisateur_id: state.user.id,
+                utilisateur: state.user.username,
+                stock_avant: currentArticle.stock_actuel,
+                stock_apres: currentArticle.stock_actuel + returnQuantity,
+                motif: `Retour projet - État: ${itemCondition}`,
+                notes: `Emplacement: ${returnLocation || 'Origine'} | État: ${itemCondition}`,
+                date_mouvement: new Date().toISOString().split('T')[0],
+                heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false })
+            }])
+            .select()
+            .single();
+
+        if (movementError) throw movementError;
+
+        console.log('=== DEBUG RETOUR STOCK ===');
+        console.log('Mouvement retour créé:', returnMovement);
+        console.log('Projet courant ID:', state.currentProject?.id);
+        console.log('Projet courant nom:', state.currentProject?.nom);
+        console.log('Article ID:', articleId);
+        console.log('=== FIN DEBUG ===');
+
+        // 3. METTRE À JOUR LE STOCK DE L'ARTICLE
+        const { error: updateError } = await supabase
+            .from('w_articles')
+            .update({
+                stock_actuel: currentArticle.stock_actuel + returnQuantity,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', articleId);
+
+        if (updateError) throw updateError;
+
+        // 4. METTRE À JOUR LES DONNÉES LOCALES
+        // Recharger les mouvements
+        await fetchMovements();
+
+        // Recharger les articles
+        await fetchArticles();
+
+        // 5. FERMER LE MODAL ET AFFICHER SUCCÈS
+        modal.remove();
+        showAlert(`${returnQuantity} unité(s) retournée(s) au stock avec succès`, 'success');
+
+        // 6. RE-OUVRIR LES DÉTAILS DU PROJET SI NÉCESSAIRE
+        if (state.currentProject && elements.projectDetailsModal.style.display === 'flex') {
+            await showProjectDetails(state.currentProject.id);
+        }
+
+    } catch (error) {
+        console.error('Erreur retour au stock:', error);
+        modalElement.querySelector('#returnErrorText').textContent = error.message || 'Erreur lors du retour au stock';
+        modalElement.querySelector('#returnError').style.display = 'flex';
+    } finally {
+        hideLoading();
+    }
 }
 
 // Fonction helper pour éditer une réservation
