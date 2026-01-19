@@ -1123,7 +1123,7 @@ function updateProjectReservations(sorties, reservations) {
 
     let html = '';
 
-    // Afficher les SORTIES (déjà utilisées)
+    // 1. AFFICHER LES SORTIES (déjà utilisées)
     if (sorties.length > 0) {
         html += `
             <tr>
@@ -1198,7 +1198,7 @@ function updateProjectReservations(sorties, reservations) {
         });
     }
 
-    // 3. AFFICHER LES RETOURS (après les sorties mais avant les réservations)
+    // 2. AFFICHER LES RETOURS
     const retours = state.movements?.filter(m =>
         m.type === 'retour_projet' &&
         (m.projet_id === state.currentProject.id || m.projet === state.currentProject.nom)
@@ -1214,7 +1214,7 @@ function updateProjectReservations(sorties, reservations) {
         `;
 
         retours.forEach(retourItem => {
-            const article = state.articles.find(a => a.id === retourItem.article_id);
+            const article = state.articles.find(a => a.id === retourItem.article_id) || {};
             const valeurTotale = article?.prix_unitaire ?
                 (article.prix_unitaire * retourItem.quantite).toFixed(2) : '0.00';
 
@@ -1279,7 +1279,7 @@ function updateProjectReservations(sorties, reservations) {
         });
     }
 
-    // Afficher les RÉSERVATIONS (pas encore utilisées)
+    // 3. AFFICHER LES RÉSERVATIONS (pas encore utilisées)
     if (reservations.length > 0) {
         html += `
             <tr>
