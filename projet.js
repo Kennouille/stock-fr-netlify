@@ -1588,8 +1588,9 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                         <div class="article-summary">
                             <div class="article-header">
                                 ${article.photo_url ? `
-                                <div class="article-photo">
-                                    <img src="${article.photo_url}" alt="${article.nom}" style="max-width: 100px; max-height: 100px; border-radius: 4px;">
+                                <div class="article-photo" style="text-align: center; margin: 15px 0;">
+                                    <img src="${article.photo_url}" alt="${article.nom}"
+                                         style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                                 </div>
                                 ` : ''}
                                 <div class="article-info">
