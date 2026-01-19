@@ -1419,37 +1419,6 @@ async function openStockInPopup(article = null, scanMode = false) {
                             <small>Laissez vide pour conserver le prix actuel</small>
                         </div>
 
-                        <div class="form-group">
-                            <label for="inLocationZone">Zone de rangement</label>
-                            <input type="text"
-                                   id="inLocationZone"
-                                   placeholder="Zone"
-                                   value="${initialData ? initialData.locationZone : ''}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="inLocationRack">Rayon</label>
-                            <input type="text"
-                                   id="inLocationRack"
-                                   placeholder="Rayon"
-                                   value="${initialData ? initialData.locationRack : ''}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="inLocationShelf">Étagère</label>
-                            <input type="text"
-                                   id="inLocationShelf"
-                                   placeholder="Étagère"
-                                   value="${initialData ? initialData.locationShelf : ''}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="inLocationPosition">Position</label>
-                            <input type="text"
-                                   id="inLocationPosition"
-                                   placeholder="Position"
-                                   value="${initialData ? initialData.locationPosition : ''}">
-                        </div>
                     </div>
                 </div>
             </div>
