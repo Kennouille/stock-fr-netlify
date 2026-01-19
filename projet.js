@@ -1345,9 +1345,17 @@ function updateProjectReservations(sorties, reservations) {
     // Événement pour le bouton "Retour au stock"
     document.querySelectorAll('.return-to-stock').forEach(btn => {
         btn.addEventListener('click', function() {
+            console.log('=== CLICK RETOUR STOCK ===');
+            console.log('Bouton cliqué:', this);
+            console.log('Dataset:', this.dataset);
+
             const mouvementId = this.dataset.id;
             const articleId = this.dataset.articleId;
             const quantity = parseInt(this.dataset.quantity);
+
+            console.log('mouvementId:', mouvementId);
+            console.log('articleId:', articleId);
+            console.log('quantity:', quantity);
 
             openReturnToStockModal(mouvementId, articleId, quantity);
         });
