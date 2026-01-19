@@ -292,10 +292,8 @@ async function fetchProjects() {
         state.archivedProjects = state.projects.filter(p => p.archived);
         state.projects = state.projects.filter(p => !p.archived);
 
-        updateStatistics();
-        updateProjectsDisplay();
-        updateArchivedProjectsDisplay();
-        populateManagerFilter();
+        // NE PAS appeler updateProjectsDisplay() ici
+        // Elle sera appelée après que toutes les données soient chargées
 
     } catch (error) {
         console.error('Erreur chargement projets:', error);
@@ -2707,14 +2705,20 @@ async function init() {
         // Initialiser les événements
         setupEventListeners();
 
-        // Charger les données initiales
-        await Promise.all([
-            fetchProjects(),
+        // Charger les données initiales dans l'ordre
+        await fetchProjects();  // D'abord les projets
+        await Promise.all([     // Puis les autres données en parallèle
             fetchArticles(),
             fetchReservations(),
             fetchUsers(),
             fetchMovements()
         ]);
+
+        // MAINTENANT que toutes les données sont chargées, mettre à jour l'affichage
+        updateStatistics();
+        updateProjectsDisplay();
+        updateArchivedProjectsDisplay();
+        populateManagerFilter();
 
         // Masquer l'overlay de chargement
         hideLoading();
