@@ -1552,7 +1552,17 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
         const { data: article, error: articleError } = await supabase
             .from('w_articles')
-            .select('nom, numero, photo_url, rack_id, level_id, slot_id')
+            .select(`
+                nom,
+                numero,
+                photo_url,
+                rack_id,
+                level_id,
+                slot_id,
+                rack:w_vuestock_racks(rack_code, display_name),
+                level:w_vuestock_levels(level_code),
+                slot:w_vuestock_slots(slot_code)
+            `)
             .eq('id', articleId)
             .single();
 
@@ -1615,9 +1625,9 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                         <div class="form-group">
                             <label><i class="fas fa-map-marker-alt"></i> Emplacement de rangement</label>
                             <div class="location-display" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border-left: 3px solid #28a745;">
-                                <div><strong>Rayon:</strong> ${article.rack_id || 'Non spécifié'}</div>
-                                <div><strong>Étagère:</strong> ${article.level_id || 'Non spécifié'}</div>
-                                <div><strong>Position:</strong> ${article.slot_id || 'Non spécifié'}</div>
+                                <div><strong>Rayon:</strong> ${article.rack?.display_name || article.rack?.rack_code || 'Non spécifié'}</div>
+                                <div><strong>Étagère:</strong> ${article.level?.level_code || 'Non spécifié'}</div>
+                                <div><strong>Position:</strong> ${article.slot?.slot_code || 'Non spécifié'}</div>
                             </div>
                             <small><i class="fas fa-info-circle"></i> Rangementez l'article à cet emplacement</small>
                         </div>
