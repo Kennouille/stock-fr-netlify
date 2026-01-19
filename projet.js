@@ -1174,8 +1174,7 @@ function updateProjectReservations(sorties, reservations) {
                         <div class="action-buttons">
                             ${state.movements?.some(m =>
                                 m.type === 'retour_projet' &&
-                                m.article_id === sortie.article_id &&
-                                (m.projet_id === state.currentProject.id || m.projet === state.currentProject.nom)
+                                m.mouvement_parent_id === sortie.id  // CHANGÉ : lien direct vers la sortie
                             ) ? '' : `
                             <button class="btn-action btn-small return-to-stock"
                                     data-id="${sortie.id}"
@@ -1797,7 +1796,8 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, mo
                 date_mouvement: new Date().toISOString().split('T')[0],
                 heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
                 raison: missingReason && missingQuantity > 0 ?
-                    `${missingQuantity} ${missingReason}` : null
+                    `${missingQuantity} ${missingReason}` : null,
+                mouvement_parent_id: mouvementId  // AJOUTÉ ICI
             }])
             .select()
             .single();
