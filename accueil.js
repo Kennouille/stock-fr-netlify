@@ -1072,19 +1072,18 @@ async function openStockOutPopup(article = null, scanMode = false) {
         currentStock: article.stock_actuel || 0,
         barcode: article.code_barre,
         unitPrice: article.prix_unitaire || 0,
-        locationZone: article.zone || '',
-        locationRack: article.rayon || '',
-        locationShelf: article.etagere || '',
-        locationPosition: article.position || ''
+        locationRack: article.rack_display_name || article.rack_code || '',    // Modifié
+        locationLevel: article.level_code || '',                               // Modifié
+        locationSlot: article.slot_code || '',                                 // Modifié
     } : null;
 
-    // Construire l'emplacement complet
     const buildLocationString = (article) => {
         const parts = [];
-        if (article.zone) parts.push(`Zone: ${article.zone}`);
-        if (article.rayon) parts.push(`Rayon: ${article.rayon}`);
-        if (article.etagere) parts.push(`Étagère: ${article.etagere}`);
-        if (article.position) parts.push(`Position: ${article.position}`);
+        if (article.rack_display_name || article.rack_code) {
+            parts.push(`Rayon: ${article.rack_display_name || article.rack_code}`);
+        }
+        if (article.level_code) parts.push(`Étagère: ${article.level_code}`);
+        if (article.slot_code) parts.push(`Position: ${article.slot_code}`);
         return parts.join(' - ') || 'Non spécifié';
     };
 
@@ -1279,20 +1278,19 @@ async function openStockInPopup(article = null, scanMode = false) {
         articleNumber: article.numero,
         barcode: article.code_barre,
         unitPrice: article.prix_unitaire || 0,
-        locationZone: article.zone || '',
-        locationRack: article.rayon || '',
-        locationShelf: article.etagere || '',
-        locationPosition: article.position || '',
+        locationRack: article.rack_display_name || article.rack_code || '',    // Modifié
+        locationLevel: article.level_code || '',                               // Modifié
+        locationSlot: article.slot_code || '',                                 // Modifié
         currentStock: article.stock_actuel || 0
     } : null;
 
-    // Construire l'emplacement complet
     const buildLocationString = (article) => {
         const parts = [];
-        if (article.zone) parts.push(`Zone: ${article.zone}`);
-        if (article.rayon) parts.push(`Rayon: ${article.rayon}`);
-        if (article.etagere) parts.push(`Étagère: ${article.etagere}`);
-        if (article.position) parts.push(`Position: ${article.position}`);
+        if (article.rack_display_name || article.rack_code) {
+            parts.push(`Rayon: ${article.rack_display_name || article.rack_code}`);
+        }
+        if (article.level_code) parts.push(`Étagère: ${article.level_code}`);
+        if (article.slot_code) parts.push(`Position: ${article.slot_code}`);
         return parts.join(' - ') || 'Non spécifié';
     };
 
@@ -1484,19 +1482,18 @@ async function openProjectReservationPopup(article = null) {
         reservedStock: article.stock_reserve || 0,
         barcode: article.code_barre,
         unitPrice: article.prix_unitaire || 0,
-        locationZone: article.zone || '',
-        locationRack: article.rayon || '',
-        locationShelf: article.etagere || '',
-        locationPosition: article.position || ''
+        locationRack: article.rack_display_name || article.rack_code || '',    // Modifié
+        locationLevel: article.level_code || '',                               // Modifié
+        locationSlot: article.slot_code || '',                                 // Modifié
     } : null;
 
-    // Construire l'emplacement complet
     const buildLocationString = (article) => {
         const parts = [];
-        if (article.zone) parts.push(`Zone: ${article.zone}`);
-        if (article.rayon) parts.push(`Rayon: ${article.rayon}`);
-        if (article.etagere) parts.push(`Étagère: ${article.etagere}`);
-        if (article.position) parts.push(`Position: ${article.position}`);
+        if (article.rack_display_name || article.rack_code) {
+            parts.push(`Rayon: ${article.rack_display_name || article.rack_code}`);
+        }
+        if (article.level_code) parts.push(`Étagère: ${article.level_code}`);
+        if (article.slot_code) parts.push(`Position: ${article.slot_code}`);
         return parts.join(' - ') || 'Non spécifié';
     };
 
@@ -1912,11 +1909,16 @@ async function openScanPopup(actionType, scanType) {
         try {
             console.log('Recherche code-barre:', barcode);
 
-            // Recherche EXACTE
+            // Recherche avec jointure
             const { data: articles, error } = await supabase
                 .from('w_articles')
-                .select('*')
-                .eq('code_barre', barcode)  // Égalité exacte
+                .select(`
+                    *,
+                    rack:w_vuestock_racks!w_articles_rack_id_fkey(rack_code, display_name),
+                    level:w_vuestock_levels!w_articles_level_id_fkey(level_code),
+                    slot:w_vuestock_slots!w_articles_slot_id_fkey(slot_code)
+                `)
+                .eq('code_barre', barcode)
                 .limit(1);
 
             if (error) {
@@ -1953,7 +1955,15 @@ async function openScanPopup(actionType, scanType) {
                 return;
             }
 
-            const article = articles[0];
+            // Transformer les données
+            const article = {
+                ...articles[0],
+                rack_code: articles[0].rack?.rack_code || '',
+                rack_display_name: articles[0].rack?.display_name || '',
+                level_code: articles[0].level?.level_code || '',
+                slot_code: articles[0].slot?.slot_code || ''
+            };
+
             console.log('Article trouvé:', article.nom);
 
             // SUCCÈS - Fermer le popup de scan
@@ -2091,22 +2101,36 @@ async function searchArticleInPopup(searchTerm, type) {
     try {
         const { data: articles, error } = await supabase
             .from('w_articles')
-            .select('*')
+            .select(`
+                *,
+                rack:w_vuestock_racks!w_articles_rack_id_fkey(rack_code, display_name),
+                level:w_vuestock_levels!w_articles_level_id_fkey(level_code),
+                slot:w_vuestock_slots!w_articles_slot_id_fkey(slot_code)
+            `)
             .or(`nom.ilike.%${searchTerm}%,numero.ilike.%${searchTerm}%,code_barre.ilike.%${searchTerm}%`)
             .limit(5);
 
         if (error) throw error;
 
+        // Transformer les données pour avoir les codes
+        const transformedArticles = articles.map(article => ({
+            ...article,
+            rack_code: article.rack?.rack_code || '',
+            rack_display_name: article.rack?.display_name || '',
+            level_code: article.level?.level_code || '',
+            slot_code: article.slot?.slot_code || ''
+        }));
+
         const resultsDiv = document.querySelector(`#${type}SearchResults .results-list`);
         const container = document.getElementById(`${type}SearchResults`);
 
-        if (!articles || articles.length === 0) {
+        if (!transformedArticles || transformedArticles.length === 0) {
             resultsDiv.innerHTML = '<div class="no-results">Aucun article trouvé</div>';
             container.style.display = 'block';
             return;
         }
 
-        resultsDiv.innerHTML = articles.map(article => `
+        resultsDiv.innerHTML = transformedArticles.map(article => `
             <div class="result-item" data-id="${article.id}">
                 <div class="result-info">
                     <h5>${article.nom}</h5>
@@ -2128,7 +2152,7 @@ async function searchArticleInPopup(searchTerm, type) {
         document.querySelectorAll(`#${type}SearchResults .btn-select-article`).forEach(btn => {
             btn.addEventListener('click', function() {
                 const articleId = this.dataset.id;
-                const article = articles.find(a => a.id === articleId);
+                const article = transformedArticles.find(a => a.id === articleId);
 
                 // Fermer ce popup et ouvrir le popup correspondant avec l'article sélectionné
                 const popup = document.querySelector('.stock-popup-overlay');
