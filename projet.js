@@ -2931,7 +2931,7 @@ async function exportProjectDetails() {
         let content = `Détails du projet: ${state.currentProject.nom}\n`;
         content += `Exporté le: ${new Date().toLocaleDateString('fr-FR')}\n\n`;
 
-        content += '\n=== RÉSERVATIONS ===\n';
+        content += '=== RÉSERVATIONS ===\n';
         if (projectReservations.length > 0) {
             content += 'Article;Code;Quantité;Date réservation;Date fin;Utilisateur;Commentaire\n';
             projectReservations.forEach(res => {
@@ -2943,7 +2943,7 @@ async function exportProjectDetails() {
             content += 'Aucune réservation\n';
         }
 
-        content += '=== INFORMATIONS DU PROJET ===\n';
+        content += '\n=== INFORMATIONS DU PROJET ===\n';
         Object.entries(projectData).forEach(([key, value]) => {
             content += `${key}: ${value}\n`;
         });
