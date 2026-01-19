@@ -1649,6 +1649,9 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
         console.log('Modal trouvé dans DOM:', modal);
         console.log('Modal style:', modal?.style);
 
+        modal.style.display = 'flex';
+        console.log('Modal style après display:', modal.style.display);
+
         // Gérer la fermeture
         modal.querySelector('.close-modal').addEventListener('click', () => {
             modal.remove();
