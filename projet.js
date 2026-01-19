@@ -1539,6 +1539,11 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
 }
 
 async function openReturnToStockModal(mouvementId, articleId, originalQuantity) {
+    console.log('=== OPEN RETURN MODAL ===');
+    console.log('mouvementId:', mouvementId);
+    console.log('articleId:', articleId);
+    console.log('originalQuantity:', originalQuantity);
+
     try {
         // Récupérer l'article pour l'emplacement
         const { data: article, error: articleError } = await supabase
