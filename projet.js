@@ -604,12 +604,20 @@ async function getProjectHistory(projectId) {
 
 async function fetchMovements() {
     try {
+        console.log('=== CHARGEMENT MOUVEMENTS ===');
+
         const { data, error } = await supabase
             .from('w_mouvements')
             .select('*')
             .eq('type', 'sortie');
 
-        if (error) throw error;
+        if (error) {
+            console.error('Erreur:', error);
+            throw error;
+        }
+
+        console.log('Mouvements chargés:', data);
+        console.log('=== FIN CHARGEMENT ===');
 
         state.movements = data || [];
 
@@ -723,14 +731,27 @@ function updateProjectsDisplay() {
     filteredProjects.forEach(project => {
         const projectReservations = state.reservations.filter(r => r.id_projet === project.id);
 
+        // DEBUG : Voir ce qui est dans state.movements
+        console.log('=== DEBUG PROJET ===');
+        console.log('Projet ID:', project.id);
+        console.log('Projet Nom:', project.nom);
+        console.log('Total mouvements dans state:', state.movements?.length || 0);
+        console.log('Mouvements pour ce projet (ID):', state.movements?.filter(m => m.projet_id === project.id));
+        console.log('Mouvements pour ce projet (Nom):', state.movements?.filter(m => m.projet === project.nom));
+
         // Filtrer les SORTIES pour ce projet (par ID OU par nom)
         const projectSorties = state.movements?.filter(m =>
             m.type === 'sortie' &&
             (m.projet_id === project.id || m.projet === project.nom)
         ) || [];
 
+        console.log('Sorties trouvées:', projectSorties);
+
         // Calculer le total des articles sortis
         const itemsUsedCount = projectSorties.reduce((sum, m) => sum + (m.quantite || 0), 0);
+
+        console.log('itemsUsedCount calculé:', itemsUsedCount);
+        console.log('=== FIN DEBUG ===');
         const status = getProjectStatus(project);
         const daysLeft = calculateDaysLeft(project.date_fin_prevue);
 
