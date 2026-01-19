@@ -705,7 +705,11 @@ function updateProjectsDisplay() {
     let html = '';
     filteredProjects.forEach(project => {
         const projectReservations = state.reservations.filter(r => r.id_projet === project.id);
-        const itemsCount = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
+        const projectOutflows = state.movements?.filter(m =>
+            m.projet_id === project.id &&
+            m.type === 'sortie'
+        ) || [];
+        const itemsUsedCount = projectOutflows.reduce((sum, m) => sum + (m.quantite || 0), 0);
         const status = getProjectStatus(project);
         const daysLeft = calculateDaysLeft(project.date_fin_prevue);
 
@@ -725,7 +729,7 @@ function updateProjectsDisplay() {
 
                 <div class="project-meta">
                     <div class="project-meta-item">
-                        <span class="project-meta-value">${itemsCount}</span>
+                        <span class="project-meta-value">${itemsUsedCount}</span>
                         <span class="project-meta-label">Articles</span>
                     </div>
                     <div class="project-meta-item">
