@@ -1733,7 +1733,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
         // Gérer la confirmation du retour
         modal.querySelector('#confirmReturnBtn').addEventListener('click', async () => {
-            await processReturnToStock(mouvementId, articleId, modalContainer);
+            await processReturnToStock(mouvementId, articleId, originalQuantity, modalContainer);
         });
 
     } catch (error) {
@@ -1745,7 +1745,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
     }
 }
 
-async function processReturnToStock(mouvementId, articleId, modalElement) {
+async function processReturnToStock(mouvementId, articleId, originalQuantity, modalElement) {
     try {
         const modal = modalElement;
         const returnQuantity = parseInt(modal.querySelector('#returnQuantity').value);
