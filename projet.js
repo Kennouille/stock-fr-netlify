@@ -1138,56 +1138,56 @@ function updateProjectReservations(sorties, reservations) {
                 (sortie.article.prix_unitaire * sortie.quantite).toFixed(2) : '0.00';
 
             html += `
-                <tr data-id="${retour.id}" class="returned-row">
+                <tr data-id="${sortie.id}" class="sortie-row">
                     <td>
                         <div class="article-info">
-                            <strong>${article?.nom || 'Article inconnu'}</strong>
-                            <small>${article?.numero || ''}</small>
+                            <strong>${sortie.article?.nom || 'Article inconnu'}</strong>
+                            <small>${sortie.article?.numero || ''}</small>
                         </div>
                     </td>
-                    <td>${article?.numero || 'N/A'}</td>
+                    <td>${sortie.article?.numero || 'N/A'}</td>
                     <td>
-                        <span class="quantity-badge retour">
-                            ${retour.quantite}
+                        <span class="quantity-badge sortie">
+                            -${sortie.quantite}
                         </span>
-                        ${retour.raison ? `
-                        <br>
-                        <small style="color: #dc3545; font-size: 0.85em;">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            ${retour.raison.replace('Quantité manquante: ', '')}
-                        </small>
-                        ` : ''}
                     </td>
                     <td>
                         <div class="date-info">
-                            ${formatDate(retour.created_at)}
-                            <small>${formatDateTime(retour.created_at).split(' ')[1] || ''}</small>
+                            ${formatDate(sortie.created_at)}
+                            <small>${formatDateTime(sortie.created_at).split(' ')[1] || ''}</small>
                         </div>
                     </td>
                     <td>
                         <div class="price-info">
-                            ${article?.prix_unitaire ?
-                                `${article.prix_unitaire.toFixed(2)} €` :
+                            ${sortie.article?.prix_unitaire ?
+                                `${sortie.article.prix_unitaire.toFixed(2)} €` :
                                 'Prix N/A'}
                             <small>Total: ${valeurTotale} €</small>
-                            ${retour.raison ? `
-                            <div class="missing-info" style="color: #dc3545; margin-top: 5px;">
-                                <i class="fas fa-exclamation-circle"></i>
-                                ${retour.raison}
-                            </div>
-                            ` : ''}
                         </div>
                     </td>
                     <td>
                         <div class="user-info">
-                            ${retour.utilisateur || 'Utilisateur inconnu'}
+                            ${sortie.utilisateur?.username || 'Utilisateur inconnu'}
                         </div>
                     </td>
                     <td>
                         <div class="action-buttons">
+                            ${state.movements?.some(m =>
+                                m.type === 'retour_projet' &&
+                                m.article_id === sortie.article_id &&
+                                (m.projet_id === state.currentProject.id || m.projet === state.currentProject.nom)
+                            ) ? '' : `
+                            <button class="btn-action btn-small return-to-stock"
+                                    data-id="${sortie.id}"
+                                    data-article-id="${sortie.article_id}"
+                                    data-quantity="${sortie.quantite}"
+                                    title="Retour au stock">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            `}
                             <button class="btn-action btn-small view-details"
-                                    data-id="${retour.id}"
-                                    data-type="retour"
+                                    data-id="${sortie.id}"
+                                    data-type="sortie"
                                     title="Voir les détails">
                                 <i class="fas fa-eye"></i>
                             </button>
