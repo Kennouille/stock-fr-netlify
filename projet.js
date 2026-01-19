@@ -1235,7 +1235,7 @@ function updateProjectReservations(sorties, reservations) {
                         <br>
                         <small style="color: #dc3545; font-size: 0.85em;">
                             <i class="fas fa-exclamation-triangle"></i>
-                            ${retourItem.raison.replace('Quantité manquante: ', '')}
+                            ${retourItem.raison}
                         </small>
                         ` : ''}
                     </td>
@@ -1753,6 +1753,7 @@ async function processReturnToStock(mouvementId, articleId, modalElement) {
         const itemCondition = modal.querySelector('#itemCondition').value;
         const returnComment = modal.querySelector('#returnComment').value.trim();
         const missingReason = modal.querySelector('#missingReason')?.value || '';
+        const missingQuantity = originalQuantity - returnQuantity;
 
         // Validation
         if (!returnQuantity || returnQuantity < 0) {
@@ -1795,7 +1796,8 @@ async function processReturnToStock(mouvementId, articleId, modalElement) {
                 notes: `Emplacement: ${returnLocation} | État: ${itemCondition}`,
                 date_mouvement: new Date().toISOString().split('T')[0],
                 heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
-                raison: missingReason ? `Quantité manquante: ${missingReason}` : null  // AJOUTÉ
+                raison: missingReason && missingQuantity > 0 ?
+                    `${missingQuantity} ${missingReason}` : null
             }])
             .select()
             .single();
