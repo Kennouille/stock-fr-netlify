@@ -1545,7 +1545,8 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
     console.log('originalQuantity:', originalQuantity);
 
     try {
-        // Récupérer l'article pour l'emplacement
+        console.log('=== DÉBUT TRY OPEN RETURN MODAL ===');
+        console.log('Current user:', state.user);
         const { data: article, error: articleError } = await supabase
             .from('w_articles')
             .select('nom, numero, rack_id, level_id, slot_id')
