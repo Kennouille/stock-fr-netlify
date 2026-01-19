@@ -1651,7 +1651,10 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
         });
 
     } catch (error) {
-        console.error('Erreur ouverture modal retour:', error);
+        console.error('=== ERREUR OPEN RETURN MODAL ===');
+        console.error('Erreur complète:', error);
+        console.error('Stack:', error.stack);
+        console.error('=== FIN ERREUR ===');
         showAlert('Erreur lors de l\'ouverture du formulaire de retour', 'error');
     }
 }
