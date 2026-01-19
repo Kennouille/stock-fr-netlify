@@ -1635,12 +1635,19 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
             </div>
         `;
 
+        console.log('=== CRÉATION MODAL HTML ===');
+        console.log('Modal HTML créé, longueur:', modalHTML.length);
+        console.log('État de state.currentProject:', state.currentProject);
+
         // Ajouter le modal au DOM
         const modalContainer = document.createElement('div');
         modalContainer.innerHTML = modalHTML;
+        console.log('Modal container créé:', modalContainer);
         document.body.appendChild(modalContainer);
 
         const modal = modalContainer.querySelector('.return-stock-modal');
+        console.log('Modal trouvé dans DOM:', modal);
+        console.log('Modal style:', modal?.style);
 
         // Gérer la fermeture
         modal.querySelector('.close-modal').addEventListener('click', () => {
