@@ -1627,7 +1627,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                             <label><i class="fas fa-map-marker-alt"></i> Emplacement de rangement</label>
                             <div class="location-display" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border-left: 3px solid #28a745;">
                                 <div><strong>Rayon:</strong> ${article.rack?.display_name || article.rack?.rack_code || 'Non spécifié'}</div>
-                                <div><strong>Étagère:</strong> ${article.level?.level_code || 'Non spécifié'}</div>
+                                <div><strong>Étage:</strong> ${article.level?.level_code || 'Non spécifié'}</div>
                                 <div><strong>Position:</strong> ${article.slot?.slot_code || 'Non spécifié'}</div>
                             </div>
                             <small><i class="fas fa-info-circle"></i> Rangementez l'article à cet emplacement</small>
@@ -1720,7 +1720,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
         // Gérer la confirmation du retour
         modal.querySelector('#confirmReturnBtn').addEventListener('click', async () => {
-            await processReturnToStock(mouvementId, articleId, modal);
+            await processReturnToStock(mouvementId, articleId, modalContainer);
         });
 
     } catch (error) {
