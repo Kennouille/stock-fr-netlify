@@ -1031,7 +1031,7 @@ async function showProjectDetails(projectId) {
         elements.archiveProjectBtn.style.display = project.archived ? 'none' : 'block';
         elements.archiveProjectBtn.textContent = project.archived ? 'Désarchiver' : 'Archiver';
 
-        showModal(elements.projectDetailsModal);
+        switchProjectTab('reservations');
 
     } catch (error) {
         console.error('Erreur affichage détails projet:', error);
