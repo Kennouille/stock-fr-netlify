@@ -1213,13 +1213,13 @@ function updateProjectReservations(sorties, reservations) {
             </tr>
         `;
 
-        retours.forEach(retour => {
-            const article = state.articles.find(a => a.id === retour.article_id);
+        retours.forEach(retourItem => {
+            const article = state.articles.find(a => a.id === retourItem.article_id);
             const valeurTotale = article?.prix_unitaire ?
-                (article.prix_unitaire * retour.quantite).toFixed(2) : '0.00';
+                (article.prix_unitaire * retourItem.quantite).toFixed(2) : '0.00';
 
             html += `
-                <tr data-id="${retour.id}" class="returned-row">
+                <tr data-id="${retourItem.id}" class="returned-row">
                     <td>
                         <div class="article-info">
                             <strong>${article?.nom || 'Article inconnu'}</strong>
@@ -1229,13 +1229,20 @@ function updateProjectReservations(sorties, reservations) {
                     <td>${article?.numero || 'N/A'}</td>
                     <td>
                         <span class="quantity-badge retour">
-                            ${retour.quantite}
+                            ${retourItem.quantite}
                         </span>
+                        ${retourItem.raison ? `
+                        <br>
+                        <small style="color: #dc3545; font-size: 0.85em;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            ${retourItem.raison.replace('Quantité manquante: ', '')}
+                        </small>
+                        ` : ''}
                     </td>
                     <td>
                         <div class="date-info">
-                            ${formatDate(retour.created_at)}
-                            <small>${formatDateTime(retour.created_at).split(' ')[1] || ''}</small>
+                            ${formatDate(retourItem.created_at)}
+                            <small>${formatDateTime(retourItem.created_at).split(' ')[1] || ''}</small>
                         </div>
                     </td>
                     <td>
@@ -1244,17 +1251,23 @@ function updateProjectReservations(sorties, reservations) {
                                 `${article.prix_unitaire.toFixed(2)} €` :
                                 'Prix N/A'}
                             <small>Total: ${valeurTotale} €</small>
+                            ${retourItem.raison ? `
+                            <div class="missing-info" style="color: #dc3545; margin-top: 5px;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                ${retourItem.raison}
+                            </div>
+                            ` : ''}
                         </div>
                     </td>
                     <td>
                         <div class="user-info">
-                            ${retour.utilisateur || 'Utilisateur inconnu'}
+                            ${retourItem.utilisateur || 'Utilisateur inconnu'}
                         </div>
                     </td>
                     <td>
                         <div class="action-buttons">
                             <button class="btn-action btn-small view-details"
-                                    data-id="${retour.id}"
+                                    data-id="${retourItem.id}"
                                     data-type="retour"
                                     title="Voir les détails">
                                 <i class="fas fa-eye"></i>
