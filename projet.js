@@ -2079,22 +2079,49 @@ function updateProjectHistory(historyItems) {
 
     let html = '';
     historyItems.forEach(item => {
+        // Déterminer l'icône et le type d'action
+        let icon = 'history';
+        let actionType = 'Action';
+        let details = '';
+
+        if (item.type === 'sortie') {
+            icon = 'arrow-up';
+            actionType = 'Sortie de stock';
+            details = `${item.quantite} × ${item.article?.nom || 'Article'} | Projet: ${item.projet || 'N/A'}`;
+        } else if (item.type === 'retour_projet') {
+            icon = 'arrow-left';
+            actionType = 'Retour au stock';
+            details = `${item.quantite} unité(s) retournée(s)`;
+            if (item.raison) {
+                details += ` | ${item.raison}`;
+            }
+        } else if (item.type === 'entree') {
+            icon = 'arrow-down';
+            actionType = 'Entrée de stock';
+            details = `${item.quantite} unité(s) | ${item.fournisseur || 'Stock initial'}`;
+        } else if (item.type === 'reservation') {
+            icon = 'clock';
+            actionType = 'Réservation';
+            details = `${item.quantite} unité(s) réservée(s)`;
+        }
+
         html += `
             <div class="history-item">
-                <div class="history-icon">
-                    <i class="fas fa-${item.type === 'reservation' ? 'plus-circle' :
-                                      item.type === 'release' ? 'minus-circle' :
-                                      item.type === 'project_update' ? 'edit' :
-                                      'history'}"></i>
+                <div class="history-icon ${item.type}">
+                    <i class="fas fa-${icon}"></i>
                 </div>
                 <div class="history-content">
                     <div class="history-header">
-                        <span class="history-title">${item.titre || 'Action'}</span>
+                        <span class="history-title">${actionType}</span>
                         <span class="history-date">${formatDateTime(item.created_at)}</span>
                     </div>
-                    <div class="history-description">${item.description || ''}</div>
-                    ${item.details ? `<div class="history-details">${item.details}</div>` : ''}
-                    ${item.utilisateur ? `<div class="history-user"><i class="fas fa-user"></i> ${item.utilisateur}</div>` : ''}
+                    <div class="history-details">
+                        ${details}
+                        ${item.commentaire ? `<div class="history-comment"><i class="fas fa-comment"></i> ${item.commentaire}</div>` : ''}
+                    </div>
+                    <div class="history-footer">
+                        <span class="history-user"><i class="fas fa-user"></i> ${item.utilisateur || 'Système'}</span>
+                    </div>
                 </div>
             </div>
         `;
