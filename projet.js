@@ -1547,13 +1547,24 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
     try {
         console.log('=== DÉBUT TRY OPEN RETURN MODAL ===');
         console.log('Current user:', state.user);
+        console.log('=== REQUÊTE ARTICLE ===');
+        console.log('articleId:', articleId);
+
         const { data: article, error: articleError } = await supabase
             .from('w_articles')
             .select('nom, numero, rack_id, level_id, slot_id')
             .eq('id', articleId)
             .single();
 
-        if (articleError) throw articleError;
+        console.log('Résultat requête:', { article, articleError });
+
+        if (articleError) {
+            console.error('Erreur requête article:', articleError);
+            throw articleError;
+        }
+
+        console.log('Article trouvé:', article);
+        console.log('=== FIN REQUÊTE ===');
 
         // Créer le modal
         const modalHTML = `
