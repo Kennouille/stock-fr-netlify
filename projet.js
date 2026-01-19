@@ -602,6 +602,23 @@ async function getProjectHistory(projectId) {
     }
 }
 
+async function fetchMovements() {
+    try {
+        const { data, error } = await supabase
+            .from('w_mouvements')
+            .select('*')
+            .eq('type', 'sortie');
+
+        if (error) throw error;
+
+        state.movements = data || [];
+
+    } catch (error) {
+        console.error('Erreur chargement mouvements:', error);
+        state.movements = [];
+    }
+}
+
 // ===== MISE À JOUR DE L'AFFICHAGE =====
 function updateStatistics() {
     // Compter les projets actifs
@@ -705,11 +722,15 @@ function updateProjectsDisplay() {
     let html = '';
     filteredProjects.forEach(project => {
         const projectReservations = state.reservations.filter(r => r.id_projet === project.id);
-        const projectOutflows = state.movements?.filter(m =>
-            m.projet_id === project.id &&
-            m.type === 'sortie'
+
+        // Filtrer les SORTIES pour ce projet (par ID OU par nom)
+        const projectSorties = state.movements?.filter(m =>
+            m.type === 'sortie' &&
+            (m.projet_id === project.id || m.projet === project.nom)
         ) || [];
-        const itemsUsedCount = projectOutflows.reduce((sum, m) => sum + (m.quantite || 0), 0);
+
+        // Calculer le total des articles sortis
+        const itemsUsedCount = projectSorties.reduce((sum, m) => sum + (m.quantite || 0), 0);
         const status = getProjectStatus(project);
         const daysLeft = calculateDaysLeft(project.date_fin_prevue);
 
@@ -2670,7 +2691,8 @@ async function init() {
             fetchProjects(),
             fetchArticles(),
             fetchReservations(),
-            fetchUsers()
+            fetchUsers(),
+            fetchMovements()
         ]);
 
         // Masquer l'overlay de chargement
