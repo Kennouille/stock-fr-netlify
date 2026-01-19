@@ -1172,6 +1172,13 @@ function updateProjectReservations(sorties, reservations) {
                     </td>
                     <td>
                         <div class="action-buttons">
+                            <button class="btn-action btn-small return-to-stock"
+                                    data-id="${sortie.id}"
+                                    data-article-id="${sortie.article_id}"
+                                    data-quantity="${sortie.quantite}"
+                                    title="Retour au stock">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
                             <button class="btn-action btn-small view-details"
                                     data-id="${sortie.id}"
                                     data-type="sortie"
@@ -1260,6 +1267,17 @@ function updateProjectReservations(sorties, reservations) {
     }
 
     elements.projectReservationsBody.innerHTML = html;
+
+    // Événement pour le bouton "Retour au stock"
+    document.querySelectorAll('.return-to-stock').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const mouvementId = this.dataset.id;
+            const articleId = this.dataset.articleId;
+            const quantity = parseInt(this.dataset.quantity);
+
+            openReturnToStockModal(mouvementId, articleId, quantity);
+        });
+    });
 
     // Ajouter les événements pour les boutons
     document.querySelectorAll('.view-details').forEach(btn => {
