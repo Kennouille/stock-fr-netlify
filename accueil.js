@@ -1082,7 +1082,7 @@ async function openStockOutPopup(article = null, scanMode = false) {
         if (article.rack_display_name || article.rack_code) {
             parts.push(`Emplacement: ${article.rack_display_name || article.rack_code}`);
         }
-        if (article.level_code) parts.push(`Étagère: ${article.level_code}`);
+        if (article.level_code) parts.push(`Étage: ${article.level_code}`);
         if (article.slot_code) parts.push(`Position: ${article.slot_code}`);
         return parts.join(' - ') || 'Non spécifié';
     };
@@ -1289,7 +1289,7 @@ async function openStockInPopup(article = null, scanMode = false) {
         if (article.rack_display_name || article.rack_code) {
             parts.push(`Emplacement: ${article.rack_display_name || article.rack_code}`);
         }
-        if (article.level_code) parts.push(`Étagère: ${article.level_code}`);
+        if (article.level_code) parts.push(`Étage: ${article.level_code}`);
         if (article.slot_code) parts.push(`Position: ${article.slot_code}`);
         return parts.join(' - ') || 'Non spécifié';
     };
