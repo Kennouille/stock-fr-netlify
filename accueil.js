@@ -1420,6 +1420,14 @@ async function openStockInPopup(article = null, scanMode = false) {
                         </div>
 
                         <div class="form-group">
+                            <label for="inLocationZone">Zone de rangement</label>
+                            <input type="text"
+                                   id="inLocationZone"
+                                   placeholder="Zone"
+                                   value="${initialData ? initialData.locationZone : ''}">
+                        </div>
+
+                        <div class="form-group">
                             <label for="inLocationRack">Rayon</label>
                             <input type="text"
                                    id="inLocationRack"
