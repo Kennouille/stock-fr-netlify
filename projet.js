@@ -1552,7 +1552,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
         const { data: article, error: articleError } = await supabase
             .from('w_articles')
-            .select('nom, numero, rack_id, level_id, slot_id')
+            .select('nom, numero, photo_url, rack_id, level_id, slot_id')
             .eq('id', articleId)
             .single();
 
@@ -1576,8 +1576,17 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                     </div>
                     <div class="modal-body">
                         <div class="article-summary">
-                            <h4>${article.nom} (${article.numero})</h4>
-                            <p>Sorti : ${originalQuantity} unité(s)</p>
+                            <div class="article-header">
+                                ${article.photo_url ? `
+                                <div class="article-photo">
+                                    <img src="${article.photo_url}" alt="${article.nom}" style="max-width: 100px; max-height: 100px; border-radius: 4px;">
+                                </div>
+                                ` : ''}
+                                <div class="article-info">
+                                    <h4>${article.nom} (${article.numero})</h4>
+                                    <p>Sorti : ${originalQuantity} unité(s)</p>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -1590,13 +1599,27 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                                    class="form-input">
                         </div>
 
+                        <div id="missingQuantitySection" style="display: none;">
+                            <div class="form-group">
+                                <label><i class="fas fa-exclamation-triangle"></i> Raison de la différence</label>
+                                <select id="missingReason" class="form-select">
+                                    <option value="">Sélectionner une raison...</option>
+                                    <option value="perdu">Perdu</option>
+                                    <option value="casse">Cassé</option>
+                                    <option value="vole">Volé</option>
+                                    <option value="fin_vie">Fin de vie utile</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="form-group">
-                            <label><i class="fas fa-map-marker-alt"></i> Emplacement de retour</label>
-                            <input type="text"
-                                   id="returnLocation"
-                                   placeholder="Zone, rayon, étagère..."
-                                   class="form-input">
-                            <small>Laisser vide pour emplacement d'origine</small>
+                            <label><i class="fas fa-map-marker-alt"></i> Emplacement de rangement</label>
+                            <div class="location-display" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border-left: 3px solid #28a745;">
+                                <div><strong>Rayon:</strong> ${article.rack_id || 'Non spécifié'}</div>
+                                <div><strong>Étagère:</strong> ${article.level_id || 'Non spécifié'}</div>
+                                <div><strong>Position:</strong> ${article.slot_id || 'Non spécifié'}</div>
+                            </div>
+                            <small><i class="fas fa-info-circle"></i> Rangementez l'article à cet emplacement</small>
                         </div>
 
                         <div class="form-group">
@@ -1635,6 +1658,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
             </div>
         `;
 
+
         console.log('=== CRÉATION MODAL HTML ===');
         console.log('Modal HTML créé, longueur:', modalHTML.length);
         console.log('État de state.currentProject:', state.currentProject);
@@ -1666,6 +1690,22 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                 modal.remove();
             }
         });
+
+        // Gérer l'affichage de la section "raison de la différence"
+        const returnQuantityInput = modal.querySelector('#returnQuantity');
+        const missingSection = modal.querySelector('#missingQuantitySection');
+
+        returnQuantityInput.addEventListener('input', function() {
+            const returnedQty = parseInt(this.value) || 0;
+
+            if (returnedQty < originalQuantity) {
+                missingSection.style.display = 'block';
+            } else {
+                missingSection.style.display = 'none';
+                modal.querySelector('#missingReason').value = '';
+            }
+        });
+
 
         // Gérer la confirmation du retour
         modal.querySelector('#confirmReturnBtn').addEventListener('click', async () => {
