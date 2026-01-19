@@ -1626,13 +1626,16 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                         <div id="missingQuantitySection" style="display: none;">
                             <div class="form-group">
                                 <label><i class="fas fa-exclamation-triangle"></i> Raison de la différence</label>
-                                <select id="missingReason" class="form-select">
+                                <select id="missingReason" class="form-select" required>
                                     <option value="">Sélectionner une raison...</option>
                                     <option value="perdu">Perdu(s)</option>
                                     <option value="cassé">Cassé(s)</option>
                                     <option value="vole">Volé(s)</option>
                                     <option value="fin_vie">Fin de vie utile</option>
                                 </select>
+                                <div class="form-error" id="missingReasonError" style="color: #dc3545; font-size: 0.85em; display: none;">
+                                    <i class="fas fa-exclamation-circle"></i> Ce champ est obligatoire
+                                </div>
                             </div>
                         </div>
 
@@ -1724,8 +1727,10 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
             if (returnedQty < originalQuantity) {
                 missingSection.style.display = 'block';
+                modal.querySelector('#missingReason').required = true;
             } else {
                 missingSection.style.display = 'none';
+                modal.querySelector('#missingReason').required = false;
                 modal.querySelector('#missingReason').value = '';
             }
         });
@@ -1754,6 +1759,13 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, mo
         const returnComment = modal.querySelector('#returnComment').value.trim();
         const missingReason = modal.querySelector('#missingReason')?.value || '';
         const missingQuantity = originalQuantity - returnQuantity;
+
+        // Validation de la raison si quantité manquante
+        if (missingQuantity > 0 && !missingReason) {
+            modal.querySelector('#returnErrorText').textContent = 'Veuillez indiquer la raison de la quantité manquante';
+            modal.querySelector('#returnError').style.display = 'flex';
+            return;
+        }
 
         // Validation
         if (!returnQuantity || returnQuantity < 0) {
