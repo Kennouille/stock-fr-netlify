@@ -1734,7 +1734,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
 async function processReturnToStock(mouvementId, articleId, modalElement) {
     try {
-        const modal = modalElement.closest('.modal-overlay');
+        const modal = modalElement;
         const returnQuantity = parseInt(modal.querySelector('#returnQuantity').value);
         const returnLocation = "Emplacement d'origine selon fiche article";
         const itemCondition = modal.querySelector('#itemCondition').value;
