@@ -690,7 +690,7 @@ async function createReservation(reservationData) {
                 id_user: state.user.id,
                 quantite: reservationData.quantity,
                 date_fin: endDate.toISOString(),
-                commentaire: reservationData.comment,
+                commentaire: reservationData.notes,
                 created_at: new Date().toISOString()
             }])
             .select()
