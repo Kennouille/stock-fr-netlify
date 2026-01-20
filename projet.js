@@ -356,14 +356,26 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
 
         // Gérer la réservation selon la quantité utilisée
         if (quantityToUse === originalQuantity) {
-            // Supprimer complètement la réservation
+
+            // 1️⃣ Supprimer le mouvement "reservation"
+            const { error: deleteMovementError } = await supabase
+                .from('w_mouvements')
+                .delete()
+                .eq('type', 'reservation')
+                .eq('article_id', articleId)
+                .eq('projet_id', reservation.projet_id);
+
+            if (deleteMovementError) throw deleteMovementError;
+
+            // 2️⃣ Supprimer la réservation active
             const { error: deleteError } = await supabase
                 .from('w_reservations_actives')
                 .delete()
                 .eq('id', reservationId);
 
             if (deleteError) throw deleteError;
-        } else {
+        }
+         else {
             // Réduire la quantité de la réservation
             const { error: updateError } = await supabase
                 .from('w_reservations_actives')
@@ -726,6 +738,26 @@ async function createReservation(reservationData) {
 
 async function releaseReservation(reservationId, comment = '') {
     try {
+        // 1️⃣ Récupérer la réservation
+        const { data: reservation, error: fetchError } = await supabase
+            .from('w_reservations_actives')
+            .select('article_id, projet_id')
+            .eq('id', reservationId)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        // 2️⃣ Supprimer le mouvement "reservation"
+        const { error: deleteMovementError } = await supabase
+            .from('w_mouvements')
+            .delete()
+            .eq('type', 'reservation')
+            .eq('article_id', reservation.article_id)
+            .eq('projet_id', reservation.projet_id);
+
+        if (deleteMovementError) throw deleteMovementError;
+
+        // 3️⃣ Supprimer la réservation active
         const { error } = await supabase
             .from('w_reservations_actives')
             .delete()
@@ -739,6 +771,7 @@ async function releaseReservation(reservationId, comment = '') {
         throw error;
     }
 }
+
 
 // ===== FONCTIONS SUPABASE =====
 async function getProjectReservations(projectId) {
@@ -1686,12 +1719,7 @@ function updateProjectReservations(sorties, reservations) {
                     try {
                         showLoading();
 
-                        const { error } = await supabase
-                            .from('w_reservations_actives')
-                            .delete()
-                            .eq('id', reservationId);
-
-                        if (error) throw error;
+                        await releaseReservation(reservationId);
 
                         showAlert('Réservation libérée avec succès', 'success');
 
