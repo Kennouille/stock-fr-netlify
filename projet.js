@@ -3625,8 +3625,10 @@ async function editProject() {
             await updateProjectAction();
         };
 
-        showModal(modal);
+        // ← AJOUTEZ CETTE LIGNE IMPORTANTE
+        state.previousModal = state.currentModal;
 
+        showModal(modal);
     } catch (error) {
         console.error('Erreur préparation édition:', error);
         showAlert('Erreur lors de la préparation de l\'édition', 'error');
