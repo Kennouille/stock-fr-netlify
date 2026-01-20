@@ -706,64 +706,95 @@ async function createReservation(reservationData) {
     const endDate = new Date(now);
     endDate.setDate(now.getDate() + 7);
 
-    // 1️⃣ récupérer stock_reserve actuel
-    const { data: article, error: articleError } = await supabase
-        .from('w_articles')
-        .select('stock_reserve')
-        .eq('id', reservationData.articleId)
-        .single();
+    console.log('=== DÉBUT createReservation ===');
+    console.log('Données réservation:', reservationData);
 
-    if (articleError) throw articleError;
+    try {
+        // 1️⃣ récupérer stock_reserve actuel
+        console.log('Étape 1: Lecture stock_reserve pour article:', reservationData.articleId);
+        const { data: article, error: articleError } = await supabase
+            .from('w_articles')
+            .select('stock_reserve')
+            .eq('id', reservationData.articleId)
+            .single();
 
-    // 2️⃣ créer la réservation
-    const { data, error } = await supabase
-        .from('w_reservations_actives')
-        .insert([{
-            article_id: reservationData.articleId,
-            projet_id: reservationData.projectId,
-            quantite: reservationData.quantity,
-            date_debut: now.toISOString(),
-            utilisateur_id: state.user.id,
-            statut: 'active',
-            created_at: now.toISOString(),
-            updated_at: now.toISOString(),
-            date_fin: endDate.toISOString(),
-            notes: reservationData.comment,
-            responsable: state.user.username
-        }])
-        .select()
-        .single();
+        if (articleError) {
+            console.error('Erreur lecture stock_reserve:', articleError);
+            throw articleError;
+        }
 
-    if (error) throw error;
+        console.log('Stock_reserve actuel:', article?.stock_reserve);
 
-    // 3️⃣ mettre à jour stock_reserve
-    const { error: updateStockError } = await supabase
-        .from('w_articles')
-        .update({
-            stock_reserve: (article.stock_reserve || 0) + reservationData.quantity
-        })
-        .eq('id', reservationData.articleId);
+        // 2️⃣ créer la réservation
+        console.log('Étape 2: Création réservation');
+        const { data, error } = await supabase
+            .from('w_reservations_actives')
+            .insert([{
+                article_id: reservationData.articleId,
+                projet_id: reservationData.projectId,
+                quantite: reservationData.quantity,
+                date_debut: now.toISOString(),
+                utilisateur_id: state.user.id,
+                statut: 'active',
+                created_at: now.toISOString(),
+                updated_at: now.toISOString(),
+                date_fin: endDate.toISOString(),
+                notes: reservationData.comment,
+                responsable: state.user.username
+            }])
+            .select()
+            .single();
 
-    if (updateStockError) throw updateStockError;
+        if (error) {
+            console.error('Erreur création réservation:', error);
+            throw error;
+        }
 
-    // 4️⃣ ajouter le mouvement
-    const { error: movementError } = await supabase
-        .from('w_mouvements')
-        .insert([{
-            article_id: reservationData.articleId,
-            type: 'reservation',
-            quantite: reservationData.quantity,
-            projet: state.currentProject?.nom || '',
-            projet_id: reservationData.projectId,
-            utilisateur_id: state.user.id,
-            utilisateur: state.user.username,
-            commentaire: reservationData.comment || 'Réservation',
-            created_at: now.toISOString()
-        }]);
+        console.log('Réservation créée:', data);
 
-    if (movementError) throw movementError;
+        // 3️⃣ mettre à jour stock_reserve
+        const newStockReserve = (article.stock_reserve || 0) + reservationData.quantity;
+        console.log('Étape 3: Mise à jour stock_reserve de', article.stock_reserve, 'à', newStockReserve);
 
-    return data;
+        const { error: updateStockError } = await supabase
+            .from('w_articles')
+            .update({
+                stock_reserve: newStockReserve,
+                updated_at: now.toISOString()
+            })
+            .eq('id', reservationData.articleId);
+
+        if (updateStockError) {
+            console.error('Erreur mise à jour stock_reserve:', updateStockError);
+            throw updateStockError;
+        }
+
+        console.log('Stock_reserve mis à jour avec succès');
+
+        // 4️⃣ ajouter le mouvement
+        const { error: movementError } = await supabase
+            .from('w_mouvements')
+            .insert([{
+                article_id: reservationData.articleId,
+                type: 'reservation',
+                quantite: reservationData.quantity,
+                projet: state.currentProject?.nom || '',
+                projet_id: reservationData.projectId,
+                utilisateur_id: state.user.id,
+                utilisateur: state.user.username,
+                commentaire: reservationData.comment || 'Réservation',
+                created_at: now.toISOString()
+            }]);
+
+        if (movementError) throw movementError;
+
+        console.log('=== FIN createReservation - SUCCÈS ===');
+        return data;
+
+    } catch (error) {
+        console.error('=== ERREUR createReservation ===', error);
+        throw error;
+    }
 }
 
 async function releaseReservation(reservationId, comment = '') {
