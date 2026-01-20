@@ -706,25 +706,19 @@ async function createReservation(reservationData) {
     const endDate = new Date(now);
     endDate.setDate(now.getDate() + 7);
 
+    // 1️⃣ créer la réservation
     const { data, error } = await supabase
         .from('w_reservations_actives')
         .insert([{
             article_id: reservationData.articleId,
             projet_id: reservationData.projectId,
             quantite: reservationData.quantity,
-
             date_debut: now.toISOString(),
-
             utilisateur_id: state.user.id,
             statut: 'active',
-
             created_at: now.toISOString(),
-
             updated_at: now.toISOString(),
-
-
             date_fin: endDate.toISOString(),
-
             notes: reservationData.comment,
             responsable: state.user.username
         }])
@@ -733,27 +727,43 @@ async function createReservation(reservationData) {
 
     if (error) throw error;
 
-    // AJOUTER LE MOUVEMENT DE RÉSERVATION
+    // 2️⃣ récupérer stock_reserve actuel
+    const { data: article, error: articleError } = await supabase
+        .from('w_articles')
+        .select('stock_reserve')
+        .eq('id', reservationData.articleId)
+        .single();
+
+    if (articleError) throw articleError;
+
+    // 3️⃣ mettre à jour stock_reserve
+    const { error: updateStockError } = await supabase
+        .from('w_articles')
+        .update({
+            stock_reserve: (article.stock_reserve || 0) + reservationData.quantity
+        })
+        .eq('id', reservationData.articleId);
+
+    if (updateStockError) throw updateStockError;
+
+    // 4️⃣ ajouter le mouvement
     const { error: movementError } = await supabase
         .from('w_mouvements')
         .insert([{
             article_id: reservationData.articleId,
             type: 'reservation',
             quantite: reservationData.quantity,
-            projet: state.currentProject?.nom || null,
+            projet: state.currentProject?.nom || '',
             projet_id: reservationData.projectId,
             utilisateur_id: state.user.id,
             utilisateur: state.user.username,
             commentaire: reservationData.comment || 'Réservation',
-            created_at: now.toISOString(),
-            date_debut: now.toISOString().split('T')[0],
-            date_fin: endDate.toISOString().split('T')[0]
+            created_at: now.toISOString()
         }]);
 
     if (movementError) throw movementError;
 
     return data;
-
 }
 
 async function releaseReservation(reservationId, comment = '') {
@@ -761,13 +771,33 @@ async function releaseReservation(reservationId, comment = '') {
         // 1️⃣ Récupérer la réservation
         const { data: reservation, error: fetchError } = await supabase
             .from('w_reservations_actives')
-            .select('article_id, projet_id')
+            .select('article_id, projet_id, quantite')
             .eq('id', reservationId)
             .single();
 
         if (fetchError) throw fetchError;
 
-        // 2️⃣ Supprimer le mouvement "reservation"
+        // 2️⃣ Récupérer stock_reserve actuel
+        const { data: article, error: articleError } = await supabase
+            .from('w_articles')
+            .select('stock_reserve')
+            .eq('id', reservation.article_id)
+            .single();
+
+        if (articleError) throw articleError;
+
+        // 3️⃣ Mettre à jour stock_reserve
+        const newReservedStock =
+            Math.max(0, (article.stock_reserve || 0) - reservation.quantite);
+
+        const { error: updateStockError } = await supabase
+            .from('w_articles')
+            .update({ stock_reserve: newReservedStock })
+            .eq('id', reservation.article_id);
+
+        if (updateStockError) throw updateStockError;
+
+        // 4️⃣ Supprimer le mouvement "reservation"
         const { error: deleteMovementError } = await supabase
             .from('w_mouvements')
             .delete()
@@ -777,7 +807,7 @@ async function releaseReservation(reservationId, comment = '') {
 
         if (deleteMovementError) throw deleteMovementError;
 
-        // 3️⃣ Supprimer la réservation active
+        // 5️⃣ Supprimer la réservation active
         const { error } = await supabase
             .from('w_reservations_actives')
             .delete()
@@ -791,7 +821,6 @@ async function releaseReservation(reservationId, comment = '') {
         throw error;
     }
 }
-
 
 // ===== FONCTIONS SUPABASE =====
 async function getProjectReservations(projectId) {
@@ -2152,10 +2181,10 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, mo
 
         showLoading();
 
-        // 1. RÉCUPÉRER LE STOCK ACTUEL
+        // 1. RÉCUPÉRER LE STOCK ACTUEL + stock_reserve
         const { data: currentArticle, error: articleError } = await supabase
             .from('w_articles')
-            .select('stock_actuel')
+            .select('stock_actuel, stock_reserve')
             .eq('id', articleId)
             .single();
 
@@ -2179,27 +2208,20 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, mo
                 notes: `Emplacement: ${returnLocation} | État: ${itemCondition}`,
                 date_mouvement: new Date().toISOString().split('T')[0],
                 heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
-                raison: missingReason && missingQuantity > 0 ?
-                    `${missingQuantity} ${missingReason}` : null,
-                mouvement_parent_id: mouvementId  // AJOUTÉ ICI
+                raison: missingReason && missingQuantity > 0 ? `${missingQuantity} ${missingReason}` : null,
+                mouvement_parent_id: mouvementId
             }])
             .select()
             .single();
 
         if (movementError) throw movementError;
 
-        console.log('=== DEBUG RETOUR STOCK ===');
-        console.log('Mouvement retour créé:', returnMovement);
-        console.log('Projet courant ID:', state.currentProject?.id);
-        console.log('Projet courant nom:', state.currentProject?.nom);
-        console.log('Article ID:', articleId);
-        console.log('=== FIN DEBUG ===');
-
-        // 3. METTRE À JOUR LE STOCK DE L'ARTICLE
+        // 3. METTRE À JOUR LE STOCK DE L'ARTICLE (avec stock_reserve)
         const { error: updateError } = await supabase
             .from('w_articles')
             .update({
                 stock_actuel: currentArticle.stock_actuel + returnQuantity,
+                stock_reserve: Math.max(0, currentArticle.stock_reserve - returnQuantity),
                 updated_at: new Date().toISOString()
             })
             .eq('id', articleId);
@@ -2207,10 +2229,7 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, mo
         if (updateError) throw updateError;
 
         // 4. METTRE À JOUR LES DONNÉES LOCALES
-        // Recharger les mouvements
         await fetchMovements();
-
-        // Recharger les articles
         await fetchArticles();
 
         // 5. FERMER LE MODAL ET AFFICHER SUCCÈS
