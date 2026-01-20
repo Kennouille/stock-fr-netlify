@@ -1338,6 +1338,13 @@ function updateProjectReservations(sorties, reservations) {
                     </td>
                     <td>
                         <div class="action-buttons">
+                            <button class="btn-action btn-small use-reservation"
+                                    data-id="${reservation.id}"
+                                    data-article-id="${article?.id || ''}"
+                                    data-quantity="${reservation.quantite}"
+                                    title="Marquer comme utilisé">
+                                <i class="fas fa-check"></i>
+                            </button>
                             <button class="btn-action btn-small view-details"
                                     data-id="${reservation.id}"
                                     data-type="reservation"
@@ -1649,16 +1656,16 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                                 <div><strong>Étage:</strong> ${article.level?.level_code || 'Non spécifié'}</div>
                                 <div><strong>Position:</strong> ${article.slot?.slot_code || 'Non spécifié'}</div>
                             </div>
-                            <small><i class="fas fa-info-circle"></i> Rangementez l'article à cet emplacement</small>
+                            <small><i class="fas fa-info-circle"></i> Rangez l'article à cet emplacement</small>
                         </div>
 
                         <div class="form-group">
                             <label><i class="fas fa-clipboard-check"></i> État des articles</label>
                             <select id="itemCondition" class="form-select">
-                                <option value="parfait">Parfait état</option>
-                                <option value="raye">Rayé/Usé</option>
-                                <option value="reparation">En réparation</option>
-                                <option value="casse">Cassé</option>
+                                <option value="parfait">Condition 1 Parfait état</option>
+                                <option value="raye">Condition 2 Usé / Réparé</option>
+                                <option value="reparation">Condition 3 A réparer</option>
+                                <option value="casse">Condition 4 A remplacer</option>
                             </select>
                         </div>
 
@@ -3303,7 +3310,7 @@ async function exportProjectHistory() {
         // Pied de page
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
-        doc.text('Document généré automatiquement - Système de gestion de stock',
+        doc.text('Document de projet - Système de gestion de stock',
                 pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
 
         // Télécharger
