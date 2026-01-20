@@ -1181,7 +1181,7 @@ function hideModal(returnToPrevious = false) {
             // Afficher le modal précédent
             state.currentModal = state.previousModal;
             state.currentModal.style.display = 'flex';
-            state.previousModal = null;
+            // NE PAS effacer previousModal ici
         } else {
             state.currentModal = null;
             state.previousModal = null;
