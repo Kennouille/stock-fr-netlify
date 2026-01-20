@@ -2594,11 +2594,14 @@ async function addReservationToProject() {
     elements.reservationAvailableStock.textContent = '0';
     elements.reservationAlreadyReserved.textContent = '0';
 
-    // Peupler la liste des articles
-    populateArticleSelect();
-
     // Stocker le modal précédent avant d'ouvrir le nouveau
+    console.log('addReservationToProject - Setting previousModal:', {
+        before: state.previousModal?.id,
+        currentModal: state.currentModal?.id
+    });
     state.previousModal = state.currentModal;
+
+    showModal(elements.addReservationModal);
 
     showModal(elements.addReservationModal);
 }
@@ -3625,7 +3628,12 @@ async function editProject() {
             await updateProjectAction();
         };
 
-        // ← AJOUTEZ CETTE LIGNE IMPORTANTE
+        // ← AJOUTEZ CETTE LIGNE IMPORTANTE AVEC DEBUG
+        console.log('editProject - Setting previousModal:', {
+            before: state.previousModal?.id,
+            currentModal: state.currentModal?.id,
+            currentModalElement: state.currentModal
+        });
         state.previousModal = state.currentModal;
 
         showModal(modal);
