@@ -687,13 +687,12 @@ async function createReservation(reservationData) {
             projet_id: reservationData.projectId,
             quantite: reservationData.quantity,
 
-            date_reservation: now.toISOString(), // ✅ LIGNE MANQUANTE
             date_debut: now.toISOString(),
 
             utilisateur_id: state.user.id,
             statut: 'active',
 
-            created_at: now.toISOString(), // ✅ PAS split
+            created_at: now.toISOString(),   // 🔑 C’EST LUI
             updated_at: now.toISOString(),
             date_fin: endDate.toISOString(),
 
@@ -706,7 +705,6 @@ async function createReservation(reservationData) {
     if (error) throw error;
     return data;
 }
-
 
 async function releaseReservation(reservationId, comment = '') {
     try {
