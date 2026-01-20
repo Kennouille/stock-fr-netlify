@@ -1957,7 +1957,7 @@ async function editReservation(reservationId) {
                             <button id="confirmEditReservationBtn" class="btn-primary">
                                 <i class="fas fa-save"></i> Enregistrer
                             </button>
-                            <button type="button" class="btn btn-secondary close-edit-modal">
+                            <button type="button" class="btn-secondary modal-close-btn close-edit-modal">
                                 Annuler
                             </button>
                         </div>

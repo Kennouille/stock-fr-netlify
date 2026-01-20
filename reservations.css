@@ -322,6 +322,12 @@ body {
     background-color: #f8f9fa;
 }
 
+.modal-close-btn.btn-secondary {
+    background-color: #ecf0f1;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
 /* ===== SECTION FILTRES ===== */
 .filters-section {
     background-color: var(--card-bg);
