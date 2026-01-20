@@ -1974,7 +1974,7 @@ async function editReservation(reservationId) {
         const modal = document.getElementById('editReservationModal');
 
         // Gérer la fermeture
-        modal.querySelector('.close-modal').addEventListener('click', () => {
+        modal.querySelector('.cancel-edit-btn').addEventListener('click', () => {
             modal.remove();
         });
 
