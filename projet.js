@@ -706,7 +706,16 @@ async function createReservation(reservationData) {
     const endDate = new Date(now);
     endDate.setDate(now.getDate() + 7);
 
-    // 1️⃣ créer la réservation
+    // 1️⃣ récupérer stock_reserve actuel
+    const { data: article, error: articleError } = await supabase
+        .from('w_articles')
+        .select('stock_reserve')
+        .eq('id', reservationData.articleId)
+        .single();
+
+    if (articleError) throw articleError;
+
+    // 2️⃣ créer la réservation
     const { data, error } = await supabase
         .from('w_reservations_actives')
         .insert([{
@@ -726,15 +735,6 @@ async function createReservation(reservationData) {
         .single();
 
     if (error) throw error;
-
-    // 2️⃣ récupérer stock_reserve actuel
-    const { data: article, error: articleError } = await supabase
-        .from('w_articles')
-        .select('stock_reserve')
-        .eq('id', reservationData.articleId)
-        .single();
-
-    if (articleError) throw articleError;
 
     // 3️⃣ mettre à jour stock_reserve
     const { error: updateStockError } = await supabase
