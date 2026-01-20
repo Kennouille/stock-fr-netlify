@@ -2948,11 +2948,34 @@ async function exportProjectDetails() {
         showLoading();
 
         // Récupérer les données complètes
-        const projectReservations = await getProjectReservations(state.currentProject.id);
+        const projectData = await getProjectReservations(state.currentProject.id);
         const projectHistory = await getProjectHistory(state.currentProject.id);
 
+        // CORRECTION ICI : projectData est un objet avec sorties et reservations
+        const sorties = projectData.sorties || [];
+        const reservations = projectData.reservations || [];
+
+        // Calculer les statistiques
+        const itemsSortis = sorties.reduce((sum, s) => sum + (s.quantite || 0), 0);
+        const valeurSortis = sorties.reduce((sum, s) => {
+            const article = s.article;
+            if (article?.prix_unitaire) {
+                return sum + (article.prix_unitaire * (s.quantite || 0));
+            }
+            return sum;
+        }, 0);
+
+        const itemsReserves = reservations.reduce((sum, r) => sum + (r.quantite || 0), 0);
+        const valeurReserves = reservations.reduce((sum, r) => {
+            const article = r.w_articles;
+            if (article?.prix_unitaire) {
+                return sum + (article.prix_unitaire * (r.quantite || 0));
+            }
+            return sum;
+        }, 0);
+
         // Préparer les données
-        const projectData = {
+        const projectInfo = {
             'Nom': state.currentProject.nom,
             'Numéro': state.currentProject.numero || '',
             'Description': state.currentProject.description || '',
@@ -2961,50 +2984,66 @@ async function exportProjectDetails() {
             'Date fin prévue': state.currentProject.date_fin_prevue ? formatDate(state.currentProject.date_fin_prevue) : '',
             'Budget': state.currentProject.budget || '',
             'Statut': state.currentProject.archived ? 'Archivé' : getProjectStatus(state.currentProject),
-            'Articles réservés': projectReservations.reduce((sum, r) => sum + r.quantite, 0),
-            'Valeur totale': projectReservations.reduce((sum, r) => {
-                const article = r.w_articles;
-                return sum + (article?.prix_unitaire || 0) * r.quantite;
-            }, 0)
+            'Articles utilisés': itemsSortis,
+            'Valeur utilisée': `${valeurSortis.toFixed(2)} €`,
+            'Articles réservés': itemsReserves,
+            'Valeur réservée': `${valeurReserves.toFixed(2)} €`,
+            'Total articles': itemsSortis + itemsReserves,
+            'Valeur totale': `${(valeurSortis + valeurReserves).toFixed(2)} €`
         };
 
-        // Créer le contenu
-        let content = `Détails du projet: ${state.currentProject.nom}\n`;
+        // Créer le contenu CSV
+        let content = 'Détails du projet\n';
+        content += `Nom: ${state.currentProject.nom}\n`;
+        content += `Numéro: ${state.currentProject.numero || ''}\n`;
         content += `Exporté le: ${new Date().toLocaleDateString('fr-FR')}\n\n`;
 
-        content += '=== RÉSERVATIONS ===\n';
-        if (projectReservations.length > 0) {
-            content += 'Article;Code;Quantité;Date réservation;Date fin;Utilisateur;Commentaire\n';
-            projectReservations.forEach(res => {
-                const article = res.w_articles;
-                const user = res.w_users;
-                content += `"${article?.nom || ''}";"${article?.code || ''}";${res.quantite};"${formatDate(res.created_at)}";"${formatDate(res.date_fin)}";"${user?.nom || ''}";"${res.commentaire || ''}"\n`;
-            });
-        } else {
-            content += 'Aucune réservation\n';
-        }
-
-        content += '\n=== INFORMATIONS DU PROJET ===\n';
-        Object.entries(projectData).forEach(([key, value]) => {
+        // Informations du projet
+        content += '=== INFORMATIONS DU PROJET ===\n';
+        Object.entries(projectInfo).forEach(([key, value]) => {
             content += `${key}: ${value}\n`;
         });
 
-        content += '\n=== HISTORIQUE ===\n';
-        if (projectHistory.length > 0) {
-            projectHistory.forEach(item => {
-                content += `${formatDateTime(item.created_at)} - ${item.titre || 'Action'}: ${item.description || ''}\n`;
+        // Sorties (articles utilisés)
+        if (sorties.length > 0) {
+            content += '\n=== ARTICLES UTILISÉS ===\n';
+            content += 'Article;Code;Quantité;Date;Utilisateur;Prix unitaire;Total\n';
+            sorties.forEach(item => {
+                const article = item.article || {};
+                const total = article.prix_unitaire ? (article.prix_unitaire * item.quantite).toFixed(2) : '0.00';
+                content += `"${article.nom || ''}";"${article.numero || ''}";${item.quantite};"${formatDate(item.created_at)}";"${item.utilisateur?.username || ''}";"${article.prix_unitaire?.toFixed(2) || '0.00'} €";"${total} €"\n`;
             });
-        } else {
-            content += 'Aucun historique\n';
+        }
+
+        // Réservations
+        if (reservations.length > 0) {
+            content += '\n=== RÉSERVATIONS ===\n';
+            content += 'Article;Code;Quantité;Date réservation;Date fin;Utilisateur;Commentaire\n';
+            reservations.forEach(res => {
+                const article = res.w_articles || {};
+                content += `"${article.nom || ''}";"${article.numero || ''}";${res.quantite};"${formatDate(res.created_at)}";"${formatDate(res.date_fin)}";"${res.w_users?.username || ''}";"${res.commentaire || ''}"\n`;
+            });
+        }
+
+        // Historique
+        if (projectHistory.length > 0) {
+            content += '\n=== HISTORIQUE ===\n';
+            content += 'Date;Action;Détails\n';
+            projectHistory.forEach(item => {
+                const details = item.type === 'sortie' ? `Sortie: ${item.quantite} ${item.article?.nom || ''}` :
+                              item.type === 'retour_projet' ? `Retour: ${item.quantite} ${item.article?.nom || ''}` :
+                              item.description || 'Action';
+                content += `"${formatDateTime(item.created_at)}";"${item.type || 'Action'}";"${details}"\n`;
+            });
         }
 
         // Télécharger
-        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
 
         link.setAttribute('href', url);
-        link.setAttribute('download', `projet_${state.currentProject.numero || state.currentProject.id}_${new Date().toISOString().split('T')[0]}.txt`);
+        link.setAttribute('download', `projet_${state.currentProject.numero || state.currentProject.id}_${new Date().toISOString().split('T')[0]}.csv`);
         link.style.visibility = 'hidden';
 
         document.body.appendChild(link);
