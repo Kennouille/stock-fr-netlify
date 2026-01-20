@@ -1882,33 +1882,46 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                         <div class="article-summary">
                             <div class="article-header">
                                 ${article.photo_url ? `
-                                    <div class="article-photo" style="text-align: center; margin: 15px 0;">
+                                    <div class="article-photo" style="text-align: center; margin: 15px 0; position: relative;" id="photoContainer">
                                         <img src="${article.photo_url}" alt="${article.nom}"
                                              style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s ease;"
-                                             onclick="if(this.style.position === 'fixed') {
-                                                 this.style.position = 'static';
-                                                 this.style.width = '';
-                                                 this.style.height = '';
-                                                 this.style.top = '';
-                                                 this.style.left = '';
-                                                 this.style.zIndex = '';
-                                                 this.style.maxWidth = '200px';
-                                                 this.style.maxHeight = '200px';
-                                             } else {
-                                                 this.style.position = 'fixed';
-                                                 this.style.width = '90vw';
-                                                 this.style.height = '90vh';
-                                                 this.style.top = '50%';
-                                                 this.style.left = '50%';
-                                                 this.style.transform = 'translate(-50%, -50%)';
-                                                 this.style.zIndex = '9999';
-                                                 this.style.maxWidth = 'none';
-                                                 this.style.maxHeight = 'none';
-                                                 this.style.objectFit = 'contain';
-                                                 this.style.backgroundColor = 'rgba(0,0,0,0.8)';
-                                                 this.style.padding = '20px';
-                                                 this.style.borderRadius = '10px';
-                                             }">
+                                             onclick="const img = this;
+                                                      if(img.style.position === 'fixed') {
+                                                          // Retour à la position originale
+                                                          img.style.position = '';
+                                                          img.style.width = '';
+                                                          img.style.height = '';
+                                                          img.style.top = '';
+                                                          img.style.left = '';
+                                                          img.style.transform = '';
+                                                          img.style.zIndex = '';
+                                                          img.style.maxWidth = '200px';
+                                                          img.style.maxHeight = '200px';
+                                                          img.style.objectFit = '';
+                                                          img.style.backgroundColor = '';
+                                                          img.style.padding = '';
+                                                          img.style.borderRadius = '8px';
+                                                      } else {
+                                                          // Sauvegarder la position originale
+                                                          const rect = img.getBoundingClientRect();
+                                                          img.dataset.originalTop = rect.top + 'px';
+                                                          img.dataset.originalLeft = rect.left + 'px';
+
+                                                          // Agrandir en plein écran
+                                                          img.style.position = 'fixed';
+                                                          img.style.width = '90vw';
+                                                          img.style.height = '90vh';
+                                                          img.style.top = '50%';
+                                                          img.style.left = '50%';
+                                                          img.style.transform = 'translate(-50%, -50%)';
+                                                          img.style.zIndex = '9999';
+                                                          img.style.maxWidth = 'none';
+                                                          img.style.maxHeight = 'none';
+                                                          img.style.objectFit = 'contain';
+                                                          img.style.backgroundColor = 'rgba(0,0,0,0.9)';
+                                                          img.style.padding = '20px';
+                                                          img.style.borderRadius = '10px';
+                                                      }">
                                     </div>
                                     ` : ''}
                                 <div class="article-info">
