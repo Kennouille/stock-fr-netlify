@@ -277,10 +277,10 @@ body {
     transform: translateY(-1px);
 }
 
-.btn-secondary {
+.btn-secondary:not(.close-modal) {
     background-color: #ecf0f1;
     color: var(--text-color);
-    border: 1px solid var(--border-color);  /* ← MAINTENANT ça fonctionne */
+    border: 1px solid var(--border-color);
 }
 
 /* Enlevez les !important si vous avez ajouté cette règle */
