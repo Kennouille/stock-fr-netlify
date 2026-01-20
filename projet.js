@@ -3012,10 +3012,7 @@ function setupEventListeners() {
         });
 
         // Si on est dans un modal enfant et qu'il y a un modal précédent
-        if (state.currentModal &&
-            state.previousModal &&
-            (state.currentModal.id === 'addReservationModal' ||
-             state.currentModal.id === 'newProjectModal')) {
+        if (state.currentModal && state.previousModal) {
             console.log('Returning to previous modal');
             hideModal(true);
         } else {
