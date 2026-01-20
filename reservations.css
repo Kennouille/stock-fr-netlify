@@ -328,6 +328,17 @@ body {
     background-color: #f8f9fa;
 }
 
+/* Ajoutez ceci à la fin de votre CSS : */
+button.btn-secondary.close-modal {
+    background-color: #ecf0f1;
+    color: var(--text-color);
+    border: 1px solid var(--border-color) !important;
+    font-size: 0.9rem !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: var(--border-radius-sm) !important;
+}
+
 .modal-close-btn.btn-secondary {
     background-color: #ecf0f1;
     color: var(--text-color);
