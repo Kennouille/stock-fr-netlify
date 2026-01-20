@@ -2331,6 +2331,17 @@ button.btn-secondary.close-modal {
     background-color: #218838;
 }
 
+/* Style pour le bouton "Utiliser" */
+.btn-action.use-reservation {
+    background-color: #28a745;
+    color: white;
+    border: none;
+}
+
+.btn-action.use-reservation:hover {
+    background-color: #218838;
+}
+
 /* Modal retour stock */
 .return-stock-modal .article-summary {
     background-color: #f8f9fa;

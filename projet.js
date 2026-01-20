@@ -276,6 +276,235 @@ function getProjectStatus(project) {
     return 'active';
 }
 
+async function useReservation(reservationId, articleId, originalQuantity, quantityToUse = null, comment = '') {
+    try {
+        // Si quantityToUse n'est pas fourni, utiliser toute la quantité
+        if (quantityToUse === null) {
+            quantityToUse = originalQuantity;
+        }
+
+        // Demander confirmation
+        if (!confirm(`Utiliser ${quantityToUse} article(s) sur ${originalQuantity} réservés ?`)) {
+            return;
+        }
+
+        showLoading();
+
+        // Récupérer la réservation
+        const { data: reservation, error: reservationError } = await supabase
+            .from('w_reservations_actives')
+            .select(`
+                *,
+                w_articles (*),
+                w_users (username)
+            `)
+            .eq('id', reservationId)
+            .single();
+
+        if (reservationError) throw reservationError;
+
+        // Récupérer le stock actuel
+        const { data: article, error: articleError } = await supabase
+            .from('w_articles')
+            .select('stock_actuel')
+            .eq('id', articleId)
+            .single();
+
+        if (articleError) throw articleError;
+
+        // Créer le mouvement de sortie avec plus d'informations
+        const articleName = reservation.w_articles?.nom || 'Article inconnu';
+        const projetNom = state.currentProject?.nom || 'Projet inconnu';
+        const mouvementComment = comment
+            ? `${comment} | Source: Réservation #${reservationId} (${articleName})`
+            : `Sortie pour projet "${projetNom}" depuis réservation #${reservationId} (${articleName})`;
+
+        const { error: movementError } = await supabase
+            .from('w_mouvements')
+            .insert([{
+                article_id: articleId,
+                type: 'sortie',
+                quantite: quantityToUse,
+                projet: state.currentProject.nom,
+                projet_id: state.currentProject.id,
+                commentaire: mouvementComment,
+                utilisateur_id: state.user.id,
+                utilisateur: state.user.username,
+                stock_avant: article.stock_actuel,
+                stock_apres: article.stock_actuel - quantityToUse,
+                date_mouvement: new Date().toISOString().split('T')[0],
+                heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
+                created_at: new Date().toISOString()
+            }]);
+
+        if (movementError) throw movementError;
+
+        // Gérer la réservation selon la quantité utilisée
+        if (quantityToUse === originalQuantity) {
+            // Supprimer complètement la réservation
+            const { error: deleteError } = await supabase
+                .from('w_reservations_actives')
+                .delete()
+                .eq('id', reservationId);
+
+            if (deleteError) throw deleteError;
+        } else {
+            // Réduire la quantité de la réservation
+            const { error: updateError } = await supabase
+                .from('w_reservations_actives')
+                .update({
+                    quantite: originalQuantity - quantityToUse,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', reservationId);
+
+            if (updateError) throw updateError;
+        }
+
+        // Mettre à jour le stock
+        const { error: stockError } = await supabase
+            .from('w_articles')
+            .update({
+                stock_actuel: article.stock_actuel - quantityToUse,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', articleId);
+
+        if (stockError) throw stockError;
+
+        // Mettre à jour les données locales
+        await Promise.all([
+            fetchReservations(),
+            fetchArticles(),
+            fetchMovements()
+        ]);
+
+        // Recharger les détails
+        if (state.currentProject) {
+            await showProjectDetails(state.currentProject.id);
+        }
+
+        showAlert(`${quantityToUse} article(s) marqué(s) comme utilisé(s)`, 'success');
+
+    } catch (error) {
+        console.error('Erreur utilisation réservation:', error);
+        showAlert('Erreur lors de la mise à jour de la réservation', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Ajoutez cette fonction après useReservation
+async function showUseReservationModal(reservationId, articleId, originalQuantity) {
+    // Créer la modal
+    const modalHtml = `
+        <div class="modal-overlay use-reservation-modal">
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-check-circle"></i> Marquer comme utilisé</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label><i class="fas fa-boxes"></i> Quantité à utiliser *</label>
+                        <div class="quantity-input-group">
+                            <button type="button" class="quantity-btn minus" id="useQuantityMinus">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number"
+                                   id="useQuantity"
+                                   value="${originalQuantity}"
+                                   min="1"
+                                   max="${originalQuantity}"
+                                   class="form-input quantity">
+                            <button type="button" class="quantity-btn plus" id="useQuantityPlus">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="quantity-info">
+                            <span>Quantité réservée : <strong>${originalQuantity}</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-comment"></i> Commentaire (optionnel)</label>
+                        <textarea id="useComment"
+                                  rows="3"
+                                  placeholder="Détails de l'utilisation..."
+                                  class="form-textarea"></textarea>
+                    </div>
+
+                    <div class="error-message" id="useReservationError" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="useReservationErrorText"></span>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button id="confirmUseReservationBtn" class="btn-success">
+                            <i class="fas fa-check"></i> Confirmer l'utilisation
+                        </button>
+                        <button type="button" class="btn-secondary close-modal">
+                            Annuler
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Ajouter au DOM
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+
+    const modal = modalContainer.querySelector('.use-reservation-modal');
+    modal.style.display = 'flex';
+
+    // Gestion des boutons de quantité
+    const quantityInput = modal.querySelector('#useQuantity');
+    modal.querySelector('#useQuantityMinus').addEventListener('click', () => {
+        let value = parseInt(quantityInput.value) || 1;
+        if (value > 1) {
+            quantityInput.value = value - 1;
+        }
+    });
+
+    modal.querySelector('#useQuantityPlus').addEventListener('click', () => {
+        let value = parseInt(quantityInput.value) || 1;
+        if (value < originalQuantity) {
+            quantityInput.value = value + 1;
+        }
+    });
+
+    // Gestion de la fermeture
+    modal.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', () => {
+            modal.remove();
+        });
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+
+    // Confirmation
+    modal.querySelector('#confirmUseReservationBtn').addEventListener('click', async () => {
+        const quantityToUse = parseInt(quantityInput.value);
+        const comment = modal.querySelector('#useComment').value.trim();
+
+        if (!quantityToUse || quantityToUse < 1 || quantityToUse > originalQuantity) {
+            modal.querySelector('#useReservationErrorText').textContent = 'Quantité invalide';
+            modal.querySelector('#useReservationError').style.display = 'flex';
+            return;
+        }
+
+        modal.remove();
+        await useReservation(reservationId, articleId, originalQuantity, quantityToUse, comment);
+    });
+}
+
 // ===== FONCTIONS SUPABASE =====
 async function fetchProjects() {
     try {
@@ -1426,6 +1655,16 @@ function updateProjectReservations(sorties, reservations) {
                     }
                 }
             }
+        });
+    });
+
+    // Événement pour le bouton "Utiliser"
+    document.querySelectorAll('.use-reservation').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const reservationId = this.dataset.id;
+            const articleId = this.dataset.articleId;
+            const quantity = parseInt(this.dataset.quantity);
+            showUseReservationModal(reservationId, articleId, quantity);
         });
     });
 }
