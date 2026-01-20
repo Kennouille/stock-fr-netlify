@@ -1523,7 +1523,7 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
                     ` : ''}
 
                     <div class="modal-actions">
-                        <button type="button" class="btn-secondary close-details-modal">
+                        <button type="button" class="btn btn-secondary close-details-modal">
                             Fermer
                         </button>
                     </div>
@@ -1957,7 +1957,7 @@ async function editReservation(reservationId) {
                             <button id="confirmEditReservationBtn" class="btn-primary">
                                 <i class="fas fa-save"></i> Enregistrer
                             </button>
-                            <button type="button" class="btn-secondary close-edit-modal">
+                            <button type="button" class="btn btn-secondary close-edit-modal">
                                 Annuler
                             </button>
                         </div>
