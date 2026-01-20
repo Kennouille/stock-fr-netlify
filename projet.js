@@ -2744,10 +2744,14 @@ async function confirmAddReservation() {
 
         const newReservation = await createReservation(reservationData);
 
-        // Ajouter à la liste des réservations
-        state.reservations.push(newReservation);
+        // Recharger TOUTES les données
+        await Promise.all([
+            fetchReservations(),  // ← RECHARGE les réservations
+            fetchArticles(),
+            fetchMovements()
+        ]);
 
-        // Recharger les détails du projet
+        // Puis recharger les détails
         await showProjectDetails(state.currentProject.id);
 
         // Mettre à jour les statistiques
