@@ -585,7 +585,10 @@ async function getProjectHistory(projectId) {
 
         const { data, error } = await supabase
             .from('w_mouvements')
-            .select('*')
+            .select(`
+                *,
+                article:article_id (nom, numero)
+            `)
             .or(`projet_id.eq.${projectId},projet.eq.${nomProjetEchappe}`)
             .order('created_at', { ascending: false })
             .limit(20);
@@ -2083,26 +2086,28 @@ function updateProjectHistory(historyItems) {
         let icon = 'history';
         let actionType = 'Action';
         let details = '';
+        const articleName = item.article?.nom || 'Article';
+        const articleNum = item.article?.numero ? ` (${item.article.numero})` : '';
 
         if (item.type === 'sortie') {
             icon = 'arrow-up';
             actionType = 'Sortie de stock';
-            details = `${item.quantite} × ${item.article?.nom || 'Article'} | Projet: ${item.projet || 'N/A'}`;
+            details = `${item.quantite} × ${articleName}${articleNum} | Projet: ${item.projet || 'N/A'}`;
         } else if (item.type === 'retour_projet') {
             icon = 'arrow-left';
             actionType = 'Retour au stock';
-            details = `${item.quantite} unité(s) retournée(s)`;
+            details = `${item.quantite} × ${articleName}${articleNum} retourné(s)`;
             if (item.raison) {
                 details += ` | ${item.raison}`;
             }
         } else if (item.type === 'entree') {
             icon = 'arrow-down';
             actionType = 'Entrée de stock';
-            details = `${item.quantite} unité(s) | ${item.fournisseur || 'Stock initial'}`;
+            details = `${item.quantite} × ${articleName}${articleNum} | ${item.fournisseur || 'Stock initial'}`;
         } else if (item.type === 'reservation') {
             icon = 'clock';
             actionType = 'Réservation';
-            details = `${item.quantite} unité(s) réservée(s)`;
+            details = `${item.quantite} × ${articleName}${articleNum} réservé(s)`;
         }
 
         html += `
