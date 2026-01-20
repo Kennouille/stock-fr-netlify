@@ -1679,7 +1679,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                             <button id="confirmReturnBtn" class="btn-success">
                                 <i class="fas fa-check"></i> Confirmer le retour
                             </button>
-                            <button type="button" class="btn-secondary close-return-modal">
+                            <button type="button" class="btn btn-secondary cancel-edit-btn">
                                 Annuler
                             </button>
                         </div>
@@ -1957,7 +1957,7 @@ async function editReservation(reservationId) {
                             <button id="confirmEditReservationBtn" class="btn-primary">
                                 <i class="fas fa-save"></i> Enregistrer
                             </button>
-                            <button type="button" class="btn-secondary modal-close-btn close-edit-modal">
+                            <button type="button" class="btn btn-secondary cancel-edit-btn">
                                 Annuler
                             </button>
                         </div>
@@ -1978,7 +1978,7 @@ async function editReservation(reservationId) {
             modal.remove();
         });
 
-        modal.querySelector('.close-edit-modal').addEventListener('click', () => {
+        modal.querySelector('.cancel-edit-btn').addEventListener('click', () => {
             modal.remove();
         });
 
