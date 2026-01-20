@@ -688,14 +688,14 @@ async function createReservation(reservationData) {
                 article_id: reservationData.articleId,
                 projet_id: reservationData.projectId,
                 quantite: reservationData.quantity,
-                date_debut: now.toISOString(), // ← timestamp complet
+                // date_debut: null, // ← Supabase utilisera DEFAULT now()
                 utilisateur_id: state.user.id,
-                created_at: now.toISOString().split('T')[0], // ← date seulement (YYYY-MM-DD)
+                // created_at: null, // ← Supabase utilisera DEFAULT
                 statut: 'active',
-                date_fin: endDate.toISOString().split('T')[0], // ← date seulement
+                date_fin: endDate.toISOString().split('T')[0],
                 notes: reservationData.comment,
-                responsable: state.user.username,
-                updated_at: now.toISOString()
+                responsable: state.user.username
+                // updated_at: null // ← Supabase utilisera DEFAULT now()
             }])
             .select()
             .single();
