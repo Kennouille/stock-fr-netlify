@@ -240,6 +240,21 @@ function formatDateTime(dateString) {
     }
 }
 
+function formatDateTimeUTC(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+
+    return date.toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Europe/Paris'
+    });
+}
+
+
 function calculateDaysBetween(startDate, endDate) {
     try {
         const start = new Date(startDate);
@@ -692,8 +707,9 @@ async function createReservation(reservationData) {
             utilisateur_id: state.user.id,
             statut: 'active',
 
-            created_at: now.toISOString(),   // 🔑 C’EST LUI
-            updated_at: now.toISOString(),
+            created_at: now,
+            updated_at: now,
+
             date_fin: endDate.toISOString(),
 
             notes: reservationData.comment,
