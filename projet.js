@@ -1241,47 +1241,22 @@ function populateArticleSelect() {
 
 // ===== GESTION DES MODALS =====
 function showModal(modalElement) {
-    console.log('showModal called:', {
-        modalId: modalElement.id,
-        currentModal: state.currentModal?.id,
-        previousModal: state.previousModal?.id
-    });
-
-    // Sauvegarder le modal courant AVANT de le cacher
     if (state.currentModal && state.currentModal !== modalElement) {
         state.previousModal = state.currentModal;
+        state.currentModal.style.display = 'none';
     }
 
-    hideModal(); // Cache le modal courant
     modalElement.style.display = 'flex';
     state.currentModal = modalElement;
 }
 
-function hideModal(returnToPrevious = false) {
-    console.log('hideModal called:', {
-        returnToPrevious,
-        currentModal: state.currentModal?.id,
-        previousModal: state.previousModal?.id,
-        stateCurrentModal: state.currentModal,
-        statePreviousModal: state.previousModal
-    });
+function hideModal() {
+    if (!state.currentModal) return;
 
-    if (state.currentModal) {
-        state.currentModal.style.display = 'none';
-
-        if (returnToPrevious && state.previousModal) {
-            // Retour au modal précédent
-            state.currentModal = state.previousModal;
-            state.currentModal.style.display = 'flex';
-            // Garder previousModal au cas où on veut revenir encore en arrière
-        } else {
-            // Fermeture normale : seulement si on ne retourne pas à un modal précédent
-            state.currentModal = null;
-            // NE PAS effacer previousModal ici non plus
-            // Il sera écrasé quand un nouveau modal s'ouvrira
-        }
-    }
+    state.currentModal.style.display = 'none';
+    state.currentModal = null;
 }
+
 
 // ===== DÉTAILS DU PROJET =====
 async function showProjectDetails(projectId) {
@@ -1906,8 +1881,6 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
     console.log('articleId:', articleId);
     console.log('originalQuantity:', originalQuantity);
 
-    state.previousModal = state.currentModal;
-
     try {
         console.log('=== DÉBUT TRY OPEN RETURN MODAL ===');
         console.log('Current user:', state.user);
@@ -2090,21 +2063,32 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
         modal.style.display = 'flex';
         console.log('Modal style après display:', modal.style.display);
+        state.previousModal = state.currentModal;
+        state.currentModal = modal;
 
-        // Gérer la fermeture
+        // CLOSE BUTTON
         modal.querySelector('.close-modal').addEventListener('click', () => {
             modal.remove();
+            state.currentModal = state.previousModal;
+            state.previousModal = null;
         });
 
+        // CANCEL BUTTON
         modal.querySelector('.cancel-edit-btn').addEventListener('click', () => {
             modal.remove();
+            state.currentModal = state.previousModal;
+            state.previousModal = null;
         });
 
+        // CLICK OVERLAY
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 modal.remove();
+                state.currentModal = state.previousModal;
+                state.previousModal = null;
             }
         });
+
 
         // Gérer l'affichage de la section "raison de la différence"
         const returnQuantityInput = modal.querySelector('#returnQuantity');
@@ -2727,7 +2711,6 @@ async function addReservationToProject() {
         before: state.previousModal?.id,
         currentModal: state.currentModal?.id
     });
-    state.previousModal = state.currentModal;
 
     showModal(elements.addReservationModal);
 
@@ -3772,7 +3755,6 @@ async function editProject() {
             currentModal: state.currentModal?.id,
             currentModalElement: state.currentModal
         });
-        state.previousModal = state.currentModal;
 
         showModal(modal);
     } catch (error) {
