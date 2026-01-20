@@ -2947,116 +2947,372 @@ async function exportProjectDetails() {
     try {
         showLoading();
 
-        // Récupérer les données complètes
-        const projectData = await getProjectReservations(state.currentProject.id);
-        const projectHistory = await getProjectHistory(state.currentProject.id);
+        // Déterminer l'onglet actif
+        const activeTab = document.querySelector('.project-tab-btn.active')?.dataset.tab || 'reservations';
 
-        // CORRECTION ICI : projectData est un objet avec sorties et reservations
-        const sorties = projectData.sorties || [];
-        const reservations = projectData.reservations || [];
-
-        // Calculer les statistiques
-        const itemsSortis = sorties.reduce((sum, s) => sum + (s.quantite || 0), 0);
-        const valeurSortis = sorties.reduce((sum, s) => {
-            const article = s.article;
-            if (article?.prix_unitaire) {
-                return sum + (article.prix_unitaire * (s.quantite || 0));
-            }
-            return sum;
-        }, 0);
-
-        const itemsReserves = reservations.reduce((sum, r) => sum + (r.quantite || 0), 0);
-        const valeurReserves = reservations.reduce((sum, r) => {
-            const article = r.w_articles;
-            if (article?.prix_unitaire) {
-                return sum + (article.prix_unitaire * (r.quantite || 0));
-            }
-            return sum;
-        }, 0);
-
-        // Préparer les données
-        const projectInfo = {
-            'Nom': state.currentProject.nom,
-            'Numéro': state.currentProject.numero || '',
-            'Description': state.currentProject.description || '',
-            'Responsable': state.currentProject.responsable || '',
-            'Date création': formatDateTime(state.currentProject.created_at),
-            'Date fin prévue': state.currentProject.date_fin_prevue ? formatDate(state.currentProject.date_fin_prevue) : '',
-            'Budget': state.currentProject.budget || '',
-            'Statut': state.currentProject.archived ? 'Archivé' : getProjectStatus(state.currentProject),
-            'Articles utilisés': itemsSortis,
-            'Valeur utilisée': `${valeurSortis.toFixed(2)} €`,
-            'Articles réservés': itemsReserves,
-            'Valeur réservée': `${valeurReserves.toFixed(2)} €`,
-            'Total articles': itemsSortis + itemsReserves,
-            'Valeur totale': `${(valeurSortis + valeurReserves).toFixed(2)} €`
-        };
-
-        // Créer le contenu CSV
-        let content = 'Détails du projet\n';
-        content += `Nom: ${state.currentProject.nom}\n`;
-        content += `Numéro: ${state.currentProject.numero || ''}\n`;
-        content += `Exporté le: ${new Date().toLocaleDateString('fr-FR')}\n\n`;
-
-        // Informations du projet
-        content += '=== INFORMATIONS DU PROJET ===\n';
-        Object.entries(projectInfo).forEach(([key, value]) => {
-            content += `${key}: ${value}\n`;
-        });
-
-        // Sorties (articles utilisés)
-        if (sorties.length > 0) {
-            content += '\n=== ARTICLES UTILISÉS ===\n';
-            content += 'Article;Code;Quantité;Date;Utilisateur;Prix unitaire;Total\n';
-            sorties.forEach(item => {
-                const article = item.article || {};
-                const total = article.prix_unitaire ? (article.prix_unitaire * item.quantite).toFixed(2) : '0.00';
-                content += `"${article.nom || ''}";"${article.numero || ''}";${item.quantite};"${formatDate(item.created_at)}";"${item.utilisateur?.username || ''}";"${article.prix_unitaire?.toFixed(2) || '0.00'} €";"${total} €"\n`;
-            });
+        // Récupérer les données selon l'onglet
+        if (activeTab === 'history') {
+            await exportProjectHistory();
+        } else {
+            await exportProjectReservations();
         }
-
-        // Réservations
-        if (reservations.length > 0) {
-            content += '\n=== RÉSERVATIONS ===\n';
-            content += 'Article;Code;Quantité;Date réservation;Date fin;Utilisateur;Commentaire\n';
-            reservations.forEach(res => {
-                const article = res.w_articles || {};
-                content += `"${article.nom || ''}";"${article.numero || ''}";${res.quantite};"${formatDate(res.created_at)}";"${formatDate(res.date_fin)}";"${res.w_users?.username || ''}";"${res.commentaire || ''}"\n`;
-            });
-        }
-
-        // Historique
-        if (projectHistory.length > 0) {
-            content += '\n=== HISTORIQUE ===\n';
-            content += 'Date;Action;Détails\n';
-            projectHistory.forEach(item => {
-                const details = item.type === 'sortie' ? `Sortie: ${item.quantite} ${item.article?.nom || ''}` :
-                              item.type === 'retour_projet' ? `Retour: ${item.quantite} ${item.article?.nom || ''}` :
-                              item.description || 'Action';
-                content += `"${formatDateTime(item.created_at)}";"${item.type || 'Action'}";"${details}"\n`;
-            });
-        }
-
-        // Télécharger
-        const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-
-        link.setAttribute('href', url);
-        link.setAttribute('download', `projet_${state.currentProject.numero || state.currentProject.id}_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        showAlert('Export réalisé avec succès', 'success');
 
     } catch (error) {
         console.error('Erreur export projet:', error);
         showAlert('Erreur lors de l\'export du projet', 'error');
     } finally {
         hideLoading();
+    }
+}
+
+async function exportProjectReservations() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const project = state.currentProject;
+        const projectData = await getProjectReservations(project.id);
+        const sorties = projectData.sorties || [];
+        const reservations = projectData.reservations || [];
+
+        let yPos = 20;
+        const pageWidth = doc.internal.pageSize.width;
+        const margin = 15;
+
+        // ===== EN-TÊTE =====
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('DÉTAILS DU PROJET', pageWidth / 2, yPos, { align: 'center' });
+        yPos += 10;
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Exporté le: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - margin, yPos, { align: 'right' });
+        yPos += 15;
+
+        // ===== INFORMATIONS PROJET =====
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('INFORMATIONS DU PROJET', margin, yPos);
+        yPos += 8;
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+
+        const projectInfo = [
+            ['Nom:', project.nom],
+            ['Numéro:', project.numero || 'Non défini'],
+            ['Description:', project.description || 'Aucune description'],
+            ['Responsable:', project.responsable || 'Non défini'],
+            ['Date création:', formatDate(project.created_at)],
+            ['Date fin prévue:', project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'Non définie'],
+            ['Budget:', project.budget ? `${project.budget} €` : 'Non défini'],
+            ['Statut:', project.archived ? 'Archivé' : getProjectStatus(project) === 'active' ? 'Actif' :
+                         getProjectStatus(project) === 'ending' ? 'Bientôt terminé' : 'En retard']
+        ];
+
+        projectInfo.forEach(([label, value]) => {
+            doc.setFont('helvetica', 'bold');
+            doc.text(label, margin, yPos);
+            doc.setFont('helvetica', 'normal');
+
+            // Gérer les textes longs avec retour à la ligne
+            const lines = doc.splitTextToSize(value.toString(), pageWidth - margin - 60);
+            lines.forEach((line, index) => {
+                doc.text(line, margin + 40, yPos + (index * 5));
+            });
+            yPos += Math.max(lines.length * 5, 7);
+
+            // Vérifier si besoin d'une nouvelle page
+            if (yPos > doc.internal.pageSize.height - 40) {
+                doc.addPage();
+                yPos = 20;
+            }
+        });
+
+        yPos += 5;
+
+        // ===== STATISTIQUES =====
+        if (sorties.length > 0 || reservations.length > 0) {
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('STATISTIQUES', margin, yPos);
+            yPos += 8;
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+
+            // Calculs
+            const itemsSortis = sorties.reduce((sum, s) => sum + (s.quantite || 0), 0);
+            const valeurSortis = sorties.reduce((sum, s) => {
+                const article = s.article;
+                return sum + ((article?.prix_unitaire || 0) * (s.quantite || 0));
+            }, 0);
+
+            const itemsReserves = reservations.reduce((sum, r) => sum + (r.quantite || 0), 0);
+            const valeurReserves = reservations.reduce((sum, r) => {
+                const article = r.w_articles;
+                return sum + ((article?.prix_unitaire || 0) * (r.quantite || 0));
+            }, 0);
+
+            const stats = [
+                ['Articles utilisés:', `${itemsSortis} unité(s)`, `${valeurSortis.toFixed(2)} €`],
+                ['Articles réservés:', `${itemsReserves} unité(s)`, `${valeurReserves.toFixed(2)} €`],
+                ['Total articles:', `${itemsSortis + itemsReserves} unité(s)`, `${(valeurSortis + valeurReserves).toFixed(2)} €`]
+            ];
+
+            stats.forEach(([label, qty, value]) => {
+                doc.setFont('helvetica', 'bold');
+                doc.text(label, margin, yPos);
+                doc.setFont('helvetica', 'normal');
+                doc.text(qty, pageWidth / 2, yPos, { align: 'center' });
+                doc.text(value, pageWidth - margin, yPos, { align: 'right' });
+                yPos += 6;
+            });
+
+            yPos += 5;
+        }
+
+        // ===== SORTIES (ARTICLES UTILISÉS) =====
+        if (sorties.length > 0) {
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('ARTICLES UTILISÉS', margin, yPos);
+            yPos += 8;
+
+            // En-tête du tableau
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Article', margin, yPos);
+            doc.text('Qté', margin + 80, yPos);
+            doc.text('Date', margin + 100, yPos);
+            doc.text('Prix unitaire', margin + 130, yPos);
+            doc.text('Total', margin + 170, yPos);
+
+            doc.line(margin, yPos + 1, pageWidth - margin, yPos + 1);
+            yPos += 6;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+
+            sorties.forEach(item => {
+                const article = item.article || {};
+                const prixUnitaire = article.prix_unitaire || 0;
+                const total = prixUnitaire * (item.quantite || 0);
+
+                // Vérifier nouvelle page
+                if (yPos > doc.internal.pageSize.height - 20) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.text(article.nom?.substring(0, 30) || 'Article', margin, yPos);
+                doc.text(item.quantite?.toString() || '0', margin + 80, yPos);
+                doc.text(formatDate(item.created_at), margin + 100, yPos);
+                doc.text(`${prixUnitaire.toFixed(2)} €`, margin + 130, yPos);
+                doc.text(`${total.toFixed(2)} €`, margin + 170, yPos);
+
+                yPos += 6;
+            });
+
+            yPos += 10;
+        }
+
+        // ===== RÉSERVATIONS =====
+        if (reservations.length > 0) {
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('ARTICLES RÉSERVÉS', margin, yPos);
+            yPos += 8;
+
+            // En-tête du tableau
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Article', margin, yPos);
+            doc.text('Qté', margin + 80, yPos);
+            doc.text('Date fin', margin + 100, yPos);
+            doc.text('Utilisateur', margin + 130, yPos);
+            doc.text('Prix unitaire', margin + 170, yPos);
+
+            doc.line(margin, yPos + 1, pageWidth - margin, yPos + 1);
+            yPos += 6;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+
+            reservations.forEach(res => {
+                const article = res.w_articles || {};
+                const prixUnitaire = article.prix_unitaire || 0;
+
+                // Vérifier nouvelle page
+                if (yPos > doc.internal.pageSize.height - 20) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.text(article.nom?.substring(0, 30) || 'Article', margin, yPos);
+                doc.text(res.quantite?.toString() || '0', margin + 80, yPos);
+                doc.text(formatDate(res.date_fin), margin + 100, yPos);
+                doc.text(res.w_users?.username?.substring(0, 15) || 'Utilisateur', margin + 130, yPos);
+                doc.text(`${prixUnitaire.toFixed(2)} €`, margin + 170, yPos);
+
+                yPos += 6;
+            });
+        }
+
+        // Pied de page
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.text('Document généré automatiquement - Système de gestion de stock',
+                pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+
+        // Télécharger
+        doc.save(`projet_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showAlert('PDF exporté avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur export PDF:', error);
+        throw error;
+    }
+}
+
+async function exportProjectHistory() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const project = state.currentProject;
+        const history = await getProjectHistory(project.id);
+
+        let yPos = 20;
+        const pageWidth = doc.internal.pageSize.width;
+        const margin = 15;
+
+        // ===== EN-TÊTE =====
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('HISTORIQUE DU PROJET', pageWidth / 2, yPos, { align: 'center' });
+        yPos += 10;
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Projet: ${project.nom} (${project.numero || 'Sans numéro'})`, margin, yPos);
+        yPos += 5;
+        doc.text(`Exporté le: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - margin, yPos, { align: 'right' });
+        yPos += 10;
+
+        if (history.length === 0) {
+            doc.setFontSize(12);
+            doc.text('Aucun historique disponible', pageWidth / 2, yPos, { align: 'center' });
+        } else {
+            // ===== LISTE HISTORIQUE =====
+            doc.setFontSize(10);
+            history.forEach((item, index) => {
+                // Vérifier nouvelle page
+                if (yPos > doc.internal.pageSize.height - 30) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                // Type d'action avec icône
+                let actionType = '';
+                let color = [0, 0, 0]; // Noir par défaut
+
+                switch(item.type) {
+                    case 'sortie':
+                        actionType = 'Sortie de stock';
+                        color = [220, 53, 69]; // Rouge
+                        break;
+                    case 'retour_projet':
+                        actionType = 'Retour au stock';
+                        color = [40, 167, 69]; // Vert
+                        break;
+                    case 'entree':
+                        actionType = 'Entrée de stock';
+                        color = [0, 123, 255]; // Bleu
+                        break;
+                    default:
+                        actionType = item.type || 'Action';
+                }
+
+                // Date et heure
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(...color);
+                doc.text(actionType, margin, yPos);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100, 100, 100);
+                doc.text(formatDateTime(item.created_at), pageWidth - margin, yPos, { align: 'right' });
+
+                yPos += 4;
+
+                // Détails
+                doc.setFontSize(9);
+                doc.setTextColor(0, 0, 0);
+
+                const details = [];
+                if (item.article?.nom) {
+                    details.push(`Article: ${item.article.nom}${item.article.numero ? ` (${item.article.numero})` : ''}`);
+                }
+                if (item.quantite) {
+                    details.push(`Quantité: ${item.quantite}`);
+                }
+                if (item.projet) {
+                    details.push(`Projet: ${item.projet}`);
+                }
+                if (item.utilisateur) {
+                    details.push(`Utilisateur: ${item.utilisateur}`);
+                }
+
+                details.forEach(detail => {
+                    doc.text(`• ${detail}`, margin + 5, yPos);
+                    yPos += 4;
+                });
+
+                // Commentaire
+                if (item.commentaire) {
+                    doc.setFont('helvetica', 'italic');
+                    doc.setTextColor(120, 120, 120);
+                    doc.text(`"${item.commentaire}"`, margin + 10, yPos);
+                    yPos += 4;
+                    doc.setFont('helvetica', 'normal');
+                }
+
+                // Séparateur
+                if (index < history.length - 1) {
+                    doc.setDrawColor(200, 200, 200);
+                    doc.line(margin, yPos + 2, pageWidth - margin, yPos + 2);
+                    yPos += 8;
+                } else {
+                    yPos += 4;
+                }
+
+                // Réinitialiser la couleur
+                doc.setTextColor(0, 0, 0);
+            });
+        }
+
+        // Pied de page
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.text('Document généré automatiquement - Système de gestion de stock',
+                pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+
+        // Télécharger
+        doc.save(`historique_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showAlert('Historique exporté en PDF', 'success');
+
+    } catch (error) {
+        console.error('Erreur export historique:', error);
+        throw error;
     }
 }
 
