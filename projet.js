@@ -1711,7 +1711,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
             modal.remove();
         });
 
-        modal.querySelector('.close-return-modal').addEventListener('click', () => {
+        modal.querySelector('.cancel-edit-btn').addEventListener('click', () => {
             modal.remove();
         });
 
@@ -1974,10 +1974,6 @@ async function editReservation(reservationId) {
         const modal = document.getElementById('editReservationModal');
 
         // Gérer la fermeture
-        modal.querySelector('.cancel-edit-btn').addEventListener('click', () => {
-            modal.remove();
-        });
-
         modal.querySelector('.cancel-edit-btn').addEventListener('click', () => {
             modal.remove();
         });
