@@ -783,6 +783,8 @@ async function createReservation(reservationData) {
                 utilisateur_id: state.user.id,
                 utilisateur: state.user.username,
                 commentaire: reservationData.comment || 'Réservation',
+                date_debut: now.toISOString().split('T')[0],
+                date_fin: endDate.toISOString().split('T')[0],
                 created_at: now.toISOString()
             }]);
 
