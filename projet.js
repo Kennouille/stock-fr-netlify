@@ -682,20 +682,25 @@ async function createReservation(reservationData) {
         const endDate = new Date(now);
         endDate.setDate(now.getDate() + 30);
 
+        // Format pour timestamp without time zone
+        const formatTimestamp = (date) => {
+            return date.toISOString().replace('T', ' ').split('.')[0];
+        };
+
         const { data, error } = await supabase
             .from('w_reservations_actives')
             .insert([{
                 article_id: reservationData.articleId,
                 projet_id: reservationData.projectId,
                 quantite: reservationData.quantity,
-                // date_debut: null, // ← Supabase utilisera DEFAULT now()
+                date_debut: formatTimestamp(now), // ← '2024-01-20 15:30:45'
                 utilisateur_id: state.user.id,
-                // created_at: null, // ← Supabase utilisera DEFAULT
+                created_at: now.toISOString().split('T')[0], // ← '2024-01-20'
                 statut: 'active',
-                date_fin: endDate.toISOString().split('T')[0],
+                date_fin: endDate.toISOString().split('T')[0], // ← '2024-02-19'
                 notes: reservationData.comment,
-                responsable: state.user.username
-                // updated_at: null // ← Supabase utilisera DEFAULT now()
+                responsable: state.user.username,
+                updated_at: formatTimestamp(now)
             }])
             .select()
             .single();
