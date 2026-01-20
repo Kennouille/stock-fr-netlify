@@ -707,8 +707,10 @@ async function createReservation(reservationData) {
             utilisateur_id: state.user.id,
             statut: 'active',
 
-            created_at: now,
-            updated_at: now,
+            created_at: now.toISOString(),
+
+            updated_at: now.toISOString(),
+
 
             date_fin: endDate.toISOString(),
 
