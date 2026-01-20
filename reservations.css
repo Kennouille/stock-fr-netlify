@@ -247,7 +247,7 @@ body {
 }
 
 /* ===== BOUTONS ===== */
-.btn-primary, .btn-secondary, .btn-export, .btn-action {
+.btn, .btn-primary, .btn-secondary, .btn-export, .btn-action {
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius-sm);
     border: none;
