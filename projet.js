@@ -2717,8 +2717,14 @@ async function confirmAddReservation() {
 
         // Vérifier le stock disponible
         const article = state.articles.find(a => a.id === articleId);
-        if (!article || (article.quantite_disponible || 0) < quantity) {
-            elements.reservationErrorText.textContent = 'Stock insuffisant';
+        if (!article) {
+            elements.reservationErrorText.textContent = 'Article non trouvé';
+            elements.reservationError.style.display = 'flex';
+            return;
+        }
+
+        if ((article.stock_actuel || 0) < quantity) {
+            elements.reservationErrorText.textContent = `Stock insuffisant. Disponible: ${article.stock_actuel || 0}`;
             elements.reservationError.style.display = 'flex';
             return;
         }
