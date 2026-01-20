@@ -741,13 +741,14 @@ async function createReservation(reservationData) {
             article_id: reservationData.articleId,
             type: 'reservation',
             quantite: reservationData.quantity,
-            projet: state.currentProject?.nom || '',
+            projet: state.currentProject?.nom || null,
             projet_id: reservationData.projectId,
             utilisateur_id: state.user.id,
             utilisateur: state.user.username,
             commentaire: reservationData.comment || 'Réservation',
             created_at: now.toISOString(),
-            reservation_id: data.id // IMPORTANT
+            date_debut: now.toISOString().split('T')[0],
+            date_fin: endDate.toISOString().split('T')[0]
         }]);
 
     if (movementError) throw movementError;
