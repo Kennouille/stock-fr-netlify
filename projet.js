@@ -3162,28 +3162,35 @@ function setupEventListeners() {
         }
     });
 
-    elements.reservationQuantityMinus.addEventListener('click', function() {
-        const input = elements.reservationQuantity;
-        let value = parseInt(input.value) || 1;
-        if (value > 1) {
-            input.value = value - 1;
+    // Event delegation pour les boutons + et - du modal Réservation
+    document.addEventListener('click', function(e) {
+        // Bouton -
+        if (e.target.closest('#reservationQuantityMinus') ||
+            e.target.id === 'reservationQuantityMinus') {
+            const input = document.getElementById('reservationQuantity');
+            let value = parseInt(input.value) || 1;
+            if (value > 1) {
+                input.value = value - 1;
+            }
         }
-    });
 
-    elements.reservationQuantityPlus.addEventListener('click', function() {
-        const input = elements.reservationQuantity;
-        let value = parseInt(input.value) || 1;
-        const articleId = elements.reservationArticle.value;
+        // Bouton +
+        if (e.target.closest('#reservationQuantityPlus') ||
+            e.target.id === 'reservationQuantityPlus') {
+            const input = document.getElementById('reservationQuantity');
+            let value = parseInt(input.value) || 1;
+            const articleId = document.getElementById('reservationArticle')?.value;
 
-        if (articleId) {
-            const article = state.articles.find(a => a.id === articleId);
-            const maxQuantity = article?.quantite_disponible || 0;
+            if (articleId) {
+                const article = state.articles.find(a => a.id === articleId);
+                const maxQuantity = article?.stock_actuel || 0; // ← Utilisez stock_actuel
 
-            if (value < maxQuantity) {
+                if (value < maxQuantity) {
+                    input.value = value + 1;
+                }
+            } else {
                 input.value = value + 1;
             }
-        } else {
-            input.value = value + 1;
         }
     });
 
