@@ -1882,11 +1882,12 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                         <div class="article-summary">
                             <div class="article-header">
                                 ${article.photo_url ? `
-                                <div class="article-photo" style="text-align: center; margin: 15px 0;">
-                                    <img src="${article.photo_url}" alt="${article.nom}"
-                                         style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                </div>
-                                ` : ''}
+                                    <div class="article-photo" style="text-align: center; margin: 15px 0;">
+                                        <img src="${article.photo_url}" alt="${article.nom}"
+                                             style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.3s ease;"
+                                             onclick="this.style.transform = this.style.transform === 'scale(2)' ? 'scale(1)' : 'scale(2)'; this.style.zIndex = this.style.zIndex === '1000' ? '1' : '1000';">
+                                    </div>
+                                    ` : ''}
                                 <div class="article-info">
                                     <h4>${article.nom} (${article.numero})</h4>
                                     <p>Sorti : ${originalQuantity} unité(s)</p>
