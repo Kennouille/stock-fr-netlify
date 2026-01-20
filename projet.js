@@ -1174,7 +1174,12 @@ function showModal(modalElement) {
         previousModal: state.previousModal?.id
     });
 
-    hideModal();
+    // Sauvegarder le modal courant AVANT de le cacher
+    if (state.currentModal && state.currentModal !== modalElement) {
+        state.previousModal = state.currentModal;
+    }
+
+    hideModal(); // Cache le modal courant
     modalElement.style.display = 'flex';
     state.currentModal = modalElement;
 }
