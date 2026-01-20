@@ -687,13 +687,15 @@ async function createReservation(reservationData) {
             .insert([{
                 article_id: reservationData.articleId,
                 projet_id: reservationData.projectId,
-                utilisateur_id: state.user.id,
                 quantite: reservationData.quantity,
-                date_fin: endDate.toISOString(),
-                date_reservation: now.toISOString().split('T')[0], // ← DATE seule
-                heure_reservation: now.toLocaleTimeString('fr-FR', { hour12: false }), // ← HEURE
+                date_debut: now.toISOString(), // ← timestamp complet
+                utilisateur_id: state.user.id,
+                created_at: now.toISOString().split('T')[0], // ← date seulement (YYYY-MM-DD)
+                statut: 'active',
+                date_fin: endDate.toISOString().split('T')[0], // ← date seulement
                 notes: reservationData.comment,
-                created_at: now.toISOString()
+                responsable: state.user.username,
+                updated_at: now.toISOString()
             }])
             .select()
             .single();
