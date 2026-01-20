@@ -3001,14 +3001,22 @@ function setupEventListeners() {
         if (!closeBtn) return;
 
         e.preventDefault();
+        e.stopPropagation(); // ← IMPORTANT : empêche d'autres gestionnaires
+
+        console.log('Close button clicked:', {
+            currentModal: state.currentModal?.id,
+            previousModal: state.previousModal?.id
+        });
 
         // Si on est dans un modal enfant et qu'il y a un modal précédent
         if (state.currentModal &&
             state.previousModal &&
             (state.currentModal.id === 'addReservationModal' ||
              state.currentModal.id === 'newProjectModal')) {
+            console.log('Returning to previous modal');
             hideModal(true);
         } else {
+            console.log('Normal close');
             hideModal();
         }
     });
