@@ -707,6 +707,13 @@ async function createReservation(reservationData) {
 
         if (error) throw error;
 
+        console.log('Insertion réservation - Données retournées:', {
+            id: data?.id,
+            date_debut: data?.date_debut,
+            created_at: data?.created_at,
+            allData: data
+        });
+
         return data;
     } catch (error) {
         console.error('Erreur création réservation:', error);
