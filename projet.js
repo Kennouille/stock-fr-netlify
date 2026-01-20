@@ -678,9 +678,9 @@ async function unarchiveProject(projectId) {
 async function createReservation(reservationData) {
     try {
         // Calculer la date de fin (par défaut 30 jours)
-        const today = new Date();
-        const endDate = new Date(today);
-        endDate.setDate(today.getDate() + 30);
+        const now = new Date();
+        const endDate = new Date(now);
+        endDate.setDate(now.getDate() + 30);
 
         const { data, error } = await supabase
             .from('w_reservations_actives')
@@ -690,8 +690,10 @@ async function createReservation(reservationData) {
                 utilisateur_id: state.user.id,
                 quantite: reservationData.quantity,
                 date_fin: endDate.toISOString(),
+                date_reservation: now.toISOString().split('T')[0], // ← DATE seule
+                heure_reservation: now.toLocaleTimeString('fr-FR', { hour12: false }), // ← HEURE
                 notes: reservationData.comment,
-                created_at: new Date().toISOString()
+                created_at: now.toISOString()
             }])
             .select()
             .single();
