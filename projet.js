@@ -693,7 +693,7 @@ async function createReservation(reservationData) {
                 article_id: reservationData.articleId,
                 projet_id: reservationData.projectId,
                 quantite: reservationData.quantity,
-                date_debut: now.toLocaleString('fr-FR').slice(0, 19).replace(' à ', ' '),
+                date_debut: now.toISOString().slice(0, 19).replace('T', ' '),
                 utilisateur_id: state.user.id,
                 created_at: now.toISOString().split('T')[0], // ← '2024-01-20'
                 statut: 'active',
