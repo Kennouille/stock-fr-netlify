@@ -1569,7 +1569,7 @@ function updateProjectReservations(sorties, reservations) {
                         <div class="action-buttons">
                             <button class="btn-action btn-small use-reservation"
                                     data-id="${reservation.id}"
-                                    data-article-id="${article?.id || ''}"
+                                    data-article-id="${reservation.article_id || ''}"
                                     data-quantity="${reservation.quantite}"
                                     title="Marquer comme utilisé">
                                 <i class="fas fa-check"></i>
