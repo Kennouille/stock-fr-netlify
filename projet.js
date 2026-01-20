@@ -536,7 +536,7 @@ async function fetchArticles() {
     try {
         const { data, error } = await supabase
             .from('w_articles')
-            .select('*')
+            .select('id, nom, numero, code_barre, prix_unitaire, stock_actuel')
             .order('nom');
 
         if (error) throw error;
@@ -1158,9 +1158,11 @@ function populateManagerFilter() {
 function populateArticleSelect() {
     let html = '<option value="">Sélectionnez un article</option>';
     state.articles.forEach(article => {
-        html += `<option value="${article.id}">${article.nom} (${article.code || article.numero})</option>`;
+        // Affiche seulement les articles avec stock > 0
+        if ((article.stock_actuel || 0) > 0) {
+            html += `<option value="${article.id}">${article.nom} (${article.code || article.numero}) - Stock: ${article.stock_actuel}</option>`;
+        }
     });
-
     elements.reservationArticle.innerHTML = html;
 }
 
@@ -2596,7 +2598,7 @@ async function updateReservationStockInfo(articleId) {
         // Récupérer le stock total disponible
         const article = state.articles.find(a => a.id === articleId);
         if (article) {
-            elements.reservationAvailableStock.textContent = article.quantite_disponible || 0;
+            elements.reservationAvailableStock.textContent = article.stock_actuel || 0;
         }
 
         // Récupérer le nombre déjà réservé pour ce projet
