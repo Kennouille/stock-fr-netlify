@@ -685,9 +685,9 @@ async function createReservation(reservationData) {
         const { data, error } = await supabase
             .from('w_reservations_actives')
             .insert([{
-                id_article: reservationData.articleId,
-                id_projet: reservationData.projectId,
-                id_user: state.user.id,
+                article_id: reservationData.articleId,
+                projet_id: reservationData.projectId,
+                utilisateur_id: state.user.id,
                 quantite: reservationData.quantity,
                 date_fin: endDate.toISOString(),
                 notes: reservationData.comment,
