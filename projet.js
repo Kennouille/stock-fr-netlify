@@ -1197,13 +1197,15 @@ function hideModal(returnToPrevious = false) {
         state.currentModal.style.display = 'none';
 
         if (returnToPrevious && state.previousModal) {
-            // Afficher le modal précédent
+            // Retour au modal précédent
             state.currentModal = state.previousModal;
             state.currentModal.style.display = 'flex';
-            // NE PAS effacer previousModal ici
+            // Garder previousModal au cas où on veut revenir encore en arrière
         } else {
+            // Fermeture normale : seulement si on ne retourne pas à un modal précédent
             state.currentModal = null;
-            state.previousModal = null;
+            // NE PAS effacer previousModal ici non plus
+            // Il sera écrasé quand un nouveau modal s'ouvrira
         }
     }
 }
