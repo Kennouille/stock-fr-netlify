@@ -1594,8 +1594,8 @@ function updateProjectReservations(sorties, reservations) {
                     </td>
                     <td>
                         <div class="date-info">
-                            ${formatDate(reservation.date_reservation)}
-                            <small>${formatDateTime(reservation.created_at).split(' ')[1] || ''}</small>
+                            ${formatDate(reservation.created_at)}
+                            <small>${formatDateTime(reservation.created_at).split(' ')[1]}</small>
                         </div>
                     </td>
                     <td>
