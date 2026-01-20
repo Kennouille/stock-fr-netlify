@@ -676,38 +676,37 @@ async function unarchiveProject(projectId) {
 }
 
 async function createReservation(reservationData) {
-    try {
-        // Calculer la date de fin (par défaut 30 jours)
-        const now = new Date();
-        const endDate = new Date(now);
-        endDate.setDate(now.getDate() + 30);
+    const now = new Date();
+    const endDate = new Date(now);
+    endDate.setDate(now.getDate() + 30);
 
-        const { data, error } = await supabase
-            .from('w_reservations_actives')
-            .insert([{
-                article_id: reservationData.articleId,
-                projet_id: reservationData.projectId,
-                quantite: reservationData.quantity,
-                date_debut: now.toISOString(), // ← LA SEULE LIGNE IMPORTANTE
-                utilisateur_id: state.user.id,
-                created_at: now.toISOString().split('T')[0],
-                statut: 'active',
-                date_fin: endDate.toISOString().split('T')[0],
-                notes: reservationData.comment,
-                responsable: state.user.username,
-                updated_at: now.toISOString()
-            }])
-            .select()
-            .single();
+    const { data, error } = await supabase
+        .from('w_reservations_actives')
+        .insert([{
+            article_id: reservationData.articleId,
+            projet_id: reservationData.projectId,
+            quantite: reservationData.quantity,
 
-        if (error) throw error;
+            date_reservation: now.toISOString(), // ✅ LIGNE MANQUANTE
+            date_debut: now.toISOString(),
 
-        return data;
-    } catch (error) {
-        console.error('Erreur création réservation:', error);
-        throw error;
-    }
+            utilisateur_id: state.user.id,
+            statut: 'active',
+
+            created_at: now.toISOString(), // ✅ PAS split
+            updated_at: now.toISOString(),
+            date_fin: endDate.toISOString(),
+
+            notes: reservationData.comment,
+            responsable: state.user.username
+        }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
 }
+
 
 async function releaseReservation(reservationId, comment = '') {
     try {
@@ -2744,14 +2743,10 @@ async function confirmAddReservation() {
 
         const newReservation = await createReservation(reservationData);
 
-        // Recharger TOUTES les données
-        await Promise.all([
-            fetchReservations(),  // ← RECHARGE les réservations
-            fetchArticles(),
-            fetchMovements()
-        ]);
+        // Ajouter à la liste des réservations
+        state.reservations.push(newReservation);
 
-        // Puis recharger les détails
+        // Recharger les détails du projet
         await showProjectDetails(state.currentProject.id);
 
         // Mettre à jour les statistiques
