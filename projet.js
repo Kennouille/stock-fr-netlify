@@ -1173,10 +1173,19 @@ function showModal(modalElement) {
     state.currentModal = modalElement;
 }
 
-function hideModal() {
+function hideModal(returnToPrevious = false) {
     if (state.currentModal) {
         state.currentModal.style.display = 'none';
-        state.currentModal = null;
+
+        if (returnToPrevious && state.previousModal) {
+            // Afficher le modal précédent
+            state.currentModal = state.previousModal;
+            state.currentModal.style.display = 'flex';
+            state.previousModal = null;
+        } else {
+            state.currentModal = null;
+            state.previousModal = null;
+        }
     }
 }
 
@@ -2588,6 +2597,9 @@ async function addReservationToProject() {
     // Peupler la liste des articles
     populateArticleSelect();
 
+    // Stocker le modal précédent avant d'ouvrir le nouveau
+    state.previousModal = state.currentModal;
+
     showModal(elements.addReservationModal);
 }
 
@@ -2985,7 +2997,17 @@ function setupEventListeners() {
 
     // Fermeture des modals
     elements.closeModalBtns.forEach(btn => {
-        btn.addEventListener('click', hideModal);
+        btn.addEventListener('click', function() {
+            // Vérifier si on est dans un modal enfant
+            if (state.currentModal &&
+                state.previousModal &&
+                (state.currentModal.id === 'addReservationModal' ||
+                 state.currentModal.id === 'newProjectModal')) {
+                hideModal(true); // Retour au modal précédent
+            } else {
+                hideModal(); // Fermeture normale
+            }
+        });
     });
 
     // Clic en dehors des modals pour fermer
