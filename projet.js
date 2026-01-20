@@ -109,7 +109,6 @@ const elements = {
 
     // Actions détails
     addReservationToProjectBtn: document.getElementById('addReservationToProjectBtn'),
-    releaseAllProjectItemsBtn: document.getElementById('releaseAllProjectItemsBtn'),
     archiveProjectBtn: document.getElementById('archiveProjectBtn'),
     editProjectBtn: document.getElementById('editProjectBtn'),
     exportProjectBtn: document.getElementById('exportProjectBtn'),
@@ -3187,7 +3186,6 @@ function setupEventListeners() {
 
     // Boutons détails projet
     elements.addReservationToProjectBtn.addEventListener('click', addReservationToProject);
-    elements.releaseAllProjectItemsBtn.addEventListener('click', releaseAllProjectItems);
     elements.archiveProjectBtn.addEventListener('click', function() {
         if (state.currentProject) {
             if (state.currentProject.archived) {
