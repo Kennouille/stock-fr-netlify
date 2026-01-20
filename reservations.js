@@ -49,7 +49,6 @@ const elements = {
 
     // Boutons header
     newReservationBtn: document.getElementById('newReservationBtn'),
-    bulkReleaseBtn: document.getElementById('bulkReleaseBtn'),
     exportReservationsBtn: document.getElementById('exportReservationsBtn'),
 
     // Filtres
@@ -1044,19 +1043,6 @@ function setupEventListeners() {
     elements.newReservationBtn.addEventListener('click', () => {
         resetNewReservationModal();
         showModal(elements.newReservationModal);
-    });
-
-    elements.bulkReleaseBtn.addEventListener('click', () => {
-        const totalExpired = state.reservations.filter(r => isReservationExpired(r)).length;
-        if (totalExpired === 0) {
-            showError('Aucune réservation à libérer');
-            return;
-        }
-
-        const confirmed = confirm(`Voulez-vous libérer toutes les réservations expirées (${totalExpired}) ?`);
-        if (confirmed) {
-            bulkReleaseExpired();
-        }
     });
 
     // Filtres
