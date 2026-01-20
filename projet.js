@@ -1168,12 +1168,26 @@ function populateArticleSelect() {
 
 // ===== GESTION DES MODALS =====
 function showModal(modalElement) {
+    console.log('showModal called:', {
+        modalId: modalElement.id,
+        currentModal: state.currentModal?.id,
+        previousModal: state.previousModal?.id
+    });
+
     hideModal();
     modalElement.style.display = 'flex';
     state.currentModal = modalElement;
 }
 
 function hideModal(returnToPrevious = false) {
+    console.log('hideModal called:', {
+        returnToPrevious,
+        currentModal: state.currentModal?.id,
+        previousModal: state.previousModal?.id,
+        stateCurrentModal: state.currentModal,
+        statePreviousModal: state.previousModal
+    });
+
     if (state.currentModal) {
         state.currentModal.style.display = 'none';
 
