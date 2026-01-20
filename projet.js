@@ -2995,19 +2995,22 @@ function setupEventListeners() {
         });
     });
 
-    // Fermeture des modals
-    elements.closeModalBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Vérifier si on est dans un modal enfant
-            if (state.currentModal &&
-                state.previousModal &&
-                (state.currentModal.id === 'addReservationModal' ||
-                 state.currentModal.id === 'newProjectModal')) {
-                hideModal(true); // Retour au modal précédent
-            } else {
-                hideModal(); // Fermeture normale
-            }
-        });
+    // Fermeture des modals avec event delegation
+    document.addEventListener('click', function(e) {
+        const closeBtn = e.target.closest('.close-modal');
+        if (!closeBtn) return;
+
+        e.preventDefault();
+
+        // Si on est dans un modal enfant et qu'il y a un modal précédent
+        if (state.currentModal &&
+            state.previousModal &&
+            (state.currentModal.id === 'addReservationModal' ||
+             state.currentModal.id === 'newProjectModal')) {
+            hideModal(true);
+        } else {
+            hideModal();
+        }
     });
 
     // Clic en dehors des modals pour fermer
