@@ -1884,8 +1884,31 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                                 ${article.photo_url ? `
                                     <div class="article-photo" style="text-align: center; margin: 15px 0;">
                                         <img src="${article.photo_url}" alt="${article.nom}"
-                                             style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.3s ease;"
-                                             onclick="this.style.transform = this.style.transform === 'scale(4)' ? 'scale(2)' : 'scale(4)'; this.style.zIndex = this.style.zIndex === '1000' ? '1' : '1000';">
+                                             style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s ease;"
+                                             onclick="if(this.style.position === 'fixed') {
+                                                 this.style.position = 'static';
+                                                 this.style.width = '';
+                                                 this.style.height = '';
+                                                 this.style.top = '';
+                                                 this.style.left = '';
+                                                 this.style.zIndex = '';
+                                                 this.style.maxWidth = '200px';
+                                                 this.style.maxHeight = '200px';
+                                             } else {
+                                                 this.style.position = 'fixed';
+                                                 this.style.width = '90vw';
+                                                 this.style.height = '90vh';
+                                                 this.style.top = '50%';
+                                                 this.style.left = '50%';
+                                                 this.style.transform = 'translate(-50%, -50%)';
+                                                 this.style.zIndex = '9999';
+                                                 this.style.maxWidth = 'none';
+                                                 this.style.maxHeight = 'none';
+                                                 this.style.objectFit = 'contain';
+                                                 this.style.backgroundColor = 'rgba(0,0,0,0.8)';
+                                                 this.style.padding = '20px';
+                                                 this.style.borderRadius = '10px';
+                                             }">
                                     </div>
                                     ` : ''}
                                 <div class="article-info">
