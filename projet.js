@@ -1838,6 +1838,8 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
     console.log('articleId:', articleId);
     console.log('originalQuantity:', originalQuantity);
 
+    state.previousModal = state.currentModal;
+
     try {
         console.log('=== DÉBUT TRY OPEN RETURN MODAL ===');
         console.log('Current user:', state.user);
