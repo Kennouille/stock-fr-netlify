@@ -705,7 +705,7 @@ async function unarchiveProject(projectId) {
 async function createReservation(reservationData) {
     const now = new Date();
     const endDate = new Date(now);
-    endDate.setDate(now.getDate() + 30);
+    endDate.setDate(now.getDate() + 7);
 
     const { data, error } = await supabase
         .from('w_reservations_actives')
@@ -733,7 +733,27 @@ async function createReservation(reservationData) {
         .single();
 
     if (error) throw error;
+
+    // AJOUTER LE MOUVEMENT DE RÉSERVATION
+    const { error: movementError } = await supabase
+        .from('w_mouvements')
+        .insert([{
+            article_id: reservationData.articleId,
+            type: 'reservation',
+            quantite: reservationData.quantity,
+            projet: state.currentProject?.nom || '',
+            projet_id: reservationData.projectId,
+            utilisateur_id: state.user.id,
+            utilisateur: state.user.username,
+            commentaire: reservationData.comment || 'Réservation',
+            created_at: now.toISOString(),
+            reservation_id: data.id // IMPORTANT
+        }]);
+
+    if (movementError) throw movementError;
+
     return data;
+
 }
 
 async function releaseReservation(reservationId, comment = '') {
