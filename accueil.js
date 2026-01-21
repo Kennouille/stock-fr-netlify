@@ -2849,22 +2849,6 @@ async function loadEmployeesForSelect(selectId, defaultValue = null) {
     }
 }
 
-// Fonction helper pour calculer les jours restants
-function calculateDaysLeft(endDate) {
-    try {
-        const end = new Date(endDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (end < today) return 0;
-
-        const diffTime = end - today;
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    } catch (e) {
-        return 0;
-    }
-}
-
 async function handleStockAction(type, popup, initialData) {
     try {
         // Récupérer les données du formulaire
