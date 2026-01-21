@@ -46,56 +46,68 @@
                 <h2><i class="fas fa-bolt"></i> Actions rapides</h2>
                 <p class="section-subtitle">Opérations quotidiennes de gestion de stock</p>
 
-                <div class="actions-grid">
-                    <!-- Sortie de stock -->
-                    <div class="action-card" id="sortieCard">
-                        <div class="action-icon red">
-                            <i class="fas fa-arrow-up"></i>
-                        </div>
-                        <h3>Sortie de stock</h3>
-                        <p>Retirer des articles du stock pour un projet</p>
-                        <div class="action-options">
-                            <button class="option-btn" data-action="sortie" data-type="scan">
-                                <i class="fas fa-camera"></i> Scanner
-                            </button>
-                            <button class="option-btn" data-action="sortie" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> Saisir
-                            </button>
-                        </div>
+                <!-- Sortie de stock -->
+                <div class="action-card" id="sortieCard">
+                    <div class="action-icon red">
+                        <i class="fas fa-arrow-up"></i>
                     </div>
-
-                    <!-- Entrée de stock -->
-                    <div class="action-card" id="entreeCard">
-                        <div class="action-icon green">
-                            <i class="fas fa-arrow-down"></i>
-                        </div>
-                        <h3>Entrée de stock</h3>
-                        <p>Ajouter de nouveaux articles ou réapprovisionner</p>
-                        <div class="action-options">
-                            <button class="option-btn" data-action="entree" data-type="scan">
-                                <i class="fas fa-camera"></i> Scanner
-                            </button>
-                            <button class="option-btn" data-action="entree" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> Saisir
-                            </button>
-                        </div>
+                    <h3>Sortie de stock</h3>
+                    <p>Retirer des articles du stock pour un projet</p>
+                    <div class="action-options">
+                        <button class="option-btn" data-action="sortie" data-type="scan">
+                            <i class="fas fa-camera"></i> Scanner
+                        </button>
+                        <button class="option-btn" data-action="sortie" data-type="saisie">
+                            <i class="fas fa-keyboard"></i> Saisir
+                        </button>
                     </div>
+                </div>
 
-                    <!-- Réservation projet -->
-                    <div class="action-card" id="reservationCard">
-                        <div class="action-icon orange">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <h3>Réservation projet</h3>
-                        <p>Réserver des articles pour un futur projet</p>
-                        <div class="action-options">
-                            <button class="option-btn" data-action="reservation" data-type="scan">
-                                <i class="fas fa-camera"></i> Scanner
-                            </button>
-                            <button class="option-btn" data-action="reservation" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> Saisir
-                            </button>
-                        </div>
+                <!-- Entrée de stock -->
+                <div class="action-card" id="entreeCard">
+                    <div class="action-icon green">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <h3>Entrée de stock</h3>
+                    <p>Ajouter de nouveaux articles ou réapprovisionner</p>
+                    <div class="action-options">
+                        <button class="option-btn" data-action="entree" data-type="scan">
+                            <i class="fas fa-camera"></i> Scanner
+                        </button>
+                        <button class="option-btn" data-action="entree" data-type="saisie">
+                            <i class="fas fa-keyboard"></i> Saisir
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Réservation projet -->
+                <div class="action-card" id="reservationCard">
+                    <div class="action-icon orange">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3>Réservation projet</h3>
+                    <p>Réserver des articles pour un futur projet</p>
+                    <div class="action-options">
+                        <button class="option-btn" data-action="reservation" data-type="scan">
+                            <i class="fas fa-camera"></i> Scanner
+                        </button>
+                        <button class="option-btn" data-action="reservation" data-type="saisie">
+                            <i class="fas fa-keyboard"></i> Saisir
+                        </button>
+                    </div>
+                </div>
+
+                <!-- NOUVEAU : Retour projet en stock -->
+                <div class="action-card" id="retourProjetCard">
+                    <div class="action-icon blue">
+                        <i class="fas fa-undo-alt"></i>
+                    </div>
+                    <h3>Retour projet en stock</h3>
+                    <p>Retourner des articles d'un projet vers le stock</p>
+                    <div class="action-options">
+                        <button class="option-btn" id="selectProjetBtn" data-action="retour_projet">
+                            <i class="fas fa-project-diagram"></i> Choisir projet
+                        </button>
                     </div>
                 </div>
             </section>
