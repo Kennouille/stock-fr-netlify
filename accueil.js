@@ -283,6 +283,502 @@ function updateProjectReservations(sorties, reservations) {
     }
 
     tbody.innerHTML = html;
+
+    setupProjectTableEvents(sorties, reservations);
+}
+
+function setupProjectTableEvents(sorties, reservations) {
+    // Bouton "Voir détails"
+    document.querySelectorAll('.view-details').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.id;
+            const itemType = this.dataset.type;
+            showItemDetails(itemId, itemType, sorties, reservations);
+        });
+    });
+
+    // Bouton "Retour au stock"
+    document.querySelectorAll('.return-to-stock').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const mouvementId = this.dataset.id;
+            const articleId = this.dataset.articleId;
+            const quantity = parseInt(this.dataset.quantity);
+            openReturnToStockModal(mouvementId, articleId, quantity);
+        });
+    });
+
+    // Bouton "Libérer la réservation"
+    document.querySelectorAll('.release-reservation').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const reservationId = this.dataset.id;
+            const reservation = reservations.find(r => r.id === reservationId);
+
+            if (reservation) {
+                const article = reservation.w_articles;
+                const articleName = article?.nom || 'Article inconnu';
+
+                if (confirm(`Libérer la réservation de ${reservation.quantite} ${articleName} ?`)) {
+                    try {
+                        // Fonction à ajouter plus tard
+                        await releaseReservation(reservationId);
+                        showTemporarySuccess('Réservation libérée avec succès');
+
+                        // Recharger les détails du projet
+                        const projectId = document.querySelector('.project-tab-content.active')
+                            ?.closest('#projectDetailsModal')
+                            ?.querySelector('[data-project-id]')?.dataset.projectId;
+
+                        if (projectId) {
+                            await openProjectDetailsModal(projectId);
+                        }
+                    } catch (error) {
+                        console.error('Erreur libération réservation:', error);
+                        alert('Erreur lors de la libération de la réservation');
+                    }
+                }
+            }
+        });
+    });
+}
+
+function showItemDetails(itemId, itemType, sorties, reservations) {
+    let item;
+
+    if (itemType === 'sortie') {
+        item = sorties.find(s => s.id === itemId);
+    } else {
+        item = reservations.find(r => r.id === itemId);
+    }
+
+    if (!item) return;
+
+    const isSortie = itemType === 'sortie';
+    const article = isSortie ? item.article : item.w_articles;
+    const user = isSortie ? item.utilisateur : item.w_users;
+
+    const modalHtml = `
+        <div class="modal-overlay" id="itemDetailsModal">
+            <div class="modal" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-info-circle"></i> Détails</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="detail-section">
+                        <h4><i class="fas fa-box"></i> Article</h4>
+                        <div class="detail-item">
+                            <span class="detail-label">Nom :</span>
+                            <span class="detail-value">${article?.nom || 'Non spécifié'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Numéro :</span>
+                            <span class="detail-value">${article?.numero || 'Non spécifié'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Code-barre :</span>
+                            <span class="detail-value">${article?.code_barre || 'Non spécifié'}</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h4><i class="fas ${isSortie ? 'fa-check-circle' : 'fa-clock'}"></i> ${isSortie ? 'Sortie' : 'Réservation'}</h4>
+                        <div class="detail-item">
+                            <span class="detail-label">Type :</span>
+                            <span class="detail-value badge ${isSortie ? 'sortie' : 'reservation'}">
+                                ${isSortie ? 'Sortie effectuée' : 'Réservation active'}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Quantité :</span>
+                            <span class="detail-value">${isSortie ? '-' : ''}${item.quantite}</span>
+                        </div>
+                        ${article?.prix_unitaire ? `
+                        <div class="detail-item">
+                            <span class="detail-label">Prix unitaire :</span>
+                            <span class="detail-value">${article.prix_unitaire.toFixed(2)} €</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Valeur totale :</span>
+                            <span class="detail-value" style="font-weight: bold;">
+                                ${(article.prix_unitaire * item.quantite).toFixed(2)} €
+                            </span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-item">
+                            <span class="detail-label">Date :</span>
+                            <span class="detail-value">${formatDateTime(item.created_at)}</span>
+                        </div>
+                        ${!isSortie ? `
+                        <div class="detail-item">
+                            <span class="detail-label">Date de fin :</span>
+                            <span class="detail-value">${formatDate(item.date_fin)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="detail-section">
+                        <h4><i class="fas fa-user"></i> Responsable</h4>
+                        <div class="detail-item">
+                            <span class="detail-label">Utilisateur :</span>
+                            <span class="detail-value">${user?.username || 'Non spécifié'}</span>
+                        </div>
+                    </div>
+
+                    ${item.commentaire ? `
+                    <div class="detail-section">
+                        <h4><i class="fas fa-comment"></i> Commentaire</h4>
+                        <div class="detail-comment">
+                            ${item.commentaire}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary close-modal">
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+
+    const modal = document.getElementById('itemDetailsModal');
+    modal.style.display = 'flex';
+
+    // Gérer la fermeture
+    modal.querySelector('.close-modal').addEventListener('click', () => {
+        modal.remove();
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+async function openReturnToStockModal(mouvementId, articleId, originalQuantity) {
+    try {
+        // Récupérer l'article avec ses détails
+        const { data: article, error: articleError } = await supabase
+            .from('w_articles')
+            .select(`
+                nom,
+                numero,
+                photo_url,
+                rack:w_vuestock_racks(rack_code, display_name),
+                level:w_vuestock_levels(level_code),
+                slot:w_vuestock_slots(slot_code)
+            `)
+            .eq('id', articleId)
+            .single();
+
+        if (articleError) throw articleError;
+
+        // Récupérer le projet courant depuis le modal
+        const projectName = document.getElementById('projectDetailsName')?.textContent || '';
+        const projectElement = document.querySelector('[data-project-id]');
+        const projectId = projectElement?.dataset.projectId;
+
+        if (!projectId) {
+            throw new Error('ID du projet non trouvé');
+        }
+
+        // Créer le modal
+        const modalHTML = `
+            <div class="modal-overlay return-stock-modal">
+                <div class="modal" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-arrow-left"></i> Retour au stock</h3>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="article-summary">
+                            <div class="article-header">
+                                <div class="article-info">
+                                    <h4>${article.nom} (${article.numero})</h4>
+                                    <p>Sorti : ${originalQuantity} unité(s)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-boxes"></i> Quantité retournée *</label>
+                            <input type="number"
+                                   id="returnQuantity"
+                                   value="${originalQuantity}"
+                                   min="0"
+                                   max="${originalQuantity}"
+                                   class="form-input">
+                        </div>
+
+                        <div id="missingQuantitySection" style="display: none;">
+                            <div class="form-group">
+                                <label><i class="fas fa-exclamation-triangle"></i> Raison de la différence</label>
+                                <select id="missingReason" class="form-select">
+                                    <option value="">Sélectionner une raison...</option>
+                                    <option value="perdu">Perdu(s)</option>
+                                    <option value="cassé">Cassé(s)</option>
+                                    <option value="vole">Volé(s)</option>
+                                    <option value="fin_vie">Fin de vie utile</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-map-marker-alt"></i> Emplacement de rangement</label>
+                            <div class="location-display">
+                                <div><strong>Rayon:</strong> ${article.rack?.display_name || article.rack?.rack_code || 'Non spécifié'}</div>
+                                <div><strong>Étage:</strong> ${article.level?.level_code || 'Non spécifié'}</div>
+                                <div><strong>Position:</strong> ${article.slot?.slot_code || 'Non spécifié'}</div>
+                            </div>
+                            <small><i class="fas fa-info-circle"></i> Rangez l'article à cet emplacement</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-clipboard-check"></i> État des articles</label>
+                            <select id="itemCondition" class="form-select">
+                                <option value="parfait">Condition 1 Parfait état</option>
+                                <option value="raye">Condition 2 Usé / Réparé</option>
+                                <option value="reparation">Condition 3 A réparer</option>
+                                <option value="casse">Condition 4 A remplacer</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-comment"></i> Commentaire</label>
+                            <textarea id="returnComment"
+                                      rows="3"
+                                      placeholder="Détails du retour..."
+                                      class="form-textarea"></textarea>
+                        </div>
+
+                        <div class="error-message" id="returnError" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="returnErrorText"></span>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button id="confirmReturnBtn" class="btn btn-success">
+                                <i class="fas fa-check"></i> Confirmer le retour
+                            </button>
+                            <button type="button" class="btn btn-secondary close-modal">
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Ajouter le modal au DOM
+        const modalContainer = document.createElement('div');
+        modalContainer.innerHTML = modalHTML;
+        document.body.appendChild(modalContainer);
+
+        const modal = modalContainer.querySelector('.return-stock-modal');
+        modal.style.display = 'flex';
+
+        // Fermeture
+        const closeModal = () => modal.remove();
+        modal.querySelector('.close-modal').addEventListener('click', closeModal);
+        modal.querySelector('.btn-secondary').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Gérer l'affichage de la section "raison de la différence"
+        const returnQuantityInput = modal.querySelector('#returnQuantity');
+        const missingSection = modal.querySelector('#missingQuantitySection');
+
+        returnQuantityInput.addEventListener('input', function() {
+            const returnedQty = parseInt(this.value) || 0;
+            missingSection.style.display = returnedQty < originalQuantity ? 'block' : 'none';
+        });
+
+        // Confirmation
+        modal.querySelector('#confirmReturnBtn').addEventListener('click', async () => {
+            await processReturnToStock(mouvementId, articleId, originalQuantity, projectId, projectName, modalContainer);
+        });
+
+    } catch (error) {
+        console.error('Erreur ouverture modal retour:', error);
+        alert('Erreur lors de l\'ouverture du formulaire de retour');
+    }
+}
+
+async function processReturnToStock(mouvementId, articleId, originalQuantity, projectId, projectName, modalElement) {
+    try {
+        const modal = modalElement;
+        const returnQuantity = parseInt(modal.querySelector('#returnQuantity').value);
+        const itemCondition = modal.querySelector('#itemCondition').value;
+        const returnComment = modal.querySelector('#returnComment').value.trim();
+        const missingReason = modal.querySelector('#missingReason')?.value || '';
+        const missingQuantity = originalQuantity - returnQuantity;
+
+        // Validation
+        if (!returnQuantity || returnQuantity < 0 || returnQuantity > originalQuantity) {
+            modal.querySelector('#returnErrorText').textContent = 'La quantité retournée est invalide';
+            modal.querySelector('#returnError').style.display = 'flex';
+            return;
+        }
+
+        if (missingQuantity > 0 && !missingReason) {
+            modal.querySelector('#returnErrorText').textContent = 'Veuillez indiquer la raison de la quantité manquante';
+            modal.querySelector('#returnError').style.display = 'flex';
+            return;
+        }
+
+        // Demander confirmation
+        if (!confirm(`Confirmer le retour de ${returnQuantity} unité(s) au stock ?`)) {
+            return;
+        }
+
+        showLoading();
+
+        // 1. Récupérer le stock actuel
+        const { data: currentArticle, error: articleError } = await supabase
+            .from('w_articles')
+            .select('stock_actuel')
+            .eq('id', articleId)
+            .single();
+
+        if (articleError) throw articleError;
+
+        // 2. Créer le mouvement de retour
+        const now = new Date();
+        const mouvementData = {
+            article_id: articleId,
+            type: 'retour_projet',
+            quantite: returnQuantity,
+            projet: projectName,
+            projet_id: projectId,
+            commentaire: returnComment,
+            utilisateur_id: currentUser.id,
+            utilisateur: currentUser.username,
+            stock_avant: currentArticle.stock_actuel,
+            stock_apres: currentArticle.stock_actuel + returnQuantity,
+            motif: `Retour projet - État: ${itemCondition}`,
+            notes: `État: ${itemCondition}`,
+            date_mouvement: now.toISOString().split('T')[0],
+            heure_mouvement: now.toLocaleTimeString('fr-FR', { hour12: false }),
+            created_at: now.toISOString()
+        };
+
+        if (missingReason && missingQuantity > 0) {
+            mouvementData.raison = `${missingQuantity} ${missingReason}`;
+        }
+
+        const { error: movementError } = await supabase
+            .from('w_mouvements')
+            .insert([mouvementData]);
+
+        if (movementError) throw movementError;
+
+        // 3. Mettre à jour le stock de l'article
+        const { error: updateError } = await supabase
+            .from('w_articles')
+            .update({
+                stock_actuel: currentArticle.stock_actuel + returnQuantity,
+                updated_at: now.toISOString()
+            })
+            .eq('id', articleId);
+
+        if (updateError) throw updateError;
+
+        // 4. Fermer le modal et afficher succès
+        modal.remove();
+        showTemporarySuccess(`${returnQuantity} unité(s) retournée(s) au stock avec succès`);
+
+        // 5. Recharger les détails du projet
+        const projectDetailsModal = document.getElementById('projectDetailsModal');
+        if (projectDetailsModal && projectDetailsModal.style.display === 'flex') {
+            await openProjectDetailsModal(projectId);
+        }
+
+    } catch (error) {
+        console.error('Erreur retour au stock:', error);
+        modalElement.querySelector('#returnErrorText').textContent = error.message || 'Erreur lors du retour au stock';
+        modalElement.querySelector('#returnError').style.display = 'flex';
+    } finally {
+        hideLoading();
+    }
+}
+
+async function releaseReservation(reservationId, comment = '') {
+    try {
+        showLoading();
+
+        // 1. Récupérer la réservation
+        const { data: reservation, error: fetchError } = await supabase
+            .from('w_reservations_actives')
+            .select('article_id, projet_id, quantite')
+            .eq('id', reservationId)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        // 2. Récupérer stock_reserve actuel
+        const { data: article, error: articleError } = await supabase
+            .from('w_articles')
+            .select('stock_reserve')
+            .eq('id', reservation.article_id)
+            .single();
+
+        if (articleError) throw articleError;
+
+        // 3. Mettre à jour stock_reserve
+        const newReservedStock = Math.max(0, (article.stock_reserve || 0) - reservation.quantite);
+
+        const { error: updateStockError } = await supabase
+            .from('w_articles')
+            .update({
+                stock_reserve: newReservedStock,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', reservation.article_id);
+
+        if (updateStockError) throw updateStockError;
+
+        // 4. Supprimer la réservation active
+        const { error: deleteError } = await supabase
+            .from('w_reservations_actives')
+            .delete()
+            .eq('id', reservationId);
+
+        if (deleteError) throw deleteError;
+
+        // 5. Créer un mouvement d'annulation
+        const { error: movementError } = await supabase
+            .from('w_mouvements')
+            .insert([{
+                article_id: reservation.article_id,
+                type: 'annulation_reservation',
+                quantite: reservation.quantite,
+                projet_id: reservation.projet_id,
+                commentaire: comment || 'Réservation libérée',
+                utilisateur_id: currentUser.id,
+                utilisateur: currentUser.username,
+                date_mouvement: new Date().toISOString().split('T')[0],
+                heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
+                created_at: new Date().toISOString()
+            }]);
+
+        if (movementError) throw movementError;
+
+        return true;
+
+    } catch (error) {
+        console.error('Erreur libération réservation:', error);
+        throw error;
+    } finally {
+        hideLoading();
+    }
 }
 
 async function getProjectHistory(projectId) {
@@ -3152,6 +3648,21 @@ async function handleStockAction(type, popup, initialData) {
     } catch (error) {
         console.error(`Erreur ${type} stock:`, error);
         alert(`Erreur lors de l'enregistrement: ${error.message || 'Erreur inconnue'}`);
+    }
+}
+
+// ===== FONCTIONS UTILITAIRES =====
+function showLoading() {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'flex';
+    }
+}
+
+function hideLoading() {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
     }
 }
 
