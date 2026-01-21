@@ -173,7 +173,7 @@ body {
 
 .actions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
     margin-top: 1rem;
 }
@@ -185,11 +185,37 @@ body {
     box-shadow: var(--shadow);
     border: 1px solid var(--border-color);
     transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px; /* Hauteur uniforme */
 }
 
 .action-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
+}
+
+/* Pour les écrans moyens (tablettes) */
+@media (max-width: 1024px) {
+    .actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Pour les écrans mobiles */
+@media (max-width: 768px) {
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .action-card {
+        min-height: auto; /* Hauteur auto sur mobile */
+    }
+}
+
+.action-icon.blue {
+    background: #dbeafe;
+    color: #2563eb;
 }
 
 .action-icon {
