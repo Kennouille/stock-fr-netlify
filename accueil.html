@@ -336,6 +336,292 @@
         </footer>
     </div>
 
+    <!-- Modal détails projet -->
+    <div id="projectDetailsModal" class="modal-overlay" style="display: none;">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3><i class="fas fa-info-circle"></i> Détails du projet</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="project-details-header">
+                    <div class="project-header-info">
+                        <h4 id="projectDetailsName"></h4>
+                        <div class="project-header-meta">
+                            <span class="project-number" id="projectDetailsNumber"></span>
+                            <span class="project-status" id="projectDetailsStatus"></span>
+                        </div>
+                    </div>
+                    <div class="project-header-stats">
+                        <!-- Colonne gauche -->
+                        <div class="stats-column">
+                            <div class="column-label">Articles utilisés</div>
+                            <div class="project-stat">
+                                <div class="stat-label">Quantité</div>
+                                <div class="stat-value" id="projectDetailsItemsUsed">0</div>
+                            </div>
+                            <div class="project-stat">
+                                <div class="stat-label">Valeur</div>
+                                <div class="stat-value" id="projectDetailsValueUsed">0 €</div>
+                            </div>
+                        </div>
+
+                        <!-- Colonne droite -->
+                        <div class="stats-column">
+                            <div class="column-label">Articles réservés</div>
+                            <div class="project-stat">
+                                <div class="stat-label">Quantité</div>
+                                <div class="stat-value" id="projectDetailsItemsReserved">0</div>
+                            </div>
+                            <div class="project-stat">
+                                <div class="stat-label">Valeur</div>
+                                <div class="stat-value" id="projectDetailsValueReserved">0 €</div>
+                            </div>
+                        </div>
+
+                        <!-- Jours restants (centré en bas) -->
+                        <div class="project-stat-full">
+                            <div class="stat-label">Jours restants</div>
+                            <div class="stat-value" id="projectDetailsDaysLeft">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-tabs">
+                    <div class="project-tab-buttons">
+                        <button class="project-tab-btn" data-tab="reservations">
+                            <i class="fas fa-boxes"></i> Réservations
+                            <span class="tab-badge" id="projectReservationsCount">0</span>
+                        </button>
+                        <button class="project-tab-btn active" data-tab="info">
+                            <i class="fas fa-info-circle"></i> Informations
+                        </button>
+                        <button class="project-tab-btn" data-tab="history">
+                            <i class="fas fa-history"></i> Historique
+                        </button>
+                    </div>
+
+                    <div class="project-tab-content active" id="projectInfoTab">
+                        <div class="project-info-grid">
+                            <div class="info-section">
+                                <h5><i class="fas fa-align-left"></i> Description</h5>
+                                <p id="projectDetailsDescription">Pas de description</p>
+                            </div>
+
+                            <div class="info-section">
+                                <h5><i class="fas fa-calendar"></i> Dates</h5>
+                                <div class="info-item">
+                                    <span class="label">Créé le :</span>
+                                    <span class="value" id="projectDetailsCreatedAt"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Date de fin :</span>
+                                    <span class="value" id="projectDetailsEndDate"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Dernière mise à jour :</span>
+                                    <span class="value" id="projectDetailsUpdatedAt"></span>
+                                </div>
+                            </div>
+
+                            <div class="info-section">
+                                <h5><i class="fas fa-users"></i> Équipe</h5>
+                                <div class="info-item">
+                                    <span class="label">Responsable :</span>
+                                    <span class="value" id="projectDetailsManager"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Budget :</span>
+                                    <span class="value" id="projectDetailsBudget"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-tab-content" id="projectReservationsTab">
+                        <div class="reservations-actions">
+                            <button id="addReservationToProjectBtn" class="btn-primary">
+                                <i class="fas fa-plus"></i> Ajouter une réservation
+                            </button>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="project-reservations-table">
+                                <thead>
+                                    <tr>
+                                        <th>Article</th>
+                                        <th>Code</th>
+                                        <th>Quantité</th>
+                                        <th>Utilisé le</th>
+                                        <th>Date de fin</th>
+                                        <th>Utilisateur</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="projectReservationsBody">
+                                    <tr>
+                                        <td colspan="7" class="loading-row">
+                                            <i class="fas fa-spinner fa-spin"></i> Chargement des réservations...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="project-tab-content" id="projectHistoryTab">
+                        <div class="history-list" id="projectHistoryList">
+                            <div class="loading-row">
+                                <i class="fas fa-spinner fa-spin"></i> Chargement de l'historique...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="archiveProjectBtn" class="btn-secondary">
+                        <i class="fas fa-archive"></i> Archiver le projet
+                    </button>
+                    <button id="editProjectBtn" class="btn-secondary">
+                        <i class="fas fa-edit"></i> Modifier
+                    </button>
+                    <button id="exportProjectBtn" class="btn-export">
+                        <i class="fas fa-file-export"></i> Exporter
+                    </button>
+                    <button type="button" class="btn-secondary close-modal">
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal ajout réservation au projet -->
+    <div id="addReservationModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus"></i> Ajouter une réservation</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="reservationArticle">
+                        <i class="fas fa-box"></i> Article *
+                    </label>
+                    <select id="reservationArticle" class="form-select">
+                        <option value="">Sélectionnez un article</option>
+                        <!-- Rempli dynamiquement -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="reservationQuantity">
+                        <i class="fas fa-boxes"></i> Quantité *
+                    </label>
+                    <div class="quantity-input-group">
+                        <button type="button" class="quantity-btn minus" id="reservationQuantityMinus">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <input type="number"
+                               id="reservationQuantity"
+                               min="1"
+                               value="1"
+                               class="form-input quantity">
+                        <button type="button" class="quantity-btn plus" id="reservationQuantityPlus">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="quantity-info">
+                        <span>Stock disponible : <strong id="reservationAvailableStock">0</strong></span>
+                        <span>Déjà réservé : <strong id="reservationAlreadyReserved">0</strong></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reservationComment">
+                        <i class="fas fa-comment"></i> Commentaire (optionnel)
+                    </label>
+                    <textarea id="reservationComment"
+                              rows="2"
+                              placeholder="Motif de la réservation..."
+                              class="form-textarea"></textarea>
+                </div>
+
+                <div id="reservationError" class="error-message" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="reservationErrorText"></span>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="confirmAddReservationBtn" class="btn-primary">
+                        <i class="fas fa-check"></i> Ajouter la réservation
+                    </button>
+                    <button type="button" class="btn-secondary close-modal">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal libération stock -->
+    <div id="releaseStockModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-unlock"></i> Libération du stock</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div class="warning-content">
+                        <h4>Attention !</h4>
+                        <p>Vous êtes sur le point de libérer tout le stock associé à ce projet.</p>
+                        <p><strong id="releaseItemsCount">0</strong> article(s) seront libérés.</p>
+                        <p>Cette action est irréversible.</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="releaseReason">
+                        <i class="fas fa-comment"></i> Raison de la libération
+                    </label>
+                    <select id="releaseReason" class="form-select">
+                        <option value="">Sélectionnez une raison</option>
+                        <option value="project_completed">Projet terminé</option>
+                        <option value="project_cancelled">Projet annulé</option>
+                        <option value="stock_return">Retour de stock</option>
+                        <option value="other">Autre</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="releaseComment">
+                        <i class="fas fa-comment-dots"></i> Commentaire
+                    </label>
+                    <textarea id="releaseComment"
+                              rows="3"
+                              placeholder="Détails supplémentaires..."
+                              class="form-textarea"></textarea>
+                </div>
+
+                <div id="releaseError" class="error-message" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="releaseErrorText"></span>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="confirmReleaseBtn" class="btn-primary">
+                        <i class="fas fa-check"></i> Confirmer la libération
+                    </button>
+                    <button type="button" class="btn-secondary close-modal">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Import des scripts -->
     <script type="module" src="accueil.js"></script>
 </body>

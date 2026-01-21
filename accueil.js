@@ -7,6 +7,570 @@ const now = new Date();
 const dateFr = now.toISOString().split('T')[0]; // Format YYYY-MM-DD
 const timeFr = now.toTimeString().split(' ')[0]; // Format HH:MM:SS
 
+// ===== FONCTIONS UTILITAIRES POUR PROJETS =====
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    } catch (e) {
+        return 'N/A';
+    }
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        return 'N/A';
+    }
+}
+
+async function getProjectReservations(projectId) {
+    try {
+        // 1. Récupérer le projet
+        const { data: project, error: projectError } = await supabase
+            .from('w_projets')
+            .select('*')
+            .eq('id', projectId)
+            .single();
+
+        if (projectError) throw projectError;
+
+        // 2. RÉCUPÉRER LES SORTIES (par projet_id)
+        const { data: sorties, error: sortiesError } = await supabase
+            .from('w_mouvements')
+            .select(`
+                *,
+                article:article_id (nom, numero, code_barre, prix_unitaire),
+                utilisateur:utilisateur_id (username)
+            `)
+            .eq('projet_id', projectId)
+            .eq('type', 'sortie')
+            .order('created_at', { ascending: false });
+
+        if (sortiesError) throw sortiesError;
+
+        // 3. RÉCUPÉRER LES RÉSERVATIONS
+        const { data: reservations, error: reservationsError } = await supabase
+            .from('w_reservations_actives')
+            .select(`
+                *,
+                w_articles (
+                    nom,
+                    numero,
+                    code_barre,
+                    prix_unitaire
+                ),
+                w_users (
+                    username
+                )
+            `)
+            .eq('projet_id', projectId)
+            .order('created_at', { ascending: false });
+
+        if (reservationsError) throw reservationsError;
+
+        return {
+            project: project,
+            sorties: sorties || [],
+            reservations: reservations || []
+        };
+
+    } catch (error) {
+        console.error('Erreur chargement données projet:', error);
+        return { project: null, sorties: [], reservations: [] };
+    }
+}
+
+function switchProjectTab(tabName) {
+    // Mettre à jour les boutons d'onglets
+    document.querySelectorAll('.project-tab-btn').forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Mettre à jour les contenus d'onglets
+    const tabs = ['info', 'reservations', 'history'];
+    tabs.forEach(tab => {
+        const element = document.getElementById(`project${tab.charAt(0).toUpperCase() + tab.slice(1)}Tab`);
+        if (element) {
+            if (tab === tabName) {
+                element.classList.add('active');
+            } else {
+                element.classList.remove('active');
+            }
+        }
+    });
+}
+
+function updateProjectReservations(sorties, reservations) {
+    const allItems = [...sorties, ...reservations];
+    const tbody = document.getElementById('projectReservationsBody');
+
+    if (!tbody) return;
+
+    if (allItems.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="loading-row">
+                    <i class="fas fa-info-circle"></i> Aucun article pour ce projet
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    let html = '';
+
+    // 1. AFFICHER LES SORTIES (déjà utilisées)
+    if (sorties.length > 0) {
+        html += `
+            <tr>
+                <td colspan="7" class="section-header">
+                    <i class="fas fa-check-circle text-success"></i> Articles utilisés (sorties)
+                </td>
+            </tr>
+        `;
+
+        sorties.forEach(sortie => {
+            const valeurTotale = sortie.article?.prix_unitaire ?
+                (sortie.article.prix_unitaire * sortie.quantite).toFixed(2) : '0.00';
+
+            html += `
+                <tr data-id="${sortie.id}" class="sortie-row">
+                    <td>
+                        <div class="article-info">
+                            <strong>${sortie.article?.nom || 'Article inconnu'}</strong>
+                            <small>${sortie.article?.numero || ''}</small>
+                        </div>
+                    </td>
+                    <td>${sortie.article?.numero || 'N/A'}</td>
+                    <td>
+                        <span class="quantity-badge sortie">
+                            -${sortie.quantite}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="date-info">
+                            ${formatDate(sortie.created_at)}
+                            <small>${formatDateTime(sortie.created_at).split(' ')[1] || ''}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="price-info">
+                            ${sortie.article?.prix_unitaire ?
+                                `${sortie.article.prix_unitaire.toFixed(2)} €` :
+                                'Prix N/A'}
+                            <small>Total: ${valeurTotale} €</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="user-info">
+                            ${sortie.utilisateur?.username || 'Utilisateur inconnu'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-small return-to-stock"
+                                    data-id="${sortie.id}"
+                                    data-article-id="${sortie.article_id}"
+                                    data-quantity="${sortie.quantite}"
+                                    title="Retour au stock">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <button class="btn-action btn-small view-details"
+                                    data-id="${sortie.id}"
+                                    data-type="sortie"
+                                    title="Voir les détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // 2. AFFICHER LES RÉSERVATIONS (pas encore utilisées)
+    if (reservations.length > 0) {
+        html += `
+            <tr>
+                <td colspan="7" class="section-header reservation-header">
+                    <i class="fas fa-clock text-warning"></i> Articles réservés (non utilisés)
+                </td>
+            </tr>
+        `;
+
+        reservations.forEach(reservation => {
+            const article = reservation.w_articles;
+            const valeurTotale = article?.prix_unitaire ?
+                (article.prix_unitaire * reservation.quantite).toFixed(2) : '0.00';
+
+            html += `
+                <tr data-id="${reservation.id}" class="reservation-row">
+                    <td>
+                        <div class="article-info">
+                            <strong>${article?.nom || 'Article inconnu'}</strong>
+                            <small>${article?.numero || ''}</small>
+                        </div>
+                    </td>
+                    <td>${article?.numero || 'N/A'}</td>
+                    <td>
+                        <span class="quantity-badge reservation">
+                            ${reservation.quantite}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="date-info">
+                            ${formatDate(reservation.created_at)}
+                            <small>${formatDateTime(reservation.created_at).split(' ')[1]}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="price-info">
+                            ${article?.prix_unitaire ?
+                                `${article.prix_unitaire.toFixed(2)} €` :
+                                'Prix N/A'}
+                            <small>Total: ${valeurTotale} €</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="user-info">
+                            ${reservation.w_users?.username || 'Utilisateur inconnu'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-small use-reservation"
+                                    data-id="${reservation.id}"
+                                    data-article-id="${reservation.article_id}"
+                                    data-quantity="${reservation.quantite}"
+                                    title="Marquer comme utilisé">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn-action btn-small view-details"
+                                    data-id="${reservation.id}"
+                                    data-type="reservation"
+                                    title="Voir les détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn-small release-reservation"
+                                    data-id="${reservation.id}"
+                                    title="Libérer la réservation">
+                                <i class="fas fa-unlock"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    tbody.innerHTML = html;
+}
+
+async function getProjectHistory(projectId) {
+    try {
+        const { data: project, error: projectError } = await supabase
+            .from('w_projets')
+            .select('nom')
+            .eq('id', projectId)
+            .single();
+
+        if (projectError) throw projectError;
+
+        const { data, error } = await supabase
+            .from('w_mouvements')
+            .select(`
+                *,
+                article:article_id (nom, numero)
+            `)
+            .eq('projet_id', projectId)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        if (error) throw error;
+
+        return data || [];
+
+    } catch (error) {
+        console.error('Erreur chargement historique projet:', error);
+        return [];
+    }
+}
+
+function updateProjectHistory(historyItems) {
+    const container = document.getElementById('projectHistoryList');
+    if (!container) return;
+
+    if (historyItems.length === 0) {
+        container.innerHTML = `
+            <div class="empty-history">
+                <i class="fas fa-history"></i>
+                <p>Aucun historique disponible</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    historyItems.forEach(item => {
+        let icon = 'history';
+        let actionType = 'Action';
+        let details = '';
+        const articleName = item.article?.nom || 'Article';
+        const articleNum = item.article?.numero ? ` (${item.article.numero})` : '';
+
+        if (item.type === 'sortie') {
+            icon = 'arrow-up';
+            actionType = 'Sortie de stock';
+            details = `${item.quantite} × ${articleName}${articleNum} | Projet: ${item.projet || 'N/A'}`;
+        } else if (item.type === 'retour_projet') {
+            icon = 'arrow-left';
+            actionType = 'Retour au stock';
+            details = `${item.quantite} × ${articleName}${articleNum} retourné(s)`;
+            if (item.raison) {
+                details += ` | ${item.raison}`;
+            }
+        } else if (item.type === 'entree') {
+            icon = 'arrow-down';
+            actionType = 'Entrée de stock';
+            details = `${item.quantite} × ${articleName}${articleNum} | ${item.fournisseur || 'Stock initial'}`;
+        } else if (item.type === 'reservation') {
+            icon = 'clock';
+            actionType = 'Réservation';
+            details = `${item.quantite} × ${articleName}${articleNum} réservé(s)`;
+        }
+
+        html += `
+            <div class="history-item">
+                <div class="history-icon ${item.type}">
+                    <i class="fas fa-${icon}"></i>
+                </div>
+                <div class="history-content">
+                    <div class="history-header">
+                        <span class="history-title">${actionType}</span>
+                        <span class="history-date">${formatDateTime(item.created_at)}</span>
+                    </div>
+                    <div class="history-details">
+                        ${details}
+                        ${item.commentaire ? `<div class="history-comment"><i class="fas fa-comment"></i> ${item.commentaire}</div>` : ''}
+                    </div>
+                    <div class="history-footer">
+                        <span class="history-user"><i class="fas fa-user"></i> ${item.utilisateur || 'Système'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function calculateDaysLeft(endDate) {
+    try {
+        const end = new Date(endDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (end < today) return 0; // Déjà terminé
+
+        const diffTime = end - today;
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    } catch (e) {
+        return 0;
+    }
+}
+
+function getProjectStatus(project) {
+    if (project.archived) return 'archived';
+
+    const daysLeft = calculateDaysLeft(project.date_fin_prevue);
+
+    if (daysLeft <= 0) return 'overdue';
+    if (daysLeft <= 7) return 'ending';
+    return 'active';
+}
+
+async function openProjectDetailsModal(projectId) {
+    try {
+        // 1. Récupérer les données du projet
+        const projectData = await getProjectReservations(projectId);
+        const { project, sorties, reservations } = projectData;
+
+        if (!project) {
+            alert('Projet non trouvé');
+            return;
+        }
+
+        // 2. Récupérer l'historique
+        const history = await getProjectHistory(projectId);
+
+        // 3. Calculer les statistiques
+        const itemsSortis = sorties.reduce((sum, s) => sum + s.quantite, 0);
+        const itemsReserves = reservations.reduce((sum, r) => sum + r.quantite, 0);
+        const daysLeft = calculateDaysLeft(project.date_fin_prevue);
+        const status = getProjectStatus(project);
+
+        // 4. Remplir les informations de base
+        document.getElementById('projectDetailsName').textContent = project.nom;
+        document.getElementById('projectDetailsNumber').textContent = project.numero || 'Sans numéro';
+        document.getElementById('projectDetailsStatus').textContent =
+            status === 'active' ? 'Actif' :
+            status === 'ending' ? 'Bientôt terminé' :
+            status === 'overdue' ? 'En retard' : 'Archivé';
+
+        // 5. Remplir les statistiques
+        document.getElementById('projectDetailsItemsUsed').textContent = itemsSortis;
+        document.getElementById('projectDetailsItemsReserved').textContent = itemsReserves;
+        document.getElementById('projectDetailsDaysLeft').textContent = daysLeft;
+
+        // 6. Remplir les informations détaillées
+        document.getElementById('projectDetailsDescription').textContent = project.description || 'Pas de description';
+        document.getElementById('projectDetailsCreatedAt').textContent = formatDateTime(project.created_at);
+        document.getElementById('projectDetailsEndDate').textContent = project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'Non définie';
+        document.getElementById('projectDetailsUpdatedAt').textContent = project.updated_at ? formatDateTime(project.updated_at) : 'Jamais';
+        document.getElementById('projectDetailsManager').textContent = project.responsable || 'Non défini';
+        document.getElementById('projectDetailsBudget').textContent = project.budget ? `${project.budget} €` : 'Non défini';
+
+        // 7. Afficher les réservations et l'historique
+        updateProjectReservations(sorties, reservations);
+        updateProjectHistory(history);
+
+        // 8. Configurer les boutons
+        const archiveBtn = document.getElementById('archiveProjectBtn');
+        if (archiveBtn) {
+            archiveBtn.style.display = project.archived ? 'none' : 'block';
+            archiveBtn.textContent = project.archived ? 'Désarchiver' : 'Archiver';
+        }
+
+        // 9. Afficher le modal
+        document.getElementById('projectDetailsModal').style.display = 'flex';
+        switchProjectTab('reservations');
+
+    } catch (error) {
+        console.error('Erreur ouverture détails projet:', error);
+        alert('Erreur lors du chargement du projet');
+    }
+}
+
+async function openProjectSelectionModal() {
+    try {
+        // Récupérer tous les projets non archivés
+        const { data: projects, error } = await supabase
+            .from('w_projets')
+            .select('id, nom, numero, responsable, date_fin_prevue')
+            .eq('archived', false)
+            .order('nom');
+
+        if (error) throw error;
+
+        if (!projects || projects.length === 0) {
+            alert('Aucun projet disponible');
+            return;
+        }
+
+        // Créer le modal de sélection
+        const modalHtml = `
+            <div class="modal-overlay" id="projectSelectionModal">
+                <div class="modal" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-project-diagram"></i> Choisir un projet</h3>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="projects-list">
+                            ${projects.map(project => `
+                                <div class="project-item" data-id="${project.id}">
+                                    <div class="project-item-header">
+                                        <h4>${project.nom}</h4>
+                                        <span class="project-number">${project.numero || 'Sans numéro'}</span>
+                                    </div>
+                                    <div class="project-item-details">
+                                        <span><i class="fas fa-user-tie"></i> ${project.responsable || 'Non défini'}</span>
+                                        ${project.date_fin_prevue ?
+                                            `<span><i class="fas fa-calendar"></i> Fin: ${formatDate(project.date_fin_prevue)}</span>` : ''}
+                                    </div>
+                                    <button class="btn-primary select-project-btn" data-id="${project.id}">
+                                        <i class="fas fa-eye"></i> Voir détails
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Ajouter au DOM
+        const modalContainer = document.createElement('div');
+        modalContainer.innerHTML = modalHtml;
+        document.body.appendChild(modalContainer);
+
+        // Afficher le modal
+        const modal = document.getElementById('projectSelectionModal');
+        modal.style.display = 'flex';
+
+        // Événements
+        modal.querySelector('.close-modal').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+
+        // Sélection d'un projet
+        modal.querySelectorAll('.select-project-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const projectId = this.dataset.id;
+                modal.remove();
+                openProjectDetailsModal(projectId);
+            });
+        });
+
+        // Clic sur l'item projet
+        modal.querySelectorAll('.project-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (!e.target.closest('.select-project-btn')) {
+                    const projectId = this.dataset.id;
+                    modal.remove();
+                    openProjectDetailsModal(projectId);
+                }
+            });
+        });
+
+    } catch (error) {
+        console.error('Erreur chargement projets:', error);
+        alert('Erreur lors du chargement des projets');
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     // Vérifier l'authentification
     await checkAuth();
@@ -346,6 +910,23 @@ function setupEventListeners() {
         document.getElementById('exportStockBasBtn').addEventListener('click', exportStockBasPDF);
         document.getElementById('exportRuptureBtn').addEventListener('click', exportRupturePDF);
     }
+
+    // Bouton "Retour projet en stock"
+    document.getElementById('selectProjetBtn')?.addEventListener('click', openProjectSelectionModal);
+
+    // Fermeture du modal Détails projet
+    document.getElementById('projectDetailsModal')?.querySelector('.close-modal')?.addEventListener('click', () => {
+        closeModal('projectDetailsModal');
+    });
+
+    // Onglets du modal projet
+    document.querySelectorAll('.project-tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tab = this.dataset.tab;
+            switchProjectTab(tab);
+        });
+    });
+
 }
 
 // ===== POPUP DE RECHERCHE =====
