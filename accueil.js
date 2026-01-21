@@ -119,6 +119,274 @@ function switchProjectTab(tabName) {
     });
 }
 
+// Fonction helper pour éditer une réservation
+async function editReservation(reservationId) {
+    try {
+        // Récupérer la réservation
+        const { data: reservation, error } = await supabase
+            .from('w_reservations_actives')
+            .select(`
+                *,
+                w_articles (
+                    nom,
+                    code,
+                    prix_unitaire,
+                    quantite_disponible
+                )
+            `)
+            .eq('id', reservationId)
+            .single();
+
+        if (error) throw error;
+
+        if (!reservation) {
+            showAlert('Réservation non trouvée', 'error');
+            return;
+        }
+
+        // Créer un modal d'édition
+        const modalHtml = `
+            <div class="modal-overlay" id="editReservationModal" style="display: flex;">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-edit"></i> Modifier la réservation</h3>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Article :</label>
+                            <input type="text"
+                                   value="${reservation.w_articles?.nom || ''}"
+                                   class="form-input"
+                                   disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editQuantity">
+                                <i class="fas fa-boxes"></i> Quantité *
+                            </label>
+                            <div class="quantity-input-group">
+                                <button type="button" class="quantity-btn minus" id="editQuantityMinus">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number"
+                                       id="editQuantity"
+                                       min="1"
+                                       max="${reservation.w_articles?.quantite_disponible + reservation.quantite || 100}"
+                                       value="${reservation.quantite}"
+                                       class="form-input quantity">
+                                <button type="button" class="quantity-btn plus" id="editQuantityPlus">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="quantity-info">
+                                <span>Stock disponible : <strong>${reservation.w_articles?.quantite_disponible + reservation.quantite || 0}</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editDateFin">
+                                <i class="fas fa-calendar"></i> Date de fin *
+                            </label>
+                            <input type="date"
+                                   id="editDateFin"
+                                   value="${reservation.date_fin.split('T')[0]}"
+                                   class="form-input"
+                                   required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editComment">
+                                <i class="fas fa-comment"></i> Commentaire
+                            </label>
+                            <textarea id="editComment"
+                                      rows="3"
+                                      class="form-textarea">${reservation.commentaire || ''}</textarea>
+                        </div>
+
+                        <div class="error-message" id="editReservationError" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="editReservationErrorText"></span>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button id="confirmEditReservationBtn" class="btn-primary">
+                                <i class="fas fa-save"></i> Enregistrer
+                            </button>
+                            <button type="button" class="btn-secondary cancel-edit-btn">
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Ajouter le modal au DOM
+        const modalContainer = document.createElement('div');
+        modalContainer.innerHTML = modalHtml;
+        document.body.appendChild(modalContainer);
+
+        const modal = document.getElementById('editReservationModal');
+
+        // Gérer la fermeture
+        modal.querySelector('.cancel-edit-btn').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+
+        // Gérer les boutons de quantité
+        modal.querySelector('#editQuantityMinus').addEventListener('click', () => {
+            const input = modal.querySelector('#editQuantity');
+            let value = parseInt(input.value) || 1;
+            if (value > 1) {
+                input.value = value - 1;
+            }
+        });
+
+        modal.querySelector('#editQuantityPlus').addEventListener('click', () => {
+            const input = modal.querySelector('#editQuantity');
+            const max = parseInt(input.max) || 100;
+            let value = parseInt(input.value) || 1;
+            if (value < max) {
+                input.value = value + 1;
+            }
+        });
+
+        // Gérer l'enregistrement
+        modal.querySelector('#confirmEditReservationBtn').addEventListener('click', async () => {
+            const quantity = parseInt(modal.querySelector('#editQuantity').value);
+            const dateFin = modal.querySelector('#editDateFin').value;
+            const comment = modal.querySelector('#editComment').value.trim();
+
+            // Validation
+            if (!quantity || quantity < 1) {
+                modal.querySelector('#editReservationErrorText').textContent = 'La quantité doit être au moins de 1';
+                modal.querySelector('#editReservationError').style.display = 'flex';
+                return;
+            }
+
+            if (!dateFin) {
+                modal.querySelector('#editReservationErrorText').textContent = 'La date de fin est obligatoire';
+                modal.querySelector('#editReservationError').style.display = 'flex';
+                return;
+            }
+
+            try {
+                showLoading();
+
+                // Mettre à jour la réservation
+                const { error: updateError } = await supabase
+                    .from('w_reservations_actives')
+                    .update({
+                        quantite: quantity,
+                        date_fin: dateFin + 'T23:59:59',
+                        commentaire: comment,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', reservationId);
+
+                if (updateError) throw updateError;
+
+                showAlert('Réservation modifiée avec succès', 'success');
+
+                // Recharger les données
+                await fetchReservations();
+
+                // Recharger les détails du projet si ouvert
+                if (state.currentProject) {
+                    await showProjectDetails(state.currentProject.id);
+                }
+
+                // Fermer le modal
+                modal.remove();
+
+            } catch (error) {
+                console.error('Erreur modification réservation:', error);
+                modal.querySelector('#editReservationErrorText').textContent = error.message || 'Erreur lors de la modification';
+                modal.querySelector('#editReservationError').style.display = 'flex';
+            } finally {
+                hideLoading();
+            }
+        });
+
+    } catch (error) {
+        console.error('Erreur préparation édition réservation:', error);
+        showAlert('Erreur lors de la préparation de l\'édition', 'error');
+    }
+}
+
+// Fonction pour mettre à jour les statistiques supplémentaires
+function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, valeurSortis) {
+    // Créer ou mettre à jour un élément HTML pour afficher les stats détaillées
+    const statsContainer = document.getElementById('projectDetailsStats') ||
+                          document.querySelector('.project-stats-container');
+
+    if (!statsContainer) {
+        // Si l'élément n'existe pas, le créer
+        const detailsContent = document.querySelector('.project-details-content');
+        if (detailsContent) {
+            const statsHtml = `
+                <div class="project-stats-container">
+                    <div class="project-stats-grid">
+                        <div class="stat-card sortie">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${itemsSortis}</div>
+                                <div class="stat-label">Articles utilisés</div>
+                                <div class="stat-amount">${valeurSortis.toFixed(2)} €</div>
+                            </div>
+                        </div>
+                        <div class="stat-card reservation">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${itemsReserves}</div>
+                                <div class="stat-label">Articles réservés</div>
+                                <div class="stat-amount">${valeurReserves.toFixed(2)} €</div>
+                            </div>
+                        </div>
+                        <div class="stat-card total">
+                            <div class="stat-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">${itemsSortis + itemsReserves}</div>
+                                <div class="stat-label">Total articles</div>
+                                <div class="stat-amount">${(valeurSortis + valeurReserves).toFixed(2)} €</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            detailsContent.insertAdjacentHTML('afterbegin', statsHtml);
+        }
+    } else {
+        // Mettre à jour les valeurs
+        const sortieValue = statsContainer.querySelector('.stat-card.sortie .stat-value');
+        const sortieAmount = statsContainer.querySelector('.stat-card.sortie .stat-amount');
+        const reserveValue = statsContainer.querySelector('.stat-card.reservation .stat-value');
+        const reserveAmount = statsContainer.querySelector('.stat-card.reservation .stat-amount');
+        const totalValue = statsContainer.querySelector('.stat-card.total .stat-value');
+        const totalAmount = statsContainer.querySelector('.stat-card.total .stat-amount');
+
+        if (sortieValue) sortieValue.textContent = itemsSortis;
+        if (sortieAmount) sortieAmount.textContent = `${valeurSortis.toFixed(2)} €`;
+        if (reserveValue) reserveValue.textContent = itemsReserves;
+        if (reserveAmount) reserveAmount.textContent = `${valeurReserves.toFixed(2)} €`;
+        if (totalValue) totalValue.textContent = itemsSortis + itemsReserves;
+        if (totalAmount) totalAmount.textContent = `${(valeurSortis + valeurReserves).toFixed(2)} €`;
+    }
+}
+
 function updateProjectReservations(sorties, reservations) {
     const allItems = [...sorties, ...reservations];
     const tbody = document.getElementById('projectReservationsBody');
@@ -462,6 +730,247 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
     });
 }
 
+async function useReservation(reservationId, articleId, originalQuantity, quantityToUse = null, comment = '') {
+    try {
+        // Si quantityToUse n'est pas fourni, utiliser toute la quantité
+        if (quantityToUse === null) {
+            quantityToUse = originalQuantity;
+        }
+
+        // Demander confirmation
+        if (!confirm(`Utiliser ${quantityToUse} article(s) sur ${originalQuantity} réservés ?`)) {
+            return;
+        }
+
+        showLoading();
+
+        // Récupérer la réservation
+        const { data: reservation, error: reservationError } = await supabase
+            .from('w_reservations_actives')
+            .select(`
+                *,
+                w_articles (*),
+                w_users (username)
+            `)
+            .eq('id', reservationId)
+            .single();
+
+        if (reservationError) throw reservationError;
+
+        // Récupérer le stock actuel
+        const { data: article, error: articleError } = await supabase
+            .from('w_articles')
+            .select('stock_actuel')
+            .eq('id', articleId)
+            .single();
+
+        if (articleError) throw articleError;
+
+        // Créer le mouvement de sortie avec plus d'informations
+        const articleName = reservation.w_articles?.nom || 'Article inconnu';
+        const projetNom = state.currentProject?.nom || 'Projet inconnu';
+        const mouvementComment = comment
+            ? `${comment} | Source: Réservation #${reservationId} (${articleName})`
+            : `Sortie pour projet "${projetNom}" depuis réservation #${reservationId} (${articleName})`;
+
+        const { error: movementError } = await supabase
+            .from('w_mouvements')
+            .insert([{
+                article_id: articleId,
+                type: 'sortie',
+                quantite: quantityToUse,
+                projet: state.currentProject.nom,
+                projet_id: state.currentProject.id,
+                commentaire: mouvementComment,
+                utilisateur_id: state.user.id,
+                utilisateur: state.user.username,
+                stock_avant: article.stock_actuel,
+                stock_apres: article.stock_actuel - quantityToUse,
+                date_mouvement: new Date().toISOString().split('T')[0],
+                heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
+                created_at: new Date().toISOString()
+            }]);
+
+        if (movementError) throw movementError;
+
+        // Gérer la réservation selon la quantité utilisée
+        if (quantityToUse === originalQuantity) {
+
+            // 1️⃣ Supprimer le mouvement "reservation"
+            const { error: deleteMovementError } = await supabase
+                .from('w_mouvements')
+                .delete()
+                .eq('type', 'reservation')
+                .eq('article_id', articleId)
+                .eq('projet_id', reservation.projet_id);
+
+            if (deleteMovementError) throw deleteMovementError;
+
+            // 2️⃣ Supprimer la réservation active
+            const { error: deleteError } = await supabase
+                .from('w_reservations_actives')
+                .delete()
+                .eq('id', reservationId);
+
+            if (deleteError) throw deleteError;
+        }
+         else {
+            // Réduire la quantité de la réservation
+            const { error: updateError } = await supabase
+                .from('w_reservations_actives')
+                .update({
+                    quantite: originalQuantity - quantityToUse,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', reservationId);
+
+            if (updateError) throw updateError;
+        }
+
+        // Mettre à jour le stock
+        const { error: stockError } = await supabase
+            .from('w_articles')
+            .update({
+                stock_actuel: article.stock_actuel - quantityToUse,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', articleId);
+
+        if (stockError) throw stockError;
+
+        // Mettre à jour les données locales
+        await Promise.all([
+            fetchReservations(),
+            fetchArticles(),
+            fetchMovements()
+        ]);
+
+        // Recharger les détails
+        if (state.currentProject) {
+            await showProjectDetails(state.currentProject.id);
+        }
+
+        showAlert(`${quantityToUse} article(s) marqué(s) comme utilisé(s)`, 'success');
+
+    } catch (error) {
+        console.error('Erreur utilisation réservation:', error);
+        showAlert('Erreur lors de la mise à jour de la réservation', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Ajoutez cette fonction après useReservation
+async function showUseReservationModal(reservationId, articleId, originalQuantity) {
+    // Créer la modal
+    const modalHtml = `
+        <div class="modal-overlay use-reservation-modal">
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-check-circle"></i> Marquer comme utilisé</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label><i class="fas fa-boxes"></i> Quantité à utiliser *</label>
+                        <div class="quantity-input-group">
+                            <button type="button" class="quantity-btn minus" id="useQuantityMinus">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number"
+                                   id="useQuantity"
+                                   value="${originalQuantity}"
+                                   min="1"
+                                   max="${originalQuantity}"
+                                   class="form-input quantity">
+                            <button type="button" class="quantity-btn plus" id="useQuantityPlus">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="quantity-info">
+                            <span>Quantité réservée : <strong>${originalQuantity}</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-comment"></i> Commentaire (optionnel)</label>
+                        <textarea id="useComment"
+                                  rows="3"
+                                  placeholder="Détails de l'utilisation..."
+                                  class="form-textarea"></textarea>
+                    </div>
+
+                    <div class="error-message" id="useReservationError" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="useReservationErrorText"></span>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button id="confirmUseReservationBtn" class="btn-success">
+                            <i class="fas fa-check"></i> Confirmer l'utilisation
+                        </button>
+                        <button type="button" class="btn-secondary close-modal">
+                            Annuler
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Ajouter au DOM
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+
+    const modal = modalContainer.querySelector('.use-reservation-modal');
+    modal.style.display = 'flex';
+
+    // Gestion des boutons de quantité
+    const quantityInput = modal.querySelector('#useQuantity');
+    modal.querySelector('#useQuantityMinus').addEventListener('click', () => {
+        let value = parseInt(quantityInput.value) || 1;
+        if (value > 1) {
+            quantityInput.value = value - 1;
+        }
+    });
+
+    modal.querySelector('#useQuantityPlus').addEventListener('click', () => {
+        let value = parseInt(quantityInput.value) || 1;
+        if (value < originalQuantity) {
+            quantityInput.value = value + 1;
+        }
+    });
+
+    // Gestion de la fermeture
+    modal.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', () => {
+            modal.remove();
+        });
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+
+    // Confirmation
+    modal.querySelector('#confirmUseReservationBtn').addEventListener('click', async () => {
+        const quantityToUse = parseInt(quantityInput.value);
+        const comment = modal.querySelector('#useComment').value.trim();
+
+        if (!quantityToUse || quantityToUse < 1 || quantityToUse > originalQuantity) {
+            modal.querySelector('#useReservationErrorText').textContent = 'Quantité invalide';
+            modal.querySelector('#useReservationError').style.display = 'flex';
+            return;
+        }
+
+        modal.remove();
+        await useReservation(reservationId, articleId, originalQuantity, quantityToUse, comment);
+    });
+}
+
 async function openReturnToStockModal(mouvementId, articleId, originalQuantity) {
     try {
         // Récupérer l'article avec ses détails
@@ -609,6 +1118,771 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
     } catch (error) {
         console.error('Erreur ouverture modal retour:', error);
         alert('Erreur lors de l\'ouverture du formulaire de retour');
+    }
+}
+
+// ===== GESTION DES RÉSERVATIONS =====
+async function addReservationToProject() {
+    if (!state.currentProject) return;
+
+    // Réinitialiser le modal
+    elements.reservationArticle.value = '';
+    elements.reservationQuantity.value = '1';
+    elements.reservationComment.value = '';
+    elements.reservationError.style.display = 'none';
+    elements.reservationAvailableStock.textContent = '0';
+    elements.reservationAlreadyReserved.textContent = '0';
+
+    // Stocker le modal précédent avant d'ouvrir le nouveau
+    console.log('addReservationToProject - Setting previousModal:', {
+        before: state.previousModal?.id,
+        currentModal: state.currentModal?.id
+    });
+
+    showModal(elements.addReservationModal);
+
+    showModal(elements.addReservationModal);
+}
+
+async function updateReservationStockInfo(articleId) {
+    if (!articleId || !state.currentProject) return;
+
+    try {
+        // Récupérer le stock total disponible
+        const article = state.articles.find(a => a.id === articleId);
+        if (article) {
+            elements.reservationAvailableStock.textContent = article.stock_actuel || 0;
+        }
+
+        // Récupérer le nombre déjà réservé pour ce projet
+        const projectReservations = state.reservations.filter(r =>
+            r.id_projet === state.currentProject.id && r.id_article === articleId
+        );
+        const alreadyReserved = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
+        elements.reservationAlreadyReserved.textContent = alreadyReserved;
+
+        // Mettre à jour la quantité max
+        const availableStock = article?.quantite_disponible || 0;
+        const currentQuantity = parseInt(elements.reservationQuantity.value) || 1;
+
+        if (currentQuantity > availableStock) {
+            elements.reservationQuantity.value = Math.max(1, availableStock);
+        }
+
+    } catch (error) {
+        console.error('Erreur mise à jour info stock:', error);
+    }
+}
+
+async function confirmAddReservation() {
+    try {
+        const articleId = elements.reservationArticle.value;
+        const quantity = parseInt(elements.reservationQuantity.value);
+        const comment = elements.reservationComment.value.trim();
+
+        // Validation
+        if (!articleId) {
+            elements.reservationErrorText.textContent = 'Veuillez sélectionner un article';
+            elements.reservationError.style.display = 'flex';
+            return;
+        }
+
+        if (!quantity || quantity < 1) {
+            elements.reservationErrorText.textContent = 'La quantité doit être au moins de 1';
+            elements.reservationError.style.display = 'flex';
+            return;
+        }
+
+        // Vérifier le stock disponible
+        const article = state.articles.find(a => a.id === articleId);
+        if (!article) {
+            elements.reservationErrorText.textContent = 'Article non trouvé';
+            elements.reservationError.style.display = 'flex';
+            return;
+        }
+
+        if ((article.stock_actuel || 0) < quantity) {
+            elements.reservationErrorText.textContent = `Stock insuffisant. Disponible: ${article.stock_actuel || 0}`;
+            elements.reservationError.style.display = 'flex';
+            return;
+        }
+
+        showLoading();
+
+        const reservationData = {
+            articleId: articleId,
+            projectId: state.currentProject.id,
+            quantity: quantity,
+            comment: comment
+        };
+
+        const newReservation = await createReservation(reservationData);
+
+        // Ajouter à la liste des réservations
+        state.reservations.push(newReservation);
+
+        // Recharger les détails du projet
+        await showProjectDetails(state.currentProject.id);
+
+        // Mettre à jour les statistiques
+        updateStatistics();
+
+        // Fermer le modal
+        hideModal();
+
+        showAlert('Réservation ajoutée avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur ajout réservation:', error);
+        elements.reservationErrorText.textContent = error.message || 'Erreur lors de l\'ajout de la réservation';
+        elements.reservationError.style.display = 'flex';
+    } finally {
+        hideLoading();
+    }
+}
+
+async function releaseAllProjectItems() {
+    if (!state.currentProject) return;
+
+    // Récupérer les réservations du projet
+    const projectReservations = state.reservations.filter(r => r.id_projet === state.currentProject.id);
+
+    if (projectReservations.length === 0) {
+        showAlert('Aucune réservation à libérer pour ce projet', 'info');
+        return;
+    }
+
+    // Mettre à jour le compteur dans le modal
+    elements.releaseItemsCount.textContent = projectReservations.length;
+    elements.releaseReason.value = '';
+    elements.releaseComment.value = '';
+    elements.releaseError.style.display = 'none';
+
+    showModal(elements.releaseStockModal);
+}
+
+async function confirmReleaseAll() {
+    try {
+        const reason = elements.releaseReason.value;
+        const comment = elements.releaseComment.value.trim();
+
+        if (!reason) {
+            elements.releaseErrorText.textContent = 'Veuillez sélectionner une raison';
+            elements.releaseError.style.display = 'flex';
+            return;
+        }
+
+        if (!confirm(`Êtes-vous sûr de vouloir libérer toutes les réservations de ce projet ? (${elements.releaseItemsCount.textContent} réservation(s))`)) {
+            return;
+        }
+
+        showLoading();
+
+        // Récupérer les réservations du projet
+        const projectReservations = state.reservations.filter(r => r.id_projet === state.currentProject.id);
+
+        // Libérer chaque réservation
+        for (const reservation of projectReservations) {
+            try {
+                await releaseReservation(reservation.id, `Libération globale: ${reason} - ${comment}`);
+            } catch (error) {
+                console.error(`Erreur libération réservation ${reservation.id}:`, error);
+            }
+        }
+
+        // Mettre à jour les données
+        await fetchReservations();
+
+        // Recharger les détails du projet
+        await showProjectDetails(state.currentProject.id);
+
+        // Mettre à jour les statistiques
+        updateStatistics();
+
+        // Fermer le modal
+        hideModal();
+
+        showAlert('Toutes les réservations ont été libérées', 'success');
+
+    } catch (error) {
+        console.error('Erreur libération globale:', error);
+        elements.releaseErrorText.textContent = error.message || 'Erreur lors de la libération du stock';
+        elements.releaseError.style.display = 'flex';
+    } finally {
+        hideLoading();
+    }
+}
+
+// ===== ARCHIVAGE/DÉSARCHIVAGE =====
+async function archiveProjectAction(projectId) {
+    if (!confirm('Archiver ce projet ? Le projet n\'apparaîtra plus dans les projets actifs.')) {
+        return;
+    }
+
+    try {
+        showLoading();
+        const archivedProject = await archiveProject(projectId);
+
+        // Mettre à jour les listes
+        const index = state.projects.findIndex(p => p.id === projectId);
+        if (index !== -1) {
+            state.projects.splice(index, 1);
+            state.archivedProjects.unshift(archivedProject);
+        }
+
+        // Mettre à jour l'affichage
+        updateProjectsDisplay();
+        updateArchivedProjectsDisplay();
+        updateStatistics();
+
+        // Si on est dans les détails, fermer le modal
+        if (state.currentProject?.id === projectId) {
+            hideModal();
+        }
+
+        showAlert('Projet archivé avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur archivage projet:', error);
+        showAlert('Erreur lors de l\'archivage du projet', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function unarchiveProjectAction(projectId) {
+    if (!confirm('Désarchiver ce projet ? Le projet réapparaîtra dans les projets actifs.')) {
+        return;
+    }
+
+    try {
+        showLoading();
+        const unarchivedProject = await unarchiveProject(projectId);
+
+        // Mettre à jour les listes
+        const index = state.archivedProjects.findIndex(p => p.id === projectId);
+        if (index !== -1) {
+            state.archivedProjects.splice(index, 1);
+            state.projects.unshift(unarchivedProject);
+        }
+
+        // Mettre à jour l'affichage
+        updateProjectsDisplay();
+        updateArchivedProjectsDisplay();
+        updateStatistics();
+
+        showAlert('Projet désarchivé avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur désarchivage projet:', error);
+        showAlert('Erreur lors du désarchivage du projet', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function exportProjectDetails() {
+    if (!state.currentProject) return;
+
+    try {
+        showLoading();
+
+        // Déterminer l'onglet actif
+        const activeTab = document.querySelector('.project-tab-btn.active')?.dataset.tab || 'reservations';
+
+        // Récupérer les données selon l'onglet
+        if (activeTab === 'history') {
+            await exportProjectHistory();
+        } else {
+            await exportProjectReservations();
+        }
+
+    } catch (error) {
+        console.error('Erreur export projet:', error);
+        showAlert('Erreur lors de l\'export du projet', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function exportProjectReservations() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const project = state.currentProject;
+        const projectData = await getProjectReservations(project.id);
+        const sorties = projectData.sorties || [];
+        const reservations = projectData.reservations || [];
+
+        let yPos = 20;
+        const pageWidth = doc.internal.pageSize.width;
+        const margin = 15;
+
+        // ===== EN-TÊTE =====
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('DÉTAILS DU PROJET', pageWidth / 2, yPos, { align: 'center' });
+        yPos += 10;
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Exporté le: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - margin, yPos, { align: 'right' });
+        yPos += 15;
+
+        // ===== INFORMATIONS PROJET =====
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('INFORMATIONS DU PROJET', margin, yPos);
+        yPos += 8;
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+
+        const projectInfo = [
+            ['Nom:', project.nom],
+            ['Numéro:', project.numero || 'Non défini'],
+            ['Description:', project.description || 'Aucune description'],
+            ['Responsable:', project.responsable || 'Non défini'],
+            ['Date création:', formatDate(project.created_at)],
+            ['Date fin prévue:', project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'Non définie'],
+            ['Budget:', project.budget ? `${project.budget} €` : 'Non défini'],
+            ['Statut:', project.archived ? 'Archivé' : getProjectStatus(project) === 'active' ? 'Actif' :
+                         getProjectStatus(project) === 'ending' ? 'Bientôt terminé' : 'En retard']
+        ];
+
+        projectInfo.forEach(([label, value]) => {
+            doc.setFont('helvetica', 'bold');
+            doc.text(label, margin, yPos);
+            doc.setFont('helvetica', 'normal');
+
+            // Gérer les textes longs avec retour à la ligne
+            const lines = doc.splitTextToSize(value.toString(), pageWidth - margin - 60);
+            lines.forEach((line, index) => {
+                doc.text(line, margin + 40, yPos + (index * 5));
+            });
+            yPos += Math.max(lines.length * 5, 7);
+
+            // Vérifier si besoin d'une nouvelle page
+            if (yPos > doc.internal.pageSize.height - 40) {
+                doc.addPage();
+                yPos = 20;
+            }
+        });
+
+        yPos += 5;
+
+        // ===== STATISTIQUES =====
+        if (sorties.length > 0 || reservations.length > 0) {
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('STATISTIQUES', margin, yPos);
+            yPos += 8;
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+
+            // Calculs
+            const itemsSortis = sorties.reduce((sum, s) => sum + (s.quantite || 0), 0);
+            const valeurSortis = sorties.reduce((sum, s) => {
+                const article = s.article;
+                return sum + ((article?.prix_unitaire || 0) * (s.quantite || 0));
+            }, 0);
+
+            const itemsReserves = reservations.reduce((sum, r) => sum + (r.quantite || 0), 0);
+            const valeurReserves = reservations.reduce((sum, r) => {
+                const article = r.w_articles;
+                return sum + ((article?.prix_unitaire || 0) * (r.quantite || 0));
+            }, 0);
+
+            const stats = [
+                ['Articles utilisés:', `${itemsSortis} unité(s)`, `${valeurSortis.toFixed(2)} €`],
+                ['Articles réservés:', `${itemsReserves} unité(s)`, `${valeurReserves.toFixed(2)} €`],
+                ['Total articles:', `${itemsSortis + itemsReserves} unité(s)`, `${(valeurSortis + valeurReserves).toFixed(2)} €`]
+            ];
+
+            stats.forEach(([label, qty, value]) => {
+                doc.setFont('helvetica', 'bold');
+                doc.text(label, margin, yPos);
+                doc.setFont('helvetica', 'normal');
+                doc.text(qty, pageWidth / 2, yPos, { align: 'center' });
+                doc.text(value, pageWidth - margin, yPos, { align: 'right' });
+                yPos += 6;
+            });
+
+            yPos += 5;
+        }
+
+        // ===== SORTIES (ARTICLES UTILISÉS) =====
+        if (sorties.length > 0) {
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('ARTICLES UTILISÉS', margin, yPos);
+            yPos += 8;
+
+            // En-tête du tableau
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Article', margin, yPos);
+            doc.text('Qté', margin + 80, yPos);
+            doc.text('Date', margin + 100, yPos);
+            doc.text('Prix unitaire', margin + 130, yPos);
+            doc.text('Total', margin + 170, yPos);
+
+            doc.line(margin, yPos + 1, pageWidth - margin, yPos + 1);
+            yPos += 6;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+
+            sorties.forEach(item => {
+                const article = item.article || {};
+                const prixUnitaire = article.prix_unitaire || 0;
+                const total = prixUnitaire * (item.quantite || 0);
+
+                // Vérifier nouvelle page
+                if (yPos > doc.internal.pageSize.height - 20) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.text(article.nom?.substring(0, 30) || 'Article', margin, yPos);
+                doc.text(item.quantite?.toString() || '0', margin + 80, yPos);
+                doc.text(formatDate(item.created_at), margin + 100, yPos);
+                doc.text(`${prixUnitaire.toFixed(2)} €`, margin + 130, yPos);
+                doc.text(`${total.toFixed(2)} €`, margin + 170, yPos);
+
+                yPos += 6;
+            });
+
+            yPos += 10;
+        }
+
+        // ===== RÉSERVATIONS =====
+        if (reservations.length > 0) {
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('ARTICLES RÉSERVÉS', margin, yPos);
+            yPos += 8;
+
+            // En-tête du tableau
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Article', margin, yPos);
+            doc.text('Qté', margin + 80, yPos);
+            doc.text('Date fin', margin + 100, yPos);
+            doc.text('Utilisateur', margin + 130, yPos);
+            doc.text('Prix unitaire', margin + 170, yPos);
+
+            doc.line(margin, yPos + 1, pageWidth - margin, yPos + 1);
+            yPos += 6;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+
+            reservations.forEach(res => {
+                const article = res.w_articles || {};
+                const prixUnitaire = article.prix_unitaire || 0;
+
+                // Vérifier nouvelle page
+                if (yPos > doc.internal.pageSize.height - 20) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.text(article.nom?.substring(0, 30) || 'Article', margin, yPos);
+                doc.text(res.quantite?.toString() || '0', margin + 80, yPos);
+                doc.text(formatDate(res.date_fin), margin + 100, yPos);
+                doc.text(res.w_users?.username?.substring(0, 15) || 'Utilisateur', margin + 130, yPos);
+                doc.text(`${prixUnitaire.toFixed(2)} €`, margin + 170, yPos);
+
+                yPos += 6;
+            });
+        }
+
+        // Pied de page
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.text('Document généré automatiquement - Système de gestion de stock',
+                pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+
+        // Télécharger
+        doc.save(`projet_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showAlert('PDF exporté avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur export PDF:', error);
+        throw error;
+    }
+}
+
+async function exportProjectHistory() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const project = state.currentProject;
+        const history = await getProjectHistory(project.id);
+
+        let yPos = 20;
+        const pageWidth = doc.internal.pageSize.width;
+        const margin = 15;
+
+        // ===== EN-TÊTE =====
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('HISTORIQUE DU PROJET', pageWidth / 2, yPos, { align: 'center' });
+        yPos += 10;
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Projet: ${project.nom} (${project.numero || 'Sans numéro'})`, margin, yPos);
+        yPos += 5;
+        doc.text(`Exporté le: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - margin, yPos, { align: 'right' });
+        yPos += 10;
+
+        if (history.length === 0) {
+            doc.setFontSize(12);
+            doc.text('Aucun historique disponible', pageWidth / 2, yPos, { align: 'center' });
+        } else {
+            // ===== LISTE HISTORIQUE =====
+            doc.setFontSize(10);
+            history.forEach((item, index) => {
+                // Vérifier nouvelle page
+                if (yPos > doc.internal.pageSize.height - 30) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                // Type d'action avec icône
+                let actionType = '';
+                let color = [0, 0, 0]; // Noir par défaut
+
+                switch(item.type) {
+                    case 'sortie':
+                        actionType = 'Sortie de stock';
+                        color = [220, 53, 69]; // Rouge
+                        break;
+                    case 'retour_projet':
+                        actionType = 'Retour au stock';
+                        color = [40, 167, 69]; // Vert
+                        break;
+                    case 'entree':
+                        actionType = 'Entrée de stock';
+                        color = [0, 123, 255]; // Bleu
+                        break;
+                    default:
+                        actionType = item.type || 'Action';
+                }
+
+                // Date et heure
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(...color);
+                doc.text(actionType, margin, yPos);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100, 100, 100);
+                doc.text(formatDateTime(item.created_at), pageWidth - margin, yPos, { align: 'right' });
+
+                yPos += 4;
+
+                // Détails
+                doc.setFontSize(9);
+                doc.setTextColor(0, 0, 0);
+
+                const details = [];
+                if (item.article?.nom) {
+                    details.push(`Article: ${item.article.nom}${item.article.numero ? ` (${item.article.numero})` : ''}`);
+                }
+                if (item.quantite) {
+                    details.push(`Quantité: ${item.quantite}`);
+                }
+                if (item.projet) {
+                    details.push(`Projet: ${item.projet}`);
+                }
+                if (item.utilisateur) {
+                    details.push(`Utilisateur: ${item.utilisateur}`);
+                }
+
+                details.forEach(detail => {
+                    doc.text(`• ${detail}`, margin + 5, yPos);
+                    yPos += 4;
+                });
+
+                // Commentaire
+                if (item.commentaire) {
+                    doc.setFont('helvetica', 'italic');
+                    doc.setTextColor(120, 120, 120);
+                    doc.text(`"${item.commentaire}"`, margin + 10, yPos);
+                    yPos += 4;
+                    doc.setFont('helvetica', 'normal');
+                }
+
+                // Séparateur
+                if (index < history.length - 1) {
+                    doc.setDrawColor(200, 200, 200);
+                    doc.line(margin, yPos + 2, pageWidth - margin, yPos + 2);
+                    yPos += 8;
+                } else {
+                    yPos += 4;
+                }
+
+                // Réinitialiser la couleur
+                doc.setTextColor(0, 0, 0);
+            });
+        }
+
+        // Pied de page
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.text('Document de projet - Système de gestion de stock',
+                pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+
+        // Télécharger
+        doc.save(`historique_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showAlert('Historique exporté en PDF', 'success');
+
+    } catch (error) {
+        console.error('Erreur export historique:', error);
+        throw error;
+    }
+}
+
+// ===== ÉDITION DE PROJET =====
+async function editProject() {
+    if (!state.currentProject) return;
+
+    try {
+        // Pré-remplir le formulaire
+        elements.projectName.value = state.currentProject.nom;
+        elements.projectNumber.value = state.currentProject.numero || '';
+        elements.projectDescription.value = state.currentProject.description || '';
+        elements.projectManager.value = state.currentProject.responsable || '';
+        elements.projectEndDate.value = state.currentProject.date_fin_prevue ?
+            state.currentProject.date_fin_prevue.split('T')[0] : '';
+        elements.projectBudget.value = state.currentProject.budget || '';
+
+        // Changer le titre et le bouton
+        const modal = elements.newProjectModal;
+        const header = modal.querySelector('.modal-header h3');
+        const submitBtn = modal.querySelector('.btn-primary');
+
+        header.innerHTML = '<i class="fas fa-edit"></i> Modifier le projet';
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Enregistrer les modifications';
+
+        // Changer l'événement
+        modal.querySelector('form').onsubmit = async function(e) {
+            e.preventDefault();
+            await updateProjectAction();
+        };
+
+        // ← AJOUTEZ CETTE LIGNE IMPORTANTE AVEC DEBUG
+        console.log('editProject - Setting previousModal:', {
+            before: state.previousModal?.id,
+            currentModal: state.currentModal?.id,
+            currentModalElement: state.currentModal
+        });
+
+        showModal(modal);
+    } catch (error) {
+        console.error('Erreur préparation édition:', error);
+        showAlert('Erreur lors de la préparation de l\'édition', 'error');
+    }
+}
+
+async function updateProjectAction() {
+    try {
+        const projectData = {
+            nom: elements.projectName.value.trim(),
+            numero: elements.projectNumber.value.trim(),
+            description: elements.projectDescription.value.trim(),
+            responsable: elements.projectManager.value.trim(),
+            date_fin_prevue: elements.projectEndDate.value || null,
+            budget: elements.projectBudget.value ? parseFloat(elements.projectBudget.value) : null
+        };
+
+        // Validation
+        if (!projectData.nom || !projectData.numero || !projectData.responsable) {
+            elements.projectErrorText.textContent = 'Veuillez remplir tous les champs obligatoires';
+            elements.projectError.style.display = 'flex';
+            return;
+        }
+
+        // Vérifier si le numéro existe déjà (sauf pour le projet en cours)
+        const existingProject = state.projects.find(p =>
+            p.numero === projectData.numero && p.id !== state.currentProject.id
+        );
+        if (existingProject) {
+            elements.projectErrorText.textContent = 'Ce numéro de projet existe déjà';
+            elements.projectError.style.display = 'flex';
+            return;
+        }
+
+        showLoading();
+        const updatedProject = await updateProject(state.currentProject.id, projectData);
+
+        // Mettre à jour les listes
+        const allProjects = [...state.projects, ...state.archivedProjects];
+        const projectIndex = allProjects.findIndex(p => p.id === state.currentProject.id);
+
+        if (projectIndex !== -1) {
+            allProjects[projectIndex] = updatedProject;
+
+            // Re-trier dans les bonnes listes
+            if (updatedProject.archived) {
+                state.archivedProjects = allProjects.filter(p => p.archived);
+                state.projects = allProjects.filter(p => !p.archived);
+            } else {
+                state.projects = allProjects.filter(p => !p.archived);
+                state.archivedProjects = allProjects.filter(p => p.archived);
+            }
+        }
+
+        // Mettre à jour l'affichage
+        updateProjectsDisplay();
+        updateArchivedProjectsDisplay();
+        populateManagerFilter();
+
+        // Recharger les détails si ouvert
+        if (elements.projectDetailsModal.style.display === 'flex') {
+            await showProjectDetails(updatedProject.id);
+        }
+
+        // Fermer le modal et réinitialiser
+        hideModal();
+        elements.newProjectForm.reset();
+        elements.projectError.style.display = 'none';
+
+        // Restaurer le formulaire original
+        const modal = elements.newProjectModal;
+        const header = modal.querySelector('.modal-header h3');
+        const submitBtn = modal.querySelector('.btn-primary');
+
+        header.innerHTML = '<i class="fas fa-plus-circle"></i> Nouveau projet';
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Créer le projet';
+
+        // Restaurer l'événement original
+        modal.querySelector('form').onsubmit = function(e) {
+            e.preventDefault();
+            createProjectAction();
+        };
+
+        showAlert('Projet modifié avec succès', 'success');
+
+    } catch (error) {
+        console.error('Erreur modification projet:', error);
+        elements.projectErrorText.textContent = error.message || 'Erreur lors de la modification du projet';
+        elements.projectError.style.display = 'flex';
+    } finally {
+        hideLoading();
     }
 }
 
