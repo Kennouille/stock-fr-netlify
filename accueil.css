@@ -2032,3 +2032,306 @@ body {
 .select-project-btn:hover {
     background: var(--primary-dark);
 }
+
+/* ===== STYLES SPÉCIFIQUES POUR MODAL DÉTAILS PROJET ===== */
+.project-details-header {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+}
+
+.project-header-info h4 {
+    font-size: 1.4rem;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.project-header-meta {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.project-number {
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.project-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+}
+
+.project-status.active { background-color: #28a745; }
+.project-status.ending { background-color: #ffc107; }
+.project-status.overdue { background-color: #dc3545; }
+.project-status.archived { background-color: #6c757d; }
+
+/* Statistiques en colonnes */
+.project-header-stats {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    padding-bottom: 40px;
+    margin-top: 15px;
+}
+
+.stats-column {
+    flex: 1;
+    max-width: 45%;
+}
+
+.column-label {
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-align: center;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.project-stat {
+    text-align: center;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    margin-bottom: 10px;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #2c3e50;
+    display: block;
+}
+
+.project-stat-full {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
+
+/* Tabs du projet */
+.project-tab-buttons {
+    display: flex;
+    gap: 10px;
+    border-bottom: 2px solid #dee2e6;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.project-tab-btn {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6c757d;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.project-tab-btn.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+}
+
+.project-tab-btn:hover:not(.active) {
+    color: #495057;
+}
+
+.project-tab-content {
+    display: none;
+}
+
+.project-tab-content.active {
+    display: block;
+}
+
+/* Contenu des onglets */
+.project-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .project-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.info-section {
+    margin-bottom: 20px;
+}
+
+.info-section h5 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-section h5 i {
+    color: #2563eb;
+}
+
+.info-item {
+    display: flex;
+    margin-bottom: 8px;
+}
+
+.info-item .label {
+    width: 140px;
+    color: #495057;
+    font-weight: 500;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.info-item .value {
+    color: #2c3e50;
+    font-size: 0.9rem;
+    flex: 1;
+}
+
+/* Table des réservations */
+.project-reservations-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.project-reservations-table th {
+    background-color: #f8f9fa;
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.project-reservations-table td {
+    padding: 12px 8px;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 0.9rem;
+}
+
+/* Badges de quantité */
+.quantity-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.quantity-badge.sortie {
+    background-color: #dc3545;
+    color: white;
+}
+
+.quantity-badge.reservation {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.quantity-badge.retour {
+    background-color: #28a745;
+    color: white;
+}
+
+/* Boutons d'action dans le tableau */
+.btn-action {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #495057;
+    transition: all 0.2s;
+}
+
+.btn-action:hover {
+    background-color: #f8f9fa;
+    border-color: #2563eb;
+    color: #2563eb;
+}
+
+.btn-action.btn-small {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+}
+
+/* Historique */
+.history-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+.empty-history {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.empty-history i {
+    font-size: 48px;
+    color: #dee2e6;
+    margin-bottom: 10px;
+}
+
+/* Responsive pour modal projet */
+@media (max-width: 768px) {
+    .project-header-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .stats-column {
+        max-width: 100%;
+    }
+
+    .project-tab-buttons {
+        flex-direction: column;
+    }
+
+    .project-tab-btn {
+        justify-content: center;
+    }
+
+    .project-reservations-table {
+        display: block;
+        overflow-x: auto;
+    }
+}
