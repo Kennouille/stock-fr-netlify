@@ -2811,29 +2811,6 @@ function setupEventListeners() {
         });
     });
 
-    // Fermeture des modals avec event delegation
-    document.addEventListener('click', function(e) {
-        const closeBtn = e.target.closest('.close-modal');
-        if (!closeBtn) return;
-
-        e.preventDefault();
-        e.stopPropagation(); // ← IMPORTANT : empêche d'autres gestionnaires
-
-        console.log('Close button clicked:', {
-            currentModal: state.currentModal?.id,
-            previousModal: state.previousModal?.id
-        });
-
-        // Si on est dans un modal enfant et qu'il y a un modal précédent
-        if (state.currentModal && state.previousModal) {
-            console.log('Returning to previous modal');
-            hideModal(true);
-        } else {
-            console.log('Normal close');
-            hideModal();
-        }
-    });
-
     // Clic en dehors des modals pour fermer
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', function(e) {
