@@ -293,47 +293,48 @@ async function editReservation(reservationId) {
             }
 
             try {
-        showLoading();
+                showLoading();
 
-        // Mettre à jour la réservation
-        const { error: updateError } = await supabase
-            .from('w_reservations_actives')
-            .update({
-                quantite: quantity,
-                date_fin: dateFin + 'T23:59:59',
-                commentaire: comment,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', reservationId);
+                // Mettre à jour la réservation
+                const { error: updateError } = await supabase
+                    .from('w_reservations_actives')
+                    .update({
+                        quantite: quantity,
+                        date_fin: dateFin + 'T23:59:59',
+                        commentaire: comment,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', reservationId);
 
-        if (updateError) throw updateError;
+                if (updateError) throw updateError;
 
-        showAlert('Réservation modifiée avec succès', 'success');
+                showAlert('Réservation modifiée avec succès', 'success');
 
-        // Recharger les données
-        await fetchReservations();
+                // Recharger les données
+                await fetchReservations();
 
-        // Recharger les détails du projet si un modal est ouvert
-        const projectDetailsModal = document.getElementById('projectDetailsModal');
-        if (projectDetailsModal && projectDetailsModal.style.display === 'flex') {
-            // Trouver l'ID du projet depuis le modal
-            const projectId = document.querySelector('[data-project-id]')?.dataset.projectId;
-            if (projectId) {
-                await openProjectDetailsModal(projectId); // ← CORRIGÉ
+                // Recharger les détails du projet si ouvert
+                if (state.currentProject) {
+                    await showProjectDetails(state.currentProject.id); // ← PROBLÈME ICI
+                }
+
+                // Fermer le modal
+                modal.remove();
+
+            } catch (error) {
+                console.error('Erreur modification réservation:', error);
+                modal.querySelector('#editReservationErrorText').textContent = error.message || 'Erreur lors de la modification';
+                modal.querySelector('#editReservationError').style.display = 'flex';
+            } finally {
+                hideLoading();
             }
-        }
-
-        // Fermer le modal
-        modal.remove();
+        });
 
     } catch (error) {
-        console.error('Erreur modification réservation:', error);
-        modal.querySelector('#editReservationErrorText').textContent = error.message || 'Erreur lors de la modification';
-        modal.querySelector('#editReservationError').style.display = 'flex';
-    } finally {
-        hideLoading();
+        console.error('Erreur préparation édition réservation:', error);
+        showAlert('Erreur lors de la préparation de l\'édition', 'error');
     }
-});
+}
 
 // Fonction pour mettre à jour les statistiques supplémentaires
 function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, valeurSortis) {
