@@ -1484,21 +1484,34 @@ async function confirmReleaseAll() {
     }
 }
 
+// Fonction pour archiver un projet
 async function archiveProject(projectId) {
     try {
+        console.log('archiveProject appelée avec ID:', projectId);
+        console.log('supabase disponible ?', typeof supabase !== 'undefined');
+
+        if (typeof supabase === 'undefined') {
+            console.error('ERROR: supabase est undefined');
+            console.log('Tentative avec window.supabase:', typeof window.supabase);
+            throw new Error('Base de données non disponible');
+        }
+
         const { data, error } = await supabase
             .from('w_projets')
             .update({
                 archived: true,
-                archived_at: new Date().toISOString(),
-                archived_by: state.user.id
+                updated_at: new Date().toISOString()
             })
             .eq('id', projectId)
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Erreur Supabase:', error);
+            throw error;
+        }
 
+        console.log('Projet archivé avec succès:', data);
         return data;
     } catch (error) {
         console.error('Erreur archivage projet:', error);
