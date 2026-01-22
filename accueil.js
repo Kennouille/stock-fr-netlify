@@ -6297,7 +6297,7 @@ class AccueilQuadManager {
         console.log(`✅ Article localisé: ${rack.code}-${level.code}-${slot.code}`);
         return true;
     }
-}}
+}
 
 // Initialiser quand la page est chargée
 document.addEventListener('DOMContentLoaded', () => {
