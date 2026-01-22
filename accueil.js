@@ -1484,6 +1484,28 @@ async function confirmReleaseAll() {
     }
 }
 
+async function archiveProject(projectId) {
+    try {
+        const { data, error } = await supabase
+            .from('w_projets')
+            .update({
+                archived: true,
+                archived_at: new Date().toISOString(),
+                archived_by: state.user.id
+            })
+            .eq('id', projectId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return data;
+    } catch (error) {
+        console.error('Erreur archivage projet:', error);
+        throw error;
+    }
+}
+
 // ===== ARCHIVAGE/DÉSARCHIVAGE =====
 async function archiveProjectAction(projectId) {
     if (!confirm('Archiver ce projet ? Le projet n\'apparaîtra plus dans les projets actifs.')) {
