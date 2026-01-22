@@ -436,6 +436,14 @@ function updateProjectReservations(sorties, retours, reservations) {
             const valeurTotale = sortie.article?.prix_unitaire ?
                 (sortie.article.prix_unitaire * sortie.quantite).toFixed(2) : '0.00';
 
+            // Vérifier si cette sortie a déjà été retournée
+            const quantiteRetournee = retours
+                .filter(retour => retour.article_id === sortie.article_id)
+                .reduce((sum, retour) => sum + retour.quantite, 0);
+
+            const quantiteRestante = sortie.quantite - quantiteRetournee;
+            const showReturnButton = quantiteRestante > 0;
+
             html += `
                 <tr data-id="${sortie.id}" class="sortie-row">
                     <td>
@@ -448,6 +456,7 @@ function updateProjectReservations(sorties, retours, reservations) {
                     <td>
                         <span class="quantity-badge sortie">
                             -${sortie.quantite}
+                            ${quantiteRetournee > 0 ? `<small>(+${quantiteRetournee} retourné)</small>` : ''}
                         </span>
                     </td>
                     <td>
@@ -471,13 +480,15 @@ function updateProjectReservations(sorties, retours, reservations) {
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <button class="btn-action btn-small return-to-stock"
-                                    data-id="${sortie.id}"
-                                    data-article-id="${sortie.article_id}"
-                                    data-quantity="${sortie.quantite}"
-                                    title="Retour au stock">
-                                <i class="fas fa-arrow-left"></i>
-                            </button>
+                            ${showReturnButton ? `
+                                <button class="btn-action btn-small return-to-stock"
+                                        data-id="${sortie.id}"
+                                        data-article-id="${sortie.article_id}"
+                                        data-quantity="${quantiteRestante}"
+                                        title="Retour ${quantiteRestante} unité(s) au stock">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                            ` : ''}
                             <button class="btn-action btn-small view-details"
                                     data-id="${sortie.id}"
                                     data-type="sortie"
@@ -1100,7 +1111,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                             <div class="article-header">
                                 <div class="article-info">
                                     <h4>${article.nom} (${article.numero})</h4>
-                                    <p>Sorti : ${originalQuantity} unité(s)</p>
+                                    <p>Sorti : ${originalQuantity} unité(s) restante(s) à retourner</p>
                                 </div>
                             </div>
                         </div>
@@ -1113,6 +1124,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                                    min="0"
                                    max="${originalQuantity}"
                                    class="form-input">
+                            <small>Quantité initiale: ${originalQuantity}</small>
                         </div>
 
                         <div id="missingQuantitySection" style="display: none;">
@@ -1199,8 +1211,21 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
             missingSection.style.display = returnedQty < originalQuantity ? 'block' : 'none';
         });
 
-        // Confirmation
         modal.querySelector('#confirmReturnBtn').addEventListener('click', async () => {
+            const returnQuantityInput = modal.querySelector('#returnQuantity');
+            const returnQuantity = parseInt(returnQuantityInput.value) || 0;
+
+            // Vérification de sécurité
+            if (returnQuantity <= 0) {
+                alert('La quantité retournée doit être supérieure à 0');
+                return;
+            }
+
+            if (returnQuantity > originalQuantity) {
+                alert(`La quantité retournée ne peut pas dépasser ${originalQuantity} unité(s)`);
+                return;
+            }
+
             await processReturnToStock(mouvementId, articleId, originalQuantity, projectId, projectName, modalContainer);
         });
 
