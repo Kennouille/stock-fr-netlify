@@ -1111,7 +1111,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                             <div class="article-header">
                                 <div class="article-info">
                                     <h4>${article.nom} (${article.numero})</h4>
-                                    <p>Sorti : ${originalQuantity} unité(s) restante(s) à retourner</p>
+                                    <p>Sorti : ${originalQuantity} unité(s)</p>
                                 </div>
                             </div>
                         </div>
