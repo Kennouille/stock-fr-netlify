@@ -2,10 +2,18 @@ import { supabase } from './supabaseClient.js';
 
 // Éléments DOM
 let currentUser = null;
+let currentModal = null;
 
 const now = new Date();
 const dateFr = now.toISOString().split('T')[0]; // Format YYYY-MM-DD
 const timeFr = now.toTimeString().split(' ')[0]; // Format HH:MM:SS
+
+// Éléments du modal Détails du projet
+let projectDetailsModal = null;
+let archiveProjectBtn = null;
+let editProjectBtn = null;
+let exportProjectBtn = null;
+let addReservationToProjectBtn = null;
 
 // ===== FONCTIONS UTILITAIRES POUR PROJETS =====
 function formatDate(dateString) {
@@ -2198,6 +2206,43 @@ async function getProjectHistory(projectId) {
     }
 }
 
+// ===== FONCTIONS DE GESTION DES BOUTONS DU MODAL =====
+async function handleArchiveProject() {
+    if (!state.currentProject) return;
+
+    const confirmArchive = confirm(`Voulez-vous vraiment archiver le projet "${state.currentProject.nom}" ?`);
+    if (!confirmArchive) return;
+
+    try {
+        showLoading();
+        await archiveProjectAction(state.currentProject.id);
+        if (projectDetailsModal) {
+            projectDetailsModal.style.display = 'none';
+        }
+        showAlert('Projet archivé avec succès', 'success');
+    } catch (error) {
+        console.error('Erreur archivage:', error);
+        showAlert('Erreur lors de l\'archivage du projet', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function handleEditProject() {
+    if (!state.currentProject) return;
+    await editProject();
+}
+
+async function handleExportProject() {
+    if (!state.currentProject) return;
+    await exportProjectDetails();
+}
+
+async function handleAddReservationToProject() {
+    if (!state.currentProject) return;
+    await addReservationToProject();
+}
+
 function updateProjectHistory(historyItems) {
     const container = document.getElementById('projectHistoryList');
     if (!container) return;
@@ -2291,6 +2336,11 @@ function getProjectStatus(project) {
     return 'active';
 }
 
+// État global pour le projet actuellement affiché
+let state = {
+    currentProject: null
+};
+
 async function openProjectDetailsModal(projectId) {
     try {
         // 1. Récupérer les données du projet (avec retours maintenant)
@@ -2301,6 +2351,9 @@ async function openProjectDetailsModal(projectId) {
             alert('Projet non trouvé');
             return;
         }
+
+        // Stocker le projet dans l'état global
+        state.currentProject = project;
 
         // 2. Récupérer l'historique
         const history = await getProjectHistory(projectId);
@@ -2461,6 +2514,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Charger les données
     await loadPageData();
+
+    // Initialiser les éléments du modal Détails du projet
+    projectDetailsModal = document.getElementById('projectDetailsModal');
+    archiveProjectBtn = document.getElementById('archiveProjectBtn');
+    editProjectBtn = document.getElementById('editProjectBtn');
+    exportProjectBtn = document.getElementById('exportProjectBtn');
+    addReservationToProjectBtn = document.getElementById('addReservationToProjectBtn');
 
     // Configurer les événements
     setupEventListeners();
@@ -2801,6 +2861,7 @@ function setupEventListeners() {
     // Fermeture du modal Détails projet
     document.getElementById('projectDetailsModal')?.querySelector('.close-modal')?.addEventListener('click', () => {
         closeModal('projectDetailsModal');
+        state.currentProject = null; // Nettoyer l'état
     });
 
     // Onglets du modal projet
@@ -2811,11 +2872,32 @@ function setupEventListeners() {
         });
     });
 
+    // Boutons du modal Détails projet
+    if (archiveProjectBtn) {
+        archiveProjectBtn.addEventListener('click', handleArchiveProject);
+    }
+
+    if (editProjectBtn) {
+        editProjectBtn.addEventListener('click', handleEditProject);
+    }
+
+    if (exportProjectBtn) {
+        exportProjectBtn.addEventListener('click', handleExportProject);
+    }
+
+    if (addReservationToProjectBtn) {
+        addReservationToProjectBtn.addEventListener('click', handleAddReservationToProject);
+    }
+
     // Clic en dehors des modals pour fermer
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', function(e) {
             if (e.target === this) {
                 hideModal();
+                // Si c'est le modal Détails projet qui se ferme
+                if (overlay.id === 'projectDetailsModal') {
+                    state.currentProject = null; // Nettoyer l'état
+                }
             }
         });
     });
