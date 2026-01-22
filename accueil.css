@@ -2505,23 +2505,30 @@ body {
 
 /* ===== BOUTONS ===== */
 .btn, .btn-primary, .btn-secondary, .btn-export, .btn-action {
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--border-radius-sm);
-    /* RETIREZ border: none d'ici */
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-sm);
+    gap: 0.5rem;
     font-weight: 500;
-    transition: all var(--transition-speed);
+    transition: all 0.2s;
     white-space: nowrap;
     font-size: 0.9rem;
+    border: 1px solid transparent; /* AJOUTÉ */
 }
 
-/* Ajoutez border: none seulement aux boutons qui en ont besoin */
-.btn-primary, .btn-export, .btn-action {
+.btn-primary, .btn-export {
+    background-color: var(--primary-color);
+    color: white;
     border: none;
+}
+
+.btn-secondary {
+    background-color: #ecf0f1;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
 }
 
 .btn-primary {
@@ -2532,17 +2539,6 @@ body {
 .btn-primary:hover {
     background-color: var(--primary-dark);
     transform: translateY(-1px);
-}
-
-.btn-secondary:not(.close-modal) {
-    background-color: #ecf0f1;
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-}
-
-/* Enlevez les !important si vous avez ajouté cette règle */
-.btn-secondary:hover {
-    background-color: #d5dbdb;
 }
 
 .btn-export {
@@ -2585,19 +2581,14 @@ body {
     background-color: #f8f9fa;
 }
 
-/* Ajoutez ceci à la fin de votre CSS : */
-button.btn-secondary.close-modal {
-    background-color: #ecf0f1;
-    color: var(--text-color);
-    border: 1px solid var(--border-color) !important;
-    font-size: 0.9rem !important;
-    width: auto !important;
-    height: auto !important;
-    border-radius: var(--border-radius-sm) !important;
-}
-
-.modal-close-btn.btn-secondary {
+.btn-secondary {
     background-color: #ecf0f1;
     color: var(--text-color);
     border: 1px solid var(--border-color);
 }
+
+.btn-secondary:hover {
+    background-color: #d5dbdb;
+}
+
+/* Supprimez tout le reste des règles .btn-secondary ci-dessous */
