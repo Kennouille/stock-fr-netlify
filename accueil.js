@@ -30,6 +30,54 @@ function formatDate(dateString) {
     }
 }
 
+// ===== FONCTIONS UTILITAIRES =====
+function showLoading() {
+    elements.loadingOverlay.style.display = 'flex';
+}
+
+function hideLoading() {
+    elements.loadingOverlay.style.display = 'none';
+}
+
+function showAlert(message, type = 'info') {
+    // Créer une alerte temporaire
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert-message ${type}`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+
+    // Ajouter au début du main-content
+    const mainContent = document.querySelector('.main-content');
+    mainContent.insertBefore(alertDiv, mainContent.firstChild);
+
+    // Supprimer après 5 secondes
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+
+// ===== GESTION DES MODALS =====
+function showModal(modalElement) {
+    if (state.currentModal && state.currentModal !== modalElement) {
+        state.previousModal = state.currentModal;
+        state.currentModal.style.display = 'none';
+    }
+
+    modalElement.style.display = 'flex';
+    state.currentModal = modalElement;
+}
+
+function hideModal() {
+    if (!state.currentModal) return;
+
+    state.currentModal.style.display = 'none';
+    state.currentModal = null;
+}
+
 function formatDateTime(dateString) {
     if (!dateString) return 'N/A';
     try {
