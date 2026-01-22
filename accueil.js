@@ -2811,6 +2811,151 @@ function setupEventListeners() {
         });
     });
 
+    // Fermeture des modals avec event delegation
+    document.addEventListener('click', function(e) {
+        const closeBtn = e.target.closest('.close-modal');
+        if (!closeBtn) return;
+
+        e.preventDefault();
+        e.stopPropagation(); // ← IMPORTANT : empêche d'autres gestionnaires
+
+        console.log('Close button clicked:', {
+            currentModal: state.currentModal?.id,
+            previousModal: state.previousModal?.id
+        });
+
+        // Si on est dans un modal enfant et qu'il y a un modal précédent
+        if (state.currentModal && state.previousModal) {
+            console.log('Returning to previous modal');
+            hideModal(true);
+        } else {
+            console.log('Normal close');
+            hideModal();
+        }
+    });
+
+    // Clic en dehors des modals pour fermer
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+    });
+
+    elements.showArchivedBtn.addEventListener('click', () => {
+        switchTab('archived');
+    });
+
+    elements.exportProjectsBtn.addEventListener('click', exportProjects);
+
+    // Filtres
+    elements.filterStatus.addEventListener('change', function() {
+        state.filters.status = this.value;
+        applyFilters();
+    });
+
+    elements.filterManager.addEventListener('change', function() {
+        state.filters.manager = this.value;
+        applyFilters();
+    });
+
+    elements.sortBy.addEventListener('change', function() {
+        state.filters.sortBy = this.value;
+        applyFilters();
+    });
+
+    elements.searchProjects.addEventListener('input', applyFilters);
+    elements.searchBtn.addEventListener('click', applyFilters);
+
+    elements.clearFiltersBtn.addEventListener('click', clearFilters);
+
+    // Formulaire nouveau projet
+    elements.newProjectForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        createProjectAction();
+    });
+
+    // Boutons détails projet
+    elements.addReservationToProjectBtn.addEventListener('click', addReservationToProject);
+    elements.archiveProjectBtn.addEventListener('click', function() {
+        if (state.currentProject) {
+            if (state.currentProject.archived) {
+                unarchiveProjectAction(state.currentProject.id);
+            } else {
+                archiveProjectAction(state.currentProject.id);
+            }
+        }
+    });
+
+    elements.editProjectBtn.addEventListener('click', editProject);
+    elements.exportProjectBtn.addEventListener('click', exportProjectDetails);
+
+    // Modal réservation
+    elements.reservationArticle.addEventListener('change', function() {
+        updateReservationStockInfo(this.value);
+    });
+
+    elements.reservationQuantity.addEventListener('input', function() {
+        const articleId = elements.reservationArticle.value;
+        if (articleId) {
+            const article = state.articles.find(a => a.id === articleId);
+            const maxQuantity = article?.quantite_disponible || 0;
+            const currentQuantity = parseInt(this.value) || 1;
+
+            if (currentQuantity > maxQuantity) {
+                this.value = Math.max(1, maxQuantity);
+            }
+        }
+    });
+
+    // Event delegation pour les boutons + et - du modal Réservation
+    document.addEventListener('click', function(e) {
+        // Bouton -
+        if (e.target.closest('#reservationQuantityMinus') ||
+            e.target.id === 'reservationQuantityMinus') {
+            const input = document.getElementById('reservationQuantity');
+            let value = parseInt(input.value) || 1;
+            if (value > 1) {
+                input.value = value - 1;
+            }
+        }
+
+        // Bouton +
+        if (e.target.closest('#reservationQuantityPlus') ||
+            e.target.id === 'reservationQuantityPlus') {
+            const input = document.getElementById('reservationQuantity');
+            let value = parseInt(input.value) || 1;
+            const articleId = document.getElementById('reservationArticle')?.value;
+
+            if (articleId) {
+                const article = state.articles.find(a => a.id === articleId);
+                const maxQuantity = article?.stock_actuel || 0; // ← Utilisez stock_actuel
+
+                if (value < maxQuantity) {
+                    input.value = value + 1;
+                }
+            } else {
+                input.value = value + 1;
+            }
+        }
+    });
+
+    elements.confirmAddReservationBtn.addEventListener('click', confirmAddReservation);
+
+    // Modal libération stock
+    elements.confirmReleaseBtn.addEventListener('click', confirmReleaseAll);
+
+    // Période statistiques
+    elements.analyticsPeriod.addEventListener('change', updateCharts);
+
+    // Échappement pour fermer les modals
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && state.currentModal) {
+            hideModal();
+        }
+    });
+
 }
 
 // ===== POPUP DE RECHERCHE =====
