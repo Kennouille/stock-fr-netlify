@@ -2843,14 +2843,6 @@ function setupEventListeners() {
         });
     });
 
-    elements.confirmAddReservationBtn.addEventListener('click', confirmAddReservation);
-
-    // Modal libération stock
-    elements.confirmReleaseBtn.addEventListener('click', confirmReleaseAll);
-
-    // Période statistiques
-    elements.analyticsPeriod.addEventListener('change', updateCharts);
-
     // Échappement pour fermer les modals
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && state.currentModal) {
