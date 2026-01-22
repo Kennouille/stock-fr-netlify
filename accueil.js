@@ -2843,10 +2843,6 @@ function setupEventListeners() {
         });
     });
 
-    elements.showArchivedBtn.addEventListener('click', () => {
-        switchTab('archived');
-    });
-
     elements.exportProjectsBtn.addEventListener('click', exportProjects);
 
     // Filtres
