@@ -2843,8 +2843,6 @@ function setupEventListeners() {
         });
     });
 
-    elements.exportProjectsBtn.addEventListener('click', exportProjects);
-
     // Filtres
     elements.filterStatus.addEventListener('change', function() {
         state.filters.status = this.value;
