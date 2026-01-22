@@ -2843,56 +2843,6 @@ function setupEventListeners() {
         });
     });
 
-    // Modal réservation
-    elements.reservationArticle.addEventListener('change', function() {
-        updateReservationStockInfo(this.value);
-    });
-
-    elements.reservationQuantity.addEventListener('input', function() {
-        const articleId = elements.reservationArticle.value;
-        if (articleId) {
-            const article = state.articles.find(a => a.id === articleId);
-            const maxQuantity = article?.quantite_disponible || 0;
-            const currentQuantity = parseInt(this.value) || 1;
-
-            if (currentQuantity > maxQuantity) {
-                this.value = Math.max(1, maxQuantity);
-            }
-        }
-    });
-
-    // Event delegation pour les boutons + et - du modal Réservation
-    document.addEventListener('click', function(e) {
-        // Bouton -
-        if (e.target.closest('#reservationQuantityMinus') ||
-            e.target.id === 'reservationQuantityMinus') {
-            const input = document.getElementById('reservationQuantity');
-            let value = parseInt(input.value) || 1;
-            if (value > 1) {
-                input.value = value - 1;
-            }
-        }
-
-        // Bouton +
-        if (e.target.closest('#reservationQuantityPlus') ||
-            e.target.id === 'reservationQuantityPlus') {
-            const input = document.getElementById('reservationQuantity');
-            let value = parseInt(input.value) || 1;
-            const articleId = document.getElementById('reservationArticle')?.value;
-
-            if (articleId) {
-                const article = state.articles.find(a => a.id === articleId);
-                const maxQuantity = article?.stock_actuel || 0; // ← Utilisez stock_actuel
-
-                if (value < maxQuantity) {
-                    input.value = value + 1;
-                }
-            } else {
-                input.value = value + 1;
-            }
-        }
-    });
-
     elements.confirmAddReservationBtn.addEventListener('click', confirmAddReservation);
 
     // Modal libération stock
