@@ -31,12 +31,11 @@ function formatDate(dateString) {
 }
 
 // ===== FONCTIONS UTILITAIRES =====
-function showLoading() {
-    elements.loadingOverlay.style.display = 'flex';
-}
-
 function hideLoading() {
-    elements.loadingOverlay.style.display = 'none';
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
 }
 
 function showAlert(message, type = 'info') {
@@ -5190,13 +5189,6 @@ function showLoading() {
     const loadingOverlay = document.getElementById('loadingOverlay');
     if (loadingOverlay) {
         loadingOverlay.style.display = 'flex';
-    }
-}
-
-function hideLoading() {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    if (loadingOverlay) {
-        loadingOverlay.style.display = 'none';
     }
 }
 
