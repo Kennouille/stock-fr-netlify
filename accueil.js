@@ -2843,9 +2843,6 @@ function setupEventListeners() {
         });
     });
 
-    elements.editProjectBtn.addEventListener('click', editProject);
-    elements.exportProjectBtn.addEventListener('click', exportProjectDetails);
-
     // Modal réservation
     elements.reservationArticle.addEventListener('change', function() {
         updateReservationStockInfo(this.value);
