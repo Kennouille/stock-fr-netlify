@@ -402,6 +402,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
     }
 }
 
+
 function updateProjectReservations(sorties, retours, reservations) {
     const allItems = [...sorties, ...retours, ...reservations];
     const tbody = document.getElementById('projectReservationsBody');
