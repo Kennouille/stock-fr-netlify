@@ -2569,6 +2569,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     exportProjectBtn = document.getElementById('exportProjectBtn');
     addReservationToProjectBtn = document.getElementById('addReservationToProjectBtn');
 
+    // Initialiser les éléments utilisés dans addReservationToProject()
+    elements.addReservationModal = document.getElementById('addReservationModal');
+    elements.reservationArticle = document.getElementById('reservationArticle');
+    elements.reservationQuantity = document.getElementById('reservationQuantity');
+    elements.reservationComment = document.getElementById('reservationComment');
+    elements.reservationError = document.getElementById('reservationError');
+    elements.reservationErrorText = document.getElementById('reservationErrorText');
+    elements.reservationAvailableStock = document.getElementById('reservationAvailableStock');
+    elements.reservationAlreadyReserved = document.getElementById('reservationAlreadyReserved');
+
     // Configurer les événements
     setupEventListeners();
 });
