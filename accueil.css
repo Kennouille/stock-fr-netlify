@@ -2335,3 +2335,170 @@ body {
         overflow-x: auto;
     }
 }
+
+/* Styles pour les retours de stock */
+.returned-row {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-left: 4px solid #28a745;
+}
+
+.returned-row:hover {
+    background-color: rgba(40, 167, 69, 0.15);
+}
+
+.quantity-badge.retour {
+    background-color: #28a745;
+    color: white;
+}
+
+.quantity-badge.retour::before {
+    content: "+";
+}
+
+.status-badge.retourne {
+    background-color: #28a745;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+}
+
+/* Bouton retour */
+.btn-action.return-to-stock {
+    background-color: #28a745;
+    color: white;
+    border: none;
+}
+
+.btn-action.return-to-stock:hover {
+    background-color: #218838;
+}
+
+/* Style pour le bouton "Utiliser" */
+.btn-action.use-reservation {
+    background-color: #28a745;
+    color: white;
+    border: none;
+}
+
+.btn-action.use-reservation:hover {
+    background-color: #218838;
+}
+
+/* Modal retour stock */
+.return-stock-modal .article-summary {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-left: 4px solid #28a745;
+}
+
+.return-stock-modal .article-summary h4 {
+    margin: 0 0 5px 0;
+    color: #28a745;
+}
+
+.return-stock-modal .form-group {
+    margin-bottom: 15px;
+}
+
+.return-stock-modal .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.return-stock-modal .form-group label i {
+    margin-right: 8px;
+    color: #6c757d;
+}
+
+.history-item {
+    display: flex;
+    padding: 12px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.history-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.history-icon.sortie {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.history-icon.retour_projet {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.history-icon.entree {
+    background-color: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+}
+
+.history-icon.reservation {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.history-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+}
+
+.history-title {
+    font-weight: 600;
+    color: #343a40;
+    font-size: 0.95em;
+}
+
+.history-date {
+    font-size: 0.85em;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+.history-details {
+    font-size: 0.9em;
+    color: #495057;
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.history-comment {
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 4px;
+    font-size: 0.85em;
+}
+
+.history-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+.history-user {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
