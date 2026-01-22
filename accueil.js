@@ -4,6 +4,9 @@ import { supabase } from './supabaseClient.js';
 let currentUser = null;
 let currentModal = null;
 
+// Objet pour stocker les éléments DOM
+const elements = {};
+
 const now = new Date();
 const dateFr = now.toISOString().split('T')[0]; // Format YYYY-MM-DD
 const timeFr = now.toTimeString().split(' ')[0]; // Format HH:MM:SS
