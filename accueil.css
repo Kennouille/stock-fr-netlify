@@ -2637,77 +2637,95 @@ body {
     background-color: #e2e8f0;
 }
 
-/* RÉINITIALISATION des boutons du modal Détails Projet */
-#projectDetailsModal .btn-primary,
-#projectDetailsModal .btn-secondary,
-#projectDetailsModal .btn-export {
-    all: unset;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    min-width: 140px;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-}
+/* ===== RÉPARATION URGENTE DES BOUTONS DU MODAL ===== */
 
-#projectDetailsModal .btn-primary {
-    background-color: #2563eb !important;
-    color: white !important;
-    border: none !important;
-}
-
-#projectDetailsModal .btn-primary:hover {
-    background-color: #1d4ed8 !important;
-    transform: translateY(-1px);
-}
-
-#projectDetailsModal .btn-secondary:not(.close-modal) {
-    background-color: #f1f5f9 !important;
-    color: #334155 !important;
-    border: 1px solid #cbd5e1 !important;
-}
-
-#projectDetailsModal .btn-secondary:not(.close-modal):hover {
-    background-color: #e2e8f0 !important;
-}
-
-#projectDetailsModal .btn-export {
-    background-color: #10b981 !important;
-    color: white !important;
-    border: none !important;
-}
-
-#projectDetailsModal .btn-export:hover {
-    background-color: #059669 !important;
-    transform: translateY(-1px);
-}
-
-/* Bouton "Ajouter une réservation" spécifique */
-#addReservationToProjectBtn {
-    all: unset;
-    background-color: #2563eb !important;
-    color: white !important;
-    border: none !important;
-    padding: 10px 20px !important;
-    border-radius: 8px !important;
-    cursor: pointer !important;
+/* 1. Reset complet pour les boutons problématiques */
+#addReservationToProjectBtn,
+#archiveProjectBtn,
+#editProjectBtn,
+#exportProjectBtn,
+#projectDetailsModal .modal-actions .btn,
+#projectDetailsModal .modal-actions .btn-primary,
+#projectDetailsModal .modal-actions .btn-secondary,
+#projectDetailsModal .modal-actions .btn-export {
+    /* Reset complet */
+    all: initial;
+    /* Styles de base */
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 8px !important;
-    font-weight: 600 !important;
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-family: inherit !important;
     font-size: 0.95rem !important;
-    min-width: 180px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    border: 1px solid !important;
+    min-width: 120px !important;
+    gap: 8px !important;
     transition: all 0.2s !important;
+    margin: 2px !important;
 }
 
-#addReservationToProjectBtn:hover {
-    background-color: #1d4ed8 !important;
+/* 2. Bouton Ajouter une réservation */
+#addReservationToProjectBtn {
+    background: #2563eb !important;
+    color: white !important;
+    border-color: #2563eb !important;
+}
+
+/* 3. Boutons de la section modal-actions */
+#archiveProjectBtn,
+#editProjectBtn,
+#projectDetailsModal .modal-actions .btn-secondary {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    border-color: #cbd5e1 !important;
+}
+
+#exportProjectBtn,
+#projectDetailsModal .modal-actions .btn-export {
+    background: #10b981 !important;
+    color: white !important;
+    border-color: #10b981 !important;
+}
+
+/* 4. Le bouton Fermer (dernier .btn-secondary dans modal-actions) */
+#projectDetailsModal .modal-actions .btn-secondary:last-child {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* 5. Effets au survol */
+#addReservationToProjectBtn:hover,
+#projectDetailsModal .modal-actions .btn-primary:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
     transform: translateY(-1px) !important;
+}
+
+#archiveProjectBtn:hover,
+#editProjectBtn:hover,
+#projectDetailsModal .modal-actions .btn-secondary:hover {
+    background: #e2e8f0 !important;
+    border-color: #94a3b8 !important;
+}
+
+#exportProjectBtn:hover,
+#projectDetailsModal .modal-actions .btn-export:hover {
+    background: #059669 !important;
+    border-color: #059669 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* 6. S'assurer que les icônes sont visibles */
+#addReservationToProjectBtn i,
+#archiveProjectBtn i,
+#editProjectBtn i,
+#exportProjectBtn i,
+#projectDetailsModal .modal-actions .btn i {
+    font-size: 1rem !important;
+    display: inline-block !important;
 }
