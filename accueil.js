@@ -2092,6 +2092,292 @@ async function updateProjectAction() {
     }
 }
 
+// ===== MISE À JOUR DE L'AFFICHAGE =====
+function updateStatistics() {
+    // Compter les projets actifs
+    elements.activeProjectsCount.textContent = state.projects.length;
+    elements.archivedTabCount.textContent = state.archivedProjects.length;
+
+    // Calculer le total des articles réservés
+    let totalItems = 0;
+    let totalValue = 0;
+
+    state.projects.forEach(project => {
+        const projectReservations = state.reservations.filter(r => r.projet_id === project.id);
+        totalItems += projectReservations.reduce((sum, r) => sum + r.quantite, 0);
+
+        projectReservations.forEach(reservation => {
+            const article = state.articles.find(a => a.id === reservation.id_article);
+            if (article && article.prix_unitaire) {
+                totalValue += article.prix_unitaire * reservation.quantite;
+            }
+        });
+    });
+
+    elements.totalReservedItems.textContent = totalItems;
+    elements.reservedValue.textContent = `${totalValue.toFixed(2)} €`;
+
+    // Compter les utilisateurs uniques avec des réservations
+    const uniqueUsers = new Set(
+        state.reservations.map(r => r.id_user).filter(Boolean)
+    );
+    elements.activeUsersCount.textContent = uniqueUsers.size;
+}
+
+function updateProjectsDisplay() {
+    // Filtrer les projets
+    let filteredProjects = [...state.projects];
+
+    // Filtre par statut
+    if (state.filters.status) {
+        filteredProjects = filteredProjects.filter(project => {
+            const status = getProjectStatus(project);
+            return status === state.filters.status;
+        });
+    }
+
+    // Filtre par responsable
+    if (state.filters.manager) {
+        filteredProjects = filteredProjects.filter(project =>
+            project.responsable === state.filters.manager
+        );
+    }
+
+    // Recherche texte
+    if (elements.searchProjects.value.trim()) {
+        const searchTerm = elements.searchProjects.value.toLowerCase().trim();
+        filteredProjects = filteredProjects.filter(project => {
+            const searchableText = [
+                project.nom || '',
+                project.numero || '',
+                project.description || '',
+                project.responsable || ''
+            ].join(' ').toLowerCase();
+
+            return searchableText.includes(searchTerm);
+        });
+    }
+
+    // Trier
+    filteredProjects.sort((a, b) => {
+        switch (state.filters.sortBy) {
+            case 'name':
+                return (a.nom || '').localeCompare(b.nom || '');
+            case 'end_date':
+                return new Date(a.date_fin_prevue || 0) - new Date(b.date_fin_prevue || 0);
+            case 'items_count':
+                const countA = state.reservations.filter(r => r.id_projet === a.id).length;
+                const countB = state.reservations.filter(r => r.id_projet === b.id).length;
+                return countB - countA;
+            default: // created_at
+                return new Date(b.created_at) - new Date(a.created_at);
+        }
+    });
+
+    if (filteredProjects.length === 0) {
+        elements.projectsGrid.innerHTML = `
+            <div class="no-projects">
+                <i class="fas fa-project-diagram"></i>
+                <p>Aucun projet trouvé</p>
+                <button id="createFirstProjectBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i> Créer un premier projet
+                </button>
+            </div>
+        `;
+
+        document.getElementById('createFirstProjectBtn')?.addEventListener('click', () => {
+            showModal(elements.newProjectModal);
+        });
+
+        return;
+    }
+
+    let html = '';
+    filteredProjects.forEach(project => {
+        const projectReservations = state.reservations.filter(r => r.projet_id === project.id);
+
+        // DEBUG : Voir ce qui est dans state.movements
+        console.log('=== DEBUG PROJET ===');
+        console.log('Projet ID:', project.id);
+        console.log('Projet Nom:', project.nom);
+        console.log('Total mouvements dans state:', state.movements?.length || 0);
+        console.log('Mouvements pour ce projet (ID):', state.movements?.filter(m => m.projet_id === project.id));
+        console.log('Mouvements pour ce projet (Nom):', state.movements?.filter(m => m.projet === project.nom));
+
+        // Filtrer les SORTIES pour ce projet (par ID OU par nom)
+        const projectSorties = state.movements?.filter(m =>
+            m.type === 'sortie' &&
+            (m.projet_id === project.id || m.projet === project.nom)
+        ) || [];
+
+        console.log('Sorties trouvées:', projectSorties);
+
+        // Calculer le total des articles sortis
+        const itemsUsedCount = projectSorties.reduce((sum, m) => sum + (m.quantite || 0), 0);
+
+        console.log('itemsUsedCount calculé:', itemsUsedCount);
+        console.log('=== FIN DEBUG ===');
+        const status = getProjectStatus(project);
+        const daysLeft = calculateDaysLeft(project.date_fin_prevue);
+
+        html += `
+            <div class="project-card" data-id="${project.id}">
+                <div class="project-card-header">
+                    <div>
+                        <div class="project-name">${project.nom}</div>
+                        <div class="project-number">${project.numero || 'Sans numéro'}</div>
+                    </div>
+
+                </div>
+
+                <div class="project-description">
+                    ${project.description || 'Aucune description'}
+                </div>
+
+                <div class="project-meta">
+                    <div class="project-meta-item">
+                        <span class="project-meta-value">${itemsUsedCount}</span>
+                        <span class="project-meta-label">Articles</span>
+                    </div>
+                    <div class="project-meta-item">
+                        <span class="project-meta-value">${daysLeft}</span>
+                        <span class="project-meta-label">Jours restants</span>
+                    </div>
+                    <div class="project-meta-item">
+                        <span class="project-meta-value">${projectReservations.length}</span>
+                        <span class="project-meta-label">Réservations</span>
+                    </div>
+                </div>
+
+                <div class="project-info">
+                    <div class="project-info-item">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Responsable : ${project.responsable || 'Non défini'}</span>
+                    </div>
+                    <div class="project-info-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>Créé le : ${formatDate(project.created_at)}</span>
+                    </div>
+                    ${project.date_fin_prevue ? `
+                    <div class="project-info-item">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Fin prévue : ${formatDate(project.date_fin_prevue)}</span>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="project-actions">
+                    <button class="btn-primary btn-small view-project-details" data-id="${project.id}">
+                        <i class="fas fa-eye"></i> Détails
+                    </button>
+                    ${status === 'archived' ? `
+                    <button class="btn-secondary btn-small unarchive-project" data-id="${project.id}">
+                        <i class="fas fa-box-open"></i> Désarchiver
+                    </button>
+                    ` : `
+                    <button class="btn-secondary btn-small archive-project" data-id="${project.id}">
+                        <i class="fas fa-archive"></i> Archiver
+                    </button>
+                    `}
+                </div>
+            </div>
+        `;
+    });
+
+    elements.projectsGrid.innerHTML = html;
+
+    // Ajouter les événements
+    document.querySelectorAll('.view-project-details').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const projectId = this.dataset.id;
+            showProjectDetails(projectId);
+        });
+    });
+
+    document.querySelectorAll('.archive-project').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const projectId = this.dataset.id;
+            archiveProjectAction(projectId);
+        });
+    });
+
+    document.querySelectorAll('.unarchive-project').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const projectId = this.dataset.id;
+            unarchiveProjectAction(projectId);
+        });
+    });
+}
+
+function updateArchivedProjectsDisplay() {
+    if (state.archivedProjects.length === 0) {
+        elements.archivedProjectsGrid.innerHTML = `
+            <div class="no-projects">
+                <i class="fas fa-archive"></i>
+                <p>Aucun projet archivé</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    state.archivedProjects.forEach(project => {
+        const projectReservations = state.reservations.filter(r => r.id_projet === project.id);
+        const itemsCount = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
+
+        html += `
+            <div class="project-card archived" data-id="${project.id}">
+                <div class="project-card-header">
+                    <div>
+                        <div class="project-name">${project.nom}</div>
+                        <div class="project-number">${project.numero || 'Sans numéro'}</div>
+                    </div>
+                    <span class="project-status archived">
+                        Archivé
+                    </span>
+                </div>
+
+                <div class="project-description">
+                    ${project.description || 'Aucune description'}
+                </div>
+
+                <div class="project-meta">
+                    <div class="project-meta-item">
+                        <span class="project-meta-value">${itemsCount}</span>
+                        <span class="project-meta-label">Articles</span>
+                    </div>
+                    <div class="project-meta-item">
+                        <span class="project-meta-value">${formatDate(project.archived_at)}</span>
+                        <span class="project-meta-label">Archivé le</span>
+                    </div>
+                </div>
+
+                <div class="project-info">
+                    <div class="project-info-item">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Responsable : ${project.responsable || 'Non défini'}</span>
+                    </div>
+                    <div class="project-info-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>Créé le : ${formatDate(project.created_at)}</span>
+                    </div>
+                </div>
+
+                <div class="project-actions">
+                    <button class="btn-primary btn-small view-project-details" data-id="${project.id}">
+                        <i class="fas fa-eye"></i> Détails
+                    </button>
+                    <button class="btn-secondary btn-small unarchive-project" data-id="${project.id}">
+                        <i class="fas fa-box-open"></i> Désarchiver
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    elements.archivedProjectsGrid.innerHTML = html;
+}
+
 async function processReturnToStock(mouvementId, articleId, originalQuantity, projectId, projectName, modalElement) {
     try {
         const modal = modalElement;
