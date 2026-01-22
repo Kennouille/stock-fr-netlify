@@ -63,7 +63,21 @@ async function getProjectReservations(projectId) {
 
         if (sortiesError) throw sortiesError;
 
-        // 3. RÉCUPÉRER LES RÉSERVATIONS
+        // 3. RÉCUPÉRER LES RETOURS DE STOCK (type 'retour_projet')
+        const { data: retours, error: retoursError } = await supabase
+            .from('w_mouvements')
+            .select(`
+                *,
+                article:article_id (nom, numero, code_barre, prix_unitaire),
+                utilisateur:utilisateur_id (username)
+            `)
+            .eq('projet_id', projectId)
+            .eq('type', 'retour_projet')
+            .order('created_at', { ascending: false });
+
+        if (retoursError) throw retoursError;
+
+        // 4. RÉCUPÉRER LES RÉSERVATIONS
         const { data: reservations, error: reservationsError } = await supabase
             .from('w_reservations_actives')
             .select(`
@@ -86,12 +100,13 @@ async function getProjectReservations(projectId) {
         return {
             project: project,
             sorties: sorties || [],
+            retours: retours || [],  // ← NOUVEAU : Ajout des retours
             reservations: reservations || []
         };
 
     } catch (error) {
         console.error('Erreur chargement données projet:', error);
-        return { project: null, sorties: [], reservations: [] };
+        return { project: null, sorties: [], retours: [], reservations: [] };  // ← MODIFIÉ
     }
 }
 
@@ -278,48 +293,47 @@ async function editReservation(reservationId) {
             }
 
             try {
-                showLoading();
+        showLoading();
 
-                // Mettre à jour la réservation
-                const { error: updateError } = await supabase
-                    .from('w_reservations_actives')
-                    .update({
-                        quantite: quantity,
-                        date_fin: dateFin + 'T23:59:59',
-                        commentaire: comment,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', reservationId);
+        // Mettre à jour la réservation
+        const { error: updateError } = await supabase
+            .from('w_reservations_actives')
+            .update({
+                quantite: quantity,
+                date_fin: dateFin + 'T23:59:59',
+                commentaire: comment,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', reservationId);
 
-                if (updateError) throw updateError;
+        if (updateError) throw updateError;
 
-                showAlert('Réservation modifiée avec succès', 'success');
+        showAlert('Réservation modifiée avec succès', 'success');
 
-                // Recharger les données
-                await fetchReservations();
+        // Recharger les données
+        await fetchReservations();
 
-                // Recharger les détails du projet si ouvert
-                if (state.currentProject) {
-                    await showProjectDetails(state.currentProject.id);
-                }
-
-                // Fermer le modal
-                modal.remove();
-
-            } catch (error) {
-                console.error('Erreur modification réservation:', error);
-                modal.querySelector('#editReservationErrorText').textContent = error.message || 'Erreur lors de la modification';
-                modal.querySelector('#editReservationError').style.display = 'flex';
-            } finally {
-                hideLoading();
+        // Recharger les détails du projet si un modal est ouvert
+        const projectDetailsModal = document.getElementById('projectDetailsModal');
+        if (projectDetailsModal && projectDetailsModal.style.display === 'flex') {
+            // Trouver l'ID du projet depuis le modal
+            const projectId = document.querySelector('[data-project-id]')?.dataset.projectId;
+            if (projectId) {
+                await openProjectDetailsModal(projectId); // ← CORRIGÉ
             }
-        });
+        }
+
+        // Fermer le modal
+        modal.remove();
 
     } catch (error) {
-        console.error('Erreur préparation édition réservation:', error);
-        showAlert('Erreur lors de la préparation de l\'édition', 'error');
+        console.error('Erreur modification réservation:', error);
+        modal.querySelector('#editReservationErrorText').textContent = error.message || 'Erreur lors de la modification';
+        modal.querySelector('#editReservationError').style.display = 'flex';
+    } finally {
+        hideLoading();
     }
-}
+});
 
 // Fonction pour mettre à jour les statistiques supplémentaires
 function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, valeurSortis) {
@@ -387,8 +401,8 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
     }
 }
 
-function updateProjectReservations(sorties, reservations) {
-    const allItems = [...sorties, ...reservations];
+function updateProjectReservations(sorties, retours, reservations) {
+    const allItems = [...sorties, ...retours, ...reservations];
     const tbody = document.getElementById('projectReservationsBody');
 
     if (!tbody) return;
@@ -475,7 +489,69 @@ function updateProjectReservations(sorties, reservations) {
         });
     }
 
-    // 2. AFFICHER LES RÉSERVATIONS (pas encore utilisées)
+    // 2. AFFICHER LES RETOURS (retournés au stock)
+    if (retours.length > 0) {
+        html += `
+            <tr>
+                <td colspan="7" class="section-header retour-header">
+                    <i class="fas fa-undo-alt text-info"></i> Articles retournés au stock
+                </td>
+            </tr>
+        `;
+
+        retours.forEach(retour => {
+            const valeurTotale = retour.article?.prix_unitaire ?
+                (retour.article.prix_unitaire * retour.quantite).toFixed(2) : '0.00';
+
+            html += `
+                <tr data-id="${retour.id}" class="retour-row">
+                    <td>
+                        <div class="article-info">
+                            <strong>${retour.article?.nom || 'Article inconnu'}</strong>
+                            <small>${retour.article?.numero || ''}</small>
+                        </div>
+                    </td>
+                    <td>${retour.article?.numero || 'N/A'}</td>
+                    <td>
+                        <span class="quantity-badge retour">
+                            +${retour.quantite}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="date-info">
+                            ${formatDate(retour.created_at)}
+                            <small>${formatDateTime(retour.created_at).split(' ')[1] || ''}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="price-info">
+                            ${retour.article?.prix_unitaire ?
+                                `${retour.article.prix_unitaire.toFixed(2)} €` :
+                                'Prix N/A'}
+                            <small>Total: ${valeurTotale} €</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="user-info">
+                            ${retour.utilisateur?.username || 'Utilisateur inconnu'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-small view-details"
+                                    data-id="${retour.id}"
+                                    data-type="retour"
+                                    title="Voir les détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // 3. AFFICHER LES RÉSERVATIONS (pas encore utilisées)
     if (reservations.length > 0) {
         html += `
             <tr>
@@ -552,20 +628,22 @@ function updateProjectReservations(sorties, reservations) {
 
     tbody.innerHTML = html;
 
-    setupProjectTableEvents(sorties, reservations);
+    setupProjectTableEvents(sorties, retours, reservations);
 }
 
-function setupProjectTableEvents(sorties, reservations) {
+function setupProjectTableEvents(sorties, retours, reservations) {
     // Bouton "Voir détails"
     document.querySelectorAll('.view-details').forEach(btn => {
         btn.addEventListener('click', function() {
             const itemId = this.dataset.id;
             const itemType = this.dataset.type;
-            showItemDetails(itemId, itemType, sorties, reservations);
+
+            // Passer tous les tableaux à la fonction showItemDetails
+            showItemDetails(itemId, itemType, sorties, retours, reservations);
         });
     });
 
-    // Bouton "Retour au stock"
+    // Bouton "Retour au stock" (uniquement pour les sorties)
     document.querySelectorAll('.return-to-stock').forEach(btn => {
         btn.addEventListener('click', function() {
             const mouvementId = this.dataset.id;
@@ -575,7 +653,7 @@ function setupProjectTableEvents(sorties, reservations) {
         });
     });
 
-    // Bouton "Libérer la réservation"
+    // Bouton "Libérer la réservation" (uniquement pour les réservations)
     document.querySelectorAll('.release-reservation').forEach(btn => {
         btn.addEventListener('click', async function() {
             const reservationId = this.dataset.id;
@@ -587,7 +665,6 @@ function setupProjectTableEvents(sorties, reservations) {
 
                 if (confirm(`Libérer la réservation de ${reservation.quantite} ${articleName} ?`)) {
                     try {
-                        // Fonction à ajouter plus tard
                         await releaseReservation(reservationId);
                         showTemporarySuccess('Réservation libérée avec succès');
 
@@ -609,11 +686,13 @@ function setupProjectTableEvents(sorties, reservations) {
     });
 }
 
-function showItemDetails(itemId, itemType, sorties, reservations) {
+function showItemDetails(itemId, itemType, sorties, retours, reservations) {
     let item;
 
     if (itemType === 'sortie') {
         item = sorties.find(s => s.id === itemId);
+    } else if (itemType === 'retour') {
+        item = retours.find(r => r.id === itemId);
     } else {
         item = reservations.find(r => r.id === itemId);
     }
@@ -621,8 +700,11 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
     if (!item) return;
 
     const isSortie = itemType === 'sortie';
-    const article = isSortie ? item.article : item.w_articles;
-    const user = isSortie ? item.utilisateur : item.w_users;
+    const isRetour = itemType === 'retour';
+    const isReservation = itemType === 'reservation';
+
+    const article = isSortie || isRetour ? item.article : item.w_articles;
+    const user = isSortie || isRetour ? item.utilisateur : item.w_users;
 
     const modalHtml = `
         <div class="modal-overlay" id="itemDetailsModal">
@@ -649,16 +731,16 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
                     </div>
 
                     <div class="detail-section">
-                        <h4><i class="fas ${isSortie ? 'fa-check-circle' : 'fa-clock'}"></i> ${isSortie ? 'Sortie' : 'Réservation'}</h4>
+                        <h4><i class="fas ${isSortie ? 'fa-arrow-up' : isRetour ? 'fa-undo' : 'fa-clock'}"></i> ${isSortie ? 'Sortie' : isRetour ? 'Retour au stock' : 'Réservation'}</h4>
                         <div class="detail-item">
                             <span class="detail-label">Type :</span>
-                            <span class="detail-value badge ${isSortie ? 'sortie' : 'reservation'}">
-                                ${isSortie ? 'Sortie effectuée' : 'Réservation active'}
+                            <span class="detail-value badge ${isSortie ? 'sortie' : isRetour ? 'retour' : 'reservation'}">
+                                ${isSortie ? 'Sortie effectuée' : isRetour ? 'Retour au stock' : 'Réservation active'}
                             </span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Quantité :</span>
-                            <span class="detail-value">${isSortie ? '-' : ''}${item.quantite}</span>
+                            <span class="detail-value">${isRetour ? '+' : (isSortie ? '-' : '')}${item.quantite}</span>
                         </div>
                         ${article?.prix_unitaire ? `
                         <div class="detail-item">
@@ -676,7 +758,7 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
                             <span class="detail-label">Date :</span>
                             <span class="detail-value">${formatDateTime(item.created_at)}</span>
                         </div>
-                        ${!isSortie ? `
+                        ${!isSortie && !isRetour ? `
                         <div class="detail-item">
                             <span class="detail-label">Date de fin :</span>
                             <span class="detail-value">${formatDate(item.date_fin)}</span>
@@ -845,9 +927,14 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
             fetchMovements()
         ]);
 
-        // Recharger les détails
-        if (state.currentProject) {
-            await showProjectDetails(state.currentProject.id);
+        // Recharger les détails du projet si un modal est ouvert
+        const projectDetailsModal = document.getElementById('projectDetailsModal');
+        if (projectDetailsModal && projectDetailsModal.style.display === 'flex') {
+            // Trouver l'ID du projet depuis le modal
+            const projectId = document.querySelector('[data-project-id]')?.dataset.projectId;
+            if (projectId) {
+                await openProjectDetailsModal(projectId); // ← CORRIGÉ : appel à la bonne fonction
+            }
         }
 
         showAlert(`${quantityToUse} article(s) marqué(s) comme utilisé(s)`, 'success');
@@ -2180,9 +2267,9 @@ function getProjectStatus(project) {
 
 async function openProjectDetailsModal(projectId) {
     try {
-        // 1. Récupérer les données du projet
+        // 1. Récupérer les données du projet (avec retours maintenant)
         const projectData = await getProjectReservations(projectId);
-        const { project, sorties, reservations } = projectData;
+        const { project, sorties, retours, reservations } = projectData; // ← Ajout de retours
 
         if (!project) {
             alert('Projet non trouvé');
@@ -2192,8 +2279,9 @@ async function openProjectDetailsModal(projectId) {
         // 2. Récupérer l'historique
         const history = await getProjectHistory(projectId);
 
-        // 3. Calculer les statistiques
+        // 3. Calculer les statistiques (corrigé pour inclure les retours)
         const itemsSortis = sorties.reduce((sum, s) => sum + s.quantite, 0);
+        const itemsRetournes = retours.reduce((sum, r) => sum + r.quantite, 0);
         const itemsReserves = reservations.reduce((sum, r) => sum + r.quantite, 0);
         const daysLeft = calculateDaysLeft(project.date_fin_prevue);
         const status = getProjectStatus(project);
@@ -2206,8 +2294,8 @@ async function openProjectDetailsModal(projectId) {
             status === 'ending' ? 'Bientôt terminé' :
             status === 'overdue' ? 'En retard' : 'Archivé';
 
-        // 5. Remplir les statistiques
-        document.getElementById('projectDetailsItemsUsed').textContent = itemsSortis;
+        // 5. Remplir les statistiques (corrigé pour les retours)
+        document.getElementById('projectDetailsItemsUsed').textContent = itemsSortis - itemsRetournes; // ← Net = sorties - retours
         document.getElementById('projectDetailsItemsReserved').textContent = itemsReserves;
         document.getElementById('projectDetailsDaysLeft').textContent = daysLeft;
 
@@ -2219,8 +2307,8 @@ async function openProjectDetailsModal(projectId) {
         document.getElementById('projectDetailsManager').textContent = project.responsable || 'Non défini';
         document.getElementById('projectDetailsBudget').textContent = project.budget ? `${project.budget} €` : 'Non défini';
 
-        // 7. Afficher les réservations et l'historique
-        updateProjectReservations(sorties, reservations);
+        // 7. Afficher les réservations, retours et l'historique
+        updateProjectReservations(sorties, retours, reservations); // ← CORRIGÉ : 3 paramètres
         updateProjectHistory(history);
 
         // 8. Configurer les boutons
