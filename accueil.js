@@ -2843,27 +2843,6 @@ function setupEventListeners() {
         });
     });
 
-    // Filtres
-    elements.filterStatus.addEventListener('change', function() {
-        state.filters.status = this.value;
-        applyFilters();
-    });
-
-    elements.filterManager.addEventListener('change', function() {
-        state.filters.manager = this.value;
-        applyFilters();
-    });
-
-    elements.sortBy.addEventListener('change', function() {
-        state.filters.sortBy = this.value;
-        applyFilters();
-    });
-
-    elements.searchProjects.addEventListener('input', applyFilters);
-    elements.searchBtn.addEventListener('click', applyFilters);
-
-    elements.clearFiltersBtn.addEventListener('click', clearFilters);
-
     // Formulaire nouveau projet
     elements.newProjectForm.addEventListener('submit', function(e) {
         e.preventDefault();
