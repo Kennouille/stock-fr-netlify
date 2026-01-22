@@ -2424,7 +2424,7 @@ function getProjectStatus(project) {
 // État global pour le projet actuellement affiché
 let state = {
     currentProject: null,
-    projects: []
+    projects: [],
     archivedProjects: []
 };
 
