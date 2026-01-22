@@ -1481,7 +1481,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
     }
 }
 
-function updateProjectReservations(sorties, reservations) {
+function updateProjectReservations(sorties, retours, reservations) { // ← CHANGÉ : ajout du paramètre retours
     const allItems = [...sorties, ...reservations];
 
     if (allItems.length === 0) {
@@ -1511,17 +1511,23 @@ function updateProjectReservations(sorties, reservations) {
             const valeurTotale = sortie.article?.prix_unitaire ?
                 (sortie.article.prix_unitaire * sortie.quantite).toFixed(2) : '0.00';
 
+            // Vérifier si cette sortie a déjà un retour
+            const hasReturn = retours?.some(retour =>
+                retour.mouvement_parent_id === sortie.id // ← UTILISER le paramètre retours
+            );
+
             html += `
-                <tr data-id="${sortie.id}" class="sortie-row">
+                <tr data-id="${sortie.id}" class="sortie-row ${hasReturn ? 'already-returned' : ''}">
                     <td>
                         <div class="article-info">
                             <strong>${sortie.article?.nom || 'Article inconnu'}</strong>
+                            ${hasReturn ? '<span class="badge badge-returned">Déjà retourné</span>' : ''}
                             <small>${sortie.article?.numero || ''}</small>
                         </div>
                     </td>
                     <td>${sortie.article?.numero || 'N/A'}</td>
                     <td>
-                        <span class="quantity-badge sortie">
+                        <span class="quantity-badge sortie ${hasReturn ? 'returned' : ''}">
                             -${sortie.quantite}
                         </span>
                     </td>
@@ -1546,10 +1552,7 @@ function updateProjectReservations(sorties, reservations) {
                     </td>
                     <td>
                         <div class="action-buttons">
-                            ${state.movements?.some(m =>
-                                m.type === 'retour_projet' &&
-                                m.mouvement_parent_id === sortie.id  // CHANGÉ : lien direct vers la sortie
-                            ) ? '' : `
+                            ${hasReturn ? '' : `
                             <button class="btn-action btn-small return-to-stock"
                                     data-id="${sortie.id}"
                                     data-article-id="${sortie.article_id}"
@@ -1571,13 +1574,8 @@ function updateProjectReservations(sorties, reservations) {
         });
     }
 
-    // 2. AFFICHER LES RETOURS
-    const retours = state.movements?.filter(m =>
-        m.type === 'retour_projet' &&
-        (m.projet_id === state.currentProject.id || m.projet === state.currentProject.nom)
-    ) || [];
-
-    if (retours.length > 0) {
+    // 2. AFFICHER LES RETOURS (utiliser le paramètre retours)
+    if (retours && retours.length > 0) {
         html += `
             <tr>
                 <td colspan="7" class="section-header retour-header">
@@ -1587,7 +1585,18 @@ function updateProjectReservations(sorties, reservations) {
         `;
 
         retours.forEach(retourItem => {
-            const article = state.articles.find(a => a.id === retourItem.article_id) || {};
+            // Trouver l'article correspondant
+            let article = null;
+
+            // Chercher d'abord dans les sorties
+            const relatedSortie = sorties.find(s => s.id === retourItem.mouvement_parent_id);
+            if (relatedSortie?.article) {
+                article = relatedSortie.article;
+            } else {
+                // Sinon chercher dans les articles du state
+                article = state.articles.find(a => a.id === retourItem.article_id) || {};
+            }
+
             const valeurTotale = article?.prix_unitaire ?
                 (article.prix_unitaire * retourItem.quantite).toFixed(2) : '0.00';
 
@@ -1602,7 +1611,7 @@ function updateProjectReservations(sorties, reservations) {
                     <td>${article?.numero || 'N/A'}</td>
                     <td>
                         <span class="quantity-badge retour">
-                            ${retourItem.quantite}
+                            +${retourItem.quantite}
                         </span>
                         ${retourItem.raison ? `
                         <br>
@@ -1759,7 +1768,7 @@ function updateProjectReservations(sorties, reservations) {
         btn.addEventListener('click', function() {
             const itemId = this.dataset.id;
             const itemType = this.dataset.type;
-            showItemDetails(itemId, itemType, sorties, reservations);
+            showItemDetails(itemId, itemType, sorties, retours, reservations); // ← CHANGÉ : ajout de retours
         });
     });
 
