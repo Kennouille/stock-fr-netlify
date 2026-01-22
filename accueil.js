@@ -456,7 +456,6 @@ function updateProjectReservations(sorties, retours, reservations) {
                     <td>
                         <span class="quantity-badge sortie">
                             -${sortie.quantite}
-                            ${quantiteRetournee > 0 ? `<small>(+${quantiteRetournee} retourné)</small>` : ''}
                         </span>
                     </td>
                     <td>
