@@ -2423,7 +2423,9 @@ function getProjectStatus(project) {
 
 // État global pour le projet actuellement affiché
 let state = {
-    currentProject: null
+    currentProject: null,
+    projects: []
+    archivedProjects: []
 };
 
 async function openProjectDetailsModal(projectId) {
