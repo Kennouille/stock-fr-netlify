@@ -2502,3 +2502,102 @@ body {
     align-items: center;
     gap: 4px;
 }
+
+/* ===== BOUTONS ===== */
+.btn, .btn-primary, .btn-secondary, .btn-export, .btn-action {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    /* RETIREZ border: none d'ici */
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    font-weight: 500;
+    transition: all var(--transition-speed);
+    white-space: nowrap;
+    font-size: 0.9rem;
+}
+
+/* Ajoutez border: none seulement aux boutons qui en ont besoin */
+.btn-primary, .btn-export, .btn-action {
+    border: none;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-secondary:not(.close-modal) {
+    background-color: #ecf0f1;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+/* Enlevez les !important si vous avez ajouté cette règle */
+.btn-secondary:hover {
+    background-color: #d5dbdb;
+}
+
+.btn-export {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-export:hover {
+    background-color: #229954;
+    transform: translateY(-1px);
+}
+
+.btn-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-action:disabled:hover {
+    transform: none;
+}
+
+.btn-small {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.8rem;
+}
+
+.btn-toggle {
+    background: none;
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--text-color);
+}
+
+.btn-toggle:hover {
+    background-color: #f8f9fa;
+}
+
+/* Ajoutez ceci à la fin de votre CSS : */
+button.btn-secondary.close-modal {
+    background-color: #ecf0f1;
+    color: var(--text-color);
+    border: 1px solid var(--border-color) !important;
+    font-size: 0.9rem !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: var(--border-radius-sm) !important;
+}
+
+.modal-close-btn.btn-secondary {
+    background-color: #ecf0f1;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
