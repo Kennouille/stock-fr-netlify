@@ -2843,24 +2843,6 @@ function setupEventListeners() {
         });
     });
 
-    // Formulaire nouveau projet
-    elements.newProjectForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        createProjectAction();
-    });
-
-    // Boutons détails projet
-    elements.addReservationToProjectBtn.addEventListener('click', addReservationToProject);
-    elements.archiveProjectBtn.addEventListener('click', function() {
-        if (state.currentProject) {
-            if (state.currentProject.archived) {
-                unarchiveProjectAction(state.currentProject.id);
-            } else {
-                archiveProjectAction(state.currentProject.id);
-            }
-        }
-    });
-
     elements.editProjectBtn.addEventListener('click', editProject);
     elements.exportProjectBtn.addEventListener('click', exportProjectDetails);
 
