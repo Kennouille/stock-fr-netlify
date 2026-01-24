@@ -2585,11 +2585,6 @@ async function openProjectDetailsModal(projectId) {
             status === 'ending' ? 'Bientôt terminé' :
             status === 'overdue' ? 'En retard' : 'Archivé';
 
-        // 5. Remplir les statistiques (corrigé pour les retours)
-        document.getElementById('projectDetailsItemsUsed').textContent = itemsSortis - itemsRetournes; // ← Net = sorties - retours
-        document.getElementById('projectDetailsItemsReserved').textContent = itemsReserves;
-        document.getElementById('projectDetailsDaysLeft').textContent = daysLeft;
-
         // 6. Remplir les informations détaillées
         document.getElementById('projectDetailsDescription').textContent = project.description || 'Pas de description';
         document.getElementById('projectDetailsCreatedAt').textContent = formatDateTime(project.created_at);
