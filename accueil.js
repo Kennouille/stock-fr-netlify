@@ -1146,14 +1146,13 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
         if (articleError) throw articleError;
 
-        // Récupérer le projet courant depuis le modal
-        const projectName = document.getElementById('projectDetailsName')?.textContent || '';
-        const projectElement = document.querySelector('[data-project-id]');
-        const projectId = projectElement?.dataset.projectId;
-
-        if (!projectId) {
-            throw new Error('ID du projet non trouvé');
+        // Récupérer le projet courant depuis l'état global
+        if (!state.currentProject) {
+            throw new Error('ID du projet non trouvé - Aucun projet sélectionné');
         }
+
+        const projectId = state.currentProject.id;
+        const projectName = state.currentProject.nom || '';
 
         // Créer le modal
         const modalHTML = `
