@@ -1336,8 +1336,8 @@ async function showProjectDetails(projectId) {
         const projectData = await getProjectReservations(projectId);
         const projectHistory = await getProjectHistory(projectId);
 
-        const sorties = projectData.sorties;
-        const reservations = projectData.reservations;
+        const sorties = projectData.sorties || []; // ← AJOUT de "|| []"
+        const reservations = projectData.reservations || []; // ← AJOUT de "|| []"
 
         // Calculer les statistiques SÉPARÉES
         // 1. Articles SORTIS (déjà utilisés)
