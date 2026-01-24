@@ -2824,6 +2824,183 @@ async function loadPageData() {
     document.getElementById('exportRuptureBtn')?.addEventListener('click', exportRupturePDF);
 }
 
+// ===== GESTION DU SCANNER/RECHERCHE POUR RETOUR D'ARTICLE =====
+
+async function handleScanArticleForReturn() {
+    if (!state.currentProject) return;
+
+    // Ouvrir le scanner
+    openScanPopup('return', 'scan');
+}
+
+async function handleSearchArticleForReturn() {
+    if (!state.currentProject) return;
+
+    const searchInput = document.getElementById('manualArticleSearchInput');
+    const searchTerm = searchInput.value.trim();
+
+    if (!searchTerm) {
+        alert('Veuillez entrer un terme de recherche');
+        return;
+    }
+
+    try {
+        showLoading();
+
+        // Rechercher dans les articles du projet
+        const projectData = await getProjectReservations(state.currentProject.id);
+        const { sorties } = projectData;
+
+        if (!sorties || sorties.length === 0) {
+            alert('Aucun article utilisé dans ce projet');
+            return;
+        }
+
+        // Récupérer les IDs des articles du projet
+        const articleIds = sorties.map(s => s.article_id);
+
+        // Rechercher les articles correspondants
+        const { data: articles, error } = await supabase
+            .from('w_articles')
+            .select('*')
+            .in('id', articleIds)
+            .or(`nom.ilike.%${searchTerm}%,numero.ilike.%${searchTerm}%,code_barre.ilike.%${searchTerm}%`);
+
+        if (error) throw error;
+
+        // Afficher les résultats
+        displayArticleSearchResults(articles, sorties);
+
+    } catch (error) {
+        console.error('Erreur recherche article:', error);
+        alert('Erreur lors de la recherche');
+    } finally {
+        hideLoading();
+    }
+}
+
+function displayArticleSearchResults(articles, sorties) {
+    const resultsContainer = document.getElementById('articleSearchResults');
+    const resultsList = document.getElementById('articleResultsList');
+    const resultsCount = document.getElementById('resultsCount');
+
+    if (!articles || articles.length === 0) {
+        resultsList.innerHTML = `
+            <div class="no-results">
+                <i class="fas fa-search"></i>
+                <p>Aucun article trouvé pour "${searchTerm}"</p>
+            </div>
+        `;
+        resultsCount.textContent = '0 résultat(s)';
+        resultsContainer.style.display = 'block';
+        return;
+    }
+
+    // Compter les quantités sorties par article
+    const articleQuantities = {};
+    sorties.forEach(sortie => {
+        if (!articleQuantities[sortie.article_id]) {
+            articleQuantities[sortie.article_id] = 0;
+        }
+        articleQuantities[sortie.article_id] += sortie.quantite;
+    });
+
+    // Afficher les résultats
+    let html = '';
+    articles.forEach(article => {
+        const quantityUsed = articleQuantities[article.id] || 0;
+
+        html += `
+            <div class="article-result-item" data-id="${article.id}">
+                <div class="article-result-image">
+                    ${article.photo_url ? `
+                        <img src="${article.photo_url}" alt="${article.nom}"
+                             onclick="enlargeArticleImage('${article.photo_url.replace(/'/g, "\\'")}', '${article.nom.replace(/'/g, "\\'")}')">
+                    ` : `
+                        <div class="no-image">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    `}
+                </div>
+                <div class="article-result-info">
+                    <h6>${article.nom}</h6>
+                    <div class="article-result-details">
+                        <span>${article.numero || 'Sans numéro'}</span>
+                        <span>Quantité utilisée: ${quantityUsed}</span>
+                        ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
+                    </div>
+                </div>
+                <div class="article-result-actions">
+                    <button class="btn-primary return-article-btn"
+                            data-article-id="${article.id}"
+                            data-quantity="${quantityUsed}">
+                        <i class="fas fa-arrow-left"></i> Retourner
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    resultsList.innerHTML = html;
+    resultsCount.textContent = `${articles.length} résultat(s)`;
+    resultsContainer.style.display = 'block';
+
+    // Ajouter les événements aux boutons
+    document.querySelectorAll('.return-article-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const articleId = this.dataset.articleId;
+            const quantity = parseInt(this.dataset.quantity);
+
+            // Trouver le mouvement correspondant
+            const sortie = sorties.find(s => s.article_id === articleId);
+            if (sortie) {
+                openReturnToStockModal(sortie.id, articleId, quantity);
+            }
+        });
+    });
+}
+
+// Fonction spéciale pour le scanner "return"
+async function handleScanForReturn(barcode) {
+    if (!state.currentProject) return;
+
+    try {
+        // Rechercher l'article par code-barre
+        const { data: articles, error } = await supabase
+            .from('w_articles')
+            .select('*')
+            .eq('code_barre', barcode)
+            .limit(1);
+
+        if (error) throw error;
+
+        if (!articles || articles.length === 0) {
+            alert(`Code-barre ${barcode} non trouvé`);
+            return;
+        }
+
+        const article = articles[0];
+
+        // Vérifier si l'article appartient au projet
+        const projectData = await getProjectReservations(state.currentProject.id);
+        const { sorties } = projectData;
+
+        const articleSortie = sorties.find(s => s.article_id === article.id);
+
+        if (!articleSortie) {
+            alert(`Cet article n'a pas été utilisé dans le projet "${state.currentProject.nom}"`);
+            return;
+        }
+
+        // Ouvrir directement le modal de retour
+        openReturnToStockModal(articleSortie.id, article.id, articleSortie.quantite);
+
+    } catch (error) {
+        console.error('Erreur scan retour:', error);
+        alert('Erreur lors du scan');
+    }
+}
+
 async function loadStats() {
     try {
         // Compter le nombre total d'articles
@@ -4641,8 +4818,14 @@ async function openScanPopup(actionType, scanType) {
                     </div>
                 `;
 
-                // Rechercher l'article
-                searchArticleByBarcode(code);
+                // Rechercher l'article selon le type d'action
+                if (currentAction === 'return') {
+                    // Scanner pour retour d'article
+                    handleScanForReturn(code, popup);
+                } else {
+                    // Scanner normal (entrée/sortie/réservation)
+                    searchArticleByBarcode(code);
+                }
             });
 
         } catch (error) {
