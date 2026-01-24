@@ -1128,6 +1128,59 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
     });
 }
 
+// Fonction pour agrandir l'image d'article
+function enlargeArticleImage(imageUrl, title) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        cursor: pointer;
+    `;
+
+    const enlargedImg = document.createElement('img');
+    enlargedImg.src = imageUrl;
+    enlargedImg.alt = title;
+    enlargedImg.style.cssText = `
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        cursor: default;
+        object-fit: contain;
+    `;
+
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = `
+        position: absolute;
+        bottom: 20px;
+        color: white;
+        text-align: center;
+        width: 100%;
+        font-size: 18px;
+        background: rgba(0,0,0,0.7);
+        padding: 15px;
+    `;
+    titleDiv.textContent = title;
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            document.body.removeChild(overlay);
+        }
+    });
+
+    overlay.appendChild(enlargedImg);
+    overlay.appendChild(titleDiv);
+    document.body.appendChild(overlay);
+}
+
 async function openReturnToStockModal(mouvementId, articleId, originalQuantity) {
     try {
         // Récupérer l'article avec ses détails
@@ -1165,6 +1218,15 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                     <div class="modal-body">
                         <div class="article-summary">
                             <div class="article-header">
+                                ${article.photo_url ? `
+                                <div class="article-image-container">
+                                    <img src="${article.photo_url}"
+                                         alt="${article.nom}"
+                                         class="article-image-clickable"
+                                         onclick="enlargeArticleImage('${article.photo_url.replace(/'/g, "\\'")}', '${article.nom.replace(/'/g, "\\'")}')">
+                                    <small class="image-hint">Cliquez pour agrandir</small>
+                                </div>
+                                ` : ''}
                                 <div class="article-info">
                                     <h4>${article.nom} (${article.numero})</h4>
                                     <p>Sorti : ${originalQuantity} unité(s)</p>
