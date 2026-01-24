@@ -1391,7 +1391,7 @@ async function showProjectDetails(projectId) {
         elements.projectDetailsBudget.textContent = project.budget ? `${project.budget} €` : 'Non défini';
 
         // Mettre à jour l'affichage des articles
-        updateProjectReservations(sorties, reservations);
+        updateProjectReservations(sorties, [], reservations);
         elements.projectReservationsCount.textContent = sorties.length + reservations.length;
 
         // Mettre à jour l'historique
