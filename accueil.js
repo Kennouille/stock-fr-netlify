@@ -33,6 +33,111 @@ function formatDate(dateString) {
     }
 }
 
+// ===== FONCTIONS UTILITAIRES GLOBALES =====
+
+// Fonction pour agrandir l'image d'article
+function enlargeArticleImage(imageUrl, title) {
+    console.log('Agrandir image:', imageUrl, title);
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        cursor: pointer;
+    `;
+
+    const enlargedImg = document.createElement('img');
+    enlargedImg.src = imageUrl;
+    enlargedImg.alt = title;
+    enlargedImg.style.cssText = `
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: 8px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        cursor: default;
+        object-fit: contain;
+        background: white;
+        padding: 10px;
+    `;
+
+    // Gestion des erreurs d'image
+    enlargedImg.onerror = function() {
+        this.src = 'https://via.placeholder.com/400x400/cccccc/666666?text=Image+non+disponible';
+        this.alt = 'Image non disponible';
+    };
+
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = `
+        position: absolute;
+        bottom: 20px;
+        color: white;
+        text-align: center;
+        width: 100%;
+        font-size: 18px;
+        background: rgba(0,0,0,0.8);
+        padding: 15px;
+        font-weight: bold;
+    `;
+    titleDiv.textContent = title;
+
+    // Bouton fermer
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.style.cssText = `
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 30px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+    `;
+
+    closeBtn.addEventListener('click', () => {
+        document.body.removeChild(overlay);
+    });
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            document.body.removeChild(overlay);
+        }
+    });
+
+    // Échap pour fermer
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            document.body.removeChild(overlay);
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+
+    overlay.appendChild(enlargedImg);
+    overlay.appendChild(titleDiv);
+    overlay.appendChild(closeBtn);
+    document.body.appendChild(overlay);
+
+    // Focus sur l'overlay
+    overlay.focus();
+}
+
 // ===== FONCTIONS UTILITAIRES =====
 function hideLoading() {
     const loadingOverlay = document.getElementById('loadingOverlay');
@@ -1128,59 +1233,6 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
     });
 }
 
-// Fonction pour agrandir l'image d'article
-function enlargeArticleImage(imageUrl, title) {
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.9);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-        cursor: pointer;
-    `;
-
-    const enlargedImg = document.createElement('img');
-    enlargedImg.src = imageUrl;
-    enlargedImg.alt = title;
-    enlargedImg.style.cssText = `
-        max-width: 90%;
-        max-height: 90%;
-        border-radius: 8px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        cursor: default;
-        object-fit: contain;
-    `;
-
-    const titleDiv = document.createElement('div');
-    titleDiv.style.cssText = `
-        position: absolute;
-        bottom: 20px;
-        color: white;
-        text-align: center;
-        width: 100%;
-        font-size: 18px;
-        background: rgba(0,0,0,0.7);
-        padding: 15px;
-    `;
-    titleDiv.textContent = title;
-
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            document.body.removeChild(overlay);
-        }
-    });
-
-    overlay.appendChild(enlargedImg);
-    overlay.appendChild(titleDiv);
-    document.body.appendChild(overlay);
-}
-
 async function openReturnToStockModal(mouvementId, articleId, originalQuantity) {
     try {
         // Récupérer l'article avec ses détails
@@ -1223,7 +1275,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                                     <img src="${article.photo_url}"
                                          alt="${article.nom}"
                                          class="article-image-clickable"
-                                         onclick="enlargeArticleImage('${article.photo_url.replace(/'/g, "\\'")}', '${article.nom.replace(/'/g, "\\'")}')">
+                                         onclick="enlargeArticleImage('${article.photo_url.replace(/'/g, "\\'")}', '${article.nom.replace(/'/g, "\\'")}')"
                                     <small class="image-hint">Cliquez pour agrandir</small>
                                 </div>
                                 ` : ''}
