@@ -1391,7 +1391,14 @@ async function showProjectDetails(projectId) {
         elements.projectDetailsBudget.textContent = project.budget ? `${project.budget} €` : 'Non défini';
 
         // Mettre à jour l'affichage des articles
-        updateProjectReservations(sorties, [], reservations);
+        // Récupérer aussi les retours (mouvements de type 'retour_projet')
+        const retours = state.movements?.filter(m =>
+            m.type === 'retour_projet' &&
+            m.projet_id === projectId
+        ) || [];
+
+        // Mettre à jour l'affichage des articles
+        updateProjectReservations(sorties, retours, reservations);
         elements.projectReservationsCount.textContent = sorties.length + reservations.length;
 
         // Mettre à jour l'historique
