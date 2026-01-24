@@ -352,37 +352,59 @@
                             <span class="project-status" id="projectDetailsStatus"></span>
                         </div>
                     </div>
-                    <div class="project-header-stats">
-                        <!-- Colonne gauche -->
-                        <div class="stats-column">
-                            <div class="column-label">Articles utilisés</div>
-                            <div class="project-stat">
-                                <div class="stat-label">Quantité</div>
-                                <div class="stat-value" id="projectDetailsItemsUsed">0</div>
+
+                    <!-- NOUVELLE SECTION : Scanner/Recherche d'article pour retour -->
+                    <div class="project-return-search-section">
+                        <div class="search-header">
+                            <h4><i class="fas fa-arrow-left"></i> Retour d'article au stock</h4>
+                            <p class="search-subtitle">Scanner ou rechercher un article à retourner</p>
+                        </div>
+
+                        <div class="search-options">
+                            <!-- Option 1 : Scanner -->
+                            <div class="search-option">
+                                <div class="option-icon">
+                                    <i class="fas fa-camera"></i>
+                                </div>
+                                <div class="option-content">
+                                    <h5>Scanner le code-barres</h5>
+                                    <p>Utilisez la caméra pour scanner l'article</p>
+                                    <button id="scanArticleForReturnBtn" class="btn-primary">
+                                        <i class="fas fa-camera"></i> Démarrer le scan
+                                    </button>
+                                </div>
                             </div>
-                            <div class="project-stat">
-                                <div class="stat-label">Valeur</div>
-                                <div class="stat-value" id="projectDetailsValueUsed">0 €</div>
+
+                            <!-- Option 2 : Recherche manuelle -->
+                            <div class="search-option">
+                                <div class="option-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <div class="option-content">
+                                    <h5>Rechercher manuellement</h5>
+                                    <p>Par nom, numéro ou code-barres</p>
+                                    <div class="search-input-group">
+                                        <input type="text"
+                                               id="manualArticleSearchInput"
+                                               placeholder="Nom, numéro ou code-barres..."
+                                               class="search-input">
+                                        <button id="searchArticleForReturnBtn" class="btn-primary">
+                                            <i class="fas fa-search"></i> Rechercher
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Colonne droite -->
-                        <div class="stats-column">
-                            <div class="column-label">Articles réservés</div>
-                            <div class="project-stat">
-                                <div class="stat-label">Quantité</div>
-                                <div class="stat-value" id="projectDetailsItemsReserved">0</div>
+                        <!-- Résultats de recherche -->
+                        <div id="articleSearchResults" class="search-results-container" style="display: none;">
+                            <div class="results-header">
+                                <h5>Articles trouvés</h5>
+                                <span id="resultsCount">0 résultat(s)</span>
                             </div>
-                            <div class="project-stat">
-                                <div class="stat-label">Valeur</div>
-                                <div class="stat-value" id="projectDetailsValueReserved">0 €</div>
+                            <div id="articleResultsList" class="results-list">
+                                <!-- Rempli dynamiquement -->
                             </div>
-                        </div>
-
-                        <!-- Jours restants (centré en bas) -->
-                        <div class="project-stat-full">
-                            <div class="stat-label">Jours restants</div>
-                            <div class="stat-value" id="projectDetailsDaysLeft">0</div>
                         </div>
                     </div>
                 </div>
