@@ -1271,14 +1271,16 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                         <div class="article-summary">
                             <div class="article-header">
                                 ${article.photo_url ? `
-                                <div class="article-image-container">
-                                    <img src="${article.photo_url}"
-                                         alt="${article.nom}"
-                                         class="article-image-clickable"
-                                         onclick="enlargeArticleImage('${article.photo_url.replace(/'/g, "\\'")}', '${article.nom.replace(/'/g, "\\'")}')"
-                                    <small class="image-hint">Cliquez pour agrandir</small>
-                                </div>
-                                ` : ''}
+                                    <div class="article-image-container" style="text-align: center; margin-bottom: 15px;">
+                                        <img src="${article.photo_url}"
+                                             alt="${article.nom}"
+                                             class="article-image-clickable"
+                                             data-image-url="${article.photo_url}"
+                                             data-image-title="${article.nom}"
+                                             style="max-width: 150px; max-height: 150px; cursor: pointer; border-radius: 8px; border: 2px solid #ddd; object-fit: contain;">
+                                        <div><small class="image-hint" style="color: #666; font-size: 12px;">Cliquez pour agrandir</small></div>
+                                    </div>
+                                    ` : ''}
                                 <div class="article-info">
                                     <h4>${article.nom} (${article.numero})</h4>
                                     <p>Sorti : ${originalQuantity} unité(s)</p>
@@ -1363,6 +1365,16 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
         const modal = modalContainer.querySelector('.return-stock-modal');
         modal.style.display = 'flex';
+
+        // Gestion du clic sur l'image
+        const articleImage = modal.querySelector('.article-image-clickable');
+        if (articleImage) {
+            articleImage.addEventListener('click', function() {
+                const imageUrl = this.dataset.imageUrl;
+                const imageTitle = this.dataset.imageTitle;
+                enlargeArticleImage(imageUrl, imageTitle);
+            });
+        }
 
         // Fermeture
         const closeModal = () => modal.remove();
