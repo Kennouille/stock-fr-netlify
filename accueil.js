@@ -3089,36 +3089,156 @@ function setupSearchResultEvents() {
 }
 
 async function creerSortieEtRetour(article) {
-    const quantite = prompt(
-        `Combien de "${article.nom}" voulez-vous ajouter au stock ?\n` +
-        `(Stock actuel: ${article.stock_actuel || 0})`,
-        "1"
-    );
+    // Créer un modal simple
+    const modalHTML = `
+        <div class="modal-overlay simple-return-modal">
+            <div class="modal" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-plus-circle"></i> Ajouter au stock</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="article-info-simple">
+                        <h4>${article.nom}</h4>
+                        <p>Stock actuel: ${article.stock_actuel || 0}</p>
+                    </div>
 
-    if (!quantite || isNaN(quantite) || parseInt(quantite) <= 0) {
-        alert('Quantité invalide');
-        return;
-    }
+                    <div class="form-group">
+                        <label><i class="fas fa-boxes"></i> Quantité à ajouter *</label>
+                        <input type="number"
+                               id="simpleQuantity"
+                               value="1"
+                               min="1"
+                               class="form-input">
+                    </div>
 
-    const quantiteNum = parseInt(quantite);
+                    <div class="form-group">
+                        <label><i class="fas fa-clipboard-list"></i> Motif *</label>
+                        <select id="simpleReason" class="form-select">
+                            <option value="perdu_retrouve">Perdu → Retrouvé</option>
+                            <option value="casse_repare">Cassé → Réparé</option>
+                            <option value="vole_remplace">Volé → Remplacé</option>
+                            <option value="fin_vie_remplace">Fin de vie → Remplacé</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
 
+                    <div class="form-group" id="simpleCommentGroup" style="display: none;">
+                        <label><i class="fas fa-comment"></i> Commentaire</label>
+                        <textarea id="simpleComment"
+                                  rows="2"
+                                  placeholder="Précisions..."
+                                  class="form-textarea"></textarea>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button id="confirmSimpleAdd" class="btn-primary">
+                            <i class="fas fa-check"></i> Confirmer
+                        </button>
+                        <button type="button" class="btn-secondary close-modal">
+                            Annuler
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Ajouter le modal
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHTML;
+    document.body.appendChild(modalContainer);
+
+    const modal = modalContainer.querySelector('.simple-return-modal');
+    modal.style.display = 'flex';
+
+    // Gérer "Autre" pour afficher le commentaire
+    const reasonSelect = modal.querySelector('#simpleReason');
+    const commentGroup = modal.querySelector('#simpleCommentGroup');
+
+    reasonSelect.addEventListener('change', function() {
+        commentGroup.style.display = this.value === 'autre' ? 'block' : 'none';
+    });
+
+    // Fermeture
+    const closeModal = () => {
+        document.body.removeChild(modalContainer);
+    };
+
+    modal.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', closeModal);
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    // Confirmation
+    modal.querySelector('#confirmSimpleAdd').addEventListener('click', async () => {
+        const quantity = parseInt(modal.querySelector('#simpleQuantity').value);
+        const reason = modal.querySelector('#simpleReason').value;
+        const comment = modal.querySelector('#simpleComment').value;
+
+        if (!quantity || quantity < 1) {
+            alert('Quantité invalide');
+            return;
+        }
+
+        await enregistrerAjoutSimple(article, quantity, reason, comment, closeModal);
+    });
+}
+
+async function enregistrerAjoutSimple(article, quantity, reason, comment, closeModal) {
     try {
         showLoading();
 
-        // JUSTE mettre à jour le stock - PAS de mouvement
-        const { error } = await supabase
+        // 1. Mettre à jour le stock
+        const nouveauStock = (article.stock_actuel || 0) + quantity;
+
+        const { error: stockError } = await supabase
             .from('w_articles')
             .update({
-                stock_actuel: (article.stock_actuel || 0) + quantiteNum,
+                stock_actuel: nouveauStock,
                 updated_at: new Date().toISOString()
             })
             .eq('id', article.id);
 
-        if (error) throw error;
+        if (stockError) throw stockError;
 
-        showAlert(`${quantiteNum} "${article.nom}" ajouté(s) au stock`, 'success');
+        // 2. Créer un mouvement simple
+        const motifMapping = {
+            'perdu_retrouve': 'Perdu → Retrouvé',
+            'casse_repare': 'Cassé → Réparé',
+            'vole_remplace': 'Volé → Remplacé',
+            'fin_vie_remplace': 'Fin de vie → Remplacé',
+            'autre': 'Autre: ' + (comment || '')
+        };
 
-        // Pas de modal de retour, juste confirmation
+        const mouvementData = {
+            article_id: article.id,
+            type: 'ajout_stock',
+            quantite: quantity,
+            projet: state.currentProject?.nom || 'Ajustement',
+            projet_id: state.currentProject?.id || null,
+            commentaire: `Ajout direct: ${motifMapping[reason] || reason} | ${comment || ''}`.trim(),
+            utilisateur_id: currentUser.id,
+            utilisateur: currentUser.username,
+            stock_avant: article.stock_actuel || 0,
+            stock_apres: nouveauStock,
+            date_mouvement: new Date().toISOString().split('T')[0],
+            heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
+            created_at: new Date().toISOString()
+        };
+
+        const { error: mouvementError } = await supabase
+            .from('w_mouvements')
+            .insert([mouvementData]);
+
+        if (mouvementError) throw mouvementError;
+
+        // 3. Succès
+        closeModal();
+        showAlert(`${quantity} "${article.nom}" ajouté(s) au stock`, 'success');
 
     } catch (error) {
         console.error('Erreur ajout stock:', error);
