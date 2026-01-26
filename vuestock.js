@@ -2228,7 +2228,9 @@ class QuadViewManager {
             // Utiliser les positions réelles comme dans la vue du dessus
             // 40px = 1 case en vue 2D, 20px = 1 case en vue 3D
             const scale = 0.5; // 20/40 = 0.5
-            const x = (rack.position_x || 0) * 0.5; // position_x de la vue 2D
+            const rackWidth3D = (rack.width || 1) * 20 * 0.5;
+            const x = ((rack.position_x || 0) * 0.5) + index * rackWidth3D;
+
             const z = (rack.position_y || 0) * 0.5; // position_y devient profondeur
 
             const angle = this.rotation3D;
