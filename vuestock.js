@@ -1943,14 +1943,31 @@ class QuadViewManager {
                 x = rack.displayX / scale;
                 y = rack.displayY / scale;
             }
-            // Si le rack a déjà une position sauvegardée (position_x/y), l'utiliser
             else if (rack.position_x !== undefined && rack.position_y !== undefined) {
-                const positionScale = 0.8; // Facteur de conversion position_x → display
-                x = rack.position_x * positionScale / scale; // Convertir en logiques
-                y = rack.position_y * positionScale / scale;
+                const positionScale = 0.8; // Conversion position_x → pixels logiques
+                const viewScale = this.topViewScale || 1; // Zoom global
 
-                rack.displayX = x * scale; // Stocker en pixels physiques
-                rack.displayY = y * scale;
+                // Position en pixels logiques (avant ctx.scale)
+                x = rack.position_x * positionScale;
+                y = rack.position_y * positionScale;
+
+                // ✅ CORRECTION : Ramener à l'écran si hors limites
+                const maxX = (this.canvasTop.width / viewScale) - 100;
+                const maxY = (this.canvasTop.height / viewScale) - 100;
+
+                if (x > maxX) {
+                    x = maxX;
+                    rack.position_x = x / positionScale; // Mettre à jour pour sauvegarde
+                }
+
+                if (y > maxY) {
+                    y = maxY;
+                    rack.position_y = y / positionScale;
+                }
+
+                // Stocker en pixels physiques (après ctx.scale)
+                rack.displayX = x * viewScale;
+                rack.displayY = y * viewScale;
             }
             // Sinon, calculer automatiquement
             else {
