@@ -2141,7 +2141,7 @@ class QuadViewManager {
         });
 
         // Dessiner chaque rack avec effets Rayons X et Zoom
-        racksWithDepth.forEach(({ rack, x, z, angle }) => {
+        racksWithDepth.forEach(({ rack, x, z, angle }, index) => {
             // Appliquer le zoom de la caméra
             const zoomScale = this.camera.currentScale;
 
