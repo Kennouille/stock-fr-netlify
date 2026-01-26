@@ -1611,6 +1611,10 @@ class QuadViewManager {
         e.preventDefault();
         e.stopPropagation();
 
+        this.isDragging = false;
+        this.isResizing = false;
+        this.isRotating = false;
+
         if (!this.currentRacks || this.currentRacks.length === 0) return;
 
         const rect = this.canvasTop.getBoundingClientRect();
@@ -1675,9 +1679,6 @@ class QuadViewManager {
             // Sélectionner le nouveau rack
             console.log(`📌 Sélection du rack ${clickedRack.code}`);
             this.selectedRack = clickedRack;
-            this.isDragging = false; // ← AJOUT : Forcer l'arrêt du drag
-            this.isResizing = false; // ← AJOUT
-            this.isRotating = false; // ← AJOUT
 
             // 1. Mettre à jour toutes les vues
             this.drawTopView(this.currentRacks);
