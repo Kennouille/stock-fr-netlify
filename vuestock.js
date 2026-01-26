@@ -1813,11 +1813,33 @@ class QuadViewManager {
         ctx.clearRect(0, 0, width, height);
         this.drawGrid(ctx, width, height, 20);
 
+        // ✅ NOUVEAU : Calcul du zoom automatique
+        if (racks.length > 0) {
+            // Calculer la largeur totale nécessaire pour tous les racks
+            const totalWidth = racks.reduce((sum, rack) => sum + (rack.width * 20) + 40, 0);
+
+            // Si ça dépasse la largeur du canvas, calculer un facteur de zoom
+            if (totalWidth > width - 100) {
+                const zoomFactor = (width - 100) / totalWidth;
+                // Appliquer le zoom (entre 0.3 et 1)
+                const scale = Math.max(0.3, Math.min(1, zoomFactor));
+
+                // Sauvegarder le contexte et appliquer le zoom
+                ctx.save();
+                ctx.scale(scale, scale);
+
+                // Stocker le scale pour l'utiliser ailleurs
+                this.topViewScale = scale;
+            } else {
+                this.topViewScale = 1;
+            }
+        }
+
         // RÉGLAGE POUR UNE SEULE LIGNE
         const startX = 50;
-        const startY = height / 2 - 40; // milieu de l'écran
-        const spacing = 40; // Réduit encore
-        let currentX = startX; // ← AJOUTER CETTE LIGNE ICI
+        const startY = height / 2 - 40;
+        const spacing = 40;
+        let currentX = startX;
 
         racks.forEach((rack) => {
             const w = rack.width * 20;
@@ -1935,6 +1957,10 @@ class QuadViewManager {
 
             currentX += w + spacing;
         });
+
+        if (this.topViewScale && this.topViewScale !== 1) {
+            ctx.restore();
+        }
 
         document.getElementById('quadRackCount').textContent = `${racks.length} racks`;
     }
