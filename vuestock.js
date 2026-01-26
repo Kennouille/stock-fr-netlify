@@ -2255,7 +2255,8 @@ class QuadViewManager {
             const zoomScale = this.camera.currentScale;
 
             // Projection isométrique avec zoom
-            const isoX = centerX + x * this.isometric.scale * zoomScale;
+            const isoX = centerX + (x - z) * this.isometric.scale * zoomScale;
+
             const isoY = centerY - z * this.isometric.scale * 0.5 * zoomScale;
 
             // Hauteur du rack (selon nombre d'étages)
