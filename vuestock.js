@@ -1022,6 +1022,7 @@ class QuadViewManager {
 
         this.cameraFocusIndex = 0; // Index du rack centré
         this.currentOffset = 0;    // Position actuelle de la caméra (pour animation)
+        this.draggedRack = null;
 
 
         // Canvases
@@ -1278,20 +1279,17 @@ class QuadViewManager {
 
             // Mouseup pour terminer le drag, resize et rotation
             this.canvasTop.addEventListener('mouseup', (e) => {
-                this.canvasTop.removeEventListener('mousemove', this.handleResizeBound);
-                this.canvasTop.removeEventListener('mousemove', this.handleRotationDragBound);
-
-                // Terminer le drag
+                // ✅ Nettoyer TOUS les états
                 if (this.isDragging) {
                     this.isDragging = false;
-                    this.dragStartX = null;  // ✅ AJOUT
-                    this.dragStartY = null;  // ✅ AJOUT
+                    this.draggedRack = null;  // ✅ CRITIQUE : nettoyer draggedRack
+                    this.dragStartX = null;
+                    this.dragStartY = null;
                     this.canvasTop.style.cursor = 'default';
                     console.log('⏹️ Drag terminé');
                 }
 
-                // Terminer le resize
-                else if (this.isResizing && this.selectedRack) {
+                if (this.isResizing && this.selectedRack) {
                     this.isResizing = false;
                     this.resizeHandle = null;
                     this.canvasTop.style.cursor = 'default';
@@ -1307,8 +1305,7 @@ class QuadViewManager {
                     console.log('⏹️ Resize terminé:', this.selectedRack.width, 'x', this.selectedRack.depth);
                 }
 
-                // Terminer la rotation
-                else if (this.isRotating && this.selectedRack) {
+                if (this.isRotating && this.selectedRack) {
                     this.isRotating = false;
                     this.canvasTop.style.cursor = 'default';
 
