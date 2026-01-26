@@ -959,9 +959,7 @@ function showItemDetails(itemId, itemType, sorties, retours, reservations) {
                     ` : ''}
 
                     <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary close-modal">
-                            Fermer
-                        </button>
+                        <!-- Bouton Fermer supprimé - Utiliser la croix ou clic extérieur -->
                     </div>
                 </div>
             </div>
