@@ -4095,11 +4095,6 @@ function openArticleDetailsPopup(article) {
                     <button class="btn btn-secondary print-single-btn" data-id="${article.id}">
                         <i class="fas fa-print"></i> Imprimer une étiquette
                     </button>
-                    ${currentUser.permissions?.historique ? `
-                        <button class="btn btn-info view-history-btn" data-id="${article.id}">
-                            <i class="fas fa-history"></i> Historique
-                        </button>
-                    ` : ''}
                 </div>
             </div>
         </div>
@@ -4126,11 +4121,6 @@ function openArticleDetailsPopup(article) {
     popup.querySelector('.print-single-btn')?.addEventListener('click', () => {
         document.body.removeChild(popup);
         openPrintLabelPopup(article);
-    });
-
-    popup.querySelector('.view-history-btn')?.addEventListener('click', () => {
-        document.body.removeChild(popup);
-        openHistoryPopup(article.id);
     });
 }
 
