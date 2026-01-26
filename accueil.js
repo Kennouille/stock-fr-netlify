@@ -3296,13 +3296,33 @@ function setupEventListeners() {
         });
     });
 
+    // Boutons du scanner/recherche pour retour d'article
+    const scanArticleBtn = document.getElementById('scanArticleForReturnBtn');
+    const searchArticleBtn = document.getElementById('searchArticleForReturnBtn');
+    const manualSearchInput = document.getElementById('manualArticleSearchInput');
+
+    if (scanArticleBtn) {
+        scanArticleBtn.addEventListener('click', handleScanArticleForReturn);
+    }
+
+    if (searchArticleBtn) {
+        searchArticleBtn.addEventListener('click', handleSearchArticleForReturn);
+    }
+
+    if (manualSearchInput) {
+        manualSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleSearchArticleForReturn();
+            }
+        });
+    }
+
     // Échappement pour fermer les modals
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && state.currentModal) {
             hideModal();
         }
     });
-
 }
 
 // ===== POPUP DE RECHERCHE =====
