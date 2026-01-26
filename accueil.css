@@ -2741,3 +2741,85 @@ body {
     background: linear-gradient(135deg, #F57C00 0%, #FF9800 100%);
     box-shadow: 0 5px 15px rgba(255, 152, 0, 0.5);
 }
+
+/* Bouton Secondaire (Fermer/Annuler) */
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    box-shadow: 0 3px 10px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(108, 117, 125, 0.5);
+    background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.3);
+}
+
+/* Bouton Fermer spécifique dans les modals */
+.modal-actions .btn-secondary {
+    min-width: 120px;
+}
+
+/* Bouton Fermer dans l'en-tête des modals */
+.modal-header .close-modal {
+    background: transparent;
+    border: none;
+    font-size: 28px;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.modal-header .close-modal:hover {
+    background: #f8f9fa;
+    color: #dc3545;
+    transform: rotate(90deg);
+}
+
+/* Style cohérent pour tous les boutons .close-modal */
+button.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 5px 15px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+button.close-modal:hover {
+    background: #f8f9fa;
+    color: #495057;
+}
