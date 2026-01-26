@@ -1675,6 +1675,9 @@ class QuadViewManager {
             // Sélectionner le nouveau rack
             console.log(`📌 Sélection du rack ${clickedRack.code}`);
             this.selectedRack = clickedRack;
+            this.isDragging = false; // ← AJOUT : Forcer l'arrêt du drag
+            this.isResizing = false; // ← AJOUT
+            this.isRotating = false; // ← AJOUT
 
             // 1. Mettre à jour toutes les vues
             this.drawTopView(this.currentRacks);
