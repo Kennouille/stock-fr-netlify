@@ -1630,7 +1630,12 @@ class QuadViewManager {
             return null;
         }
 
-        console.log(`🔍 Recherche parmi ${this.currentRacks.length} racks à: ${x},${y}`);
+        // ✅ CORRECTION : Appliquer le scale inverse aux coordonnées de la souris
+        const scale = this.topViewScale || 1;
+        const adjustedX = x / scale;
+        const adjustedY = y / scale;
+
+        console.log(`🔍 Recherche parmi ${this.currentRacks.length} racks à: ${adjustedX},${adjustedY} (scale: ${scale})`);
 
         for (const rack of this.currentRacks) {
             if (!rack.displayX) {
@@ -1645,7 +1650,7 @@ class QuadViewManager {
 
             console.log(`  Rack ${rack.code}: ${left}-${right}, ${top}-${bottom}`);
 
-            if (x >= left && x <= right && y >= top && y <= bottom) {
+            if (adjustedX >= left && adjustedX <= right && adjustedY >= top && adjustedY <= bottom) {
                 console.log(`✅ ${rack.code} TROUVÉ!`);
                 return rack;
             }
