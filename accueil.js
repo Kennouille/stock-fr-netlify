@@ -3840,6 +3840,18 @@ function setupEventListeners() {
         state.currentProject = null; // Nettoyer l'état
     });
 
+    // Bouton Fermer dans les actions du modal Détails projet
+    const projectModal = document.getElementById('projectDetailsModal');
+    if (projectModal) {
+        const closeBtn = projectModal.querySelector('.modal-actions .btn-secondary.close-modal');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                closeModal('projectDetailsModal');
+                state.currentProject = null; // Nettoyer l'état
+            });
+        }
+    }
+
     // Onglets du modal projet
     document.querySelectorAll('.project-tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
