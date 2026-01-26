@@ -2871,30 +2871,6 @@ async function handleSearchArticleForReturn() {
     }
 }
 
-// Fonction pour gérer un article sans sortie
-function handleArticleWithoutExit(article, sorties, retours) {
-    const confirmerAjout = confirm(
-        `"${article.nom}" n'a pas été utilisé dans ce projet.\n\n` +
-        `Voulez-vous quand même le retourner au stock ?\n` +
-        `(Cela créera une nouvelle sortie puis un retour)`
-    );
-
-    if (confirmerAjout) {
-        creerSortieEtRetour(article);
-    } else {
-        // Option: montrer tous les résultats quand même
-        const showAll = confirm(
-            `Voulez-vous voir tous les résultats de recherche ?\n` +
-            `(Y compris les articles sans flèche)`
-        );
-
-        if (showAll) {
-            // Afficher tous les articles (même sans sortie)
-            displayAllSearchResults([article], sorties, retours);
-        }
-    }
-}
-
 async function creerSortieEtRetour(article) {
     try {
         // Créer une sortie fictive pour cet article
@@ -3054,6 +3030,167 @@ function displayArticleSearchResults(articles, sorties, retours) {
             }
         });
     });
+}
+
+// Fonction pour afficher tous les résultats (même les articles sans sortie)
+function displayAllSearchResults(articles, sorties, retours) {
+    const resultsContainer = document.getElementById('articleSearchResults');
+    const resultsList = document.getElementById('articleResultsList');
+    const resultsCount = document.getElementById('resultsCount');
+
+    if (!articles || articles.length === 0) {
+        resultsList.innerHTML = `
+            <div class="no-results">
+                <i class="fas fa-search"></i>
+                <p>Aucun article trouvé</p>
+            </div>
+        `;
+        resultsCount.textContent = '0 résultat(s)';
+        resultsContainer.style.display = 'block';
+        return;
+    }
+
+    // Calculer les quantités pour chaque article
+    const articleStats = {};
+
+    articles.forEach(article => {
+        const sortiesArticle = sorties.filter(s => s.article_id === article.id);
+        const retoursArticle = retours.filter(r => r.article_id === article.id);
+
+        const totalSorti = sortiesArticle.reduce((sum, s) => sum + s.quantite, 0);
+        const totalRetourne = retoursArticle.reduce((sum, r) => sum + r.quantite, 0);
+        const quantiteRestante = totalSorti - totalRetourne;
+        const aUneFleche = quantiteRestante > 0;
+
+        articleStats[article.id] = {
+            totalSorti,
+            totalRetourne,
+            quantiteRestante,
+            aUneFleche,
+            derniereSortie: sortiesArticle.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+        };
+    });
+
+    // Afficher les résultats
+    let html = '';
+    articles.forEach(article => {
+        const stats = articleStats[article.id];
+        const aUneFleche = stats?.aUneFleche || false;
+
+        html += `
+            <div class="article-result-item ${aUneFleche ? 'has-arrow' : 'no-arrow'}" data-id="${article.id}">
+                <div class="article-result-image">
+                    ${article.photo_url ? `
+                        <img src="${article.photo_url}" alt="${article.nom}"
+                             class="enlargeable-image"
+                             data-image-url="${article.photo_url}"
+                             data-image-title="${article.nom}">
+                    ` : `
+                        <div class="no-image">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    `}
+                </div>
+                <div class="article-result-info">
+                    <h6>${article.nom}</h6>
+                    <div class="article-result-details">
+                        <span>${article.numero || 'Sans numéro'}</span>
+                        ${stats ? `
+                            <span class="${aUneFleche ? 'status-arrow' : 'status-none'}">
+                                ${aUneFleche ? `À retourner: ${stats.quantiteRestante}` : 'Tout retourné'}
+                            </span>
+                        ` : '<span class="status-none">Non utilisé</span>'}
+                        ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
+                    </div>
+                    <div class="article-date-info">
+                        ${stats?.derniereSortie ?
+                            `<small><i class="far fa-calendar"></i> Dernière sortie: ${formatDate(stats.derniereSortie.created_at)}</small>` :
+                            `<small><i class="fas fa-info-circle"></i> Non utilisé dans ce projet</small>`
+                        }
+                    </div>
+                </div>
+                <div class="article-result-actions">
+                    ${aUneFleche ? `
+                        <button class="btn-primary return-article-btn"
+                                data-mouvement-id="${stats.derniereSortie?.id}"
+                                data-article-id="${article.id}"
+                                data-quantity="${stats.quantiteRestante}">
+                            <i class="fas fa-arrow-left"></i> Retourner
+                        </button>
+                    ` : `
+                        <button class="btn-secondary add-article-btn"
+                                data-article-id="${article.id}">
+                            <i class="fas fa-plus"></i> Ajouter
+                        </button>
+                    `}
+                </div>
+            </div>
+        `;
+    });
+
+    resultsList.innerHTML = html;
+    resultsCount.textContent = `${articles.length} résultat(s)`;
+    resultsContainer.style.display = 'block';
+
+    // Ajouter les événements aux images
+    document.querySelectorAll('.enlargeable-image').forEach(img => {
+        img.addEventListener('click', function() {
+            const imageUrl = this.dataset.imageUrl;
+            const imageTitle = this.dataset.imageTitle;
+
+            if (typeof enlargeArticleImage === 'function') {
+                enlargeArticleImage(imageUrl, imageTitle);
+            }
+        });
+    });
+
+    // Ajouter les événements aux boutons "Retourner"
+    document.querySelectorAll('.return-article-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const mouvementId = this.dataset.mouvementId;
+            const articleId = this.dataset.articleId;
+            const quantity = parseInt(this.dataset.quantity);
+
+            if (mouvementId && articleId) {
+                openReturnToStockModal(mouvementId, articleId, quantity);
+            }
+        });
+    });
+
+    // Ajouter les événements aux boutons "Ajouter"
+    document.querySelectorAll('.add-article-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const articleId = this.dataset.articleId;
+            const article = articles.find(a => a.id === articleId);
+
+            if (article) {
+                const confirmer = confirm(
+                    `Ajouter "${article.nom}" au projet ?\n\n` +
+                    `Cela créera une sortie puis ouvrira le formulaire de retour.`
+                );
+
+                if (confirmer) {
+                    creerSortieEtRetour(article);
+                }
+            }
+        });
+    });
+}
+
+// Fonction pour gérer un article sans sortie
+function handleArticleWithoutExit(article, sorties, retours) {
+    const confirmerAjout = confirm(
+        `"${article.nom}" n'a pas été utilisé dans ce projet.\n\n` +
+        `Voulez-vous quand même le retourner au stock ?\n` +
+        `(Cela créera une nouvelle sortie puis un retour)`
+    );
+
+    if (confirmerAjout) {
+        creerSortieEtRetour(article);
+    } else {
+        // Montrer tous les résultats quand même
+        displayAllSearchResults([article], sorties, retours);
+    }
 }
 
 // Fonction spéciale pour le scanner "return"
