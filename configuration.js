@@ -213,7 +213,8 @@ function displayUsers(users) {
                         'impression': 'Impression',
                         'gestion': 'Gestion',
                         'projets': 'Projets',
-                        'reservations': 'Réservations'
+                        'reservations': 'Réservations',
+                        'vuestock': 'Vue Stock'
                     };
 
                     permissionsHTML += `<span class="permission-tag ${key === 'config' ? 'admin' : ''}">${permissionNames[key] || key}</span>`;
@@ -331,7 +332,8 @@ function openEditModal(user) {
         { id: 'edit_perm_impression', key: 'impression', label: 'Impression', icon: 'fa-print', desc: 'Imprimer Étiquettes et rapports' },
         { id: 'edit_perm_gestion', key: 'gestion', label: 'Gestion articles', icon: 'fa-box-open', desc: 'Modifier/supprimer articles' },
         { id: 'edit_perm_projets', key: 'projets', label: 'Gestion projets', icon: 'fa-project-diagram', desc: 'CrÉer/gÉrer les projets' },
-        { id: 'edit_perm_reservations', key: 'reservations', label: 'RÉservations', icon: 'fa-clipboard-list', desc: 'GÉrer les rÉservations' }
+        { id: 'edit_perm_reservations', key: 'reservations', label: 'RÉservations', icon: 'fa-clipboard-list', desc: 'GÉrer les rÉservations' },
+        { id: 'edit_perm_vuestock', key: 'vuestock', label: 'Vue Stock', icon: 'fa-eye', desc: 'Visualiser le stock complet' }
     ];
 
     allPermissions.forEach(perm => {
@@ -398,7 +400,7 @@ document.getElementById('addUserForm')?.addEventListener('submit', async functio
     };
 
     // Liste des permissions
-    const permissionKeys = ['config', 'creation', 'stats', 'historique', 'impression', 'gestion', 'projets', 'reservations'];
+    const permissionKeys = ['config', 'creation', 'stats', 'historique', 'impression', 'gestion', 'projets', 'reservations', 'vuestock'];
 
     permissionKeys.forEach(key => {
         const checkbox = document.getElementById(`perm_${key}`);
