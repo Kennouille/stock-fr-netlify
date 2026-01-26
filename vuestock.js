@@ -3518,6 +3518,11 @@ class QuadViewManager {
 
         const rack = this.selectedRack;
 
+        // ✅ CORRECTION : Appliquer le scale inverse aux coordonnées du clic
+        const scale = this.topViewScale || 1;
+        const adjustedClickX = clickX / scale;
+        const adjustedClickY = clickY / scale;
+
         // Recalculer la position du rack (comme dans drawTopView)
         const rackX = rack.displayX;
         const rackY = rack.displayY;
@@ -3561,12 +3566,12 @@ class QuadViewManager {
             }
         };
 
-        console.log('🔍 Vérification des poignettes aux coordonnées:', clickX, clickY);
+        console.log('🔍 Vérification des poignettes aux coordonnées:', adjustedClickX, adjustedClickY, '(scale:', scale + ')');
 
         // Vérifier chaque poignette
         for (const [handleName, handleRect] of Object.entries(handles)) {
-            const inX = clickX >= handleRect.x && clickX <= handleRect.x + handleRect.width;
-            const inY = clickY >= handleRect.y && clickY <= handleRect.y + handleRect.height;
+            const inX = adjustedClickX >= handleRect.x && adjustedClickX <= handleRect.x + handleRect.width;
+            const inY = adjustedClickY >= handleRect.y && adjustedClickY <= handleRect.y + handleRect.height;
 
             console.log(`  ${handleName}: ${handleRect.x}-${handleRect.x + handleRect.width}, ${handleRect.y}-${handleRect.y + handleRect.height} -> ${inX && inY ? 'HIT!' : 'miss'}`);
 
