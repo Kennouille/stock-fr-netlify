@@ -199,13 +199,19 @@ exports.handler = async (event) => {
             const payload = {
                 rack_code: body.code || body.rack_code || `RACK_${Date.now()}`,
                 display_name: body.name || body.display_name || `Étagère ${body.code}`,
-                position_x: Math.round(body.position_x || body.x || 100),  // ← AJOUT DE Math.round()
-                position_y: Math.round(body.position_y || body.y || 100),  // ← AJOUT DE Math.round()
+                position_x: Math.round(body.position_x || body.x || 100),
+                position_y: Math.round(body.position_y || body.y || 100),
                 rotation: body.rotation || 0,
                 width: body.width || 3,
                 depth: body.depth || 2,
                 color: body.color || '#4a90e2'
             };
+
+            // CORRECTION 2 : Limiter rack_code à 10 caractères maximum
+            if (payload.rack_code && payload.rack_code.length > 10) {
+                payload.rack_code = payload.rack_code.substring(0, 10);
+                console.log(`✂️ Code rack tronqué à 10 chars: ${payload.rack_code}`);
+            }
 
             // Nettoyer le payload (enlever les undefined)
             Object.keys(payload).forEach(key => {
