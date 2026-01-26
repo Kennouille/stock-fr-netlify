@@ -1062,26 +1062,20 @@ class QuadViewManager {
         if (this.canvasTop) {
             // Mousedown pour démarrer le drag
             this.canvasTop.addEventListener('mousedown', (e) => {
-                this.isDragging = false;
-                this.isResizing = false;
-                this.isRotating = false;
+                // ✅ NE PAS réinitialiser ici, mais seulement si on clique sur un AUTRE rack
 
                 const rect = this.canvasTop.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
-                // Vérifier si on clique sur un rack (sélectionné ou pas)
                 const clickedRack = this.findRackAtPosition(x, y);
 
                 if (clickedRack && this.selectedRack && clickedRack.id === this.selectedRack.id) {
-                    // On clique sur le rack déjà sélectionné
+                    // On clique sur le rack déjà sélectionné - OK pour drag/resize/rotate
 
-                    // D'abord vérifier si c'est sur une poignée
                     const handle = this.getClickedHandle(x, y);
                     if (handle) {
-                        // C'est une poignée
                         if (handle === 'rotate') {
-                            // Démarrer la rotation
                             this.isRotating = true;
                             this.rotateStartX = x;
                             this.rotateStartY = y;
@@ -1089,7 +1083,6 @@ class QuadViewManager {
                             this.canvasTop.style.cursor = 'grab';
                             console.log('🔄 Rotation démarrée pour', this.selectedRack.code);
                         } else {
-                            // Démarrer le redimensionnement (nw, ne, sw, se)
                             this.isResizing = true;
                             this.resizeHandle = handle;
                             this.resizeStartX = x;
@@ -1105,10 +1098,18 @@ class QuadViewManager {
 
                     // Sinon, démarrer le drag du rack
                     this.isDragging = true;
+                    this.draggedRack = clickedRack;  // ✅ AJOUT : stocker quel rack on déplace
                     this.dragStartX = x - clickedRack.displayX;
                     this.dragStartY = y - clickedRack.displayY;
                     this.canvasTop.style.cursor = 'grabbing';
                     console.log('🚀 Drag démarré pour', clickedRack.code);
+                }
+                // ✅ AJOUT : Si on clique sur un AUTRE rack, arrêter tout
+                else if (clickedRack) {
+                    this.isDragging = false;
+                    this.isResizing = false;
+                    this.isRotating = false;
+                    this.draggedRack = null;
                 }
             });
 
@@ -1120,8 +1121,7 @@ class QuadViewManager {
                 const y = e.clientY - rect.top;
 
                 // === DRAG ===
-                if (this.isDragging && this.selectedRack) {
-                    // ... garder tout le code existant du drag ...
+                if (this.isDragging && this.draggedRack) {  // ✅ CHANGÉ : utiliser draggedRack au lieu de selectedRack
                     let newDisplayX = x - this.dragStartX;
                     let newDisplayY = y - this.dragStartY;
 
@@ -1129,25 +1129,24 @@ class QuadViewManager {
                     newDisplayX = Math.round(newDisplayX / gridSize) * gridSize;
                     newDisplayY = Math.round(newDisplayY / gridSize) * gridSize;
 
-                    // ✅ CORRECTION : Prendre en compte le scale
-                    const viewScale = this.topViewScale || 1; // Changer le nom
+                    const viewScale = this.topViewScale || 1;
                     const canvasWidth = this.canvasTop.width / viewScale;
                     const canvasHeight = this.canvasTop.height / viewScale;
 
-                    newDisplayX = Math.max(0, Math.min(newDisplayX, canvasWidth - this.selectedRack.displayWidth));
-                    newDisplayY = Math.max(0, Math.min(newDisplayY, canvasHeight - this.selectedRack.displayHeight));
+                    newDisplayX = Math.max(0, Math.min(newDisplayX, canvasWidth - this.draggedRack.displayWidth));  // ✅ CHANGÉ
+                    newDisplayY = Math.max(0, Math.min(newDisplayY, canvasHeight - this.draggedRack.displayHeight)); // ✅ CHANGÉ
 
-                    this.selectedRack.displayX = newDisplayX;
-                    this.selectedRack.displayY = newDisplayY;
+                    this.draggedRack.displayX = newDisplayX;  // ✅ CHANGÉ
+                    this.draggedRack.displayY = newDisplayY;  // ✅ CHANGÉ
 
-                    const scale = 0.8; // OK, nom différent
-                    this.selectedRack.position_x = newDisplayX / scale;
-                    this.selectedRack.position_y = newDisplayY / scale;
+                    const scale = 0.8;
+                    this.draggedRack.position_x = newDisplayX / scale;  // ✅ CHANGÉ
+                    this.draggedRack.position_y = newDisplayY / scale;  // ✅ CHANGÉ
 
                     const xInput = document.getElementById('quadRackX');
                     const yInput = document.getElementById('quadRackY');
-                    if (xInput) xInput.value = Math.round(this.selectedRack.position_x / 40);
-                    if (yInput) yInput.value = Math.round(this.selectedRack.position_y / 40);
+                    if (xInput) xInput.value = Math.round(this.draggedRack.position_x / 40);  // ✅ CHANGÉ
+                    if (yInput) yInput.value = Math.round(this.draggedRack.position_y / 40);  // ✅ CHANGÉ
 
                     this.drawTopView(this.currentRacks);
                 }
