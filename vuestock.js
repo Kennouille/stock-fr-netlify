@@ -2275,17 +2275,15 @@ class QuadViewManager {
             // 3. Sinon : 100% opaque
 
             // Dessiner le rack en 3D isométrique avec effets
-            this.drawIsoRack(
+            this.drawCabinetRack(
                 ctx,
                 isoX,
                 isoY,
-                rackWidth * scale,
+                rackWidth * scale * 1.5,   // Plus large
+                rackHeight * scale * 2,     // Plus haut
                 rackDepth * scale,
-                rackHeight * scale,
                 rack,
-                angle,
-                finalOpacity,  // <-- UNE SEULE VARIABLE
-                xrayAlpha
+                finalOpacity
             );
         });
 
@@ -2329,6 +2327,88 @@ class QuadViewManager {
             ctx.beginPath();
             ctx.ellipse(centerX, centerY, r, r * 0.5, 0, 0, Math.PI * 2);
             ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+    // Dessiner un rack comme une armoire (perspective frontale)
+    drawCabinetRack(ctx, x, y, width, height, depth, rack, opacity = 1) {
+        ctx.save();
+
+        // Appliquer l'opacité
+        ctx.globalAlpha = opacity;
+
+        // Dimensions ajustées
+        const cabinetWidth = width;
+        const cabinetHeight = height;
+        const cabinetDepth = depth * 0.3; // Réduire la profondeur visuelle
+
+        // Face avant de l'armoire
+        ctx.fillStyle = rack.color;
+        ctx.fillRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
+
+        // Bordure
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
+
+        // Code du rack
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(rack.code, x, y - cabinetHeight/2);
+
+        // Dessiner les étages comme des séparateurs horizontaux
+        if (rack.levels && rack.levels.length > 0) {
+            const levelHeight = cabinetHeight / rack.levels.length;
+
+            rack.levels.forEach((level, index) => {
+                const levelY = y - cabinetHeight + (index * levelHeight);
+
+                // Ligne de séparation d'étage
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x - cabinetWidth/2 + 5, levelY);
+                ctx.lineTo(x + cabinetWidth/2 - 5, levelY);
+                ctx.stroke();
+
+                // Code de l'étage (petit)
+                if (levelHeight > 20) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    ctx.font = '10px Arial';
+                    ctx.fillText(level.code, x - cabinetWidth/2 + 15, levelY - levelHeight/2);
+                }
+            });
+        }
+
+        // Effet de profondeur (côté droit)
+        ctx.fillStyle = this.adjustColor(rack.color, -20);
+        ctx.beginPath();
+        ctx.moveTo(x + cabinetWidth/2, y - cabinetHeight);
+        ctx.lineTo(x + cabinetWidth/2 + cabinetDepth, y - cabinetHeight - cabinetDepth*0.5);
+        ctx.lineTo(x + cabinetWidth/2 + cabinetDepth, y - cabinetDepth*0.5);
+        ctx.lineTo(x + cabinetWidth/2, y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Effet de profondeur (dessus)
+        ctx.fillStyle = this.adjustColor(rack.color, 10);
+        ctx.beginPath();
+        ctx.moveTo(x - cabinetWidth/2, y - cabinetHeight);
+        ctx.lineTo(x + cabinetWidth/2, y - cabinetHeight);
+        ctx.lineTo(x + cabinetWidth/2 + cabinetDepth, y - cabinetHeight - cabinetDepth*0.5);
+        ctx.lineTo(x - cabinetWidth/2 + cabinetDepth, y - cabinetHeight - cabinetDepth*0.5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Surbrillance si sélectionné
+        if (opacity < 1) {
+            ctx.strokeStyle = '#ffeb3b';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x - cabinetWidth/2 - 2, y - cabinetHeight - 2, cabinetWidth + 4, cabinetHeight + 4);
         }
 
         ctx.restore();
