@@ -2689,3 +2689,55 @@ body {
 #scanArticleForReturnBtn i {
     font-size: 16px;
 }
+
+/* Bouton Ajouter dans les résultats */
+.add-article-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+    min-width: 100px;
+    box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+}
+
+.add-article-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.5);
+    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+}
+
+.add-article-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.add-article-btn i {
+    font-size: 14px;
+}
+
+/* Style pour les boutons dans les résultats */
+.article-result-actions .add-article-btn {
+    margin: 0;
+    width: 100%;
+}
+
+/* Style différent pour les articles sans flèche */
+.article-result-item.no-arrow .add-article-btn {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    box-shadow: 0 3px 10px rgba(255, 152, 0, 0.3);
+}
+
+.article-result-item.no-arrow .add-article-btn:hover {
+    background: linear-gradient(135deg, #F57C00 0%, #FF9800 100%);
+    box-shadow: 0 5px 15px rgba(255, 152, 0, 0.5);
+}
