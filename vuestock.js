@@ -1984,7 +1984,7 @@ class QuadViewManager {
             let x, y;
 
             // Si ce rack est en cours de drag, utiliser displayX/Y existants
-            if (this.isDragging && this.selectedRack && rack.id === this.selectedRack.id) {
+            if (this.isDragging && this.draggedRack && rack.id === this.draggedRack.id) {
                 // displayX/Y sont en pixels physiques, convertir en logiques
                 x = rack.displayX / scale;
                 y = rack.displayY / scale;
