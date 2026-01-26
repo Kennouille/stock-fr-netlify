@@ -3944,9 +3944,6 @@ function openSearchPopup(results, searchType) {
                                 <button class="btn-action view-details" data-index="${index}">
                                     <i class="fas fa-eye"></i> Détails
                                 </button>
-                                <button class="btn-action quick-edit" data-id="${article.id}">
-                                    <i class="fas fa-edit"></i> Modifier
-                                </button>
                                 <button class="btn-action print-label" data-id="${article.id}">
                                     <i class="fas fa-print"></i> Étiquette
                                 </button>
