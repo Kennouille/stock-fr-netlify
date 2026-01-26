@@ -1927,26 +1927,32 @@ class QuadViewManager {
         let currentX = startX;
 
         racks.forEach((rack) => {
-            const w = rack.width * 20;
-            const d = rack.depth * 20;
+            // Taille d'un carré en pixels LOGIQUES (toujours 20)
+            const logicalGridSize = 20;
+            const scale = this.topViewScale || 1;
+
+            // Dimensions en pixels logiques (toujours proportionnelles à la grille)
+            const w = rack.width * logicalGridSize;
+            const d = rack.depth * logicalGridSize;
 
             let x, y;
 
             // Si ce rack est en cours de drag, utiliser displayX/Y existants
             if (this.isDragging && this.selectedRack && rack.id === this.selectedRack.id) {
-                x = rack.displayX;
-                y = rack.displayY;
+                // displayX/Y sont en pixels physiques, convertir en logiques
+                x = rack.displayX / scale;
+                y = rack.displayY / scale;
             }
             // Si le rack a déjà une position sauvegardée (position_x/y), l'utiliser
             else if (rack.position_x !== undefined && rack.position_y !== undefined) {
-                const scale = 0.8;
-                x = rack.position_x * scale;
-                y = rack.position_y * scale;
+                const positionScale = 0.8; // Facteur de conversion position_x → display
+                x = rack.position_x * positionScale / scale; // Convertir en logiques
+                y = rack.position_y * positionScale / scale;
 
-                rack.displayX = x;
-                rack.displayY = y;
+                rack.displayX = x * scale; // Stocker en pixels physiques
+                rack.displayY = y * scale;
             }
-            // Sinon, calculer automatiquement (nouveaux racks uniquement)
+            // Sinon, calculer automatiquement
             else {
                 if (currentX + w > width - 50) {
                     currentX = Math.max(startX, width - 50 - w);
@@ -1955,14 +1961,14 @@ class QuadViewManager {
                 x = currentX;
                 y = startY;
 
-                rack.displayX = x;
-                rack.displayY = y;
+                rack.displayX = x * scale; // Stocker en pixels physiques
+                rack.displayY = y * scale;
 
                 currentX += w + spacing;
             }
 
-            rack.displayWidth = w;
-            rack.displayHeight = d;
+            rack.displayWidth = w * scale;  // Stocker en pixels physiques
+            rack.displayHeight = d * scale;
 
             // Ton dessin original
             ctx.fillStyle = rack.color || '#4a90e2';
