@@ -2842,26 +2842,85 @@ async function handleSearchArticleForReturn() {
     try {
         showLoading();
 
-        // 1. Rechercher l'article dans la base
+        // 1. Récupérer les données du projet
+        const projectData = await getProjectReservations(state.currentProject.id);
+        const { sorties, retours } = projectData;
+
+        // 2. Récupérer tous les articles du projet (IDs uniques)
+        const articleIdsDuProjet = [...new Set(sorties.map(s => s.article_id))];
+
+        if (articleIdsDuProjet.length === 0) {
+            alert('Ce projet n\'a aucun article utilisé');
+            return;
+        }
+
+        // 3. Rechercher parmi les articles DU PROJET
         const { data: articles, error } = await supabase
             .from('w_articles')
             .select('*')
+            .in('id', articleIdsDuProjet) // <-- IMPORTANT: seulement les articles du projet
             .or(`nom.ilike.%${searchTerm}%,numero.ilike.%${searchTerm}%,code_barre.ilike.%${searchTerm}%`)
             .limit(10);
 
         if (error) throw error;
 
         if (!articles || articles.length === 0) {
-            alert(`Aucun article trouvé pour "${searchTerm}"`);
+            // Aucun article du projet ne correspond à la recherche
+            alert(`Aucun article de ce projet ne correspond à "${searchTerm}"`);
             return;
         }
 
-        // 2. Récupérer les données du projet (sorties et retours)
-        const projectData = await getProjectReservations(state.currentProject.id);
-        const { sorties, retours } = projectData;
+        // 4. Séparer les articles en deux catégories
+        const articlesAvecFleche = [];
+        const articlesDejaRetournes = [];
 
-        // 3. Afficher les résultats avec la nouvelle fonction
-        displayArticleSearchResults(articles, sorties || [], retours || []);
+        articles.forEach(article => {
+            const sortiesArticle = sorties.filter(s => s.article_id === article.id);
+            const retoursArticle = retours.filter(r => r.article_id === article.id);
+
+            const totalSorti = sortiesArticle.reduce((sum, s) => sum + s.quantite, 0);
+            const totalRetourne = retoursArticle.reduce((sum, r) => sum + r.quantite, 0);
+            const quantiteRestante = totalSorti - totalRetourne;
+
+            if (quantiteRestante > 0) {
+                articlesAvecFleche.push({
+                    article,
+                    quantiteRestante,
+                    derniereSortie: sortiesArticle.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+                });
+            } else if (totalSorti > 0) {
+                articlesDejaRetournes.push({
+                    article,
+                    totalSorti,
+                    totalRetourne,
+                    derniereSortie: sortiesArticle.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+                });
+            }
+        });
+
+        // 5. Afficher selon le résultat
+        if (articlesAvecFleche.length > 0) {
+            // Afficher les articles avec flèche
+            displayArticlesAvecFleche(articlesAvecFleche);
+        } else if (articlesDejaRetournes.length > 0) {
+            // Demander si on veut ajouter un article déjà retourné
+            const premierArticle = articlesDejaRetournes[0];
+            const confirmer = confirm(
+                `"${premierArticle.article.nom}" a déjà été retourné (${premierArticle.totalRetourne}/${premierArticle.totalSorti}).\n\n` +
+                `Voulez-vous quand même l'ajouter au stock ?\n` +
+                `(Cela créera une nouvelle sortie puis un retour)`
+            );
+
+            if (confirmer) {
+                creerSortieEtRetour(premierArticle.article);
+            } else if (articlesDejaRetournes.length > 1) {
+                // Montrer tous les articles déjà retournés
+                displayArticlesDejaRetournes(articlesDejaRetournes);
+            }
+        } else {
+            // Cas improbable : article du projet mais ni flèche ni retourné
+            alert(`"${articles[0].nom}" est dans le projet mais n'a pas de sortie enregistrée`);
+        }
 
     } catch (error) {
         console.error('Erreur recherche article:', error);
@@ -2869,6 +2928,164 @@ async function handleSearchArticleForReturn() {
     } finally {
         hideLoading();
     }
+}
+
+// Afficher les articles avec flèche (sortie non retournée)
+function displayArticlesAvecFleche(articlesAvecFleche) {
+    const resultsContainer = document.getElementById('articleSearchResults');
+    const resultsList = document.getElementById('articleResultsList');
+    const resultsCount = document.getElementById('resultsCount');
+
+    let html = '';
+    articlesAvecFleche.forEach(item => {
+        const { article, quantiteRestante, derniereSortie } = item;
+
+        html += `
+            <div class="article-result-item has-arrow" data-id="${article.id}">
+                <div class="article-result-image">
+                    ${article.photo_url ? `
+                        <img src="${article.photo_url}" alt="${article.nom}"
+                             class="enlargeable-image"
+                             data-image-url="${article.photo_url}"
+                             data-image-title="${article.nom}">
+                    ` : `
+                        <div class="no-image">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    `}
+                </div>
+                <div class="article-result-info">
+                    <h6>${article.nom}</h6>
+                    <div class="article-result-details">
+                        <span>${article.numero || 'Sans numéro'}</span>
+                        <span class="status-arrow">À retourner: ${quantiteRestante}</span>
+                        ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
+                    </div>
+                    <div class="article-date-info">
+                        <small><i class="far fa-calendar"></i> Dernière sortie: ${formatDate(derniereSortie?.created_at)}</small>
+                    </div>
+                </div>
+                <div class="article-result-actions">
+                    <button class="btn-primary return-article-btn"
+                            data-mouvement-id="${derniereSortie?.id}"
+                            data-article-id="${article.id}"
+                            data-quantity="${quantiteRestante}">
+                        <i class="fas fa-arrow-left"></i> Retourner
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    resultsList.innerHTML = html;
+    resultsCount.textContent = `${articlesAvecFleche.length} article(s) à retourner`;
+    resultsContainer.style.display = 'block';
+
+    // Ajouter les événements
+    setupSearchResultEvents();
+}
+
+// Afficher les articles déjà retournés
+function displayArticlesDejaRetournes(articlesDejaRetournes) {
+    const resultsContainer = document.getElementById('articleSearchResults');
+    const resultsList = document.getElementById('articleResultsList');
+    const resultsCount = document.getElementById('resultsCount');
+
+    let html = '';
+    articlesDejaRetournes.forEach(item => {
+        const { article, totalSorti, totalRetourne, derniereSortie } = item;
+
+        html += `
+            <div class="article-result-item no-arrow" data-id="${article.id}">
+                <div class="article-result-image">
+                    ${article.photo_url ? `
+                        <img src="${article.photo_url}" alt="${article.nom}"
+                             class="enlargeable-image"
+                             data-image-url="${article.photo_url}"
+                             data-image-title="${article.nom}">
+                    ` : `
+                        <div class="no-image">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    `}
+                </div>
+                <div class="article-result-info">
+                    <h6>${article.nom}</h6>
+                    <div class="article-result-details">
+                        <span>${article.numero || 'Sans numéro'}</span>
+                        <span class="status-none">Déjà retourné: ${totalRetourne}/${totalSorti}</span>
+                        ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
+                    </div>
+                    <div class="article-date-info">
+                        ${derniereSortie ?
+                            `<small><i class="far fa-calendar"></i> Dernière sortie: ${formatDate(derniereSortie.created_at)}</small>` :
+                            ''
+                        }
+                    </div>
+                </div>
+                <div class="article-result-actions">
+                    <button class="btn-secondary add-article-btn"
+                            data-article-id="${article.id}">
+                        <i class="fas fa-plus"></i> Ajouter
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    resultsList.innerHTML = html;
+    resultsCount.textContent = `${articlesDejaRetournes.length} article(s) déjà retourné(s)`;
+    resultsContainer.style.display = 'block';
+
+    // Ajouter les événements
+    setupSearchResultEvents();
+
+    // Événements spécifiques aux boutons "Ajouter"
+    document.querySelectorAll('.add-article-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const articleId = this.dataset.articleId;
+            const article = articlesDejaRetournes.find(a => a.article.id === articleId)?.article;
+
+            if (article) {
+                const confirmer = confirm(
+                    `Ajouter "${article.nom}" au stock ?\n\n` +
+                    `Cela créera une nouvelle sortie puis ouvrira le formulaire de retour.`
+                );
+
+                if (confirmer) {
+                    creerSortieEtRetour(article);
+                }
+            }
+        });
+    });
+}
+
+// Fonction utilitaire pour configurer les événements des résultats
+function setupSearchResultEvents() {
+    // Images agrandissables
+    document.querySelectorAll('.enlargeable-image').forEach(img => {
+        img.addEventListener('click', function() {
+            const imageUrl = this.dataset.imageUrl;
+            const imageTitle = this.dataset.imageTitle;
+
+            if (typeof enlargeArticleImage === 'function') {
+                enlargeArticleImage(imageUrl, imageTitle);
+            }
+        });
+    });
+
+    // Boutons "Retourner"
+    document.querySelectorAll('.return-article-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const mouvementId = this.dataset.mouvementId;
+            const articleId = this.dataset.articleId;
+            const quantity = parseInt(this.dataset.quantity);
+
+            if (mouvementId && articleId) {
+                openReturnToStockModal(mouvementId, articleId, quantity);
+            }
+        });
+    });
 }
 
 async function creerSortieEtRetour(article) {
