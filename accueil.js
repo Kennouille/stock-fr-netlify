@@ -3234,11 +3234,11 @@ async function enregistrerAjoutSimple(article, quantity, reason, comment, closeM
 
         const mouvementData = {
             article_id: article.id,
-            type: 'ajout_stock',
+            type: 'ajustement',
             quantite: quantity,
             projet: state.currentProject?.nom || 'Ajustement',
             projet_id: state.currentProject?.id || null,
-            commentaire: `Ajout direct: ${motifMapping[reason] || reason} | ${comment || ''}`.trim(),
+            commentaire: `Ajustement stock: ${motifMapping[reason] || reason} | ${comment || ''}`.trim(),
             utilisateur_id: currentUser.id,
             utilisateur: currentUser.username,
             stock_avant: article.stock_actuel || 0,
