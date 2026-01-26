@@ -2787,6 +2787,12 @@ function updateUserInterface() {
         roleBadge.classList.add('user');
         roleText.textContent = 'Utilisateur';
     }
+
+    // AJOUTER CE CODE : Vérifier la permission vuestock pour le bouton Inventaire
+    const inventoryLink = document.getElementById('inventoryLink');
+    if (inventoryLink && currentUser.permissions && currentUser.permissions.vuestock) {
+        inventoryLink.style.display = 'inline-block';
+    }
 }
 
 function toggleAdminSection() {
@@ -3761,7 +3767,7 @@ function setupAdminButtons() {
         { id: 'gestion', icon: 'fas fa-box-open', text: 'Gestion articles', perm: 'gestion' },
         { id: 'projet', icon: 'fas fa-project-diagram', text: 'Gestion projets', perm: 'projets' },
         { id: 'reservations', icon: 'fas fa-clipboard-list', text: 'Réservations', perm: 'reservations' },
-        { id: 'vuestock', icon: 'fas fa-boxes', text: 'Vue stock 3D', perm: 'visualisation' }
+        { id: 'vuestock', icon: 'fas fa-boxes', text: 'Vue stock 3D', perm: 'vuestock' }
     ];
 
     // Filtrer les boutons selon les permissions
