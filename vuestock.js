@@ -1712,8 +1712,8 @@ class QuadViewManager {
 
         // ✅ CORRECTION : Appliquer le scale inverse aux coordonnées de la souris
         const scale = this.topViewScale || 1;
-        const adjustedX = x / scale;
-        const adjustedY = y / scale;
+        const adjustedX = x;
+        const adjustedY = y;
 
         console.log(`🔍 Recherche parmi ${this.currentRacks.length} racks à: ${adjustedX},${adjustedY} (scale: ${scale})`);
 
