@@ -495,12 +495,15 @@ class CanvasManager {
         newX = Math.round(newX / this.gridSize) * this.gridSize;
         newY = Math.round(newY / this.gridSize) * this.gridSize;
 
-        // Limites du canvas
-        const canvasWidth = this.canvas.width;
-        const canvasHeight = this.canvas.height;
-        const rackWidth = this.currentRack.width * this.gridSize;
-        const rackHeight = this.currentRack.depth * this.gridSize;
+        // ✅ CORRECTION : Calculer les limites AVEC le scale
+        const scale = this.topViewScale || 1;
+        const canvasWidth = this.canvasTop.width / scale;  // Largeur réelle avec scale
+        const canvasHeight = this.canvasTop.height / scale; // Hauteur réelle avec scale
 
+        const rackWidth = this.currentRack.displayWidth;
+        const rackHeight = this.currentRack.displayHeight;
+
+        // ✅ Permettre le déplacement sur TOUTE la largeur
         newX = Math.max(0, Math.min(newX, canvasWidth - rackWidth));
         newY = Math.max(0, Math.min(newY, canvasHeight - rackHeight));
 
