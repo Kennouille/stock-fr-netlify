@@ -2725,7 +2725,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Initialiser les éléments du modal Détails du projet
     projectDetailsModal = document.getElementById('projectDetailsModal');
     archiveProjectBtn = document.getElementById('archiveProjectBtn');
-    editProjectBtn = document.getElementById('editProjectBtn');
     exportProjectBtn = document.getElementById('exportProjectBtn');
     addReservationToProjectBtn = document.getElementById('addReservationToProjectBtn');
 
@@ -3852,10 +3851,6 @@ function setupEventListeners() {
     // Boutons du modal Détails projet
     if (archiveProjectBtn) {
         archiveProjectBtn.addEventListener('click', handleArchiveProject);
-    }
-
-    if (editProjectBtn) {
-        editProjectBtn.addEventListener('click', handleEditProject);
     }
 
     if (exportProjectBtn) {
