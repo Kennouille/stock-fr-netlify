@@ -1017,6 +1017,7 @@ class QuadViewManager {
         this.initStockModal();
 
         this.cameraFocusIndex = 0; // Index du rack centré
+        this.currentOffset = 0;    // Position actuelle de la caméra (pour animation)
 
 
         // Canvases
@@ -1351,6 +1352,17 @@ class QuadViewManager {
                         }
                     }
                 });
+
+                // === BOUCLE D'ANIMATION POUR MOUVEMENT FLUIDE ===
+                const animate = () => {
+                    // Redessiner la vue 3D seulement si besoin d'animation
+                    if (this.currentRacks && this.currentOffset !== undefined) {
+                        // Toujours redessiner pour l'animation fluide
+                        this.draw3DView(this.currentRacks);
+                    }
+                    requestAnimationFrame(animate);
+                };
+                animate();
 
                 // Clic pour zoomer sur un rack
                 this.canvas3D.addEventListener('click', (e) => {
@@ -2157,12 +2169,26 @@ class QuadViewManager {
         const focusIndex = selectedIndex !== -1 ? selectedIndex : 0;
         this.cameraFocusIndex = focusIndex; // Stocker pour la navigation
 
-        // Calculer le décalage pour centrer le rack focus
-        const focusOffset = - (focusIndex * spacingX);
+        // ANIMATION FLUIDE : Calculer la position cible
+        const targetOffset = - (focusIndex * spacingX);
+
+        // Si pas encore défini, initialiser à la position cible
+        if (this.currentOffset === undefined) {
+            this.currentOffset = targetOffset;
+        }
+
+        // Animation progressive (interpolation)
+        const animationSpeed = 0.1; // Plus petit = plus lent
+        this.currentOffset += (targetOffset - this.currentOffset) * animationSpeed;
+
+        // Arrêter l'animation quand c'est assez proche
+        if (Math.abs(targetOffset - this.currentOffset) < 0.5) {
+            this.currentOffset = targetOffset;
+        }
 
         const racksWithDepth = sortedRacks.map((rack, index) => {
-            // Position avec décalage pour centrer le rack focus
-            const x = focusOffset + (index * spacingX);
+            // Position avec animation fluide
+            const x = this.currentOffset + (index * spacingX);
             const z = baseZ;
 
             const angle = this.rotation3D;
@@ -3865,7 +3891,6 @@ class VueStock {
 
         // AJOUT pour QuadView
         this.quadViewManager = null;
-        this.cameraFocusIndex = 0;
 
         this.init();
     }
