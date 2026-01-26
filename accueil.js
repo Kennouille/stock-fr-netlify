@@ -3065,8 +3065,8 @@ function displayArticlesDejaRetournes(articlesDejaRetournes) {
 
             if (article) {
                 const confirmer = confirm(
-                    `Ajouter "${article.nom}" au stock ?\n\n` +
-                    `Cela créera une nouvelle sortie puis ouvrira le formulaire de retour.`
+                    `Toutes les pièces de cet article ont déjà été retournées "${article.nom}" au stock \n\n` +
+                    `Retourner d autres pièces`
                 );
 
                 if (confirmer) {
