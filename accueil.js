@@ -2910,7 +2910,9 @@ function displayArticleSearchResults(articles, sorties) {
                 <div class="article-result-image">
                     ${article.photo_url ? `
                         <img src="${article.photo_url}" alt="${article.nom}"
-                             onclick="enlargeArticleImage('${article.photo_url.replace(/'/g, "\\'")}', '${article.nom.replace(/'/g, "\\'")}')">
+                             class="enlargeable-image"
+                             data-image-url="${article.photo_url}"
+                             data-image-title="${article.nom}">
                     ` : `
                         <div class="no-image">
                             <i class="fas fa-box"></i>
@@ -2939,6 +2941,22 @@ function displayArticleSearchResults(articles, sorties) {
     resultsList.innerHTML = html;
     resultsCount.textContent = `${articles.length} résultat(s)`;
     resultsContainer.style.display = 'block';
+
+    // Ajouter les événements aux images
+    document.querySelectorAll('.enlargeable-image').forEach(img => {
+        img.addEventListener('click', function() {
+            const imageUrl = this.dataset.imageUrl;
+            const imageTitle = this.dataset.imageTitle;
+
+            if (typeof enlargeArticleImage === 'function') {
+                enlargeArticleImage(imageUrl, imageTitle);
+            } else {
+                console.error('enlargeArticleImage non disponible');
+                // Fallback simple
+                window.open(imageUrl, '_blank');
+            }
+        });
+    });
 
     // Ajouter les événements aux boutons
     document.querySelectorAll('.return-article-btn').forEach(btn => {
