@@ -1016,6 +1016,8 @@ class QuadViewManager {
 
         this.initStockModal();
 
+        this.cameraFocusIndex = 0; // Index du rack centré
+
 
         // Canvases
         this.canvasTop = document.getElementById('canvasTop');
@@ -1614,9 +1616,28 @@ class QuadViewManager {
             // Sélectionner le nouveau rack
             console.log(`📌 Sélection du rack ${clickedRack.code}`);
             this.selectedRack = clickedRack;
+
+            // 1. Mettre à jour toutes les vues
             this.drawTopView(this.currentRacks);
             this.drawFrontView(clickedRack);
             this.updatePropertiesPanel(clickedRack);
+
+            // 2. CENTRER ce rack dans la vue 3D
+            if (this.currentRacks) {
+                // Calculer la position pour centrer ce rack
+                const rackIndex = this.currentRacks.findIndex(r => r.id === clickedRack.id);
+                if (rackIndex !== -1) {
+                    // Positionner la caméra pour que ce rack soit au centre
+                    const totalRacks = this.currentRacks.length;
+                    const spacing = 120;
+                    this.cameraFocusIndex = rackIndex; // Nouvelle propriété à ajouter
+
+                    // Redessiner la vue 3D avec ce rack centré
+                    this.draw3DView(this.currentRacks);
+
+                    console.log(`🎯 Rack ${clickedRack.code} centré en 3D (index: ${rackIndex})`);
+                }
+            }
 
         } else {
             console.log('❌ Aucun rack à cette position');
