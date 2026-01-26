@@ -1126,9 +1126,9 @@ class QuadViewManager {
                     newDisplayY = Math.round(newDisplayY / gridSize) * gridSize;
 
                     // ✅ CORRECTION : Prendre en compte le scale
-                    const scale = this.topViewScale || 1;
-                    const canvasWidth = this.canvasTop.width / scale;
-                    const canvasHeight = this.canvasTop.height / scale;
+                    const viewScale = this.topViewScale || 1; // Changer le nom
+                    const canvasWidth = this.canvasTop.width / viewScale;
+                    const canvasHeight = this.canvasTop.height / viewScale;
 
                     newDisplayX = Math.max(0, Math.min(newDisplayX, canvasWidth - this.selectedRack.displayWidth));
                     newDisplayY = Math.max(0, Math.min(newDisplayY, canvasHeight - this.selectedRack.displayHeight));
@@ -1136,7 +1136,7 @@ class QuadViewManager {
                     this.selectedRack.displayX = newDisplayX;
                     this.selectedRack.displayY = newDisplayY;
 
-                    const scale = 0.8;
+                    const scale = 0.8; // OK, nom différent
                     this.selectedRack.position_x = newDisplayX / scale;
                     this.selectedRack.position_y = newDisplayY / scale;
 
