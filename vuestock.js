@@ -2130,11 +2130,15 @@ class QuadViewManager {
         });
 
         const racksWithDepth = sortedRacks.map((rack, index) => {
-            // Position linéaire basée sur l'index ou position_x
-            const x = startX + (index * spacingX);
-            const z = baseZ;
+            // Position linéaire basée sur l'index
+            const originalX = startX + (index * spacingX);
+            const originalZ = baseZ;
 
-            // Garder une rotation minimale pour l'effet 3D
+            // APPLIQUER LA ROTATION sur l'axe Y
+            const angleRad = (this.rotation3D * Math.PI) / 180;
+            const x = originalX * Math.cos(angleRad) - originalZ * Math.sin(angleRad);
+            const z = originalX * Math.sin(angleRad) + originalZ * Math.cos(angleRad);
+
             const angle = this.rotation3D;
 
             return { rack, x, z, angle };
