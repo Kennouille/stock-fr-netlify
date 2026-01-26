@@ -2190,25 +2190,8 @@ class QuadViewManager {
         const centerY = height / 2 + 50; // Décalé vers le bas
 
         // Disposition linéaire avec rack sélectionné au centre
-        // Espacement proportionnel à la largeur des racks
-        const baseSpacing = 80; // Espacement minimum entre racks
+        const spacingX = 120; // Espacement entre racks
         const baseZ = 0; // Tous à la même profondeur
-
-        // Calculer l'espacement dynamique
-        const canvasWidth = this.canvas3D.width;
-        const totalRacks = sortedRacks.length;
-
-        // Largeur moyenne des racks
-        let totalWidth = 0;
-        sortedRacks.forEach(rack => {
-            totalWidth += rack.width * 20 * 1.5; // Largeur comme dans drawCabinetRack
-        });
-        const averageWidth = totalWidth / totalRacks;
-
-        // Espacement = max(espacement minimum, espacement disponible)
-        const availableSpace = canvasWidth * 0.7; // 70% du canvas
-        const neededSpace = totalWidth + (baseSpacing * (totalRacks - 1));
-        const spacingX = Math.max(baseSpacing, (availableSpace - totalWidth) / totalRacks);
 
         // Utiliser l'ordre réel des racks
         const sortedRacks = [...racks].sort((a, b) => {
