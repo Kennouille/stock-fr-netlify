@@ -319,7 +319,6 @@ class CanvasManager {
         rackElement.style.height = `${rack.depth * this.gridSize}px`;
         rackElement.style.backgroundColor = rack.color || '#4a90e2';
         rackElement.style.border = '2px solid #333';
-        rackElement.style.boxSizing = 'border-box';
         rackElement.style.borderRadius = '4px';
         rackElement.style.transform = rack.rotation ? `rotate(${rack.rotation}deg)` : '';
         rackElement.style.transformOrigin = 'center center';
@@ -474,10 +473,8 @@ class CanvasManager {
         this.isDragging = true; // ← Première fois
         this.currentRack = rack;
         this.currentElement = element;
-        const rect = this.overlay.getBoundingClientRect();
-        this.dragStartX = (e.clientX - rect.left) - rack.position_x;
-        this.dragStartY = (e.clientY - rect.top) - rack.position_y;
-
+        this.dragStartX = e.clientX - rack.position_x;
+        this.dragStartY = e.clientY - rack.position_y;
 
         // Sélectionner l'étagère
         this.selectRack(rack, element);
@@ -1921,9 +1918,8 @@ class QuadViewManager {
         let currentX = startX;
 
         racks.forEach((rack) => {
-            const w = rack.width * 40;
-            const d = rack.depth * 40;
-
+            const w = rack.width * 20;
+            const d = rack.depth * 20;
 
             let x, y;
 
@@ -1934,9 +1930,9 @@ class QuadViewManager {
             }
             // Si le rack a déjà une position sauvegardée (position_x/y), l'utiliser
             else if (rack.position_x !== undefined && rack.position_y !== undefined) {
-                x = rack.position_x;
-                y = rack.position_y;
-
+                const scale = 0.8;
+                x = rack.position_x * scale;
+                y = rack.position_y * scale;
 
                 rack.displayX = x;
                 rack.displayY = y;
@@ -2229,14 +2225,9 @@ class QuadViewManager {
         }
 
         const racksWithDepth = sortedRacks.map((rack, index) => {
-            // Utiliser les positions réelles comme dans la vue du dessus
-            // 40px = 1 case en vue 2D, 20px = 1 case en vue 3D
-            const scale = 0.5; // 20/40 = 0.5
-            const rackWidth3D = (rack.width || 1) * 40; // largeur 2D réelle
-            const x = (rack.position_x || 0) * 0.5;
-
-
-            const z = (rack.position_y || 0) * 0.5; // position_y devient profondeur
+            // Position avec animation fluide
+            const x = this.currentOffset + (index * spacingX);
+            const z = baseZ;
 
             const angle = this.rotation3D;
 
@@ -2244,11 +2235,7 @@ class QuadViewManager {
         });
 
         // Dessiner chaque rack avec effets Rayons X et Zoom
-        racksWithDepth
-            .slice()
-            .sort((a, b) => a.z - b.z)
-            .forEach(({ rack, x, z, angle }, index) => {
-
+        racksWithDepth.forEach(({ rack, x, z, angle }, index) => {
             // Déterminer si ce rack est sélectionné
             const isSelected = this.selectedRack && rack.id === this.selectedRack.id;
 
@@ -2260,8 +2247,7 @@ class QuadViewManager {
             const zoomScale = this.camera.currentScale;
 
             // Projection isométrique avec zoom
-            const isoX = centerX + (x - z) * this.isometric.scale * zoomScale;
-
+            const isoX = centerX + x * this.isometric.scale * zoomScale;
             const isoY = centerY - z * this.isometric.scale * 0.5 * zoomScale;
 
             // Hauteur du rack (selon nombre d'étages)
