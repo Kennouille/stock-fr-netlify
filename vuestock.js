@@ -2239,9 +2239,6 @@ class QuadViewManager {
             // Déterminer si ce rack est sélectionné
             const isSelected = this.selectedRack && rack.id === this.selectedRack.id;
 
-            // Opacité : 50% si sélectionné, 100% sinon
-            const opacity = isSelected ? 0.5 : 1;
-
             // Effet Rayons X si c'est le rack survolé
             const isHovered = (rack === this.hoveredRack);
             const xrayAlpha = isHovered ? this.xrayProgress : 0;
@@ -2264,15 +2261,18 @@ class QuadViewManager {
             const depthScale = 1 - (index / sortedRacks.length) * 0.1;
             const scale = depthScale * zoomScale;
 
-            // Déterminer l'opacité (flouter les autres racks si un est en focus)
-            let opacity = 1;
-            if (this.focusedRack && rack !== this.focusedRack) {
-                opacity = 0.3; // Racks non focusés deviennent semi-transparents
-            }
+            // DÉTERMINER L'OPACITÉ FINALE
+            let finalOpacity = 1;
 
-            // Effet Rayons X si c'est le rack survolé
-            const isHovered = (rack === this.hoveredRack);
-            const xrayAlpha = isHovered ? this.xrayProgress : 0;
+            // 1. Si rack sélectionné : 50% transparent
+            if (isSelected) {
+                finalOpacity = 0.5;
+            }
+            // 2. Si autre rack est focusé : 30% transparent
+            else if (this.focusedRack && rack !== this.focusedRack) {
+                finalOpacity = 0.3;
+            }
+            // 3. Sinon : 100% opaque
 
             // Dessiner le rack en 3D isométrique avec effets
             this.drawIsoRack(
@@ -2284,8 +2284,8 @@ class QuadViewManager {
                 rackHeight * scale,
                 rack,
                 angle,
-                opacity,          // ← NOUVEAU : opacité selon sélection
-                xrayAlpha         // ← EXISTANT : effet rayons X
+                finalOpacity,  // <-- UNE SEULE VARIABLE
+                xrayAlpha
             );
         });
 
