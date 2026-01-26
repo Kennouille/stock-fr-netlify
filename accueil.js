@@ -2842,35 +2842,84 @@ async function handleSearchArticleForReturn() {
     try {
         showLoading();
 
-        // Rechercher dans les articles du projet
-        const projectData = await getProjectReservations(state.currentProject.id);
-        const { sorties } = projectData;
-
-        if (!sorties || sorties.length === 0) {
-            alert('Aucun article utilisé dans ce projet');
-            return;
-        }
-
-        // Récupérer les IDs des articles du projet
-        const articleIds = sorties.map(s => s.article_id);
-
-        // Rechercher les articles correspondants
+        // 1. Rechercher l'article dans la base
         const { data: articles, error } = await supabase
             .from('w_articles')
             .select('*')
-            .in('id', articleIds)
-            .or(`nom.ilike.%${searchTerm}%,numero.ilike.%${searchTerm}%,code_barre.ilike.%${searchTerm}%`);
+            .or(`nom.ilike.%${searchTerm}%,numero.ilike.%${searchTerm}%,code_barre.ilike.%${searchTerm}%`)
+            .limit(5);
 
         if (error) throw error;
 
-        // Afficher les résultats
-        displayArticleSearchResults(articles, sorties);
+        if (!articles || articles.length === 0) {
+            alert(`Aucun article trouvé pour "${searchTerm}"`);
+            return;
+        }
+
+        // 2. Vérifier si l'article a été utilisé dans ce projet
+        const projectData = await getProjectReservations(state.currentProject.id);
+        const { sorties } = projectData;
+
+        const articleTrouve = articles[0]; // Prendre le premier résultat
+
+        const sortieArticle = sorties.find(s => s.article_id === articleTrouve.id);
+
+        if (sortieArticle) {
+            // L'article a été utilisé → ouvrir modal retour
+            openReturnToStockModal(sortieArticle.id, articleTrouve.id, sortieArticle.quantite);
+        } else {
+            // L'article n'a pas été utilisé → demander confirmation
+            const confirmerAjout = confirm(
+                `"${articleTrouve.nom}" n'a pas été utilisé dans ce projet.\n\n` +
+                `Voulez-vous quand même le retourner au stock ?\n` +
+                `(Cela créera une nouvelle sortie puis un retour)`
+            );
+
+            if (confirmerAjout) {
+                // Créer une sortie puis ouvrir le retour
+                await creerSortieEtRetour(articleTrouve);
+            }
+        }
 
     } catch (error) {
         console.error('Erreur recherche article:', error);
         alert('Erreur lors de la recherche');
     } finally {
         hideLoading();
+    }
+}
+
+async function creerSortieEtRetour(article) {
+    try {
+        // Créer une sortie fictive pour cet article
+        const mouvementData = {
+            article_id: article.id,
+            type: 'sortie',
+            quantite: 1, // Quantité par défaut
+            projet: state.currentProject.nom,
+            projet_id: state.currentProject.id,
+            commentaire: `Sortie automatique pour retour manuel - ${article.nom}`,
+            utilisateur_id: currentUser.id,
+            utilisateur: currentUser.username,
+            date_mouvement: new Date().toISOString().split('T')[0],
+            heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
+            created_at: new Date().toISOString()
+        };
+
+        const { data: newMouvement, error } = await supabase
+            .from('w_mouvements')
+            .insert([mouvementData])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Ouvrir directement le modal de retour
+        openReturnToStockModal(newMouvement.id, article.id, 1);
+
+    } catch (error) {
+        console.error('Erreur création sortie/retour:', error);
+        alert('Erreur lors de la création de la sortie');
     }
 }
 
