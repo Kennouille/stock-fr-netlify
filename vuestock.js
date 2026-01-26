@@ -2118,22 +2118,27 @@ class QuadViewManager {
         const centerX = width / 2;
         const centerY = height / 2 + 50; // Décalé vers le bas
 
-        // Rayon du cercle sur lequel disposer les racks
-        const radius = 180;
+        // Disposition linéaire basée sur les vraies positions
+        const startX = -200; // Position de départ
+        const spacingX = 120; // Espacement entre racks
+        const baseZ = 0; // Tous à la même profondeur
 
-        // Trier les racks par profondeur (z) pour affichage correct
-        const racksWithDepth = racks.map((rack, index) => {
-            // Angle de base + rotation actuelle
-            const baseAngle = (index / racks.length) * 360;
-            const angle = (baseAngle + this.rotation3D) % 360;
-            const angleRad = (angle * Math.PI) / 180;
+        // Utiliser l'ordre réel des racks (par position_x ou par code)
+        const sortedRacks = [...racks].sort((a, b) => {
+            // Trier par position_x (de gauche à droite)
+            return (a.position_x || 0) - (b.position_x || 0);
+        });
 
-            // Position sur le cercle
-            const x = Math.cos(angleRad) * radius;
-            const z = Math.sin(angleRad) * radius;
+        const racksWithDepth = sortedRacks.map((rack, index) => {
+            // Position linéaire basée sur l'index ou position_x
+            const x = startX + (index * spacingX);
+            const z = baseZ;
+
+            // Garder une rotation minimale pour l'effet 3D
+            const angle = this.rotation3D;
 
             return { rack, x, z, angle };
-        }).sort((a, b) => b.z - a.z); // Trier du plus loin au plus proche
+        });
 
         // Dessiner chaque rack avec effets Rayons X et Zoom
         racksWithDepth.forEach(({ rack, x, z, angle }) => {
