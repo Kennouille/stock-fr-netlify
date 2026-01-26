@@ -2139,23 +2139,32 @@ class QuadViewManager {
         const centerX = width / 2;
         const centerY = height / 2 + 50; // Décalé vers le bas
 
-        // Disposition linéaire basée sur les vraies positions
-        const startX = -200; // Position de départ
+        // Disposition linéaire avec rack sélectionné au centre
         const spacingX = 120; // Espacement entre racks
         const baseZ = 0; // Tous à la même profondeur
 
-        // Utiliser l'ordre réel des racks (par position_x ou par code)
+        // Utiliser l'ordre réel des racks
         const sortedRacks = [...racks].sort((a, b) => {
-            // Trier par position_x (de gauche à droite)
             return (a.position_x || 0) - (b.position_x || 0);
         });
 
+        // Trouver l'index du rack sélectionné
+        const selectedIndex = sortedRacks.findIndex(r =>
+            this.selectedRack && r.id === this.selectedRack.id
+        );
+
+        // Si aucun rack sélectionné, utiliser le premier
+        const focusIndex = selectedIndex !== -1 ? selectedIndex : 0;
+        this.cameraFocusIndex = focusIndex; // Stocker pour la navigation
+
+        // Calculer le décalage pour centrer le rack focus
+        const focusOffset = - (focusIndex * spacingX);
+
         const racksWithDepth = sortedRacks.map((rack, index) => {
-            // Position linéaire basée sur l'index ou position_x
-            const x = startX + (index * spacingX);
+            // Position avec décalage pour centrer le rack focus
+            const x = focusOffset + (index * spacingX);
             const z = baseZ;
 
-            // Garder une rotation minimale pour l'effet 3D
             const angle = this.rotation3D;
 
             return { rack, x, z, angle };
@@ -3856,6 +3865,7 @@ class VueStock {
 
         // AJOUT pour QuadView
         this.quadViewManager = null;
+        this.cameraFocusIndex = 0;
 
         this.init();
     }
