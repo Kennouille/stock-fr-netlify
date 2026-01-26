@@ -199,8 +199,8 @@ exports.handler = async (event) => {
             const payload = {
                 rack_code: body.code || body.rack_code || `RACK_${Date.now()}`,
                 display_name: body.name || body.display_name || `Étagère ${body.code}`,
-                position_x: body.position_x || body.x || 100,
-                position_y: body.position_y || body.y || 100,
+                position_x: Math.round(body.position_x || body.x || 100),  // ← AJOUT DE Math.round()
+                position_y: Math.round(body.position_y || body.y || 100),  // ← AJOUT DE Math.round()
                 rotation: body.rotation || 0,
                 width: body.width || 3,
                 depth: body.depth || 2,
