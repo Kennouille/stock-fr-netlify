@@ -2189,45 +2189,39 @@ class QuadViewManager {
         const centerX = width / 2;
         const centerY = height / 2 + 50; // Décalé vers le bas
 
-        // Disposition linéaire avec rack sélectionné au centre
-        const spacingX = 120; // Espacement entre racks
-        const baseZ = 0; // Tous à la même profondeur
-
-        // Utiliser l'ordre réel des racks
+        // Utiliser les positions réelles des racks (comme dans la vue du dessus)
         const sortedRacks = [...racks].sort((a, b) => {
             return (a.position_x || 0) - (b.position_x || 0);
         });
 
-        // Trouver l'index du rack sélectionné
-        const selectedIndex = sortedRacks.findIndex(r =>
-            this.selectedRack && r.id === this.selectedRack.id
-        );
+        // Trouver la position min et max pour centrer la vue
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
 
-        // Si aucun rack sélectionné, utiliser le premier
-        const focusIndex = selectedIndex !== -1 ? selectedIndex : 0;
-        this.cameraFocusIndex = focusIndex; // Stocker pour la navigation
+        sortedRacks.forEach(rack => {
+            // Convertir position_x/y (pixels) en coordonnées 3D
+            // Dans la vue dessus, 40px = 1 case, dans la vue 3D on va utiliser un facteur d'échelle
+            const rackX = rack.position_x || 0;
+            const rackY = rack.position_y || 0;
 
-        // ANIMATION FLUIDE : Calculer la position cible
-        const targetOffset = - (focusIndex * spacingX);
+            minX = Math.min(minX, rackX);
+            maxX = Math.max(maxX, rackX + (rack.width * 40)); // 40px par case
+            minY = Math.min(minY, rackY);
+            maxY = Math.max(maxY, rackY + (rack.depth * 40));
+        });
 
-        // Si pas encore défini, initialiser à la position cible
-        if (this.currentOffset === undefined) {
-            this.currentOffset = targetOffset;
-        }
+        // Centrer la vue sur l'ensemble des racks
+        const centerOfRacksX = (minX + maxX) / 2;
+        const centerOfRacksY = (minY + maxY) / 2;
 
-        // Animation progressive (interpolation)
-        const animationSpeed = 0.1; // Plus petit = plus lent
-        this.currentOffset += (targetOffset - this.currentOffset) * animationSpeed;
-
-        // Arrêter l'animation quand c'est assez proche
-        if (Math.abs(targetOffset - this.currentOffset) < 0.5) {
-            this.currentOffset = targetOffset;
-        }
-
-        const racksWithDepth = sortedRacks.map((rack, index) => {
-            // Position avec animation fluide
-            const x = this.currentOffset + (index * spacingX);
-            const z = baseZ;
+        const racksWithDepth = sortedRacks.map((rack) => {
+            // Utiliser les positions réelles du rack
+            // Facteur d'échelle : dans vue 3D, 1 case = 20px (au lieu de 40px dans vue dessus)
+            const scaleFactor = 0.5; // 20/40 = 0.5
+            const x = (rack.position_x - centerOfRacksX) * scaleFactor;
+            const z = (rack.position_y - centerOfRacksY) * scaleFactor; // Dans vue 3D, Y devient Z (profondeur)
 
             const angle = this.rotation3D;
 
