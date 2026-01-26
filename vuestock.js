@@ -491,9 +491,10 @@ class CanvasManager {
         let newX = e.clientX - this.dragStartX;
         let newY = e.clientY - this.dragStartY;
 
-        // Snap to grid
-        newX = Math.round(newX / this.gridSize) * this.gridSize;
-        newY = Math.round(newY / this.gridSize) * this.gridSize;
+        // ✅ CORRECTION : Utiliser la taille de grille Quad (20px) au lieu de Canvas (40px)
+        const gridSize = 20; // Taille de grille dans QuadView
+        newX = Math.round(newX / gridSize) * gridSize;
+        newY = Math.round(newY / gridSize) * gridSize;
 
         // ✅ CORRECTION : Calculer les limites AVEC le scale
         const scale = this.topViewScale || 1;
