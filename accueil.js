@@ -2835,7 +2835,7 @@ async function handleSearchArticleForReturn() {
     const searchTerm = searchInput.value.trim();
 
     if (!searchTerm) {
-        alert('Veuillez entrer un terme de recherche');
+        showNotification('Veuillez entrer un terme de recherche', 'warning');
         return;
     }
 
@@ -2850,7 +2850,7 @@ async function handleSearchArticleForReturn() {
         const articleIdsDuProjet = [...new Set(sorties.map(s => s.article_id))];
 
         if (articleIdsDuProjet.length === 0) {
-            alert('Ce projet n\'a aucun article utilisé');
+            afficherMessageResultats('info', 'Ce projet n\'a aucun article utilisé');
             return;
         }
 
@@ -2865,8 +2865,7 @@ async function handleSearchArticleForReturn() {
         if (error) throw error;
 
         if (!articles || articles.length === 0) {
-            // Aucun article du projet ne correspond à la recherche
-            alert(`Aucun article de ce projet ne correspond à "${searchTerm}"`);
+            afficherMessageResultats('warning', `Aucun article de ce projet ne correspond à "${searchTerm}"`);
             return;
         }
 
@@ -2903,30 +2902,49 @@ async function handleSearchArticleForReturn() {
             // Afficher les articles avec flèche
             displayArticlesAvecFleche(articlesAvecFleche);
         } else if (articlesDejaRetournes.length > 0) {
-            // Demander si on veut ajouter un article déjà retourné
-            const premierArticle = articlesDejaRetournes[0];
-            const confirmer = confirm(
-                `"${premierArticle.article.nom}" a déjà été retourné (${premierArticle.totalRetourne}/${premierArticle.totalSorti}).\n\n` +
-                `Voulez-vous quand même l'ajouter au stock ?\n` +
-                `(Cela créera une nouvelle sortie puis un retour)`
-            );
-
-            if (confirmer) {
-                creerSortieEtRetour(premierArticle.article);
-            } else if (articlesDejaRetournes.length > 1) {
-                // Montrer tous les articles déjà retournés
-                displayArticlesDejaRetournes(articlesDejaRetournes);
-            }
+            // Afficher directement les articles déjà retournés
+            displayArticlesDejaRetournes(articlesDejaRetournes);
         } else {
             // Cas improbable : article du projet mais ni flèche ni retourné
-            alert(`"${articles[0].nom}" est dans le projet mais n'a pas de sortie enregistrée`);
+            afficherMessageResultats('info', `"${articles[0].nom}" est dans le projet mais n'a pas de sortie enregistrée`);
         }
 
     } catch (error) {
         console.error('Erreur recherche article:', error);
-        alert('Erreur lors de la recherche');
+        showNotification('Erreur lors de la recherche', 'error');
     } finally {
         hideLoading();
+    }
+}
+
+// Fonction pour afficher un message dans les résultats
+function afficherMessageResultats(type, message) {
+    const resultsContainer = document.getElementById('articleSearchResults');
+    const resultsList = document.getElementById('articleResultsList');
+    const resultsCount = document.getElementById('resultsCount');
+
+    const icon = type === 'info' ? 'fa-info-circle' : 'fa-exclamation-triangle';
+    const color = type === 'info' ? '#3498db' : '#e74c3c';
+
+    resultsList.innerHTML = `
+        <div class="message-result">
+            <i class="fas ${icon} fa-3x"></i>
+            <p>${message}</p>
+        </div>
+    `;
+    resultsCount.textContent = '0 résultat(s)';
+    resultsContainer.style.display = 'block';
+}
+
+// Fonction de notification (si elle n'existe pas)
+function showNotification(message, type = 'info') {
+    // Utiliser showAlert si elle existe, sinon console.log
+    if (typeof showAlert === 'function') {
+        showAlert(message, type);
+    } else if (type === 'error') {
+        console.error(message);
+    } else {
+        console.log(message);
     }
 }
 
