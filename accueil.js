@@ -3111,7 +3111,7 @@ async function creerSortieEtRetour(article) {
         <div class="modal-overlay simple-return-modal">
             <div class="modal" style="max-width: 400px;">
                 <div class="modal-header">
-                    <h3><i class="fas fa-plus-circle"></i> Ajouter au stock</h3>
+                    <h3><i class="fas fa-plus-circle"></i> Retourner au stock</h3>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -3121,7 +3121,7 @@ async function creerSortieEtRetour(article) {
                     </div>
 
                     <div class="form-group">
-                        <label><i class="fas fa-boxes"></i> Quantité à ajouter *</label>
+                        <label><i class="fas fa-boxes"></i> Quantité à retourner *</label>
                         <input type="number"
                                id="simpleQuantity"
                                value="1"
