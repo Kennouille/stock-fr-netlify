@@ -319,6 +319,7 @@ class CanvasManager {
         rackElement.style.height = `${rack.depth * this.gridSize}px`;
         rackElement.style.backgroundColor = rack.color || '#4a90e2';
         rackElement.style.border = '2px solid #333';
+        rackElement.style.boxSizing = 'border-box';
         rackElement.style.borderRadius = '4px';
         rackElement.style.transform = rack.rotation ? `rotate(${rack.rotation}deg)` : '';
         rackElement.style.transformOrigin = 'center center';
