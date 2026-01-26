@@ -2340,9 +2340,6 @@ class QuadViewManager {
         // Appliquer l'opacité globale
         ctx.globalAlpha = opacity;
 
-        // Appliquer l'opacité globale
-        ctx.globalAlpha = opacity;
-
         // Angle isométrique standard (30°)
         const iso = Math.PI / 6; // 30 degrés
 
