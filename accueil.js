@@ -3149,11 +3149,11 @@ async function creerSortieEtRetour(article) {
                     </div>
 
                     <div class="modal-actions">
-                        <button id="confirmSimpleAdd" class="btn-primary">
-                            <i class="fas fa-check"></i> Confirmer
-                        </button>
                         <button type="button" class="btn-secondary close-modal">
                             Annuler
+                        </button>
+                        <button id="confirmSimpleAdd" class="btn-primary">
+                            <i class="fas fa-check"></i> Confirmer
                         </button>
                     </div>
                 </div>

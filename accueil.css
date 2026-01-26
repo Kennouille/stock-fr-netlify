@@ -3268,3 +3268,29 @@ button.close-modal:hover {
         margin-top: 10px;
     }
 }
+
+/* S'assurer que tous les boutons dans .modal-actions ont la même taille */
+.modal-actions .btn-primary,
+.modal-actions .btn-secondary,
+.modal-actions .btn-success,
+.modal-actions .btn-danger,
+.modal-actions .btn-warning {
+    padding: 10px 20px;
+    font-size: 13px;
+    min-width: 100px;
+    height: 40px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Ajuster les icônes pour correspondre */
+.modal-actions .btn-primary i,
+.modal-actions .btn-secondary i,
+.modal-actions .btn-success i,
+.modal-actions .btn-danger i,
+.modal-actions .btn-warning i {
+    font-size: 14px;
+}
