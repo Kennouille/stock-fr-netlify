@@ -3760,7 +3760,8 @@ function setupAdminButtons() {
         { id: 'configuration', icon: 'fas fa-cog', text: 'Configuration', perm: 'config' },
         { id: 'gestion', icon: 'fas fa-box-open', text: 'Gestion articles', perm: 'gestion' },
         { id: 'projet', icon: 'fas fa-project-diagram', text: 'Gestion projets', perm: 'projets' },
-        { id: 'reservations', icon: 'fas fa-clipboard-list', text: 'Réservations', perm: 'reservations' }
+        { id: 'reservations', icon: 'fas fa-clipboard-list', text: 'Réservations', perm: 'reservations' },
+        { id: 'vuestock', icon: 'fas fa-boxes', text: 'Vue stock 3D', perm: 'visualisation' }
     ];
 
     // Filtrer les boutons selon les permissions

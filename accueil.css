@@ -3294,3 +3294,31 @@ button.close-modal:hover {
 .modal-actions .btn-warning i {
     font-size: 14px;
 }
+
+/* Bouton Vue stock 3D spécial */
+.admin-btn[data-id="vuestock"] {
+    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+    color: white;
+    border: 2px solid #8e44ad;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-btn[data-id="vuestock"]:hover {
+    background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(155, 89, 182, 0.4);
+}
+
+.admin-btn[data-id="vuestock"]::after {
+    content: '3D';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
+}
