@@ -2847,7 +2847,7 @@ async function handleSearchArticleForReturn() {
             .from('w_articles')
             .select('*')
             .or(`nom.ilike.%${searchTerm}%,numero.ilike.%${searchTerm}%,code_barre.ilike.%${searchTerm}%`)
-            .limit(5);
+            .limit(10);
 
         if (error) throw error;
 
@@ -2856,36 +2856,42 @@ async function handleSearchArticleForReturn() {
             return;
         }
 
-        // 2. Vérifier si l'article a été utilisé dans ce projet
+        // 2. Récupérer les données du projet (sorties et retours)
         const projectData = await getProjectReservations(state.currentProject.id);
-        const { sorties } = projectData;
+        const { sorties, retours } = projectData;
 
-        const articleTrouve = articles[0]; // Prendre le premier résultat
-
-        const sortieArticle = sorties.find(s => s.article_id === articleTrouve.id);
-
-        if (sortieArticle) {
-            // L'article a été utilisé → ouvrir modal retour
-            openReturnToStockModal(sortieArticle.id, articleTrouve.id, sortieArticle.quantite);
-        } else {
-            // L'article n'a pas été utilisé → demander confirmation
-            const confirmerAjout = confirm(
-                `"${articleTrouve.nom}" n'a pas été utilisé dans ce projet.\n\n` +
-                `Voulez-vous quand même le retourner au stock ?\n` +
-                `(Cela créera une nouvelle sortie puis un retour)`
-            );
-
-            if (confirmerAjout) {
-                // Créer une sortie puis ouvrir le retour
-                await creerSortieEtRetour(articleTrouve);
-            }
-        }
+        // 3. Afficher les résultats avec la nouvelle fonction
+        displayArticleSearchResults(articles, sorties || [], retours || []);
 
     } catch (error) {
         console.error('Erreur recherche article:', error);
         alert('Erreur lors de la recherche');
     } finally {
         hideLoading();
+    }
+}
+
+// Fonction pour gérer un article sans sortie
+function handleArticleWithoutExit(article, sorties, retours) {
+    const confirmerAjout = confirm(
+        `"${article.nom}" n'a pas été utilisé dans ce projet.\n\n` +
+        `Voulez-vous quand même le retourner au stock ?\n` +
+        `(Cela créera une nouvelle sortie puis un retour)`
+    );
+
+    if (confirmerAjout) {
+        creerSortieEtRetour(article);
+    } else {
+        // Option: montrer tous les résultats quand même
+        const showAll = confirm(
+            `Voulez-vous voir tous les résultats de recherche ?\n` +
+            `(Y compris les articles sans flèche)`
+        );
+
+        if (showAll) {
+            // Afficher tous les articles (même sans sortie)
+            displayAllSearchResults([article], sorties, retours);
+        }
     }
 }
 
@@ -2923,16 +2929,36 @@ async function creerSortieEtRetour(article) {
     }
 }
 
-function displayArticleSearchResults(articles, sorties) {
+function displayArticleSearchResults(articles, sorties, retours) {
     const resultsContainer = document.getElementById('articleSearchResults');
     const resultsList = document.getElementById('articleResultsList');
     const resultsCount = document.getElementById('resultsCount');
 
-    if (!articles || articles.length === 0) {
+    // Filtrer : garder seulement les articles qui ont une sortie non retournée
+    const articlesAvecFleche = articles.filter(article => {
+        const sortiesArticle = sorties.filter(s => s.article_id === article.id);
+
+        if (sortiesArticle.length === 0) return false; // Pas de sortie
+
+        // Pour chaque sortie, vérifier si elle a été retournée
+        const sortiesNonRetournees = sortiesArticle.filter(sortie => {
+            const retoursPourCetteSortie = retours.filter(r =>
+                r.article_id === sortie.article_id
+            );
+
+            const quantiteRetournee = retoursPourCetteSortie.reduce((sum, r) => sum + r.quantite, 0);
+            return sortie.quantite > quantiteRetournee;
+        });
+
+        return sortiesNonRetournees.length > 0; // Garder seulement si au moins une sortie non retournée
+    });
+
+    if (articlesAvecFleche.length === 0) {
         resultsList.innerHTML = `
             <div class="no-results">
                 <i class="fas fa-search"></i>
-                <p>Aucun article trouvé pour "${searchTerm}"</p>
+                <p>Aucun article avec flèche trouvé pour "${document.getElementById('manualArticleSearchInput').value}"</p>
+                <p class="small-text">Ces articles n'ont pas de sortie non retournée dans ce projet</p>
             </div>
         `;
         resultsCount.textContent = '0 résultat(s)';
@@ -2940,19 +2966,28 @@ function displayArticleSearchResults(articles, sorties) {
         return;
     }
 
-    // Compter les quantités sorties par article
-    const articleQuantities = {};
-    sorties.forEach(sortie => {
-        if (!articleQuantities[sortie.article_id]) {
-            articleQuantities[sortie.article_id] = 0;
-        }
-        articleQuantities[sortie.article_id] += sortie.quantite;
+    // Compter les quantités restantes par article
+    const articleQuantitesRestantes = {};
+
+    articlesAvecFleche.forEach(article => {
+        const sortiesArticle = sorties.filter(s => s.article_id === article.id);
+        const retoursArticle = retours.filter(r => r.article_id === article.id);
+
+        const totalSorti = sortiesArticle.reduce((sum, s) => sum + s.quantite, 0);
+        const totalRetourne = retoursArticle.reduce((sum, r) => sum + r.quantite, 0);
+
+        articleQuantitesRestantes[article.id] = totalSorti - totalRetourne;
     });
 
     // Afficher les résultats
     let html = '';
-    articles.forEach(article => {
-        const quantityUsed = articleQuantities[article.id] || 0;
+    articlesAvecFleche.forEach(article => {
+        const quantiteRestante = articleQuantitesRestantes[article.id] || 0;
+
+        // Trouver la sortie la plus récente pour cet article
+        const sortieArticle = sorties
+            .filter(s => s.article_id === article.id)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
 
         html += `
             <div class="article-result-item" data-id="${article.id}">
@@ -2972,14 +3007,18 @@ function displayArticleSearchResults(articles, sorties) {
                     <h6>${article.nom}</h6>
                     <div class="article-result-details">
                         <span>${article.numero || 'Sans numéro'}</span>
-                        <span>Quantité utilisée: ${quantityUsed}</span>
+                        <span>À retourner: ${quantiteRestante}</span>
                         ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
+                    </div>
+                    <div class="article-date-info">
+                        <small><i class="far fa-calendar"></i> Sorti le: ${formatDate(sortieArticle?.created_at)}</small>
                     </div>
                 </div>
                 <div class="article-result-actions">
                     <button class="btn-primary return-article-btn"
+                            data-mouvement-id="${sortieArticle?.id}"
                             data-article-id="${article.id}"
-                            data-quantity="${quantityUsed}">
+                            data-quantity="${quantiteRestante}">
                         <i class="fas fa-arrow-left"></i> Retourner
                     </button>
                 </div>
@@ -2988,7 +3027,7 @@ function displayArticleSearchResults(articles, sorties) {
     });
 
     resultsList.innerHTML = html;
-    resultsCount.textContent = `${articles.length} résultat(s)`;
+    resultsCount.textContent = `${articlesAvecFleche.length} résultat(s)`;
     resultsContainer.style.display = 'block';
 
     // Ajouter les événements aux images
@@ -2999,10 +3038,6 @@ function displayArticleSearchResults(articles, sorties) {
 
             if (typeof enlargeArticleImage === 'function') {
                 enlargeArticleImage(imageUrl, imageTitle);
-            } else {
-                console.error('enlargeArticleImage non disponible');
-                // Fallback simple
-                window.open(imageUrl, '_blank');
             }
         });
     });
@@ -3010,13 +3045,12 @@ function displayArticleSearchResults(articles, sorties) {
     // Ajouter les événements aux boutons
     document.querySelectorAll('.return-article-btn').forEach(btn => {
         btn.addEventListener('click', function() {
+            const mouvementId = this.dataset.mouvementId;
             const articleId = this.dataset.articleId;
             const quantity = parseInt(this.dataset.quantity);
 
-            // Trouver le mouvement correspondant
-            const sortie = sorties.find(s => s.article_id === articleId);
-            if (sortie) {
-                openReturnToStockModal(sortie.id, articleId, quantity);
+            if (mouvementId && articleId) {
+                openReturnToStockModal(mouvementId, articleId, quantity);
             }
         });
     });
