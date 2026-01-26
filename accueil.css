@@ -3079,3 +3079,68 @@ button.close-modal:hover {
 .popup-footer .btn-warning {
     min-width: 150px;
 }
+
+/* Bouton Rechercher dans le modal Détails du projet */
+#searchArticleForReturnBtn {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+    min-width: 120px;
+    box-shadow: 0 3px 10px rgba(52, 152, 219, 0.3);
+}
+
+#searchArticleForReturnBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.5);
+    background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+}
+
+#searchArticleForReturnBtn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+#searchArticleForReturnBtn i {
+    font-size: 14px;
+}
+
+/* Style spécifique pour le groupe de recherche */
+.search-input-group .btn-primary {
+    border-radius: 0 6px 6px 0;
+    height: 44px;
+}
+
+.search-input-group .search-input {
+    border-radius: 6px 0 0 6px;
+    border-right: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .search-input-group {
+        flex-direction: column;
+    }
+
+    .search-input-group .search-input {
+        border-radius: 6px;
+        border-right: 1px solid #ced4da;
+        margin-bottom: 10px;
+    }
+
+    .search-input-group .btn-primary {
+        border-radius: 6px;
+        height: auto;
+        width: 100%;
+    }
+}
