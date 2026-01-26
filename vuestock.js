@@ -2130,15 +2130,11 @@ class QuadViewManager {
         });
 
         const racksWithDepth = sortedRacks.map((rack, index) => {
-            // Position linéaire basée sur l'index
-            const originalX = startX + (index * spacingX);
-            const originalZ = baseZ;
+            // Position linéaire basée sur l'index ou position_x
+            const x = startX + (index * spacingX);
+            const z = baseZ;
 
-            // APPLIQUER LA ROTATION sur l'axe Y
-            const angleRad = (this.rotation3D * Math.PI) / 180;
-            const x = originalX * Math.cos(angleRad) - originalZ * Math.sin(angleRad);
-            const z = originalX * Math.sin(angleRad) + originalZ * Math.cos(angleRad);
-
+            // Garder une rotation minimale pour l'effet 3D
             const angle = this.rotation3D;
 
             return { rack, x, z, angle };
@@ -3038,26 +3034,31 @@ class QuadViewManager {
         const height = this.canvas3D.height;
         const centerX = width / 2;
         const centerY = height / 2 + 50;
-        const radius = 180;
+
+        // Disposition linéaire (DOIT MATCHER draw3DView)
+        const startX = -200;
+        const spacingX = 120;
+
+        // Trier comme dans draw3DView
+        const sortedRacks = [...this.currentRacks].sort((a, b) => {
+            return (a.position_x || 0) - (b.position_x || 0);
+        });
 
         // Parcourir tous les racks
-        for (let i = 0; i < this.currentRacks.length; i++) {
-            const rack = this.currentRacks[i];
+        for (let i = 0; i < sortedRacks.length; i++) {
+            const rack = sortedRacks[i];
 
-            // Calculer la position du rack
-            const baseAngle = (i / this.currentRacks.length) * 360;
-            const angle = (baseAngle + this.rotation3D) % 360;
-            const angleRad = (angle * Math.PI) / 180;
-
-            const x = Math.cos(angleRad) * radius;
-            const z = Math.sin(angleRad) * radius;
+            // Position linéaire (identique à draw3DView)
+            const x = startX + (i * spacingX);
+            const z = 0; // Tous à la même profondeur
 
             // Projection isométrique
             const isoX = centerX + x * this.isometric.scale;
             const isoY = centerY - z * this.isometric.scale * 0.5;
 
-            // Échelle selon profondeur
-            const scale = 1 - (z / radius) * 0.3;
+            // Échelle
+            const depthScale = 1 - (i / sortedRacks.length) * 0.1;
+            const scale = depthScale;
             const rackWidth = rack.width * 20 * scale;
             const rackHeight = (rack.levels?.length || 1) * 12 * scale;
 
