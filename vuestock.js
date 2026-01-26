@@ -1062,55 +1062,98 @@ class QuadViewManager {
         if (this.canvasTop) {
             // Mousedown pour démarrer le drag
             this.canvasTop.addEventListener('mousedown', (e) => {
-                // ✅ NE PAS réinitialiser ici, mais seulement si on clique sur un AUTRE rack
-
                 const rect = this.canvasTop.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
                 const clickedRack = this.findRackAtPosition(x, y);
 
-                if (clickedRack && this.selectedRack && clickedRack.id === this.selectedRack.id) {
-                    // On clique sur le rack déjà sélectionné - OK pour drag/resize/rotate
-
-                    const handle = this.getClickedHandle(x, y);
-                    if (handle) {
-                        if (handle === 'rotate') {
-                            this.isRotating = true;
-                            this.rotateStartX = x;
-                            this.rotateStartY = y;
-                            this.rotateStartAngle = this.selectedRack.rotation || 0;
-                            this.canvasTop.style.cursor = 'grab';
-                            console.log('🔄 Rotation démarrée pour', this.selectedRack.code);
-                        } else {
-                            this.isResizing = true;
-                            this.resizeHandle = handle;
-                            this.resizeStartX = x;
-                            this.resizeStartY = y;
-                            this.resizeStartWidth = this.selectedRack.displayWidth;
-                            this.resizeStartHeight = this.selectedRack.displayHeight;
-                            this.resizeStartPosX = this.selectedRack.displayX;
-                            this.resizeStartPosY = this.selectedRack.displayY;
-                            console.log('📏 Redimensionnement démarré pour', this.selectedRack.code, 'poignée:', handle);
-                        }
-                        return;
-                    }
-
-                    // Sinon, démarrer le drag du rack
-                    this.isDragging = true;
-                    this.draggedRack = clickedRack;  // ✅ AJOUT : stocker quel rack on déplace
-                    this.dragStartX = x - clickedRack.displayX;
-                    this.dragStartY = y - clickedRack.displayY;
-                    this.canvasTop.style.cursor = 'grabbing';
-                    console.log('🚀 Drag démarré pour', clickedRack.code);
-                }
-                // ✅ AJOUT : Si on clique sur un AUTRE rack, arrêter tout
-                else if (clickedRack) {
+                if (!clickedRack) {
+                    // Clic dans le vide - désélectionner
                     this.isDragging = false;
                     this.isResizing = false;
                     this.isRotating = false;
                     this.draggedRack = null;
+                    return;
                 }
+
+                // ✅ Si c'est un rack DIFFÉRENT, le sélectionner
+                if (!this.selectedRack || clickedRack.id !== this.selectedRack.id) {
+                    // Arrêter tout drag en cours
+                    this.isDragging = false;
+                    this.isResizing = false;
+                    this.isRotating = false;
+                    this.draggedRack = null;
+
+                    // Fermer le tiroir
+                    const container = document.getElementById('quadLevelSlots');
+                    if (container) {
+                        const currentDrawer = container.querySelector('.quad-drawer-container');
+                        if (currentDrawer && currentDrawer.classList.contains('open')) {
+                            currentDrawer.classList.remove('open');
+                            setTimeout(() => {
+                                container.innerHTML = '';
+                                this.selectedLevel = null;
+                            }, 700);
+                        } else {
+                            container.innerHTML = '';
+                            this.selectedLevel = null;
+                        }
+                    }
+
+                    // Sélectionner le nouveau rack
+                    console.log(`📌 Sélection du rack ${clickedRack.code}`);
+                    this.selectedRack = clickedRack;
+
+                    // Mettre à jour toutes les vues
+                    this.drawTopView(this.currentRacks);
+                    this.drawFrontView(clickedRack);
+                    this.updatePropertiesPanel(clickedRack);
+
+                    // Centrer ce rack dans la vue 3D
+                    if (this.currentRacks) {
+                        const rackIndex = this.currentRacks.findIndex(r => r.id === clickedRack.id);
+                        if (rackIndex !== -1) {
+                            this.cameraFocusIndex = rackIndex;
+                            this.draw3DView(this.currentRacks);
+                            console.log(`🎯 Rack ${clickedRack.code} centré en 3D (index: ${rackIndex})`);
+                        }
+                    }
+
+                    return; // ✅ Important : ne pas démarrer de drag sur la première sélection
+                }
+
+                // ✅ Si c'est le MÊME rack, gérer drag/resize/rotate
+                const handle = this.getClickedHandle(x, y);
+                if (handle) {
+                    if (handle === 'rotate') {
+                        this.isRotating = true;
+                        this.rotateStartX = x;
+                        this.rotateStartY = y;
+                        this.rotateStartAngle = this.selectedRack.rotation || 0;
+                        this.canvasTop.style.cursor = 'grab';
+                        console.log('🔄 Rotation démarrée pour', this.selectedRack.code);
+                    } else {
+                        this.isResizing = true;
+                        this.resizeHandle = handle;
+                        this.resizeStartX = x;
+                        this.resizeStartY = y;
+                        this.resizeStartWidth = this.selectedRack.displayWidth;
+                        this.resizeStartHeight = this.selectedRack.displayHeight;
+                        this.resizeStartPosX = this.selectedRack.displayX;
+                        this.resizeStartPosY = this.selectedRack.displayY;
+                        console.log('📏 Redimensionnement démarré pour', this.selectedRack.code, 'poignée:', handle);
+                    }
+                    return;
+                }
+
+                // ✅ Démarrer le drag du rack
+                this.isDragging = true;
+                this.draggedRack = clickedRack;
+                this.dragStartX = x - clickedRack.displayX;
+                this.dragStartY = y - clickedRack.displayY;
+                this.canvasTop.style.cursor = 'grabbing';
+                console.log('🚀 Drag démarré pour', clickedRack.code);
             });
 
             // Mousemove pour le drag
