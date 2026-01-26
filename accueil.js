@@ -3520,22 +3520,6 @@ function displayAllSearchResults(articles, sorties, retours) {
     });
 }
 
-// Fonction pour gérer un article sans sortie
-function handleArticleWithoutExit(article, sorties, retours) {
-    const confirmerAjout = confirm(
-        `"${article.nom}" n'a pas été utilisé dans ce projet.\n\n` +
-        `Voulez-vous quand même le retourner au stock ?\n` +
-        `(Cela créera une nouvelle sortie puis un retour)`
-    );
-
-    if (confirmerAjout) {
-        creerSortieEtRetour(article);
-    } else {
-        // Montrer tous les résultats quand même
-        displayAllSearchResults([article], sorties, retours);
-    }
-}
-
 // Fonction spéciale pour le scanner "return"
 async function handleScanForReturn(barcode) {
     if (!state.currentProject) return;
