@@ -2157,7 +2157,7 @@ class QuadViewManager {
             const rackDepth = rack.depth * 20;
 
             // Échelle selon la distance (effet de profondeur) + zoom
-            const depthScale = 1 - (z / radius) * 0.3;
+            const depthScale = 1 - (index / sortedRacks.length) * 0.1;
             const scale = depthScale * zoomScale;
 
             // Déterminer l'opacité (flouter les autres racks si un est en focus)
