@@ -2239,7 +2239,11 @@ class QuadViewManager {
         });
 
         // Dessiner chaque rack avec effets Rayons X et Zoom
-        racksWithDepth.forEach(({ rack, x, z, angle }, index) => {
+        racksWithDepth
+            .slice()
+            .sort((a, b) => a.z - b.z)
+            .forEach(({ rack, x, z, angle }, index) => {
+
             // Déterminer si ce rack est sélectionné
             const isSelected = this.selectedRack && rack.id === this.selectedRack.id;
 
