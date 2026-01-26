@@ -3043,7 +3043,7 @@ function displayArticlesDejaRetournes(articlesDejaRetournes) {
                 <div class="article-result-actions">
                     <button class="btn-secondary add-article-btn"
                             data-article-id="${article.id}">
-                        <i class="fas fa-plus"></i> Ajouter
+                        <i class="fas fa-plus"></i> Retour
                     </button>
                 </div>
             </div>
