@@ -3089,36 +3089,42 @@ function setupSearchResultEvents() {
 }
 
 async function creerSortieEtRetour(article) {
-    try {
-        // Créer une sortie fictive pour cet article
-        const mouvementData = {
-            article_id: article.id,
-            type: 'sortie',
-            quantite: 1, // Quantité par défaut
-            projet: state.currentProject.nom,
-            projet_id: state.currentProject.id,
-            commentaire: `Sortie automatique pour retour manuel - ${article.nom}`,
-            utilisateur_id: currentUser.id,
-            utilisateur: currentUser.username,
-            date_mouvement: new Date().toISOString().split('T')[0],
-            heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
-            created_at: new Date().toISOString()
-        };
+    const quantite = prompt(
+        `Combien de "${article.nom}" voulez-vous ajouter au stock ?\n` +
+        `(Stock actuel: ${article.stock_actuel || 0})`,
+        "1"
+    );
 
-        const { data: newMouvement, error } = await supabase
-            .from('w_mouvements')
-            .insert([mouvementData])
-            .select()
-            .single();
+    if (!quantite || isNaN(quantite) || parseInt(quantite) <= 0) {
+        alert('Quantité invalide');
+        return;
+    }
+
+    const quantiteNum = parseInt(quantite);
+
+    try {
+        showLoading();
+
+        // JUSTE mettre à jour le stock - PAS de mouvement
+        const { error } = await supabase
+            .from('w_articles')
+            .update({
+                stock_actuel: (article.stock_actuel || 0) + quantiteNum,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', article.id);
 
         if (error) throw error;
 
-        // Ouvrir directement le modal de retour
-        openReturnToStockModal(newMouvement.id, article.id, 1);
+        showAlert(`${quantiteNum} "${article.nom}" ajouté(s) au stock`, 'success');
+
+        // Pas de modal de retour, juste confirmation
 
     } catch (error) {
-        console.error('Erreur création sortie/retour:', error);
-        alert('Erreur lors de la création de la sortie');
+        console.error('Erreur ajout stock:', error);
+        alert('Erreur lors de l\'ajout au stock');
+    } finally {
+        hideLoading();
     }
 }
 
