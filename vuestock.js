@@ -1062,6 +1062,10 @@ class QuadViewManager {
         if (this.canvasTop) {
             // Mousedown pour démarrer le drag
             this.canvasTop.addEventListener('mousedown', (e) => {
+                this.isDragging = false;
+                this.isResizing = false;
+                this.isRotating = false;
+
                 const rect = this.canvasTop.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
@@ -1232,9 +1236,14 @@ class QuadViewManager {
 
             // Mouseup pour terminer le drag, resize et rotation
             this.canvasTop.addEventListener('mouseup', (e) => {
+                this.canvasTop.removeEventListener('mousemove', this.handleResizeBound);
+                this.canvasTop.removeEventListener('mousemove', this.handleRotationDragBound);
+
                 // Terminer le drag
                 if (this.isDragging) {
                     this.isDragging = false;
+                    this.dragStartX = null;  // ✅ AJOUT
+                    this.dragStartY = null;  // ✅ AJOUT
                     this.canvasTop.style.cursor = 'default';
                     console.log('⏹️ Drag terminé');
                 }
