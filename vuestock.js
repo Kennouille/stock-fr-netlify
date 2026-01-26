@@ -474,8 +474,10 @@ class CanvasManager {
         this.isDragging = true; // ← Première fois
         this.currentRack = rack;
         this.currentElement = element;
-        this.dragStartX = e.clientX - rack.position_x;
-        this.dragStartY = e.clientY - rack.position_y;
+        const rect = this.overlay.getBoundingClientRect();
+        this.dragStartX = (e.clientX - rect.left) - rack.position_x;
+        this.dragStartY = (e.clientY - rect.top) - rack.position_y;
+
 
         // Sélectionner l'étagère
         this.selectRack(rack, element);
