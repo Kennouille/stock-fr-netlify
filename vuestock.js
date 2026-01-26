@@ -1329,6 +1329,44 @@ class QuadViewManager {
                 // Curseur initial
                 this.canvas3D.style.cursor = 'grab';
 
+                // === NAVIGATION PAR FLÈCHES (CHANGEMENT UNIQUE) ===
+                document.addEventListener('keydown', (e) => {
+                    // Vérifier qu'on est dans la vue quad
+                    if (this.currentView !== 'quad') return;
+
+                    // Vérifier qu'on a des racks
+                    if (!this.currentRacks || this.currentRacks.length === 0) return;
+
+                    // Trier les racks comme dans draw3DView
+                    const sortedRacks = [...this.currentRacks].sort((a, b) => {
+                        return (a.position_x || 0) - (b.position_x || 0);
+                    });
+
+                    let currentIndex = sortedRacks.findIndex(r =>
+                        this.selectedRack && r.id === this.selectedRack.id
+                    );
+
+                    if (currentIndex === -1) currentIndex = 0;
+
+                    if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        // Aller au rack précédent (ou dernier)
+                        const newIndex = currentIndex <= 0 ? sortedRacks.length - 1 : currentIndex - 1;
+                        this.selectedRack = sortedRacks[newIndex];
+                        this.draw3DView(this.currentRacks);
+                        console.log(`⬅️ Rack précédent: ${sortedRacks[newIndex].code}`);
+                    }
+
+                    if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        // Aller au rack suivant (ou premier)
+                        const newIndex = currentIndex >= sortedRacks.length - 1 ? 0 : currentIndex + 1;
+                        this.selectedRack = sortedRacks[newIndex];
+                        this.draw3DView(this.currentRacks);
+                        console.log(`➡️ Rack suivant: ${sortedRacks[newIndex].code}`);
+                    }
+                });
+
                 // NOUVEAU : Détection du survol pour Vision Rayons X
                 this.canvas3D.addEventListener('mousemove', (e) => {
                     if (this.isDragging3D) return; // Ne pas détecter si on est en train de faire tourner
@@ -2198,6 +2236,16 @@ class QuadViewManager {
 
         // Dessiner chaque rack avec effets Rayons X et Zoom
         racksWithDepth.forEach(({ rack, x, z, angle }, index) => {
+            // Déterminer si ce rack est sélectionné
+            const isSelected = this.selectedRack && rack.id === this.selectedRack.id;
+
+            // Opacité : 50% si sélectionné, 100% sinon
+            const opacity = isSelected ? 0.5 : 1;
+
+            // Effet Rayons X si c'est le rack survolé
+            const isHovered = (rack === this.hoveredRack);
+            const xrayAlpha = isHovered ? this.xrayProgress : 0;
+
             // Appliquer le zoom de la caméra
             const zoomScale = this.camera.currentScale;
 
@@ -2236,8 +2284,8 @@ class QuadViewManager {
                 rackHeight * scale,
                 rack,
                 angle,
-                opacity,
-                xrayAlpha
+                opacity,          // ← NOUVEAU : opacité selon sélection
+                xrayAlpha         // ← EXISTANT : effet rayons X
             );
         });
 
@@ -2289,6 +2337,8 @@ class QuadViewManager {
     // Dessiner un rack en vue isométrique avec effets Rayons X et Opacité
     drawIsoRack(ctx, x, y, width, depth, height, rack, angle, opacity = 1, xrayAlpha = 0) {
         ctx.save();
+        // Appliquer l'opacité globale
+        ctx.globalAlpha = opacity;
 
         // Appliquer l'opacité globale
         ctx.globalAlpha = opacity;
