@@ -1063,6 +1063,11 @@ class QuadViewManager {
         if (this.canvasTop) {
             // Mousedown pour démarrer le drag
             this.canvasTop.addEventListener('mousedown', (e) => {
+                this.isDragging = false;
+                this.isResizing = false;
+                this.isRotating = false;
+                this.draggedRack = null;
+
                 const rect = this.canvasTop.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
@@ -1070,22 +1075,11 @@ class QuadViewManager {
                 const clickedRack = this.findRackAtPosition(x, y);
 
                 if (!clickedRack) {
-                    // Clic dans le vide - désélectionner
-                    this.isDragging = false;
-                    this.isResizing = false;
-                    this.isRotating = false;
-                    this.draggedRack = null;
                     return;
                 }
 
                 // ✅ Si c'est un rack DIFFÉRENT, le sélectionner
                 if (!this.selectedRack || clickedRack.id !== this.selectedRack.id) {
-                    // Arrêter tout drag en cours
-                    this.isDragging = false;
-                    this.isResizing = false;
-                    this.isRotating = false;
-                    this.draggedRack = null;
-
                     // Fermer le tiroir
                     const container = document.getElementById('quadLevelSlots');
                     if (container) {
@@ -1121,7 +1115,7 @@ class QuadViewManager {
                         }
                     }
 
-                    return; // ✅ Important : ne pas démarrer de drag sur la première sélection
+                    return;
                 }
 
                 // ✅ Si c'est le MÊME rack, gérer drag/resize/rotate
