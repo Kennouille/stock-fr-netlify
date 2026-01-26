@@ -1918,8 +1918,9 @@ class QuadViewManager {
         let currentX = startX;
 
         racks.forEach((rack) => {
-            const w = rack.width * 20;
-            const d = rack.depth * 20;
+            const w = rack.width * 40;
+            const d = rack.depth * 40;
+
 
             let x, y;
 
