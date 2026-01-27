@@ -424,6 +424,7 @@ document.getElementById('addUserForm')?.addEventListener('submit', async functio
             .from('w_users')
             .insert([
                 {
+                    id: generateUUID(),
                     username: username,
                     password: password, // À sécuriser plus tard avec bcrypt
                     permissions: permissions
