@@ -1177,7 +1177,7 @@ class QuadViewManager {
                     this.draggedRack.displayX = newDisplayX;  // ✅ CHANGÉ
                     this.draggedRack.displayY = newDisplayY;  // ✅ CHANGÉ
 
-                    const scale = 0.8;
+                    const scale = 1;
                     this.draggedRack.position_x = newDisplayX / scale;  // ✅ CHANGÉ
                     this.draggedRack.position_y = newDisplayY / scale;  // ✅ CHANGÉ
 
@@ -1279,7 +1279,7 @@ class QuadViewManager {
 
                     // ✅ AJOUT : Sauvegarder la position finale
                     if (this.draggedRack) {
-                        const scale = 0.8;
+                        const scale = 1;
                         this.draggedRack.position_x = this.draggedRack.displayX / scale;
                         this.draggedRack.position_y = this.draggedRack.displayY / scale;
                     }
@@ -1297,7 +1297,7 @@ class QuadViewManager {
                     this.canvasTop.style.cursor = 'default';
 
                     // Mettre à jour position_x/y depuis displayX/Y
-                    const scale = 0.8;
+                    const scale = 1;
                     this.selectedRack.position_x = this.selectedRack.displayX / scale;
                     this.selectedRack.position_y = this.selectedRack.displayY / scale;
 
@@ -2002,7 +2002,7 @@ class QuadViewManager {
                 y = rack.displayY;
             }
             else if (rack.position_x !== undefined && rack.position_y !== undefined) {
-                const positionScale = 0.8; // Conversion position_x → pixels logiques
+                const positionScale = 1; // Conversion position_x → pixels logiques
                 const viewScale = this.topViewScale || 1; // Zoom global
 
                 // Position en pixels logiques (avant ctx.scale)
@@ -3696,7 +3696,7 @@ class QuadViewManager {
 
                 // IMPORTANT : Mettre à jour position_x/y depuis displayX/Y
                 // pour que la prochaine fois qu'on redessine, on garde la position
-                const scale = 0.8;
+                const scale = 1;
                 rack.position_x = rack.displayX / scale;
                 rack.position_y = rack.displayY / scale;
 
@@ -3916,7 +3916,7 @@ class QuadViewManager {
 
         // Calculer la différence en cases (chaque case = 20px dans cette vue)
         const gridSize = 20;
-        const scale = 0.8;
+        const scale = 1;
         const deltaGridX = Math.round(deltaX / gridSize);
         const deltaGridY = Math.round(deltaY / gridSize);
 
@@ -4000,8 +4000,8 @@ class QuadViewManager {
         this.rotateStart = {
             x: startX,
             y: startY,
-            centerX: (rack.position_x * 0.8) % this.canvasTop.width + (rack.width * 20 / 2),
-            centerY: (rack.position_y * 0.8) % this.canvasTop.height + (rack.depth * 20 / 2),
+            centerX: (rack.position_x * 1) % this.canvasTop.width + (rack.width * 20 / 2),
+            centerY: (rack.position_y * 1) % this.canvasTop.height + (rack.depth * 20 / 2),
             startRotation: rack.rotation || 0
         };
 
