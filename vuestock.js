@@ -2466,8 +2466,12 @@ class QuadViewManager {
         if (rack.levels && rack.levels.length > 0) {
             const levelHeight = cabinetHeight / rack.levels.length;
 
-            rack.levels.forEach((level, index) => {
-                const levelY = y - cabinetHeight + (index * levelHeight);
+            // Trier les niveaux par ordre croissant (10, 20, 30, etc.)
+            const sortedLevels = [...rack.levels].sort((a, b) => parseInt(a.code) - parseInt(b.code));
+
+            sortedLevels.forEach((level, index) => {
+                // Inverser l'ordre pour que 10 soit en bas
+                const levelY = y - (index * levelHeight);
 
                 // Ligne de séparation d'étage
                 ctx.strokeStyle = 'rgba(255,255,255,0.5)';
