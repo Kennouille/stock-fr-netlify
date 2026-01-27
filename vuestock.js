@@ -2437,19 +2437,14 @@ class QuadViewManager {
             const xrayAlpha = isHovered ? this.xrayProgress : 0;
             const zoomScale = this.camera.currentScale;
 
-            // ✅ NOUVEAU : Rotation orbitale autour de l'axe Y (vertical)
-            // Convertir rotation en radians
-            const angle = (this.rotation3D || 0) * Math.PI / 180;
+            // SUPPRIMER la rotation orbitale des racks
+            // const angle = (this.rotation3D || 0) * Math.PI / 180; // ← À SUPPRIMER
 
-            // Position originale
-            const origX = x + this.currentOffset;
-            const origZ = z;
+            // Position originale SANS rotation
+            const rotatedX = x + this.currentOffset; // ← Directement, pas de rotation
+            const rotatedZ = z; // ← Directement, pas de rotation
 
-            // Appliquer rotation orbitale
-            const rotatedX = origX * Math.cos(angle) - origZ * Math.sin(angle);
-            const rotatedZ = origX * Math.sin(angle) + origZ * Math.cos(angle);
-
-            // Projection isométrique avec les coordonnées tournées
+            // Projection isométrique SANS rotation orbitale
             const isoX = centerX + rotatedX * this.isometric.scale * zoomScale;
             const isoY = centerY - rotatedZ * this.isometric.scale * 0.5 * zoomScale;
 
@@ -3405,11 +3400,10 @@ class QuadViewManager {
 
         const startRotation = this.rotation3D || 0;
 
-        // SUPPRIMER cette inversion
-        // const invertedTarget = -targetRotation; // ← À SUPPRIMER
-        const finalTarget = targetRotation; // ← UTILISER directement targetRotation
+        // ✅ CORRECTION : Inverser le signe de la rotation cible
+        const invertedTarget = -targetRotation; // ← AJOUT du moins
 
-        let diff = finalTarget - startRotation; // ← CHANGÉ : finalTarget au lieu de invertedTarget
+        let diff = invertedTarget - startRotation;
         while (diff > 180) diff -= 360;
         while (diff < -180) diff += 360;
 
@@ -3432,7 +3426,7 @@ class QuadViewManager {
             if (step < steps) {
                 this.rotation3DAnimFrame = requestAnimationFrame(animate);
             } else {
-                this.rotation3D = finalTarget; // ← CHANGÉ : finalTarget au lieu de invertedTarget
+                this.rotation3D = invertedTarget; // ✅ CHANGÉ aussi ici
                 if (this.currentRacks) {
                     this.draw3DView(this.currentRacks);
                 }
