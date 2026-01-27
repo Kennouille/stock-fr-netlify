@@ -1108,6 +1108,13 @@ class QuadViewManager {
                     this.drawFrontView(clickedRack);
                     this.updatePropertiesPanel(clickedRack);
 
+                    if (clickedRack.rotation && clickedRack.rotation !== 0) {
+                        const targetRotation = -clickedRack.rotation;
+                        this.animate3DRotation(targetRotation);
+                    } else {
+                        this.animate3DRotation(0);
+                    }
+
                     // Centrer ce rack dans la vue 3D
                     if (this.currentRacks) {
                         const rackIndex = this.currentRacks.findIndex(r => r.id === clickedRack.id);
@@ -2392,7 +2399,7 @@ class QuadViewManager {
 
             let z = 0;
             if (rack.rotation && rack.rotation !== 0) {
-                z = -50;
+                z = -100;
             }
 
             // ✅ CORRECTION : Espacement de 120px au lieu de effectiveWidth + 10
@@ -2543,44 +2550,16 @@ class QuadViewManager {
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(rack.code, x, y - cabinetHeight/2);
 
-        // ✅ CORRECTION : Ne dessiner les étages QUE si on voit la face (pas le côté)
-        if (!showSide && rack.levels && rack.levels.length > 0) {
-            const levelHeight = cabinetHeight / rack.levels.length;
-            const sortedLevels = [...rack.levels].sort((a, b) => parseInt(a.code) - parseInt(b.code));
-
-            sortedLevels.forEach((level, index) => {
-                const levelY = y - (index * levelHeight);
-
-                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(x - cabinetWidth/2 + 5, levelY);
-                ctx.lineTo(x + cabinetWidth/2 - 5, levelY);
-                ctx.stroke();
-
-                if (levelHeight > 20) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-                    ctx.font = '10px Arial';
-                    ctx.fillText(level.code, x - cabinetWidth/2 + 15, levelY - levelHeight/2);
-                }
-            });
-        } else if (showSide) {
-            // ✅ NOUVEAU : Dessiner le côté (sans étages, juste une texture différente)
-            ctx.fillStyle = this.adjustColor(rack.color, -30);
-            ctx.fillRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
-
-            // Lignes verticales pour indiquer que c'est le côté
-            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-            ctx.lineWidth = 1;
-            for (let i = 0; i < 3; i++) {
-                const xPos = x - cabinetWidth/2 + (cabinetWidth / 4) * (i + 1);
-                ctx.beginPath();
-                ctx.moveTo(xPos, y - cabinetHeight);
-                ctx.lineTo(xPos, y);
-                ctx.stroke();
-            }
+        // ✅ AJOUT : Si on voit le côté, tourner le texte de 90°
+        if (showSide) {
+            ctx.save();
+            ctx.translate(x, y - cabinetHeight/2);
+            ctx.rotate(Math.PI / 2); // 90° en radians
+            ctx.fillText(rack.code, 0, 0);
+            ctx.restore();
+        } else {
+            ctx.fillText(rack.code, x, y - cabinetHeight/2);
         }
 
         // Effet de profondeur (côté droit)
