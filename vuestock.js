@@ -3121,6 +3121,11 @@ class QuadViewManager {
                     // Mettre à jour l'affichage
                     this.refreshSlotDisplay(articleId, newQuantity);
 
+                    // AJOUT IMPORTANT : Mettre à jour les statistiques
+                    if (window.vueStock.updateStats) {
+                        window.vueStock.updateStats();
+                    }
+
                     // Fermer le modal
                     document.getElementById('stockModalOverlay').classList.remove('active');
 
