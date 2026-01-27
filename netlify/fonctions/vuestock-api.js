@@ -57,7 +57,7 @@ exports.handler = async (event) => {
 
   if (action === 'get-config') {
     try {
-      const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+      const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
 
       // ✅ 1. Charger les racks
       const racksResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?select=*&order=rack_code.asc`, {
@@ -194,7 +194,7 @@ exports.handler = async (event) => {
             console.log('📦 Body parsed for save-rack:', body);
             console.log('🆔 ID présent?:', !!body.id);
 
-            const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+            const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
 
             const payload = {
                 rack_code: body.code || body.rack_code || `RACK_${Date.now()}`,
@@ -312,7 +312,7 @@ exports.handler = async (event) => {
 
             console.log('📦 Body parsed for save-level:', body);
 
-            const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+            const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
 
             // Vérifier les données requises
             if (!body.rack_id) {
@@ -424,7 +424,7 @@ exports.handler = async (event) => {
 
             console.log('📦 Body parsed for save-slot:', body);
 
-            const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+            const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
 
             // Vérifier les données requises
             if (!body.level_id) {
@@ -583,7 +583,7 @@ exports.handler = async (event) => {
                 throw new Error('rackId is required for deletion');
             }
 
-            const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+            const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
 
             console.log('🗑️ Deleting rack with ID:', rackId);
 
@@ -651,7 +651,7 @@ exports.handler = async (event) => {
                 };
             }
 
-            const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+            const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
 
             // Mettre à jour la table w_articles
             const response = await fetch(`${supabaseUrl}/rest/v1/w_articles?id=eq.${article_id}`, {
