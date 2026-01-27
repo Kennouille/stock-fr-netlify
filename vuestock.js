@@ -3598,7 +3598,6 @@ class QuadViewManager {
         }
     }
 
-    // Sauvegarder les modifications du rack
     async saveRackChanges(rack) {
         if (!rack) return;
 
@@ -3619,6 +3618,14 @@ class QuadViewManager {
         if (rotationInput) rack.rotation = parseInt(rotationInput.value);
         if (colorInput) rack.color = colorInput.value;
 
+        // 🔴 AJOUTEZ CETTE LIGNE ICI (juste avant console.log) :
+        // Synchroniser position_x/y avec displayX/Y avant tout
+        if (typeof rack.displayX !== 'undefined' && typeof rack.displayY !== 'undefined') {
+            const scale = 1;
+            rack.position_x = rack.displayX / scale;
+            rack.position_y = rack.displayY / scale;
+        }
+
         console.log('Sauvegarde du rack:', rack);
 
         // Redessiner
@@ -3634,7 +3641,7 @@ class QuadViewManager {
                     id: rack.id,
                     code: rack.code,
                     name: rack.name,
-                    position_x: rack.position_x,
+                    position_x: rack.position_x, // ✅ Maintenant synchronisé
                     position_y: rack.position_y,
                     rotation: rack.rotation || 0,
                     width: rack.width,
@@ -3644,11 +3651,10 @@ class QuadViewManager {
 
                 console.log('Rack sauvegardé:', result);
 
-                // IMPORTANT : Mettre à jour position_x/y depuis displayX/Y
-                // pour que la prochaine fois qu'on redessine, on garde la position
-                const scale = 1;
-                rack.position_x = rack.displayX / scale;
-                rack.position_y = rack.displayY / scale;
+                // 🟢 RETIREZ ou COMMETEZ ces lignes (elles sont maintenant inutiles) :
+                // const scale = 1;
+                // rack.position_x = rack.displayX / scale;
+                // rack.position_y = rack.displayY / scale;
 
                 this.showQuadNotification('Étagère sauvegardée', 'success');
 
