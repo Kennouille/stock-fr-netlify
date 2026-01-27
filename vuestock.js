@@ -1023,6 +1023,9 @@ class QuadViewManager {
         this.cameraFocusIndex = 0; // Index du rack centré
         this.currentOffset = 0;    // Position actuelle de la caméra (pour animation)
         this.draggedRack = null;
+        this.selectedRackZOffset = 0; // Décalage en Z pour le rack sélectionné
+        this.selectedRackAnimProgress = 0; // Progression de l'animation
+
 
 
         // Canvases
@@ -2341,16 +2344,18 @@ class QuadViewManager {
             // Déterminer si ce rack est sélectionné
             const isSelected = this.selectedRack && rack.id === this.selectedRack.id;
 
-            // Effet Rayons X si c'est le rack survolé
-            const isHovered = (rack === this.hoveredRack);
-            const xrayAlpha = isHovered ? this.xrayProgress : 0;
+            // Appliquer un décalage en Z si le rack est sélectionné
+            let rackZOffset = 0;
+            if (isSelected) {
+                rackZOffset = this.selectedRackZOffset;
+            }
 
             // Appliquer le zoom de la caméra
             const zoomScale = this.camera.currentScale;
 
-            // Projection isométrique avec zoom
+            // Projection isométrique avec zoom et décalage
             const isoX = centerX + x * this.isometric.scale * zoomScale;
-            const isoY = centerY - z * this.isometric.scale * 0.5 * zoomScale;
+            const isoY = centerY - (z + rackZOffset) * this.isometric.scale * 0.5 * zoomScale;
 
             // Hauteur du rack (selon nombre d'étages)
             const rackHeight = (rack.levels?.length || 1) * 12;
@@ -2363,19 +2368,6 @@ class QuadViewManager {
             const depthScale = 1 - (index / sortedRacks.length) * 0.1;
             const scale = depthScale * zoomScale;
 
-            // DÉTERMINER L'OPACITÉ FINALE
-            let finalOpacity = 1;
-
-            // 1. Si rack sélectionné : 50% transparent
-            if (isSelected) {
-                finalOpacity = 0.5;
-            }
-            // 2. Si autre rack est focusé : 30% transparent
-            else if (this.focusedRack && rack !== this.focusedRack) {
-                finalOpacity = 0.3;
-            }
-            // 3. Sinon : 100% opaque
-
             // Dessiner le rack en 3D isométrique avec effets
             this.drawCabinetRack(
                 ctx,
@@ -2385,9 +2377,18 @@ class QuadViewManager {
                 rackHeight * scale * 2,     // Plus haut
                 rackDepth * scale,
                 rack,
-                finalOpacity
+                1 // Opacité à 100% (pas de transparence)
             );
+
+            // Animation pour le rack sélectionné
+            if (isSelected && this.selectedRackAnimProgress < 1) {
+                this.selectedRackZOffset = 50 * this.selectedRackAnimProgress;
+                this.selectedRackAnimProgress += 0.05;
+            } else if (!isSelected && this.selectedRackZOffset > 0) {
+                this.selectedRackZOffset = Math.max(0, this.selectedRackZOffset - 5);
+            }
         });
+
 
         // Indicateur de rotation
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
@@ -4082,6 +4083,8 @@ class QuadViewManager {
     // Méthodes pour la sélection
     selectRack(rack) {
         this.selectedRack = rack;
+        this.selectedRackAnimProgress = 0; // Réinitialiser l'animation
+        this.selectedRackZOffset = 0; // Réinitialiser le décalage
         this.selectedLevel = null;
 
         // Mettre à jour les vues
