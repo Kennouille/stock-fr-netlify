@@ -2467,20 +2467,29 @@ class QuadViewManager {
         // Appliquer l'opacité
         ctx.globalAlpha = opacity;
 
-        // ✅ AJOUT : Appliquer la rotation si elle existe
+        // ✅ CORRECTION : Pas de rotation en 2D canvas
+        // La rotation doit être appliquée en modifiant les dimensions width/depth
+        // selon l'angle de rotation pour simuler une vue de dessus qui tourne
+
+        let effectiveWidth = width;
+        let effectiveDepth = depth;
+
         if (rack.rotation && rack.rotation !== 0) {
-            // Translater au centre du rack
-            ctx.translate(x, y - height/2);
-            // Appliquer la rotation (convertir degrés en radians)
-            ctx.rotate((rack.rotation * Math.PI) / 180);
-            // Revenir en arrière
-            ctx.translate(-x, -(y - height/2));
+            // Convertir la rotation en radians
+            const angle = (rack.rotation * Math.PI) / 180;
+
+            // Calculer les nouvelles dimensions projetées
+            const cos = Math.abs(Math.cos(angle));
+            const sin = Math.abs(Math.sin(angle));
+
+            effectiveWidth = width * cos + depth * sin;
+            effectiveDepth = width * sin + depth * cos;
         }
 
         // Dimensions ajustées
-        const cabinetWidth = width;
+        const cabinetWidth = effectiveWidth;
         const cabinetHeight = height;
-        const cabinetDepth = depth * 0.3;
+        const cabinetDepth = effectiveDepth * 0.3;
 
         // Face avant de l'armoire
         ctx.fillStyle = rack.color;
@@ -2498,7 +2507,7 @@ class QuadViewManager {
         ctx.textBaseline = 'middle';
         ctx.fillText(rack.code, x, y - cabinetHeight/2);
 
-        // Dessiner les étages comme des séparateurs horizontaux
+        // Dessiner les étages
         if (rack.levels && rack.levels.length > 0) {
             const levelHeight = cabinetHeight / rack.levels.length;
             const sortedLevels = [...rack.levels].sort((a, b) => parseInt(a.code) - parseInt(b.code));
@@ -2521,7 +2530,7 @@ class QuadViewManager {
             });
         }
 
-        // Effet de profondeur (côté droit)
+        // Effet de profondeur (côté droit) - ajusté selon la rotation
         ctx.fillStyle = this.adjustColor(rack.color, -20);
         ctx.beginPath();
         ctx.moveTo(x + cabinetWidth/2, y - cabinetHeight);
