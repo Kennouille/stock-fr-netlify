@@ -2437,8 +2437,21 @@ class QuadViewManager {
             const xrayAlpha = isHovered ? this.xrayProgress : 0;
             const zoomScale = this.camera.currentScale;
 
-            const isoX = centerX + (x + this.currentOffset) * this.isometric.scale * zoomScale;
-            const isoY = centerY - z * this.isometric.scale * 0.5 * zoomScale;
+            // ✅ NOUVEAU : Rotation orbitale autour de l'axe Y (vertical)
+            // Convertir rotation en radians
+            const angle = (this.rotation3D || 0) * Math.PI / 180;
+
+            // Position originale
+            const origX = x + this.currentOffset;
+            const origZ = z;
+
+            // Appliquer rotation orbitale
+            const rotatedX = origX * Math.cos(angle) - origZ * Math.sin(angle);
+            const rotatedZ = origX * Math.sin(angle) + origZ * Math.cos(angle);
+
+            // Projection isométrique avec les coordonnées tournées
+            const isoX = centerX + rotatedX * this.isometric.scale * zoomScale;
+            const isoY = centerY - rotatedZ * this.isometric.scale * 0.5 * zoomScale;
 
             const rackHeight = (rack.levels?.length || 1) * 12;
             const rackWidth = rack.width * 20;
@@ -2515,17 +2528,6 @@ class QuadViewManager {
     drawCabinetRack(ctx, x, y, width, height, depth, rack, opacity = 1) {
         ctx.save();
         ctx.globalAlpha = opacity;
-
-        // ✅ AJOUT : Appliquer la rotation globale de la caméra
-        if (this.rotation3D && this.rotation3D !== 0) {
-            // Pivoter autour du centre de l'écran
-            const centerX = this.canvas3D.width / 2;
-            const centerY = this.canvas3D.height / 2 + 50;
-
-            ctx.translate(centerX, centerY);
-            ctx.rotate((this.rotation3D * Math.PI) / 180);
-            ctx.translate(-centerX, -centerY);
-        }
 
         // ✅ CORRECTION : Inverser width et depth si rotation proche de 90° ou 270°
         let effectiveWidth = width;
