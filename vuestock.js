@@ -1968,8 +1968,9 @@ class QuadViewManager {
                 ctx.scale(scale, scale);
 
                 // Stocker le scale pour l'utiliser ailleurs
-                // ✅ FIX
-                this.topViewScale = 1;  // TOUJOURS fixe
+                this.topViewScale = scale;
+            } else {
+                this.topViewScale = 1;
             }
         }
 
@@ -2001,24 +2002,28 @@ class QuadViewManager {
                 y = rack.displayY;
             }
             else if (rack.position_x !== undefined && rack.position_y !== undefined) {
-                // SUPPRIMEZ positionScale ET viewScale
-                // Position en pixels logiques DIRECTS (20px/carré fixe)
-                x = rack.position_x * 20;  // ← 20px par case
-                y = rack.position_y * 20;
+                const positionScale = 0.8; // Conversion position_x → pixels logiques
+                const viewScale = this.topViewScale || 1; // Zoom global
 
-                // Vos limites OK
-                const maxX = (this.canvasTop.width) - 100;
-                const maxY = (this.canvasTop.height) - 100;
+                // Position en pixels logiques (avant ctx.scale)
+                x = rack.position_x * positionScale;
+                y = rack.position_y * positionScale;
+
+                // ✅ CORRECTION : Ramener à l'écran si hors limites
+                const maxX = (this.canvasTop.width / viewScale) - 100;
+                const maxY = (this.canvasTop.height / viewScale) - 100;
 
                 if (x > maxX) {
                     x = maxX;
-                    rack.position_x = x / 20; // ← Diviser pour sauvegarder en cases
-                }
-                if (y > maxY) {
-                    y = maxY;
-                    rack.position_y = y / 20;
+                    rack.position_x = x; // Mettre à jour pour sauvegarde
                 }
 
+                if (y > maxY) {
+                    y = maxY;
+                    rack.position_y = y;
+                }
+
+                // Stocker en pixels physiques (après ctx.scale)
                 rack.displayX = x;
                 rack.displayY = y;
             }
