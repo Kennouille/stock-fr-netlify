@@ -2066,7 +2066,7 @@ class QuadViewManager {
                 // Surbrillance
                 ctx.strokeStyle = '#ffeb3b';
                 ctx.lineWidth = 3;
-                ctx.strokeRect(x - 2, y - 2, w + 4, d + 4);
+                ctx.strokeRect(x - 2, y - 2, (w / scale) + 4, (d / scale) + 4); // Appliquer le scale inverse
 
                 // Poignettes de redimensionnement (coins)
                 const handleSize = 8;
