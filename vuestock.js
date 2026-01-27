@@ -4892,13 +4892,42 @@ class VueStock {
         const slotCount = this.racks.reduce((sum, rack) =>
             sum + rack.levels.reduce((levelSum, level) => levelSum + level.slots.length, 0), 0);
 
+        // CORRECTION : Compter les emplacements OCCUPÉS
+        const occupiedSlotCount = this.racks.reduce((sum, rack) =>
+            sum + rack.levels.reduce((levelSum, level) =>
+                levelSum + level.slots.reduce((slotSum, slot) =>
+                    slotSum + (slot.articles && slot.articles.length > 0 ? 1 : 0), 0), 0), 0);
+
+        // Calculer le pourcentage d'occupation
+        let occupationPercentage = '0%';
+        if (slotCount > 0) {
+            const percentage = Math.round((occupiedSlotCount / slotCount) * 100);
+            occupationPercentage = `${percentage}%`;
+
+            // Mettre à jour le style selon le taux
+            const occupationElement = document.getElementById('statOccupation');
+            occupationElement.classList.remove('occupation-low', 'occupation-medium', 'occupation-high');
+
+            if (percentage >= 90) {
+                occupationElement.classList.add('occupation-high');
+            } else if (percentage >= 50) {
+                occupationElement.classList.add('occupation-medium');
+            } else if (percentage > 0) {
+                occupationElement.classList.add('occupation-low');
+            }
+        }
+
         // Mettre à jour l'interface
         document.getElementById('statRacks').textContent = rackCount;
         document.getElementById('statLevels').textContent = levelCount;
         document.getElementById('statSlots').textContent = slotCount;
+        document.getElementById('statOccupation').textContent = occupationPercentage;
 
-        // Pour l'occupation, on ferait une requête API
-        document.getElementById('statOccupation').textContent = '0%';
+        // Ajouter un tooltip avec le détail
+        const occupationElement = document.getElementById('statOccupation');
+        if (occupationElement) {
+            occupationElement.title = `${occupiedSlotCount} emplacements occupés sur ${slotCount}`;
+        }
     }
 
     // ===== NOTIFICATIONS =====

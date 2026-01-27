@@ -2168,3 +2168,21 @@ function getStockLevel(stock) {
 .zoom-hint.visible {
     opacity: 1;
 }
+
+/* Dans votre fichier CSS */
+.stat-item:nth-child(4) .stat-value {
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.occupation-low {
+    color: #2ecc71 !important; /* Vert pour faible occupation */
+}
+
+.occupation-medium {
+    color: #f39c12 !important; /* Orange pour occupation moyenne */
+}
+
+.occupation-high {
+    color: #e74c3c !important; /* Rouge pour forte occupation */
+}
