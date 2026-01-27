@@ -1943,6 +1943,7 @@ class QuadViewManager {
         });
     }
 
+    // Dans drawTopView(), AVANT la boucle forEach des racks
     drawTopView(racks) {
         if (!this.ctxTop || !this.canvasTop) return;
 
@@ -1953,27 +1954,18 @@ class QuadViewManager {
         ctx.clearRect(0, 0, width, height);
         this.drawGrid(ctx, width, height, 20);
 
-        // ✅ NOUVEAU : Calcul du zoom automatique
+        // ✅ NE PAS APPLIQUER ctx.scale() ICI
+        // On va dessiner directement en pixels logiques
+
+        // Calculer le zoom automatique SANS l'appliquer au contexte
+        let scale = 1;
         if (racks.length > 0) {
-            // Calculer la largeur totale nécessaire pour tous les racks
             const totalWidth = racks.reduce((sum, rack) => sum + (rack.width * 20) + 40, 0);
-
-            // Si ça dépasse la largeur du canvas, calculer un facteur de zoom
             if (totalWidth > width - 100) {
-                const zoomFactor = (width - 100) / totalWidth;
-                // Appliquer le zoom (entre 0.3 et 1)
-                const scale = Math.max(0.3, Math.min(1, zoomFactor));
-
-                // Sauvegarder le contexte et appliquer le zoom
-                ctx.save();
-                ctx.scale(scale, scale);
-
-                // Stocker le scale pour l'utiliser ailleurs
-                this.topViewScale = scale;
-            } else {
-                this.topViewScale = 1;
+                scale = Math.max(0.3, Math.min(1, (width - 100) / totalWidth));
             }
         }
+        this.topViewScale = scale;
 
         // RÉGLAGE POUR UNE SEULE LIGNE
         const startX = 50;
@@ -1982,15 +1974,13 @@ class QuadViewManager {
         let currentX = startX;
 
         racks.forEach((rack) => {
-            // Taille d'un carré en pixels LOGIQUES (toujours 20)
             const logicalGridSize = 20;
-            const scale = this.topViewScale || 1;
 
-            // Dimensions en pixels logiques (toujours proportionnelles à la grille)
-            const w = rack.width * logicalGridSize;
-            const d = rack.depth * logicalGridSize;
+            // ✅ Calculer w et d en pixels PHYSIQUES (avec le scale déjà appliqué)
+            const w = rack.width * logicalGridSize * scale;
+            const d = rack.depth * logicalGridSize * scale;
 
-            // Stocker displayWidth et displayHeight UNE SEULE FOIS si non définis
+            // Stocker les dimensions PHYSIQUES
             if (rack.displayWidth === undefined) {
                 rack.displayWidth = w;
             }
@@ -2000,114 +1990,84 @@ class QuadViewManager {
 
             let x, y;
 
-            // Si ce rack est en cours de drag, utiliser displayX/Y existants
             if (this.isDragging && this.draggedRack && rack.id === this.draggedRack.id) {
-                // displayX/Y sont déjà en pixels logiques, pas besoin de diviser
                 x = rack.displayX;
                 y = rack.displayY;
             }
             else if (rack.position_x !== undefined && rack.position_y !== undefined) {
-                const positionScale = 1; // Conversion position_x → pixels logiques
-                const viewScale = this.topViewScale || 1; // Zoom global
+                // ✅ Appliquer le scale à la position
+                x = rack.position_x * scale;
+                y = rack.position_y * scale;
 
-                // Position en pixels logiques (avant ctx.scale)
-                x = rack.position_x * positionScale;
-                y = rack.position_y * positionScale;
+                const maxX = width - 100;
+                const maxY = height - 100;
 
-                // ✅ CORRECTION : Ramener à l'écran si hors limites
-                const maxX = (this.canvasTop.width / viewScale) - 100;
-                const maxY = (this.canvasTop.height / viewScale) - 100;
+                if (x > maxX) x = maxX;
+                if (y > maxY) y = maxY;
 
-                if (x > maxX) {
-                    x = maxX;
-                    rack.position_x = x; // Mettre à jour pour sauvegarde
-                }
-
-                if (y > maxY) {
-                    y = maxY;
-                    rack.position_y = y;
-                }
-
-                // Stocker en pixels physiques (après ctx.scale)
                 rack.displayX = x;
                 rack.displayY = y;
             }
-            // Sinon, calculer automatiquement
             else {
                 if (currentX + w > width - 50) {
                     currentX = Math.max(startX, width - 50 - w);
                 }
-
                 x = currentX;
                 y = startY;
-
                 rack.displayX = x;
                 rack.displayY = y;
-
                 currentX += w + spacing;
             }
 
-
-
-            // Ton dessin original
+            // Dessiner le rack (SANS diviser par scale puisque w/d sont déjà scalés)
             ctx.fillStyle = rack.color || '#4a90e2';
-            ctx.fillRect(x, y, w / scale, d / scale); // Appliquer le scale inverse
+            ctx.fillRect(x, y, w, d);  // ← CHANGÉ : pas de division
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
-            ctx.strokeRect(x, y, w / scale, d / scale); // Appliquer le scale inverse
+            ctx.strokeRect(x, y, w, d);
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(rack.code, x + (w / scale) / 2, y + (d / scale) / 2); // Centrer le texte dans le rectangle ajusté
+            ctx.fillText(rack.code, x + w/2, y + d/2);
 
-
-            // Dans drawTopView(), section "POIGNETTES QUAND RACK SÉLECTIONNÉ"
+            // POIGNETTES
             if (this.selectedRack && rack.id === this.selectedRack.id) {
-                // Surbrillance
                 ctx.strokeStyle = '#ffeb3b';
                 ctx.lineWidth = 3;
-                ctx.strokeRect(x - 2, y - 2, (w / scale) + 4, (d / scale) + 4);
+                ctx.strokeRect(x - 2, y - 2, w + 4, d + 4);
 
-                // Poignettes de redimensionnement (coins)
                 const handleSize = 8;
                 const handleColor = '#007bff';
                 const handleBorder = '#ffffff';
 
-                // ✅ CORRECTION : Utiliser les mêmes calculs que pour la détection
-                const rackVisualWidth = w / scale;
-                const rackVisualHeight = d / scale;
-
-                // Coin supérieur gauche
+                // Coins
                 ctx.fillStyle = handleBorder;
                 ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
                 ctx.fillRect(x - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
-                // Coin supérieur droit
                 ctx.fillStyle = handleBorder;
-                ctx.fillRect(x + rackVisualWidth - handleSize/2, y - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
-                ctx.fillRect(x + rackVisualWidth - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+                ctx.fillRect(x + w - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
-                // Coin inférieur gauche
                 ctx.fillStyle = handleBorder;
-                ctx.fillRect(x - handleSize/2, y + rackVisualHeight - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(x - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
-                ctx.fillRect(x - handleSize/2 + 1, y + rackVisualHeight - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+                ctx.fillRect(x - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
-                // Coin inférieur droit
                 ctx.fillStyle = handleBorder;
-                ctx.fillRect(x + rackVisualWidth - handleSize/2, y + rackVisualHeight - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(x + w - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
-                ctx.fillRect(x + rackVisualWidth - handleSize/2 + 1, y + rackVisualHeight - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+                ctx.fillRect(x + w - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
-                // ✅ CORRECTION CRUCIALE : Poignette de rotation
-                const rotateHandleSize = 30; // Taille de la zone cliquable
-                const rotateHandleCenterX = x + (rackVisualWidth / 2);  // ← CHANGÉ
+                // ✅ POIGNETTE ROTATE (directement en pixels physiques)
+                const rotateHandleSize = 30;
+                const rotateHandleCenterX = x + w/2;
                 const rotateHandleY = y - 25;
 
-                // Dessiner le cercle visible (10px de rayon)
+                // Cercle visible
                 ctx.beginPath();
                 ctx.arc(rotateHandleCenterX, rotateHandleY, 10, 0, Math.PI * 2);
                 ctx.fillStyle = handleBorder;
@@ -2117,24 +2077,21 @@ class QuadViewManager {
                 ctx.fillStyle = handleColor;
                 ctx.fill();
 
-                // Icône de rotation
                 ctx.fillStyle = '#ffffff';
                 ctx.font = 'bold 10px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('⟳', rotateHandleCenterX, rotateHandleY);
 
-                // ✅ CORRECTION : Point rouge de debug AVEC les mêmes coordonnées que la détection
+                // Point rouge de debug
                 ctx.fillStyle = 'red';
                 ctx.beginPath();
-                const debugX = rotateHandleCenterX;  // Même calcul
-                const debugY = rotateHandleY;
-                ctx.arc(debugX, debugY, 3, 0, Math.PI * 2);
+                ctx.arc(rotateHandleCenterX, rotateHandleY, 3, 0, Math.PI * 2);
                 ctx.fill();
 
-                console.log(`🎯 Rack ${rack.code}: rotate poignette DESSINÉE à x=${rotateHandleCenterX.toFixed(1)}, y=${rotateHandleY.toFixed(1)}`);
+                console.log(`🎯 Rack ${rack.code}: rotate DESSINÉE à x=${rotateHandleCenterX.toFixed(1)}, y=${rotateHandleY.toFixed(1)}`);
 
-                // ✅ Stocker les positions pour vérification
+                // ✅ Stocker pour getClickedHandle
                 rack._debugRotateHandle = {
                     centerX: rotateHandleCenterX,
                     centerY: rotateHandleY,
@@ -2147,10 +2104,6 @@ class QuadViewManager {
 
             currentX += w + spacing;
         });
-
-        if (this.topViewScale && this.topViewScale !== 1) {
-            ctx.restore();
-        }
 
         document.getElementById('quadRackCount').textContent = `${racks.length} racks`;
     }
@@ -3780,25 +3733,21 @@ class QuadViewManager {
 
         const rack = this.selectedRack;
 
-        // ✅ Appliquer le scale inverse
-        const scale = this.topViewScale || 1;
-        const adjustedClickX = clickX / scale;
-        const adjustedClickY = clickY / scale;
+        // ✅ PAS de conversion de scale, on travaille directement en pixels physiques
+        const adjustedClickX = clickX;
+        const adjustedClickY = clickY;
 
-        const rackX = rack.displayX;
-        const rackY = rack.displayY;
-        const rackWidth = rack.displayWidth;
-        const rackHeight = rack.displayHeight;
+        // ✅ UTILISER LES VALEURS STOCKÉES
+        if (!rack._debugRotateHandle) {
+            console.error('❌ Pas de _debugRotateHandle stocké');
+            return null;
+        }
 
         const handleSize = 8;
-        const rotateHandleSize = 30;
-
-        // ✅ UTILISER EXACTEMENT LES MÊMES CALCULS QUE DANS drawTopView
-        const rackVisualWidth = rackWidth;  // Déjà en pixels logiques
-        const rackVisualHeight = rackHeight;
-
-        const rotateHandleCenterX = rackX + (rackVisualWidth / 2);
-        const rotateHandleCenterY = rackY - 25;
+        const rackX = rack.displayX;
+        const rackY = rack.displayY;
+        const rackW = rack.displayWidth;
+        const rackH = rack.displayHeight;
 
         const handles = {
             nw: {
@@ -3808,52 +3757,38 @@ class QuadViewManager {
                 height: handleSize
             },
             ne: {
-                x: rackX + rackVisualWidth - handleSize/2,
+                x: rackX + rackW - handleSize/2,
                 y: rackY - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
             sw: {
                 x: rackX - handleSize/2,
-                y: rackY + rackVisualHeight - handleSize/2,
+                y: rackY + rackH - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
             se: {
-                x: rackX + rackVisualWidth - handleSize/2,
-                y: rackY + rackVisualHeight - handleSize/2,
+                x: rackX + rackW - handleSize/2,
+                y: rackY + rackH - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
             rotate: {
-                x: rotateHandleCenterX - rotateHandleSize/2,
-                y: rotateHandleCenterY - rotateHandleSize/2,
-                width: rotateHandleSize,
-                height: rotateHandleSize
+                x: rack._debugRotateHandle.left,
+                y: rack._debugRotateHandle.top,
+                width: 30,
+                height: 30
             }
         };
 
-        console.log('🔍 Clic ajusté:', adjustedClickX.toFixed(1), adjustedClickY.toFixed(1), '(scale:', scale.toFixed(3) + ')');
-        console.log('🎯 Rotate calculée:',
-                    (rotateHandleCenterX - rotateHandleSize/2).toFixed(1), '-',
-                    (rotateHandleCenterX + rotateHandleSize/2).toFixed(1), ',',
-                    (rotateHandleCenterY - rotateHandleSize/2).toFixed(1), '-',
-                    (rotateHandleCenterY + rotateHandleSize/2).toFixed(1));
-
-        // ✅ VÉRIFICATION avec les valeurs stockées
-        if (rack._debugRotateHandle) {
-            console.log('🎯 Rotate DESSINÉE:',
-                        rack._debugRotateHandle.left.toFixed(1), '-',
-                        rack._debugRotateHandle.right.toFixed(1), ',',
-                        rack._debugRotateHandle.top.toFixed(1), '-',
-                        rack._debugRotateHandle.bottom.toFixed(1));
-        }
+        console.log('🔍 Clic brut:', adjustedClickX.toFixed(1), adjustedClickY.toFixed(1));
+        console.log('🎯 Rotate zone:', handles.rotate.x.toFixed(1), '-', (handles.rotate.x + 30).toFixed(1), ',',
+                    handles.rotate.y.toFixed(1), '-', (handles.rotate.y + 30).toFixed(1));
 
         for (const [handleName, handleRect] of Object.entries(handles)) {
             const inX = adjustedClickX >= handleRect.x && adjustedClickX <= handleRect.x + handleRect.width;
             const inY = adjustedClickY >= handleRect.y && adjustedClickY <= handleRect.y + handleRect.height;
-
-            console.log(`  ${handleName}: ${handleRect.x.toFixed(1)}-${(handleRect.x + handleRect.width).toFixed(1)}, ${handleRect.y.toFixed(1)}-${(handleRect.y + handleRect.height).toFixed(1)} -> ${inX && inY ? '✅ HIT!' : 'miss'}`);
 
             if (inX && inY) {
                 console.log('✅✅✅ Poignette détectée:', handleName);
