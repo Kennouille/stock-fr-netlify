@@ -1316,7 +1316,6 @@ function setupEventListeners() {
     document.getElementById('lastPageBtn').addEventListener('click', () => goToPage(totalPages));
 
     // Actions rapides
-    document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
     document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
     document.getElementById('printListBtn').addEventListener('click', printList);
     document.getElementById('massEditBtn').addEventListener('click', massEdit);
