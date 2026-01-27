@@ -1969,6 +1969,9 @@ class QuadViewManager {
 
                 // Stocker le scale pour l'utiliser ailleurs
                 this.topViewScale = 1;
+
+            } else {
+                this.topViewScale = 1;
             }
         }
 
