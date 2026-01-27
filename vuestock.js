@@ -2062,17 +2062,21 @@ class QuadViewManager {
             ctx.fillText(rack.code, x + (w / scale) / 2, y + (d / scale) / 2); // Centrer le texte dans le rectangle ajusté
 
 
-            // AJOUT : POIGNETTES QUAND RACK SÉLECTIONNÉ
+            // Dans drawTopView(), section "POIGNETTES QUAND RACK SÉLECTIONNÉ"
             if (this.selectedRack && rack.id === this.selectedRack.id) {
                 // Surbrillance
                 ctx.strokeStyle = '#ffeb3b';
                 ctx.lineWidth = 3;
-                ctx.strokeRect(x - 2, y - 2, (w / scale) + 4, (d / scale) + 4); // Appliquer le scale inverse
+                ctx.strokeRect(x - 2, y - 2, (w / scale) + 4, (d / scale) + 4);
 
                 // Poignettes de redimensionnement (coins)
                 const handleSize = 8;
                 const handleColor = '#007bff';
                 const handleBorder = '#ffffff';
+
+                // ✅ CORRECTION : Utiliser les mêmes calculs que pour la détection
+                const rackVisualWidth = w / scale;
+                const rackVisualHeight = d / scale;
 
                 // Coin supérieur gauche
                 ctx.fillStyle = handleBorder;
@@ -2082,31 +2086,34 @@ class QuadViewManager {
 
                 // Coin supérieur droit
                 ctx.fillStyle = handleBorder;
-                ctx.fillRect(x + (w / scale) - handleSize/2, y - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(x + rackVisualWidth - handleSize/2, y - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
-                ctx.fillRect(x + (w / scale) - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+                ctx.fillRect(x + rackVisualWidth - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
                 // Coin inférieur gauche
                 ctx.fillStyle = handleBorder;
-                ctx.fillRect(x - handleSize/2, y + (d / scale) - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(x - handleSize/2, y + rackVisualHeight - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
-                ctx.fillRect(x - handleSize/2 + 1, y + (d / scale) - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+                ctx.fillRect(x - handleSize/2 + 1, y + rackVisualHeight - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
                 // Coin inférieur droit
                 ctx.fillStyle = handleBorder;
-                ctx.fillRect(x + (w / scale) - handleSize/2, y + (d / scale) - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(x + rackVisualWidth - handleSize/2, y + rackVisualHeight - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
-                ctx.fillRect(x + (w / scale) - handleSize/2 + 1, y + (d / scale) - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+                ctx.fillRect(x + rackVisualWidth - handleSize/2 + 1, y + rackVisualHeight - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
-
-                // Poignette de rotation (au-dessus du rack)
+                // ✅ CORRECTION CRUCIALE : Poignette de rotation
+                const rotateHandleSize = 30; // Taille de la zone cliquable
+                const rotateHandleCenterX = x + (rackVisualWidth / 2);  // ← CHANGÉ
                 const rotateHandleY = y - 25;
+
+                // Dessiner le cercle visible (10px de rayon)
                 ctx.beginPath();
-                ctx.arc(x + (w / scale) / 2, rotateHandleY, 10, 0, Math.PI * 2);
+                ctx.arc(rotateHandleCenterX, rotateHandleY, 10, 0, Math.PI * 2);
                 ctx.fillStyle = handleBorder;
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(x + (w / scale) / 2, rotateHandleY, 8, 0, Math.PI * 2);
+                ctx.arc(rotateHandleCenterX, rotateHandleY, 8, 0, Math.PI * 2);
                 ctx.fillStyle = handleColor;
                 ctx.fill();
 
@@ -2115,26 +2122,26 @@ class QuadViewManager {
                 ctx.font = 'bold 10px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('⟳', x + (w / scale) / 2, rotateHandleY);
+                ctx.fillText('⟳', rotateHandleCenterX, rotateHandleY);
 
-                // ✅ TEST : Point rouge au centre exact
+                // ✅ CORRECTION : Point rouge de debug AVEC les mêmes coordonnées que la détection
                 ctx.fillStyle = 'red';
                 ctx.beginPath();
-                ctx.arc(x + (w / scale) / 2, rotateHandleY, 3, 0, Math.PI * 2);
+                const debugX = rotateHandleCenterX;  // Même calcul
+                const debugY = rotateHandleY;
+                ctx.arc(debugX, debugY, 3, 0, Math.PI * 2);
                 ctx.fill();
 
-                console.log(`🎯 TEST VISUEL: Rack ${rack.code} - Centre rotate: x=${(x + (w / scale) / 2).toFixed(1)}, y=${rotateHandleY.toFixed(1)}`);
+                console.log(`🎯 Rack ${rack.code}: rotate poignette DESSINÉE à x=${rotateHandleCenterX.toFixed(1)}, y=${rotateHandleY.toFixed(1)}`);
 
-                // ✅ LOG DE DÉBOGAGE : Position de la poignette rotate
-                console.log(`🎯 Rack ${rack.code}: rotate poignette à x=${x + (w / scale) / 2}, y=${rotateHandleY}, zone: ${x + (w / scale)/2 - 10}-${x + (w / scale)/2 + 10}, ${rotateHandleY - 10}-${rotateHandleY + 10}`);
-
-                // Stocker les positions des poignettes pour les interactions
-                this.selectionHandles = {
-                    nw: { x: x - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
-                    ne: { x: x + (w / scale) - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
-                    sw: { x: x - handleSize/2, y: y + (d / scale) - handleSize/2, width: handleSize, height: handleSize },
-                    se: { x: x + (w / scale) - handleSize/2, y: y + (d / scale) - handleSize/2, width: handleSize, height: handleSize },
-                    rotate: { x: x + (w / scale)/2 - 10, y: rotateHandleY - 10, width: 20, height: 20 }
+                // ✅ Stocker les positions pour vérification
+                rack._debugRotateHandle = {
+                    centerX: rotateHandleCenterX,
+                    centerY: rotateHandleY,
+                    left: rotateHandleCenterX - rotateHandleSize/2,
+                    right: rotateHandleCenterX + rotateHandleSize/2,
+                    top: rotateHandleY - rotateHandleSize/2,
+                    bottom: rotateHandleY + rotateHandleSize/2
                 };
             }
 
@@ -3768,36 +3775,30 @@ class QuadViewManager {
         }
     }
 
-    // Dans la méthode getClickedHandle de la classe QuadViewManager
     getClickedHandle(clickX, clickY) {
         if (!this.selectedRack) return null;
 
         const rack = this.selectedRack;
 
-        // ✅ CORRECTION : Appliquer le scale INVERSE aux coordonnées de clic
+        // ✅ Appliquer le scale inverse
         const scale = this.topViewScale || 1;
-        const adjustedClickX = clickX / scale;  // ← AJOUTER CETTE LIGNE
-        const adjustedClickY = clickY / scale;  // ← AJOUTER CETTE LIGNE
+        const adjustedClickX = clickX / scale;
+        const adjustedClickY = clickY / scale;
 
         const rackX = rack.displayX;
         const rackY = rack.displayY;
         const rackWidth = rack.displayWidth;
         const rackHeight = rack.displayHeight;
 
-        // Ces dimensions sont DÉJÀ en pixels logiques (avant scale)
-        const rackVisualWidth = rackWidth;
-        const rackVisualHeight = rackHeight;
-
         const handleSize = 8;
         const rotateHandleSize = 30;
 
-        // Position de la poignette rotate (centre)
+        // ✅ UTILISER EXACTEMENT LES MÊMES CALCULS QUE DANS drawTopView
+        const rackVisualWidth = rackWidth;  // Déjà en pixels logiques
+        const rackVisualHeight = rackHeight;
+
         const rotateHandleCenterX = rackX + (rackVisualWidth / 2);
         const rotateHandleCenterY = rackY - 25;
-
-        // Zone de détection AGRANDIE
-        const rotateHandleX = rotateHandleCenterX - (rotateHandleSize / 2);
-        const rotateHandleY = rotateHandleCenterY - (rotateHandleSize / 2);
 
         const handles = {
             nw: {
@@ -3825,25 +3826,37 @@ class QuadViewManager {
                 height: handleSize
             },
             rotate: {
-                x: rotateHandleX,
-                y: rotateHandleY,
+                x: rotateHandleCenterX - rotateHandleSize/2,
+                y: rotateHandleCenterY - rotateHandleSize/2,
                 width: rotateHandleSize,
                 height: rotateHandleSize
             }
         };
 
-        console.log('🔍 Vérification poignettes:', adjustedClickX.toFixed(1), adjustedClickY.toFixed(1), '(scale:', scale.toFixed(3) + ')');
-        console.log('🎯 Rotate zone:', rotateHandleX.toFixed(1), '-', (rotateHandleX + rotateHandleSize).toFixed(1),
-                    ',', rotateHandleY.toFixed(1), '-', (rotateHandleY + rotateHandleSize).toFixed(1));
+        console.log('🔍 Clic ajusté:', adjustedClickX.toFixed(1), adjustedClickY.toFixed(1), '(scale:', scale.toFixed(3) + ')');
+        console.log('🎯 Rotate calculée:',
+                    (rotateHandleCenterX - rotateHandleSize/2).toFixed(1), '-',
+                    (rotateHandleCenterX + rotateHandleSize/2).toFixed(1), ',',
+                    (rotateHandleCenterY - rotateHandleSize/2).toFixed(1), '-',
+                    (rotateHandleCenterY + rotateHandleSize/2).toFixed(1));
+
+        // ✅ VÉRIFICATION avec les valeurs stockées
+        if (rack._debugRotateHandle) {
+            console.log('🎯 Rotate DESSINÉE:',
+                        rack._debugRotateHandle.left.toFixed(1), '-',
+                        rack._debugRotateHandle.right.toFixed(1), ',',
+                        rack._debugRotateHandle.top.toFixed(1), '-',
+                        rack._debugRotateHandle.bottom.toFixed(1));
+        }
 
         for (const [handleName, handleRect] of Object.entries(handles)) {
             const inX = adjustedClickX >= handleRect.x && adjustedClickX <= handleRect.x + handleRect.width;
             const inY = adjustedClickY >= handleRect.y && adjustedClickY <= handleRect.y + handleRect.height;
 
-            console.log(`  ${handleName}: ${handleRect.x.toFixed(1)}-${(handleRect.x + handleRect.width).toFixed(1)}, ${handleRect.y.toFixed(1)}-${(handleRect.y + handleRect.height).toFixed(1)} -> ${inX && inY ? 'HIT!' : 'miss'}`);
+            console.log(`  ${handleName}: ${handleRect.x.toFixed(1)}-${(handleRect.x + handleRect.width).toFixed(1)}, ${handleRect.y.toFixed(1)}-${(handleRect.y + handleRect.height).toFixed(1)} -> ${inX && inY ? '✅ HIT!' : 'miss'}`);
 
             if (inX && inY) {
-                console.log('✅ Poignette détectée:', handleName);
+                console.log('✅✅✅ Poignette détectée:', handleName);
                 return handleName;
             }
         }
