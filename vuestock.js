@@ -2516,6 +2516,17 @@ class QuadViewManager {
         ctx.save();
         ctx.globalAlpha = opacity;
 
+        // ✅ AJOUT : Appliquer la rotation globale de la caméra
+        if (this.rotation3D && this.rotation3D !== 0) {
+            // Pivoter autour du centre de l'écran
+            const centerX = this.canvas3D.width / 2;
+            const centerY = this.canvas3D.height / 2 + 50;
+
+            ctx.translate(centerX, centerY);
+            ctx.rotate((this.rotation3D * Math.PI) / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+
         // ✅ CORRECTION : Inverser width et depth si rotation proche de 90° ou 270°
         let effectiveWidth = width;
         let effectiveDepth = depth;
