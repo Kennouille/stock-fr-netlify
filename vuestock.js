@@ -2006,10 +2006,6 @@ class QuadViewManager {
                 x = rack.position_x * 20;  // ← 20px par case
                 y = rack.position_y * 20;
 
-                // ✅ CORRECTION : Ramener à l'écran si hors limites
-                const maxX = (this.canvasTop.width) - 100;
-                const maxY = (this.canvasTop.height) - 100;
-
                 // Vos limites OK
                 const maxX = (this.canvasTop.width) - 100;
                 const maxY = (this.canvasTop.height) - 100;
