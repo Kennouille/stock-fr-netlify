@@ -1973,6 +1973,10 @@ class QuadViewManager {
         let currentX = startX;
 
         racks.forEach((rack) => {
+            if (rack.code === 'D') {
+                console.log(`🎨 Drawing D at: displayX=${rack.displayX}, displayY=${rack.displayY}, isDragging=${this.isDragging}, draggedRack=${this.draggedRack?.code}, selectedRack=${this.selectedRack?.code}`);
+            }
+
             // Taille d'un carré en pixels LOGIQUES (toujours 20)
             const logicalGridSize = 20;
             const scale = this.topViewScale || 1;
