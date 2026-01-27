@@ -1943,159 +1943,192 @@ class QuadViewManager {
     }
 
     drawTopView(racks) {
-      if (!this.ctxTop || !this.canvasTop) return;
+        if (!this.ctxTop || !this.canvasTop) return;
 
-      const ctx = this.ctxTop;
-      const width = this.canvasTop.width;
-      const height = this.canvasTop.height;
+        const ctx = this.ctxTop;
+        const width = this.canvasTop.width;
+        const height = this.canvasTop.height;
 
-      // 1. Effacer + grille 20px fixe
-      ctx.clearRect(0, 0, width, height);
+        ctx.clearRect(0, 0, width, height);
+        this.drawGrid(ctx, width, height, 20);
 
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-      ctx.lineWidth = 1;
-      const gridSize = 20;
+        // ✅ NOUVEAU : Calcul du zoom automatique
+        if (racks.length > 0) {
+            // Calculer la largeur totale nécessaire pour tous les racks
+            const totalWidth = racks.reduce((sum, rack) => sum + (rack.width * 20) + 40, 0);
 
-      // Grille verticale
-      for (let x = 0; x < width; x += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
-      // Grille horizontale
-      for (let y = 0; y < height; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
-      // Points grille
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-      for (let x = 0; x < width; x += gridSize * 4) {
-        for (let y = 0; y < height; y += gridSize * 4) {
-          ctx.beginPath();
-          ctx.arc(x, y, 2, 0, Math.PI * 2);
-          ctx.fill();
+            // Si ça dépasse la largeur du canvas, calculer un facteur de zoom
+            if (totalWidth > width - 100) {
+                const zoomFactor = (width - 100) / totalWidth;
+                // Appliquer le zoom (entre 0.3 et 1)
+                const scale = Math.max(0.3, Math.min(1, zoomFactor));
+
+                // Sauvegarder le contexte et appliquer le zoom
+                ctx.save();
+                ctx.scale(scale, scale);
+
+                // Stocker le scale pour l'utiliser ailleurs
+                // ✅ FIX
+                this.topViewScale = 1;  // TOUJOURS fixe
+            }
         }
-      }
 
-      // 2. FIX: Scale = 1
-      this.topViewScale = 1;
+        // RÉGLAGE POUR UNE SEULE LIGNE
+        const startX = 50;
+        const startY = height / 2 - 40;
+        const spacing = 40;
+        let currentX = startX;
 
-      if (racks.length === 0) {
-        ctx.fillStyle = '#f8f9fa';
-        ctx.fillRect(0, 0, width, height);
-        ctx.fillStyle = '#6c757d';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Chargement des tagres...', width/2, height/2);
-        return;
-      }
+        racks.forEach((rack) => {
+            if (rack.code === 'D') {
+                console.log(`🎨 Drawing D at: displayX=${rack.displayX}, displayY=${rack.displayY}, isDragging=${this.isDragging}, draggedRack=${this.draggedRack?.code}, selectedRack=${this.selectedRack?.code}`);
+            }
 
-      // 3. Centrage
-      const rackWidths = racks.reduce((sum, rack) => sum + (rack.width * gridSize), 0);
-      const totalWidth = rackWidths + Math.max(0, racks.length - 1) * 40;
-      const startX = Math.max(20, (width - totalWidth) / 2);
-      const startY = Math.max(20, (height - 80) / 2);
+            // Taille d'un carré en pixels LOGIQUES (toujours 20)
+            const logicalGridSize = 20;
+            const scale = this.topViewScale || 1;
 
-      // 4. Dessiner racks triés
-      const sortedRacks = [...racks].sort((a, b) => (a.positionx || 0) - (b.positionx || 0));
-      let currentX = startX;
+            // Dimensions en pixels logiques (toujours proportionnelles à la grille)
+            const w = rack.width * logicalGridSize;
+            const d = rack.depth * logicalGridSize;
 
-      // 4. Dessiner racks à leurs positions REELLES (PAS forcées)
-        sortedRacks.forEach((rack) => {
-          const w = rack.width * gridSize;
-          const d = rack.depth * gridSize;
+            let x, y;
 
-          // POSITION RÉELLE DU RACK (corrigé)
-          let x, y;
+            // Si ce rack est en cours de drag, utiliser displayX/Y existants
+            if (this.isDragging && this.draggedRack && rack.id === this.draggedRack.id) {
+                // displayX/Y sont déjà en pixels logiques, pas besoin de diviser
+                x = rack.displayX;
+                y = rack.displayY;
+            }
+            else if (rack.position_x !== undefined && rack.position_y !== undefined) {
+                // SUPPRIMEZ positionScale ET viewScale
+                // Position en pixels logiques DIRECTS (20px/carré fixe)
+                x = rack.position_x * 20;  // ← 20px par case
+                y = rack.position_y * 20;
 
-          if (rack.displayX !== undefined) {
-            // Drag en cours → utiliser display
-            x = rack.displayX;
-            y = rack.displayY;
-          } else {
-            // Position normale → convertir positionx/y en pixels
-            x = (rack.positionx || 0) * gridSize;  // 20px par case
-            y = (rack.positiony || 0) * gridSize;
-          }
+                // ✅ CORRECTION : Ramener à l'écran si hors limites
+                const maxX = (this.canvasTop.width) - 100;
+                const maxY = (this.canvasTop.height) - 100;
 
-          // Sauvegarder pour drag/resize
-          rack.displayX = x;
-          rack.displayY = y;
-          rack.displayWidth = w;
-          rack.displayHeight = d;
+                // Vos limites OK
+                const maxX = (this.canvasTop.width) - 100;
+                const maxY = (this.canvasTop.height) - 100;
 
-          // SUPPRIMEZ currentX += ... (pas de forçage ligne)
+                if (x > maxX) {
+                    x = maxX;
+                    rack.position_x = x / 20; // ← Diviser pour sauvegarder en cases
+                }
+                if (y > maxY) {
+                    y = maxY;
+                    rack.position_y = y / 20;
+                }
 
-          // RACK (même code)
-          ctx.fillStyle = rack.color || '#4a90e2';
-          ctx.fillRect(x, y, w, d);
-          ctx.strokeStyle = '#333';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, w, d);
+                rack.displayX = x;
+                rack.displayY = y;
+            }
+            // Sinon, calculer automatiquement
+            else {
+                if (currentX + w > width - 50) {
+                    currentX = Math.max(startX, width - 50 - w);
+                }
 
-          // CODE
-          ctx.fillStyle = '#fff';
-          ctx.font = 'bold 14px Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(rack.code || 'R', x + w/2, y + d/2);
+                x = currentX;
+                y = startY;
 
-          // SÉLECTION + POIGNÉES (même code)
-          if (this.selectedRack?.id === rack.id) {
-            ctx.strokeStyle = '#007bff';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(x - 3, y - 3, w + 6, d + 6);
+                rack.displayX = x;
+                rack.displayY = y;
 
-            // TOUTES les poignées (votre code exact)
-            const handleSize = 8;
-            const handleColor = '#007bff';
-            const handleBorder = '#ffffff';
+                currentX += w + spacing;
+            }
 
-            // NW, NE, SW, SE (votre code exact)
-            ctx.fillStyle = handleBorder;
-            ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
-            ctx.fillStyle = handleColor;
-            ctx.fillRect(x - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+            rack.displayWidth = w;
+            rack.displayHeight = d;
 
-            ctx.fillStyle = handleBorder;
-            ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
-            ctx.fillStyle = handleColor;
-            ctx.fillRect(x + w - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
-
-            ctx.fillStyle = handleBorder;
-            ctx.fillRect(x - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
-            ctx.fillStyle = handleColor;
-            ctx.fillRect(x - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
-
-            ctx.fillStyle = handleBorder;
-            ctx.fillRect(x + w - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
-            ctx.fillStyle = handleColor;
-            ctx.fillRect(x + w - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
-
-            // ROTATION
-            const rotateHandleY = y - 25;
-            ctx.beginPath();
-            ctx.arc(x + w/2, rotateHandleY, 10, 0, Math.PI * 2);
-            ctx.fillStyle = handleBorder;
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(x + w/2, rotateHandleY, 8, 0, Math.PI * 2);
-            ctx.fillStyle = handleColor;
-            ctx.fill();
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 10px Arial';
+            // Ton dessin original
+            ctx.fillStyle = rack.color || '#4a90e2';
+            ctx.fillRect(x, y, w, d);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, w, d);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('⟳', x + w/2, rotateHandleY);
-          }
+            ctx.fillText(rack.code, x + w/2, y + d/2);
+
+            // AJOUT : POIGNETTES QUAND RACK SÉLECTIONNÉ
+            if (this.selectedRack && rack.id === this.selectedRack.id) {
+                // Surbrillance
+                ctx.strokeStyle = '#ffeb3b';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x - 2, y - 2, w + 4, d + 4);
+
+                // Poignettes de redimensionnement (coins)
+                const handleSize = 8;
+                const handleColor = '#007bff';
+                const handleBorder = '#ffffff';
+
+                // Coin supérieur gauche
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Coin supérieur droit
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x + w - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Coin inférieur gauche
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Coin inférieur droit
+                ctx.fillStyle = handleBorder;
+                ctx.fillRect(x + w - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
+                ctx.fillStyle = handleColor;
+                ctx.fillRect(x + w - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+                // Poignette de rotation (au-dessus du rack)
+                const rotateHandleY = y - 25;
+                ctx.beginPath();
+                ctx.arc(x + w/2, rotateHandleY, 10, 0, Math.PI * 2);
+                ctx.fillStyle = handleBorder;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + w/2, rotateHandleY, 8, 0, Math.PI * 2);
+                ctx.fillStyle = handleColor;
+                ctx.fill();
+
+                // Icône de rotation
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⟳', x + w/2, rotateHandleY);
+
+                // Stocker les positions des poignettes pour les interactions
+                this.selectionHandles = {
+                    nw: { x: x - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
+                    ne: { x: x + w - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
+                    sw: { x: x - handleSize/2, y: y + d - handleSize/2, width: handleSize, height: handleSize },
+                    se: { x: x + w - handleSize/2, y: y + d - handleSize/2, width: handleSize, height: handleSize },
+                    rotate: { x: x + w/2 - 10, y: rotateHandleY - 10, width: 20, height: 20 }
+                };
+            }
+
+            currentX += w + spacing;
         });
 
-    }
+        if (this.topViewScale && this.topViewScale !== 1) {
+            ctx.restore();
+        }
 
+        document.getElementById('quadRackCount').textContent = `${racks.length} racks`;
+    }
 
     drawFrontView(rack) {
         if (!this.ctxFront || !this.canvasFront || !rack) return;
