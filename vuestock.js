@@ -2399,7 +2399,7 @@ class QuadViewManager {
 
             let z = 0;
             if (rack.rotation && rack.rotation !== 0) {
-                z = -100;
+                z = -70;
             }
 
             // ✅ CORRECTION : Espacement de 120px au lieu de effectiveWidth + 10
@@ -3403,7 +3403,10 @@ class QuadViewManager {
 
         const startRotation = this.rotation3D || 0;
 
-        let diff = targetRotation - startRotation;
+        // ✅ CORRECTION : Inverser le signe de la rotation cible
+        const invertedTarget = -targetRotation; // ← AJOUT du moins
+
+        let diff = invertedTarget - startRotation;
         while (diff > 180) diff -= 360;
         while (diff < -180) diff += 360;
 
@@ -3426,7 +3429,7 @@ class QuadViewManager {
             if (step < steps) {
                 this.rotation3DAnimFrame = requestAnimationFrame(animate);
             } else {
-                this.rotation3D = targetRotation;
+                this.rotation3D = invertedTarget; // ✅ CHANGÉ aussi ici
                 if (this.currentRacks) {
                     this.draw3DView(this.currentRacks);
                 }
