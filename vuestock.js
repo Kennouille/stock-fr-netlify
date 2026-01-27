@@ -3773,24 +3773,27 @@ class QuadViewManager {
         if (!this.selectedRack) return null;
 
         const rack = this.selectedRack;
-        const adjustedClickX = clickX;
-        const adjustedClickY = clickY;
+
+        // ✅ CORRECTION : Appliquer le scale INVERSE aux coordonnées de clic
+        const scale = this.topViewScale || 1;
+        const adjustedClickX = clickX / scale;  // ← AJOUTER CETTE LIGNE
+        const adjustedClickY = clickY / scale;  // ← AJOUTER CETTE LIGNE
 
         const rackX = rack.displayX;
         const rackY = rack.displayY;
         const rackWidth = rack.displayWidth;
         const rackHeight = rack.displayHeight;
 
-        const scale = this.topViewScale || 1;
-        const rackVisualWidth = rackWidth / scale;
-        const rackVisualHeight = rackHeight / scale;
+        // Ces dimensions sont DÉJÀ en pixels logiques (avant scale)
+        const rackVisualWidth = rackWidth;
+        const rackVisualHeight = rackHeight;
 
         const handleSize = 8;
-        const rotateHandleSize = 30; // ⬅️ AGRANDI à 30px
+        const rotateHandleSize = 30;
 
         // Position de la poignette rotate (centre)
         const rotateHandleCenterX = rackX + (rackVisualWidth / 2);
-        const rotateHandleCenterY = rackY - 25; // 25px au-dessus du rack
+        const rotateHandleCenterY = rackY - 25;
 
         // Zone de détection AGRANDIE
         const rotateHandleX = rotateHandleCenterX - (rotateHandleSize / 2);
@@ -3829,7 +3832,7 @@ class QuadViewManager {
             }
         };
 
-        console.log('🔍 Vérification poignettes:', adjustedClickX, adjustedClickY);
+        console.log('🔍 Vérification poignettes:', adjustedClickX.toFixed(1), adjustedClickY.toFixed(1), '(scale:', scale.toFixed(3) + ')');
         console.log('🎯 Rotate zone:', rotateHandleX.toFixed(1), '-', (rotateHandleX + rotateHandleSize).toFixed(1),
                     ',', rotateHandleY.toFixed(1), '-', (rotateHandleY + rotateHandleSize).toFixed(1));
 
