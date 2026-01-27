@@ -506,7 +506,8 @@ function displayArticleDetails(article) {
             <div class="detail-photo-container">
                 <div class="detail-photo" id="detailPhotoContainer">
                     ${article.photo_url ?
-                        `<img src="${article.photo_url}" alt="${article.nom}" loading="lazy" id="detailPhotoImg">` :
+                        `<img src="${article.photo_url}" alt="${article.nom}" loading="lazy"
+                             id="detailPhotoImg" class="clickable-photo-detail">` :
                         `<div class="detail-photo-placeholder" id="detailPhotoPlaceholder">
                             <i class="fas fa-image"></i>
                         </div>`
@@ -636,6 +637,14 @@ function displayArticleDetails(article) {
         if (editBtn) {
             editBtn.addEventListener('click', () => {
                 openEditModal(article.id);
+            });
+        }
+
+        // NOUVEAU: Événement pour la photo
+        const detailPhoto = document.getElementById('detailPhotoImg');
+        if (detailPhoto) {
+            detailPhoto.addEventListener('click', function() {
+                showPhotoInLightbox(this.src, article.nom);
             });
         }
 
@@ -1622,6 +1631,35 @@ function showExportSuccess(message) {
             document.head.removeChild(style);
         }
     }, 3000);
+}
+
+function showPhotoInLightbox(photoUrl, articleName) {
+    const lightbox = document.createElement('div');
+    lightbox.className = 'photo-lightbox';
+    lightbox.innerHTML = `
+        <div class="lightbox-overlay"></div>
+        <div class="lightbox-content">
+            <img src="${photoUrl}" alt="${articleName}" class="lightbox-image">
+            <button class="lightbox-close">&times;</button>
+        </div>
+    `;
+
+    document.body.appendChild(lightbox);
+
+    lightbox.querySelector('.lightbox-overlay').addEventListener('click', function() {
+        document.body.removeChild(lightbox);
+    });
+
+    lightbox.querySelector('.lightbox-close').addEventListener('click', function() {
+        document.body.removeChild(lightbox);
+    });
+
+    document.addEventListener('keydown', function closeOnEscape(e) {
+        if (e.key === 'Escape') {
+            document.body.removeChild(lightbox);
+            document.removeEventListener('keydown', closeOnEscape);
+        }
+    });
 }
 
 function printList() {
