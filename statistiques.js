@@ -90,9 +90,28 @@ async function checkAuth() {
 
         state.user = JSON.parse(userJson);
 
-        // Vérifier les permissions (users avec permission)
-        if (!state.user.permissions?.view_reports) {
-            alert('Accès non autorisé');
+        // DEBUG: Afficher les permissions pour vérification
+        console.log('Utilisateur connecté:', state.user.username);
+        console.log('Permissions:', state.user.permissions);
+        console.log('Permission stats:', state.user.permissions?.stats);
+
+        // Le SuperAdmin a toujours accès
+        const SUPERADMIN_USERNAME = 'Kennouille';
+        const isSuperAdmin = state.user.username === SUPERADMIN_USERNAME;
+
+        if (isSuperAdmin) {
+            console.log('SuperAdmin - accès autorisé automatiquement');
+            // Mettre à jour les permissions pour inclure stats si nécessaire
+            if (!state.user.permissions) {
+                state.user.permissions = {};
+            }
+            state.user.permissions.stats = true;
+            return true;
+        }
+
+        // Pour les autres utilisateurs, vérifier la permission stats
+        if (!state.user.permissions?.stats) {
+            alert('Vous n\'avez pas la permission d\'accéder à cette page');
             window.location.href = 'accueil.html';
             return false;
         }
