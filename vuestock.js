@@ -1644,11 +1644,6 @@ class QuadViewManager {
     // Méthode pour gérer les clics sur le canvas
      handleCanvasClick(e) {
         console.log('=== handleCanvasClick ===');
-        console.log('🎯 COORDONNÉES BRUTES:');
-        console.log('  e.clientX/Y:', e.clientX, e.clientY);
-        console.log('  rect:', this.canvasTop.getBoundingClientRect());
-        console.log('  calculé x/y:', x, y);
-        console.log('  canvas width/height:', this.canvasTop.width, this.canvasTop.height);
 
         e.preventDefault();
         e.stopPropagation();
@@ -1662,6 +1657,14 @@ class QuadViewManager {
         const rect = this.canvasTop.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
+
+        // ✅ LOGS DE DÉBOGAGE
+        console.log('🎯 COORDONNÉES BRUTES:');
+        console.log('  e.clientX:', e.clientX, 'e.clientY:', e.clientY);
+        console.log('  rect.left:', rect.left.toFixed(1), 'rect.top:', rect.top.toFixed(1));
+        console.log('  rect.width:', rect.width, 'rect.height:', rect.height);
+        console.log('  canvas.width:', this.canvasTop.width, 'canvas.height:', this.canvasTop.height);
+        console.log('  x calculé:', x.toFixed(1), 'y calculé:', y.toFixed(1));
 
         console.log(`🎯 Clic à: ${x}, ${y}`);
         console.log(`📌 État actuel: selectedRack = ${this.selectedRack ? this.selectedRack.code : 'null'}`);
