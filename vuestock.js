@@ -2467,10 +2467,20 @@ class QuadViewManager {
         // Appliquer l'opacité
         ctx.globalAlpha = opacity;
 
+        // ✅ AJOUT : Appliquer la rotation si elle existe
+        if (rack.rotation && rack.rotation !== 0) {
+            // Translater au centre du rack
+            ctx.translate(x, y - height/2);
+            // Appliquer la rotation (convertir degrés en radians)
+            ctx.rotate((rack.rotation * Math.PI) / 180);
+            // Revenir en arrière
+            ctx.translate(-x, -(y - height/2));
+        }
+
         // Dimensions ajustées
         const cabinetWidth = width;
         const cabinetHeight = height;
-        const cabinetDepth = depth * 0.3; // Réduire la profondeur visuelle
+        const cabinetDepth = depth * 0.3;
 
         // Face avant de l'armoire
         ctx.fillStyle = rack.color;
@@ -2491,15 +2501,11 @@ class QuadViewManager {
         // Dessiner les étages comme des séparateurs horizontaux
         if (rack.levels && rack.levels.length > 0) {
             const levelHeight = cabinetHeight / rack.levels.length;
-
-            // Trier les niveaux par ordre croissant (10, 20, 30, etc.)
             const sortedLevels = [...rack.levels].sort((a, b) => parseInt(a.code) - parseInt(b.code));
 
             sortedLevels.forEach((level, index) => {
-                // Inverser l'ordre pour que 10 soit en bas
                 const levelY = y - (index * levelHeight);
 
-                // Ligne de séparation d'étage
                 ctx.strokeStyle = 'rgba(255,255,255,0.5)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -2507,7 +2513,6 @@ class QuadViewManager {
                 ctx.lineTo(x + cabinetWidth/2 - 5, levelY);
                 ctx.stroke();
 
-                // Code de l'étage (petit)
                 if (levelHeight > 20) {
                     ctx.fillStyle = 'rgba(255,255,255,0.8)';
                     ctx.font = '10px Arial';
