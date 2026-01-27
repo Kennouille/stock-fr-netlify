@@ -1276,7 +1276,15 @@ class QuadViewManager {
                 // ✅ Nettoyer TOUS les états
                 if (this.isDragging) {
                     this.isDragging = false;
-                    this.draggedRack = null;  // ✅ CRITIQUE : nettoyer draggedRack
+
+                    // ✅ AJOUT : Sauvegarder la position finale
+                    if (this.draggedRack) {
+                        const scale = 0.8;
+                        this.draggedRack.position_x = this.draggedRack.displayX / scale;
+                        this.draggedRack.position_y = this.draggedRack.displayY / scale;
+                    }
+
+                    this.draggedRack = null;
                     this.dragStartX = null;
                     this.dragStartY = null;
                     this.canvasTop.style.cursor = 'default';
