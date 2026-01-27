@@ -2004,97 +2004,96 @@ class QuadViewManager {
       const sortedRacks = [...racks].sort((a, b) => (a.positionx || 0) - (b.positionx || 0));
       let currentX = startX;
 
-      sortedRacks.forEach((rack) => {
-        const w = rack.width * gridSize;
-        const d = rack.depth * gridSize;
+      // 4. Dessiner racks à leurs positions REELLES (PAS forcées)
+        sortedRacks.forEach((rack) => {
+          const w = rack.width * gridSize;
+          const d = rack.depth * gridSize;
 
-        let x = currentX;
-        let y = startY;
+          // POSITION RÉELLE DU RACK (corrigé)
+          let x, y;
 
-        if (rack.displayX !== undefined) {
-          x = rack.displayX;
-          y = rack.displayY;
-        } else {
-          x = (rack.positionx || 0) * 0.8;
-          y = (rack.positiony || 0) * 0.8;
-        }
+          if (rack.displayX !== undefined) {
+            // Drag en cours → utiliser display
+            x = rack.displayX;
+            y = rack.displayY;
+          } else {
+            // Position normale → convertir positionx/y en pixels
+            x = (rack.positionx || 0) * gridSize;  // 20px par case
+            y = (rack.positiony || 0) * gridSize;
+          }
 
-        rack.displayX = x;
-        rack.displayY = y;
-        rack.displayWidth = w;
-        rack.displayHeight = d;
+          // Sauvegarder pour drag/resize
+          rack.displayX = x;
+          rack.displayY = y;
+          rack.displayWidth = w;
+          rack.displayHeight = d;
 
-        // RACK
-        ctx.fillStyle = rack.color || '#4a90e2';
-        ctx.fillRect(x, y, w, d);
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, w, d);
+          // SUPPRIMEZ currentX += ... (pas de forçage ligne)
 
-        // CODE
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 14px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(rack.code || 'R', x + w/2, y + d/2);
+          // RACK (même code)
+          ctx.fillStyle = rack.color || '#4a90e2';
+          ctx.fillRect(x, y, w, d);
+          ctx.strokeStyle = '#333';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x, y, w, d);
 
-        // SÉLECTION
-        if (this.selectedRack?.id === rack.id) {
-          ctx.strokeStyle = '#007bff';
-          ctx.lineWidth = 4;
-          ctx.strokeRect(x - 3, y - 3, w + 6, d + 6);
-        }
-
-        // POIGNÉES (UNIQUEMENT rack sélectionné)
-        if (this.selectedRack?.id === rack.id) {
-          const handleSize = 8;
-          const handleColor = '#007bff';
-          const handleBorder = '#ffffff';
-
-          // NW
-          ctx.fillStyle = handleBorder;
-          ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
-          ctx.fillStyle = handleColor;
-          ctx.fillRect(x - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
-
-          // NE
-          ctx.fillStyle = handleBorder;
-          ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
-          ctx.fillStyle = handleColor;
-          ctx.fillRect(x + w - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
-
-          // SW
-          ctx.fillStyle = handleBorder;
-          ctx.fillRect(x - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
-          ctx.fillStyle = handleColor;
-          ctx.fillRect(x - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
-
-          // SE
-          ctx.fillStyle = handleBorder;
-          ctx.fillRect(x + w - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
-          ctx.fillStyle = handleColor;
-          ctx.fillRect(x + w - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
-
-          // ROTATION
-          const rotateHandleY = y - 25;
-          ctx.beginPath();
-          ctx.arc(x + w/2, rotateHandleY, 10, 0, Math.PI * 2);
-          ctx.fillStyle = handleBorder;
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(x + w/2, rotateHandleY, 8, 0, Math.PI * 2);
-          ctx.fillStyle = handleColor;
-          ctx.fill();
-
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 10px Arial';
+          // CODE
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 14px Arial';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('⟳', x + w/2, rotateHandleY);
-        }
+          ctx.fillText(rack.code || 'R', x + w/2, y + d/2);
 
-        currentX += w + 40;
-      });
+          // SÉLECTION + POIGNÉES (même code)
+          if (this.selectedRack?.id === rack.id) {
+            ctx.strokeStyle = '#007bff';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(x - 3, y - 3, w + 6, d + 6);
+
+            // TOUTES les poignées (votre code exact)
+            const handleSize = 8;
+            const handleColor = '#007bff';
+            const handleBorder = '#ffffff';
+
+            // NW, NE, SW, SE (votre code exact)
+            ctx.fillStyle = handleBorder;
+            ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
+            ctx.fillStyle = handleColor;
+            ctx.fillRect(x - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+            ctx.fillStyle = handleBorder;
+            ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
+            ctx.fillStyle = handleColor;
+            ctx.fillRect(x + w - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+            ctx.fillStyle = handleBorder;
+            ctx.fillRect(x - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
+            ctx.fillStyle = handleColor;
+            ctx.fillRect(x - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+            ctx.fillStyle = handleBorder;
+            ctx.fillRect(x + w - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
+            ctx.fillStyle = handleColor;
+            ctx.fillRect(x + w - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
+            // ROTATION
+            const rotateHandleY = y - 25;
+            ctx.beginPath();
+            ctx.arc(x + w/2, rotateHandleY, 10, 0, Math.PI * 2);
+            ctx.fillStyle = handleBorder;
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + w/2, rotateHandleY, 8, 0, Math.PI * 2);
+            ctx.fillStyle = handleColor;
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⟳', x + w/2, rotateHandleY);
+          }
+        });
+
     }
 
 
