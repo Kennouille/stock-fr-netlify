@@ -3773,15 +3773,18 @@ class QuadViewManager {
         if (!this.selectedRack) return null;
 
         const rack = this.selectedRack;
-        const adjustedClickX = clickX;
-        const adjustedClickY = clickY;
+        const scale = this.topViewScale || 1; // ⬅️ DÉPLACÉ ICI
+
+        // ⬇️⬇️⬇️ CORRECTION ⬇️⬇️⬇️
+        const adjustedClickX = clickX * scale;
+        const adjustedClickY = clickY * scale;
+        // ⬆️⬆️⬆️ CORRECTION ⬆️⬆️⬆️
 
         const rackX = rack.displayX;
         const rackY = rack.displayY;
         const rackWidth = rack.displayWidth;
         const rackHeight = rack.displayHeight;
 
-        const scale = this.topViewScale || 1;
         const rackVisualWidth = rackWidth / scale;
         const rackVisualHeight = rackHeight / scale;
 
