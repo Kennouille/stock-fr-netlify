@@ -343,23 +343,35 @@ async function fetchData() {
         state.data.reservations = reservations || [];
 
         // Récupérer les projets
+        console.log('Récupération des projets...');
         const { data: projects, error: projectsError } = await supabase
             .from('w_projets')
             .select('id, nom, numero')
             .eq('archived', false)
             .order('nom');
 
-        if (projectsError) throw projectsError;
-        state.data.projects = projects || [];
+        if (projectsError) {
+            console.error('Erreur récupération projets:', projectsError);
+            state.data.projects = [];
+        } else {
+            console.log('Projets récupérés:', projects);
+            state.data.projects = projects || [];
+        }
 
         // Récupérer les utilisateurs
+        console.log('Récupération des utilisateurs...');
         const { data: users, error: usersError } = await supabase
             .from('w_users')
             .select('id, username as nom, username')
-            .order('username');
+            .order('username');  // Changé de 'nom' à 'username'
 
-        if (usersError) throw usersError;
-        state.data.users = users || [];
+        if (usersError) {
+            console.error('Erreur récupération utilisateurs:', usersError);
+            state.data.users = [];
+        } else {
+            console.log('Utilisateurs récupérés:', users);
+            state.data.users = users || [];
+        }
 
         // Récupérer les mouvements récents
         const dateRange = getDateRangeForPeriod(state.filters.period);
