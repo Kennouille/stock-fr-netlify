@@ -1461,14 +1461,301 @@ function showEditError(message) {
 }
 
 // ===== ACTIONS RAPIDES =====
-function exportToExcel() {
-    alert('Export Excel à implémenter');
-    // Tu pourrais utiliser une librairie comme SheetJS
+async function exportToExcel() {
+    try {
+        // Afficher un indicateur de chargement
+        const exportBtn = document.getElementById('exportExcelBtn');
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération...';
+        exportBtn.disabled = true;
+
+        // Récupérer TOUS les articles (non paginés)
+        const { data: allArticles, error } = await supabase
+            .from('w_articles')
+            .select(`
+                *,
+                w_vuestock_racks(rack_code, display_name),
+                w_vuestock_levels(level_code),
+                w_vuestock_slots(slot_code, full_code)
+            `)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Préparer les données pour Excel
+        const excelData = allArticles.map(article => {
+            // Calculer la valeur totale
+            const totalValue = (article.stock_actuel || 0) * (article.prix_unitaire || 0);
+
+            // Déterminer le statut
+            let status = 'Actif';
+            if (!article.actif) status = 'Inactif';
+            else if (article.stock_actuel === 0) status = 'Rupture';
+            else if (article.stock_actuel <= article.stock_minimum) status = 'Stock bas';
+
+            // Formater l'emplacement
+            let location = '';
+            if (article.w_vuestock_racks) {
+                location = article.w_vuestock_racks.display_name || article.w_vuestock_racks.rack_code;
+            }
+            if (article.w_vuestock_levels) {
+                location += location ? ` → ${article.w_vuestock_levels.level_code}` : article.w_vuestock_levels.level_code;
+            }
+            if (article.w_vuestock_slots) {
+                location += location ? ` → ${article.w_vuestock_slots.full_code || article.w_vuestock_slots.slot_code}` : article.w_vuestock_slots.full_code || article.w_vuestock_slots.slot_code;
+            }
+
+            return {
+                'ID': article.id,
+                'Nom': article.nom || '',
+                'Numéro': article.numero || '',
+                'Référence interne': article.reference_interne || '',
+                'Code-barre': article.code_barre || '',
+                'Description': article.caracteristiques || '',
+                'Stock actuel': article.stock_actuel || 0,
+                'Stock minimum': article.stock_minimum || 1,
+                'Prix unitaire (€)': (article.prix_unitaire || 0).toFixed(2),
+                'Valeur totale (€)': totalValue.toFixed(2),
+                'Statut': status,
+                'Emplacement': location || 'Non spécifié',
+                'Créé le': new Date(article.created_at).toLocaleDateString('fr-FR'),
+                'Modifié le': article.updated_at ? new Date(article.updated_at).toLocaleDateString('fr-FR') : '',
+                'Actif': article.actif ? 'Oui' : 'Non'
+            };
+        });
+
+        // Créer le workbook
+        const wb = XLSX.utils.book_new();
+
+        // Créer la feuille principale
+        const ws = XLSX.utils.json_to_sheet(excelData);
+
+        // Ajouter des en-têtes stylisés
+        const headerStyle = {
+            font: { bold: true, color: { rgb: "FFFFFF" } },
+            fill: { fgColor: { rgb: "4F81BD" } },
+            alignment: { horizontal: "center" }
+        };
+
+        // Appliquer des styles aux colonnes
+        const colWidths = [
+            { wch: 8 },  // ID
+            { wch: 25 }, // Nom
+            { wch: 12 }, // Numéro
+            { wch: 15 }, // Référence
+            { wch: 15 }, // Code-barre
+            { wch: 30 }, // Description
+            { wch: 12 }, // Stock actuel
+            { wch: 12 }, // Stock min
+            { wch: 15 }, // Prix unitaire
+            { wch: 15 }, // Valeur totale
+            { wch: 12 }, // Statut
+            { wch: 25 }, // Emplacement
+            { wch: 12 }, // Créé le
+            { wch: 12 }, // Modifié le
+            { wch: 8 }   // Actif
+        ];
+
+        ws['!cols'] = colWidths;
+
+        // Ajouter un titre
+        const title = [
+            ['INVENTAIRE DES ARTICLES'],
+            ['Export généré le ' + new Date().toLocaleDateString('fr-FR') + ' à ' + new Date().toLocaleTimeString('fr-FR')],
+            ['Total articles : ' + allArticles.length],
+            [] // Ligne vide
+        ];
+
+        const titleRange = XLSX.utils.decode_range(ws['!ref']);
+        XLSX.utils.sheet_add_aoa(ws, title, { origin: { r: -4, c: 0 } });
+
+        // Ajouter la feuille au workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Articles');
+
+        // Générer le fichier Excel
+        const fileName = `inventaire_articles_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+
+        // Restaurer le bouton
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+
+        // Afficher un message de succès
+        showExportSuccess('Excel généré avec succès !');
+
+    } catch (error) {
+        console.error('Erreur export Excel:', error);
+
+        // Restaurer le bouton
+        const exportBtn = document.getElementById('exportExcelBtn');
+        exportBtn.innerHTML = '<i class="fas fa-file-excel"></i> Excel';
+        exportBtn.disabled = false;
+
+        alert('Erreur lors de l\'export Excel : ' + error.message);
+    }
 }
 
-function exportToPDF() {
-    alert('Export PDF à implémenter');
-    // Tu pourrais utiliser une librairie comme jsPDF
+async function exportToPDF() {
+    try {
+        // Afficher un indicateur de chargement
+        const exportBtn = document.getElementById('exportPdfBtn');
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération...';
+        exportBtn.disabled = true;
+
+        // Récupérer les articles (filtrés comme dans le tableau)
+        const articlesToExport = filteredArticles.length > 0 ? filteredArticles : allArticles;
+
+        // Préparer les données pour le PDF
+        const pdfData = articlesToExport.map(article => {
+            const totalValue = (article.stock_actuel || 0) * (article.prix_unitaire || 0);
+
+            let status = 'Actif';
+            if (!article.actif) status = 'Inactif';
+            else if (article.stock_actuel === 0) status = 'Rupture';
+            else if (article.stock_actuel <= article.stock_minimum) status = 'Stock bas';
+
+            return [
+                article.numero || '',
+                article.nom?.substring(0, 30) + (article.nom?.length > 30 ? '...' : '') || '',
+                article.reference_interne || '',
+                article.stock_actuel || 0,
+                (article.prix_unitaire || 0).toFixed(2) + ' €',
+                totalValue.toFixed(2) + ' €',
+                status
+            ];
+        });
+
+        // Créer le PDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('landscape');
+
+        // Titre
+        doc.setFontSize(20);
+        doc.setTextColor(40, 40, 40);
+        doc.text('INVENTAIRE DES ARTICLES', 14, 22);
+
+        // Sous-titre
+        doc.setFontSize(11);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Export généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, 14, 30);
+        doc.text(`Total articles : ${articlesToExport.length}`, 14, 36);
+
+        // Ajouter le tableau
+        doc.autoTable({
+            startY: 45,
+            head: [
+                ['Numéro', 'Nom', 'Référence', 'Stock', 'Prix unitaire', 'Valeur totale', 'Statut']
+            ],
+            body: pdfData,
+            theme: 'grid',
+            headStyles: {
+                fillColor: [41, 128, 185],
+                textColor: 255,
+                fontStyle: 'bold'
+            },
+            alternateRowStyles: {
+                fillColor: [245, 245, 245]
+            },
+            columnStyles: {
+                0: { cellWidth: 25 }, // Numéro
+                1: { cellWidth: 45 }, // Nom
+                2: { cellWidth: 30 }, // Référence
+                3: { cellWidth: 20 }, // Stock
+                4: { cellWidth: 25 }, // Prix
+                5: { cellWidth: 25 }, // Valeur
+                6: { cellWidth: 25 }  // Statut
+            },
+            margin: { left: 14 },
+            styles: {
+                fontSize: 9,
+                cellPadding: 3,
+                overflow: 'linebreak'
+            },
+            didDrawPage: function(data) {
+                // Pied de page
+                doc.setFontSize(10);
+                doc.setTextColor(150, 150, 150);
+                doc.text(
+                    `Page ${data.pageNumber}`,
+                    doc.internal.pageSize.width / 2,
+                    doc.internal.pageSize.height - 10,
+                    { align: 'center' }
+                );
+            }
+        });
+
+        // Sauvegarder le PDF
+        const fileName = `inventaire_articles_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+
+        // Restaurer le bouton
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+
+        // Afficher un message de succès
+        showExportSuccess('PDF généré avec succès !');
+
+    } catch (error) {
+        console.error('Erreur export PDF:', error);
+
+        // Restaurer le bouton
+        const exportBtn = document.getElementById('exportPdfBtn');
+        exportBtn.innerHTML = '<i class="fas fa-file-pdf"></i> PDF';
+        exportBtn.disabled = false;
+
+        alert('Erreur lors de l\'export PDF : ' + error.message);
+    }
+}
+
+function showExportSuccess(message) {
+    const successDiv = document.createElement('div');
+    successDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideIn 0.3s ease;
+        max-width: 300px;
+    `;
+
+    successDiv.innerHTML = `
+        <i class="fas fa-check-circle" style="font-size: 1.2rem;"></i>
+        <div>
+            <div style="font-weight: bold; margin-bottom: 4px;">Export réussi</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">${message}</div>
+        </div>
+    `;
+
+    document.body.appendChild(successDiv);
+
+    // Animation CSS
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Supprimer après 3 secondes
+    setTimeout(() => {
+        if (successDiv.parentNode) {
+            document.body.removeChild(successDiv);
+        }
+        if (style.parentNode) {
+            document.head.removeChild(style);
+        }
+    }, 3000);
 }
 
 function printList() {
