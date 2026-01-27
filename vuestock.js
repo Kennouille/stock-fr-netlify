@@ -2047,34 +2047,54 @@ class QuadViewManager {
                 currentX += w + spacing;
             }
 
+            // ✅ AJOUT DE LA ROTATION VISUELLE
+            ctx.save(); // Sauvegarder le contexte
 
+            // Si rotation, appliquer la transformation
+            if (rack.rotation && rack.rotation !== 0) {
+                // Translater au centre du rack
+                const centerX = x + (w / scale) / 2;
+                const centerY = y + (d / scale) / 2;
+                ctx.translate(centerX, centerY);
+                ctx.rotate((rack.rotation * Math.PI) / 180); // Convertir degrés en radians
+                ctx.translate(-centerX, -centerY);
+            }
 
-            // Ton dessin original
+            // Dessin du rack (code original)
             ctx.fillStyle = rack.color || '#4a90e2';
-            ctx.fillRect(x, y, w / scale, d / scale); // Appliquer le scale inverse
+            ctx.fillRect(x, y, w / scale, d / scale);
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
-            ctx.strokeRect(x, y, w / scale, d / scale); // Appliquer le scale inverse
+            ctx.strokeRect(x, y, w / scale, d / scale);
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(rack.code, x + (w / scale) / 2, y + (d / scale) / 2); // Centrer le texte dans le rectangle ajusté
+            ctx.fillText(rack.code, x + (w / scale) / 2, y + (d / scale) / 2);
 
+            ctx.restore(); // Restaurer le contexte (annule la rotation)
 
-            // Dans drawTopView(), section "POIGNETTES QUAND RACK SÉLECTIONNÉ"
+            // Poignettes (APRÈS la restauration pour qu'elles ne tournent pas)
             if (this.selectedRack && rack.id === this.selectedRack.id) {
                 // Surbrillance
+                ctx.save();
+                if (rack.rotation && rack.rotation !== 0) {
+                    const centerX = x + (w / scale) / 2;
+                    const centerY = y + (d / scale) / 2;
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate((rack.rotation * Math.PI) / 180);
+                    ctx.translate(-centerX, -centerY);
+                }
+
                 ctx.strokeStyle = '#ffeb3b';
                 ctx.lineWidth = 3;
                 ctx.strokeRect(x - 2, y - 2, (w / scale) + 4, (d / scale) + 4);
+                ctx.restore();
 
-                // Poignettes de redimensionnement (coins)
+                // Les poignettes ne tournent PAS (elles restent toujours horizontales/verticales)
                 const handleSize = 8;
                 const handleColor = '#007bff';
                 const handleBorder = '#ffffff';
-
-                // ✅ CORRECTION : Utiliser les mêmes calculs que pour la détection
                 const rackVisualWidth = w / scale;
                 const rackVisualHeight = d / scale;
 
@@ -2102,12 +2122,11 @@ class QuadViewManager {
                 ctx.fillStyle = handleColor;
                 ctx.fillRect(x + rackVisualWidth - handleSize/2 + 1, y + rackVisualHeight - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
-                // ✅ CORRECTION CRUCIALE : Poignette de rotation
-                const rotateHandleSize = 30; // Taille de la zone cliquable
-                const rotateHandleCenterX = x + (rackVisualWidth / 2);  // ← CHANGÉ
+                // Poignette de rotation
+                const rotateHandleSize = 30;
+                const rotateHandleCenterX = x + (rackVisualWidth / 2);
                 const rotateHandleY = y - 25;
 
-                // Dessiner le cercle visible (10px de rayon)
                 ctx.beginPath();
                 ctx.arc(rotateHandleCenterX, rotateHandleY, 10, 0, Math.PI * 2);
                 ctx.fillStyle = handleBorder;
@@ -2117,24 +2136,19 @@ class QuadViewManager {
                 ctx.fillStyle = handleColor;
                 ctx.fill();
 
-                // Icône de rotation
                 ctx.fillStyle = '#ffffff';
                 ctx.font = 'bold 10px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('⟳', rotateHandleCenterX, rotateHandleY);
 
-                // ✅ CORRECTION : Point rouge de debug AVEC les mêmes coordonnées que la détection
                 ctx.fillStyle = 'red';
                 ctx.beginPath();
-                const debugX = rotateHandleCenterX;  // Même calcul
-                const debugY = rotateHandleY;
-                ctx.arc(debugX, debugY, 3, 0, Math.PI * 2);
+                ctx.arc(rotateHandleCenterX, rotateHandleY, 3, 0, Math.PI * 2);
                 ctx.fill();
 
                 console.log(`🎯 Rack ${rack.code}: rotate poignette DESSINÉE à x=${rotateHandleCenterX.toFixed(1)}, y=${rotateHandleY.toFixed(1)}`);
 
-                // ✅ Stocker les positions pour vérification
                 rack._debugRotateHandle = {
                     centerX: rotateHandleCenterX,
                     centerY: rotateHandleY,
