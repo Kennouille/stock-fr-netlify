@@ -842,6 +842,13 @@ function updateCategoriesTable() {
 
 // ===== DATATABLES INITIALISATION =====
 function initDataTables() {
+    console.log('Initialisation DataTables...');
+    console.log('Nombre de th dans stockValueTable:', $('#stockValueTable thead th').length);
+    console.log('Nombre de th dans lowStockTable:', $('#lowStockTable thead th').length);
+    console.log('Nombre de th dans outOfStockTable:', $('#outOfStockTable thead th').length);
+    console.log('Nombre de th dans topArticlesTable:', $('#topArticlesTable thead th').length);
+    console.log('Nombre de th dans categoriesTable:', $('#categoriesTable thead th').length);
+
     // Détruire les instances existantes
     if (state.dataTables.stockValue) {
         state.dataTables.stockValue.destroy();
@@ -859,6 +866,7 @@ function initDataTables() {
         state.dataTables.categories.destroy();
     }
 
+    console.log('Initialisation stockValueTable...');
     // Initialiser les tables avec DataTables
     state.dataTables.stockValue = $('#stockValueTable').DataTable({
         pageLength: 10,
@@ -867,6 +875,7 @@ function initDataTables() {
         },
         order: [[6, 'desc']] // Trier par valeur totale décroissante
     });
+    console.log('stockValueTable initialisée');
 
     state.dataTables.lowStock = $('#lowStockTable').DataTable({
         pageLength: 10,
