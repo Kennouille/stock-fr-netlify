@@ -867,6 +867,9 @@ function initDataTables() {
     }
 
     console.log('Initialisation stockValueTable...');
+    console.log('Contenu de stockValueTable tbody:', $('#stockValueTable tbody').html());
+    console.log('Nombre de lignes dans tbody:', $('#stockValueTable tbody tr').length);
+
     // Initialiser les tables avec DataTables
     state.dataTables.stockValue = $('#stockValueTable').DataTable({
         pageLength: 10,
