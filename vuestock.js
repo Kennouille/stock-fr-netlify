@@ -1025,7 +1025,7 @@ class QuadViewManager {
         this.draggedRack = null;
         this.selectedRackZOffset = 0; // Décalage en Z pour le rack sélectionné
         this.selectedRackAnimProgress = 0; // Progression de l'animation
-        this.animationFrameId = null; // ID de l'animation en cours
+
 
 
         // Canvases
@@ -2339,39 +2339,58 @@ class QuadViewManager {
             return { rack, x, z, angle };
         });
 
-        // Dessiner chaque rack avec effets
-        sortedRacks.forEach((rack, index) => {
+        // Dessiner chaque rack avec effets Rayons X et Zoom
+        racksWithDepth.forEach(({ rack, x, z, angle }, index) => {
             // Déterminer si ce rack est sélectionné
             const isSelected = this.selectedRack && rack.id === this.selectedRack.id;
 
-            // Appliquer un décalage en Z si le rack est sélectionné
-            let rackZOffset = 0;
-            if (isSelected) {
-                rackZOffset = 50 * this.selectedRackAnimProgress;
-            }
-
-            // Position avec animation fluide
-            const x = this.currentOffset + (index * spacingX);
-            const z = baseZ;
+            // Effet Rayons X si c'est le rack survolé
+            const isHovered = (rack === this.hoveredRack);
+            const xrayAlpha = isHovered ? this.xrayProgress : 0;
 
             // Appliquer le zoom de la caméra
             const zoomScale = this.camera.currentScale;
 
-            // Projection isométrique avec zoom et décalage
+            // Projection isométrique avec zoom
             const isoX = centerX + x * this.isometric.scale * zoomScale;
-            const isoY = centerY - (z + rackZOffset) * this.isometric.scale * 0.5 * zoomScale;
+            const isoY = centerY - z * this.isometric.scale * 0.5 * zoomScale;
 
-            // Dessiner le rack
-            this.drawCabinetRack(ctx, isoX, isoY, rack, isSelected);
-        });
+            // Hauteur du rack (selon nombre d'étages)
+            const rackHeight = (rack.levels?.length || 1) * 12;
 
-        // Animation pour le rack sélectionné
-        if (this.selectedRackAnimProgress < 1 && this.selectedRack) {
-            this.selectedRackAnimProgress += 0.05;
-            if (this.selectedRackAnimProgress > 1) {
-                this.selectedRackAnimProgress = 1;
+            // Dimensions du rack
+            const rackWidth = rack.width * 20;
+            const rackDepth = rack.depth * 20;
+
+            // Échelle selon la distance (effet de profondeur) + zoom
+            const depthScale = 1 - (index / sortedRacks.length) * 0.1;
+            const scale = depthScale * zoomScale;
+
+            // DÉTERMINER L'OPACITÉ FINALE
+            let finalOpacity = 1;
+
+            // 1. Si rack sélectionné : 50% transparent
+            if (isSelected) {
+                finalOpacity = 0.5;
             }
-        }
+            // 2. Si autre rack est focusé : 30% transparent
+            else if (this.focusedRack && rack !== this.focusedRack) {
+                finalOpacity = 0.3;
+            }
+            // 3. Sinon : 100% opaque
+
+            // Dessiner le rack en 3D isométrique avec effets
+            this.drawCabinetRack(
+                ctx,
+                isoX,
+                isoY,
+                rackWidth * scale * 1.5,   // Plus large
+                rackHeight * scale * 2,     // Plus haut
+                rackDepth * scale,
+                rack,
+                finalOpacity
+            );
+        });
 
         // Indicateur de rotation
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
@@ -2419,19 +2438,16 @@ class QuadViewManager {
     }
 
     // Dessiner un rack comme une armoire (perspective frontale)
-    drawCabinetRack(ctx, x, y, rack, isSelected) {
+    drawCabinetRack(ctx, x, y, width, height, depth, rack, opacity = 1) {
         ctx.save();
 
-        // Dimensions du rack
-        const cabinetWidth = 60;
-        const cabinetHeight = (rack.levels?.length || 1) * 12;
-        const cabinetDepth = 20;
+        // Appliquer l'opacité
+        ctx.globalAlpha = opacity;
 
-        // Effet de surbrillance pour le rack sélectionné
-        if (isSelected) {
-            ctx.shadowColor = '#ffff00';
-            ctx.shadowBlur = 20;
-        }
+        // Dimensions ajustées
+        const cabinetWidth = width;
+        const cabinetHeight = height;
+        const cabinetDepth = depth * 0.3; // Réduire la profondeur visuelle
 
         // Face avant de l'armoire
         ctx.fillStyle = rack.color;
@@ -2449,7 +2465,7 @@ class QuadViewManager {
         ctx.textBaseline = 'middle';
         ctx.fillText(rack.code, x, y - cabinetHeight/2);
 
-        // Dessiner les étages
+        // Dessiner les étages comme des séparateurs horizontaux
         if (rack.levels && rack.levels.length > 0) {
             const levelHeight = cabinetHeight / rack.levels.length;
 
@@ -2457,7 +2473,8 @@ class QuadViewManager {
             const sortedLevels = [...rack.levels].sort((a, b) => parseInt(a.code) - parseInt(b.code));
 
             sortedLevels.forEach((level, index) => {
-                const levelY = y - (index + 1) * levelHeight;
+                // Inverser l'ordre pour que 10 soit en bas
+                const levelY = y - (index * levelHeight);
 
                 // Ligne de séparation d'étage
                 ctx.strokeStyle = 'rgba(255,255,255,0.5)';
@@ -2467,7 +2484,7 @@ class QuadViewManager {
                 ctx.lineTo(x + cabinetWidth/2 - 5, levelY);
                 ctx.stroke();
 
-                // Code de l'étage
+                // Code de l'étage (petit)
                 if (levelHeight > 20) {
                     ctx.fillStyle = 'rgba(255,255,255,0.8)';
                     ctx.font = '10px Arial';
@@ -2476,7 +2493,7 @@ class QuadViewManager {
             });
         }
 
-        // Effet de profondeur
+        // Effet de profondeur (côté droit)
         ctx.fillStyle = this.adjustColor(rack.color, -20);
         ctx.beginPath();
         ctx.moveTo(x + cabinetWidth/2, y - cabinetHeight);
@@ -2497,15 +2514,14 @@ class QuadViewManager {
         ctx.fill();
 
         // Surbrillance si sélectionné
-        if (isSelected) {
-            ctx.strokeStyle = '#ffff00';
+        if (opacity < 1) {
+            ctx.strokeStyle = '#ffeb3b';
             ctx.lineWidth = 3;
             ctx.strokeRect(x - cabinetWidth/2 - 2, y - cabinetHeight - 2, cabinetWidth + 4, cabinetHeight + 4);
         }
 
         ctx.restore();
     }
-
 
     // Dessiner un rack en vue isométrique avec effets Rayons X et Opacité
     drawIsoRack(ctx, x, y, width, depth, height, rack, angle, opacity = 1, xrayAlpha = 0) {
@@ -4069,10 +4085,19 @@ class QuadViewManager {
     // Méthodes pour la sélection
     selectRack(rack) {
         this.selectedRack = rack;
-        this.selectedRackAnimProgress = 0; // Réinitialiser l'animation
-        this.draw3DView(this.currentRacks); // Redessiner la vue 3D
-    }
+        this.selectedLevel = null;
 
+        // Mettre à jour les vues
+        if (window.vueStock) {
+            this.drawFrontView(rack);
+            this.updateAllViews(window.vueStock.racks);
+        }
+
+        // Si le rack a des niveaux, sélectionner le premier
+        if (rack.levels && rack.levels.length > 0) {
+            this.selectLevel(rack.levels[0]);
+        }
+    }
 
     selectLevel(level) {
         this.selectedLevel = level;
