@@ -2544,47 +2544,14 @@ class QuadViewManager {
         const cabinetHeight = height;
         const cabinetDepth = effectiveDepth * 0.3;
 
-        if (showSide) {
-            // Pour un rack tourné à 90°, dessiner la FACE AVANT sur le CÔTÉ
-            ctx.save();
+        // Face avant
+        ctx.fillStyle = rack.color;
+        ctx.fillRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
 
-            // Translation et rotation pour placer la face avant sur le côté
-            ctx.translate(x - cabinetWidth/2, y - cabinetHeight/2);
-            ctx.rotate(Math.PI / 2); // Tourner de 90°
-            ctx.translate(-cabinetWidth/2, -cabinetHeight/2);
-
-            // Dessiner la face avant
-            ctx.fillStyle = rack.color;
-            ctx.fillRect(0, 0, cabinetHeight, cabinetWidth); // Inverser width/height
-
-            // Bordure
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(0, 0, cabinetHeight, cabinetWidth);
-
-            // Code du rack sur cette face
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(rack.code, cabinetHeight/2, cabinetWidth/2);
-
-            ctx.restore();
-        } else {
-            // Code existant pour les racks non tournés
-            ctx.fillStyle = rack.color;
-            ctx.fillRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
-
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
-
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(rack.code, x, y - cabinetHeight/2);
-        }
+        // Bordure
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
 
         // Code du rack - TOUJOURS sur la face avant, même pour les racks tournés
         ctx.fillStyle = '#fff';
@@ -2647,14 +2614,7 @@ class QuadViewManager {
                 }
             });
 
-            // ✅ Lettre du rack sur cette face latérale
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            const labelX = x + cabinetWidth/2 + lateralWidth/2;
-            const labelY = y - cabinetHeight/2 - lateralWidth*0.25;
-            ctx.fillText(rack.code, labelX, labelY);
+
         }
 
         // Effet de profondeur (dessus) - RESTE IDENTIQUE
