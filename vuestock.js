@@ -3773,11 +3773,15 @@ class QuadViewManager {
 
         // Taille des poignettes
         const handleSize = 8;
-        const rotateHandleSize = 20;
+        const rotateHandleSize = 40;
 
-        // ✅ CORRECTION : Même calcul que dans drawTopView
-        const rotateHandleX = rackX + (rackVisualWidth / 2) - (rotateHandleSize / 2);
-        const rotateHandleY = rackY - 25 - (rotateHandleSize / 2);
+        // Position de la poignette rotate (centre)
+        const rotateHandleCenterX = rackX + (rackVisualWidth / 2);
+        const rotateHandleCenterY = rackY - 25; // 25px au-dessus du rack
+
+        // Zone de détection AGRANDIE
+        const rotateHandleX = rotateHandleCenterX - (rotateHandleSize / 2);
+        const rotateHandleY = rotateHandleCenterY - (rotateHandleSize / 2
 
         // Calculer les positions des poignettes
         const handles = {
