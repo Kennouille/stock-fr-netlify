@@ -362,16 +362,8 @@ async function fetchData() {
         console.log('Récupération des utilisateurs...');
         const { data: users, error: usersError } = await supabase
             .from('w_users')
-            .select('id, username as nom, username')
-            .order('username');  // Changé de 'nom' à 'username'
-
-        if (usersError) {
-            console.error('Erreur récupération utilisateurs:', usersError);
-            state.data.users = [];
-        } else {
-            console.log('Utilisateurs récupérés:', users);
-            state.data.users = users || [];
-        }
+            .select('id, username')
+            .order('username');
 
         // Récupérer les mouvements récents
         const dateRange = getDateRangeForPeriod(state.filters.period);
@@ -411,7 +403,7 @@ function populateFilters() {
     // Peupler le filtre utilisateur
     let userHtml = '<option value="">Tous les utilisateurs</option>';
     state.data.users.forEach(user => {
-        userHtml += `<option value="${user.id}">${user.nom} (${user.email})</option>`;
+        userHtml += `<option value="${user.id}">${user.username}</option>`;
     });
     elements.userFilter.innerHTML = userHtml;
     elements.userFilter.value = state.filters.userId;
