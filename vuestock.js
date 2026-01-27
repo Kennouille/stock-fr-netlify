@@ -3400,10 +3400,11 @@ class QuadViewManager {
 
         const startRotation = this.rotation3D || 0;
 
-        // ✅ CORRECTION : Inverser le signe de la rotation cible
-        const invertedTarget = -targetRotation; // ← AJOUT du moins
+        // SUPPRIMER cette inversion
+        // const invertedTarget = -targetRotation; // ← À SUPPRIMER
+        const finalTarget = targetRotation; // ← UTILISER directement targetRotation
 
-        let diff = invertedTarget - startRotation;
+        let diff = finalTarget - startRotation; // ← CHANGÉ : finalTarget au lieu de invertedTarget
         while (diff > 180) diff -= 360;
         while (diff < -180) diff += 360;
 
@@ -3426,7 +3427,7 @@ class QuadViewManager {
             if (step < steps) {
                 this.rotation3DAnimFrame = requestAnimationFrame(animate);
             } else {
-                this.rotation3D = invertedTarget; // ✅ CHANGÉ aussi ici
+                this.rotation3D = finalTarget; // ← CHANGÉ : finalTarget au lieu de invertedTarget
                 if (this.currentRacks) {
                     this.draw3DView(this.currentRacks);
                 }
