@@ -3760,20 +3760,17 @@ class QuadViewManager {
         const adjustedClickX = clickX;
         const adjustedClickY = clickY;
 
-        // Recalculer la position du rack
         const rackX = rack.displayX;
         const rackY = rack.displayY;
         const rackWidth = rack.displayWidth;
         const rackHeight = rack.displayHeight;
 
-        // ✅ AJOUTER : scale pour calculer la largeur VISUELLE
         const scale = this.topViewScale || 1;
         const rackVisualWidth = rackWidth / scale;
         const rackVisualHeight = rackHeight / scale;
 
-        // Taille des poignettes
         const handleSize = 8;
-        const rotateHandleSize = 40;
+        const rotateHandleSize = 30; // ⬅️ AGRANDI à 30px
 
         // Position de la poignette rotate (centre)
         const rotateHandleCenterX = rackX + (rackVisualWidth / 2);
@@ -3781,9 +3778,8 @@ class QuadViewManager {
 
         // Zone de détection AGRANDIE
         const rotateHandleX = rotateHandleCenterX - (rotateHandleSize / 2);
-        const rotateHandleY = rotateHandleCenterY - (rotateHandleSize / 2
+        const rotateHandleY = rotateHandleCenterY - (rotateHandleSize / 2);
 
-        // Calculer les positions des poignettes
         const handles = {
             nw: {
                 x: rackX - handleSize/2,
@@ -3817,10 +3813,10 @@ class QuadViewManager {
             }
         };
 
-        console.log('🔍 Vérification des poignettes aux coordonnées:', adjustedClickX, adjustedClickY);
-        console.log('📏 Rack:', rack.code, 'position:', rackX, rackY, 'size VISUEL:', rackVisualWidth, rackVisualHeight);
+        console.log('🔍 Vérification poignettes:', adjustedClickX, adjustedClickY);
+        console.log('🎯 Rotate zone:', rotateHandleX.toFixed(1), '-', (rotateHandleX + rotateHandleSize).toFixed(1),
+                    ',', rotateHandleY.toFixed(1), '-', (rotateHandleY + rotateHandleSize).toFixed(1));
 
-        // Vérifier chaque poignette
         for (const [handleName, handleRect] of Object.entries(handles)) {
             const inX = adjustedClickX >= handleRect.x && adjustedClickX <= handleRect.x + handleRect.width;
             const inY = adjustedClickY >= handleRect.y && adjustedClickY <= handleRect.y + handleRect.height;
