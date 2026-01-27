@@ -1989,6 +1989,14 @@ class QuadViewManager {
             const w = rack.width * logicalGridSize;
             const d = rack.depth * logicalGridSize;
 
+            // Stocker displayWidth et displayHeight UNE SEULE FOIS si non définis
+            if (rack.displayWidth === undefined) {
+                rack.displayWidth = w;
+            }
+            if (rack.displayHeight === undefined) {
+                rack.displayHeight = d;
+            }
+
             let x, y;
 
             // Si ce rack est en cours de drag, utiliser displayX/Y existants
