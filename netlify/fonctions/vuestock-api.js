@@ -669,6 +669,7 @@ exports.handler = async (event) => {
                 })
             });
 
+
             const text = await response.text();
             console.log(`📥 Supabase PATCH response:`, response.status, text);
 
