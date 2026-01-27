@@ -2309,9 +2309,31 @@ class QuadViewManager {
     draw3DView(racks) {
         if (!this.ctx3D || !this.canvas3D) return;
 
+        // ✅ AJOUT : Vérification si racks est vide
+        if (!racks || racks.length === 0) {
+            const ctx = this.ctx3D;
+            const width = this.canvas3D.width;
+            const height = this.canvas3D.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Fond simple
+            ctx.fillStyle = '#667eea';
+            ctx.fillRect(0, 0, width, height);
+
+            // Message
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Aucun rack à afficher', width/2, height/2);
+
+            return; // ← IMPORTANT : sortir de la fonction
+        }
+
         const ctx = this.ctx3D;
         const width = this.canvas3D.width;
         const height = this.canvas3D.height;
+
 
         // Effacer
         ctx.clearRect(0, 0, width, height);
