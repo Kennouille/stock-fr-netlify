@@ -2572,7 +2572,58 @@ class QuadViewManager {
         ctx.closePath();
         ctx.fill();
 
-        // Effet de profondeur (dessus)
+        // ✅ NOUVEAU : Si showSide, dessiner les tiroirs sur la face latérale droite
+        if (showSide && rack.levels && rack.levels.length > 0) {
+            const lateralWidth = cabinetDepth;
+            const lateralHeight = cabinetHeight;
+
+            // Face latérale avec tiroirs
+            ctx.fillStyle = rack.color;
+            ctx.beginPath();
+            ctx.moveTo(x + cabinetWidth/2, y - cabinetHeight);
+            ctx.lineTo(x + cabinetWidth/2 + lateralWidth, y - cabinetHeight - lateralWidth*0.5);
+            ctx.lineTo(x + cabinetWidth/2 + lateralWidth, y - lateralWidth*0.5);
+            ctx.lineTo(x + cabinetWidth/2, y);
+            ctx.closePath();
+            ctx.fill();
+
+            // Dessiner les étages sur cette face latérale
+            const levelHeight = lateralHeight / rack.levels.length;
+            const sortedLevels = [...rack.levels].sort((a, b) => parseInt(a.code) - parseInt(b.code));
+
+            sortedLevels.forEach((level, index) => {
+                const levelYTop = y - cabinetHeight + (index * levelHeight);
+                const levelYBottom = levelYTop + levelHeight;
+
+                // Ligne de séparation en perspective
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x + cabinetWidth/2, levelYBottom);
+                ctx.lineTo(x + cabinetWidth/2 + lateralWidth, levelYBottom - lateralWidth*0.5);
+                ctx.stroke();
+
+                // Code de l'étage
+                if (levelHeight > 15) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    ctx.font = '9px Arial';
+                    const textX = x + cabinetWidth/2 + lateralWidth*0.3;
+                    const textY = levelYTop + levelHeight/2 - lateralWidth*0.15;
+                    ctx.fillText(level.code, textX, textY);
+                }
+            });
+
+            // ✅ Lettre du rack sur cette face latérale
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const labelX = x + cabinetWidth/2 + lateralWidth/2;
+            const labelY = y - cabinetHeight/2 - lateralWidth*0.25;
+            ctx.fillText(rack.code, labelX, labelY);
+        }
+
+        // Effet de profondeur (dessus) - RESTE IDENTIQUE
         ctx.fillStyle = this.adjustColor(rack.color, 10);
         ctx.beginPath();
         ctx.moveTo(x - cabinetWidth/2, y - cabinetHeight);
