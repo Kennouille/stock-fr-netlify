@@ -2450,35 +2450,29 @@ class QuadViewManager {
     // Dessiner un rack comme une armoire (perspective frontale)
     drawCabinetRack(ctx, x, y, width, height, depth, rack, opacity = 1) {
         ctx.save();
-
-        // Appliquer l'opacité
         ctx.globalAlpha = opacity;
 
-        // ✅ CORRECTION : Pas de rotation en 2D canvas
-        // La rotation doit être appliquée en modifiant les dimensions width/depth
-        // selon l'angle de rotation pour simuler une vue de dessus qui tourne
-
+        // ✅ CORRECTION : Inverser width et depth si rotation proche de 90° ou 270°
         let effectiveWidth = width;
         let effectiveDepth = depth;
+        let showSide = false; // true = on voit le côté au lieu de la face
 
         if (rack.rotation && rack.rotation !== 0) {
-            // Convertir la rotation en radians
-            const angle = (rack.rotation * Math.PI) / 180;
+            const angle = rack.rotation % 360;
 
-            // Calculer les nouvelles dimensions projetées
-            const cos = Math.abs(Math.cos(angle));
-            const sin = Math.abs(Math.sin(angle));
-
-            effectiveWidth = width * cos + depth * sin;
-            effectiveDepth = width * sin + depth * cos;
+            // Si rotation proche de 90° ou 270°, inverser les dimensions
+            if ((angle > 45 && angle < 135) || (angle > 225 && angle < 315)) {
+                effectiveWidth = depth;
+                effectiveDepth = width;
+                showSide = true;
+            }
         }
 
-        // Dimensions ajustées
         const cabinetWidth = effectiveWidth;
         const cabinetHeight = height;
         const cabinetDepth = effectiveDepth * 0.3;
 
-        // Face avant de l'armoire
+        // Face avant
         ctx.fillStyle = rack.color;
         ctx.fillRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
 
@@ -2494,8 +2488,8 @@ class QuadViewManager {
         ctx.textBaseline = 'middle';
         ctx.fillText(rack.code, x, y - cabinetHeight/2);
 
-        // Dessiner les étages
-        if (rack.levels && rack.levels.length > 0) {
+        // ✅ CORRECTION : Ne dessiner les étages QUE si on voit la face (pas le côté)
+        if (!showSide && rack.levels && rack.levels.length > 0) {
             const levelHeight = cabinetHeight / rack.levels.length;
             const sortedLevels = [...rack.levels].sort((a, b) => parseInt(a.code) - parseInt(b.code));
 
@@ -2515,9 +2509,24 @@ class QuadViewManager {
                     ctx.fillText(level.code, x - cabinetWidth/2 + 15, levelY - levelHeight/2);
                 }
             });
+        } else if (showSide) {
+            // ✅ NOUVEAU : Dessiner le côté (sans étages, juste une texture différente)
+            ctx.fillStyle = this.adjustColor(rack.color, -30);
+            ctx.fillRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
+
+            // Lignes verticales pour indiquer que c'est le côté
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 3; i++) {
+                const xPos = x - cabinetWidth/2 + (cabinetWidth / 4) * (i + 1);
+                ctx.beginPath();
+                ctx.moveTo(xPos, y - cabinetHeight);
+                ctx.lineTo(xPos, y);
+                ctx.stroke();
+            }
         }
 
-        // Effet de profondeur (côté droit) - ajusté selon la rotation
+        // Effet de profondeur (côté droit)
         ctx.fillStyle = this.adjustColor(rack.color, -20);
         ctx.beginPath();
         ctx.moveTo(x + cabinetWidth/2, y - cabinetHeight);
