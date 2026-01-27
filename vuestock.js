@@ -1730,6 +1730,24 @@ class QuadViewManager {
             this.drawFrontView(clickedRack);
             this.updatePropertiesPanel(clickedRack);
 
+            // ✅ NOUVEAU : Faire tourner la vue 3D si le rack est tourné
+            if (this.currentRacks) {
+                const rackIndex = this.currentRacks.findIndex(r => r.id === clickedRack.id);
+                if (rackIndex !== -1) {
+                    this.cameraFocusIndex = rackIndex;
+
+                    if (clickedRack.rotation && clickedRack.rotation !== 0) {
+                        const targetRotation = -clickedRack.rotation;
+                        this.animate3DRotation(targetRotation);
+                    } else {
+                        this.animate3DRotation(0);
+                    }
+
+                    this.draw3DView(this.currentRacks);
+                    console.log(`🎯 Rack ${clickedRack.code} centré en 3D (index: ${rackIndex})`);
+                }
+            }
+
             // 2. CENTRER ce rack dans la vue 3D
             if (this.currentRacks) {
                 // Calculer la position pour centrer ce rack
@@ -2298,7 +2316,7 @@ class QuadViewManager {
         // Effacer
         ctx.clearRect(0, 0, width, height);
 
-        // Fond gradient
+        // Fond gradient animé selon la rotation (CORRIGÉ)
         const gradientAngle = (this.rotation3D % 360) * Math.PI / 180;
         const gx = Math.max(0, Math.min(width, width * 0.5 + Math.cos(gradientAngle) * width * 0.3));
         const gy = Math.max(0, Math.min(height, height * 0.5 + Math.sin(gradientAngle) * height * 0.3));
@@ -2310,29 +2328,24 @@ class QuadViewManager {
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
-        // Grille de sol
+        // Grille de sol en perspective
         this.drawFloorGrid(ctx, width, height);
 
+        // ✅ REMPLACER TOUT À PARTIR D'ICI
         const centerX = width / 2;
         const centerY = height / 2 + 50;
 
-        // ✅ MODIFICATION : Trier par rotation d'abord (racks tournés en avant)
+        // Trier les racks
         const sortedRacks = [...racks].sort((a, b) => {
-            // Les racks tournés (rotation !== 0) passent devant
             const aRotated = a.rotation && a.rotation !== 0 ? 1 : 0;
             const bRotated = b.rotation && b.rotation !== 0 ? 1 : 0;
 
             if (aRotated !== bRotated) {
-                return bRotated - aRotated; // Tournés en premier
+                return bRotated - aRotated;
             }
 
-            // Sinon, ordre par position_x
             return (a.position_x || 0) - (b.position_x || 0);
         });
-
-        // Disposition
-        const spacingX = 120;
-        const baseZ = 0;
 
         const selectedIndex = sortedRacks.findIndex(r =>
             this.selectedRack && r.id === this.selectedRack.id
@@ -2340,7 +2353,41 @@ class QuadViewManager {
         const focusIndex = selectedIndex !== -1 ? selectedIndex : 0;
         this.cameraFocusIndex = focusIndex;
 
-        const targetOffset = - (focusIndex * spacingX);
+        // ✅ NOUVEAU : Calculer les positions en tenant compte des vraies dimensions
+        let currentX = 0;
+        const racksWithDepth = sortedRacks.map((rack, index) => {
+            // Calculer la largeur effective selon la rotation
+            let effectiveWidth = rack.width * 20;
+
+            if (rack.rotation && rack.rotation !== 0) {
+                const angle = rack.rotation % 360;
+                if ((angle > 45 && angle < 135) || (angle > 225 && angle < 315)) {
+                    effectiveWidth = rack.depth * 20;
+                }
+            }
+
+            const x = currentX;
+
+            let z = 0;
+            if (rack.rotation && rack.rotation !== 0) {
+                z = -50;
+            }
+
+            currentX += effectiveWidth + 10;
+
+            return { rack, x, z, effectiveWidth };
+        });
+
+        // ✅ NOUVEAU : Calculer l'offset pour centrer le rack sélectionné
+        let targetOffset = 0;
+        if (focusIndex > 0) {
+            for (let i = 0; i < focusIndex; i++) {
+                targetOffset -= racksWithDepth[i].effectiveWidth + 10;
+            }
+            targetOffset -= racksWithDepth[focusIndex].effectiveWidth / 2;
+        } else {
+            targetOffset = -racksWithDepth[0].effectiveWidth / 2;
+        }
 
         if (this.currentOffset === undefined) {
             this.currentOffset = targetOffset;
@@ -2353,29 +2400,15 @@ class QuadViewManager {
             this.currentOffset = targetOffset;
         }
 
-        const racksWithDepth = sortedRacks.map((rack, index) => {
-            // ✅ Si le rack est tourné, le mettre plus en avant (z négatif)
-            let z = baseZ;
-            if (rack.rotation && rack.rotation !== 0) {
-                z = -50; // Plus proche de la caméra
-            }
-
-            const x = this.currentOffset + (index * spacingX);
-            const angle = this.rotation3D;
-
-            return { rack, x, z, angle };
-        });
-
         // Dessiner chaque rack
-        racksWithDepth.forEach(({ rack, x, z, angle }, index) => {
+        racksWithDepth.forEach(({ rack, x, z, effectiveWidth }, index) => {
             const isSelected = this.selectedRack && rack.id === this.selectedRack.id;
             const isHovered = (rack === this.hoveredRack);
             const xrayAlpha = isHovered ? this.xrayProgress : 0;
             const zoomScale = this.camera.currentScale;
 
-            // Projection avec Z
-            const isoX = centerX + x * this.isometric.scale * zoomScale;
-            const isoY = centerY - z * this.isometric.scale * 0.5 * zoomScale; // ✅ Z affecte Y
+            const isoX = centerX + (x + this.currentOffset) * this.isometric.scale * zoomScale;
+            const isoY = centerY - z * this.isometric.scale * 0.5 * zoomScale;
 
             const rackHeight = (rack.levels?.length || 1) * 12;
             const rackWidth = rack.width * 20;
@@ -2403,11 +2436,12 @@ class QuadViewManager {
             );
         });
 
-        // Indicateur
+        // Indicateur de rotation
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'left';
         ctx.fillText(`🔄 ${Math.round(this.rotation3D)}°`, 10, 25);
+
         ctx.font = '12px Arial';
         ctx.fillText(`${racks.length} racks - Glissez pour tourner`, 10, 45);
     }
@@ -3292,6 +3326,46 @@ class QuadViewManager {
                     this.draw3DView(this.currentRacks);
                 }
                 this.animationFrame = null;
+            }
+        };
+
+        animate();
+    }
+
+    animate3DRotation(targetRotation) {
+        if (this.rotation3DAnimFrame) {
+            cancelAnimationFrame(this.rotation3DAnimFrame);
+        }
+
+        const startRotation = this.rotation3D || 0;
+
+        let diff = targetRotation - startRotation;
+        while (diff > 180) diff -= 360;
+        while (diff < -180) diff += 360;
+
+        const finalRotation = startRotation + diff;
+
+        let step = 0;
+        const steps = 40;
+
+        const animate = () => {
+            step++;
+            const progress = step / steps;
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+            this.rotation3D = startRotation + (finalRotation - startRotation) * easeProgress;
+
+            if (this.currentRacks) {
+                this.draw3DView(this.currentRacks);
+            }
+
+            if (step < steps) {
+                this.rotation3DAnimFrame = requestAnimationFrame(animate);
+            } else {
+                this.rotation3D = targetRotation;
+                if (this.currentRacks) {
+                    this.draw3DView(this.currentRacks);
+                }
             }
         };
 
