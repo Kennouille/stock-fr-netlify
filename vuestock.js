@@ -2444,9 +2444,16 @@ class QuadViewManager {
             const rotatedX = x + this.currentOffset; // ← Directement, pas de rotation
             const rotatedZ = z; // ← Directement, pas de rotation
 
-            // Projection isométrique SANS rotation orbitale
-            const isoX = centerX + rotatedX * this.isometric.scale * zoomScale;
-            const isoY = centerY - rotatedZ * this.isometric.scale * 0.5 * zoomScale;
+            // Rotation de la caméra (vue) autour du centre
+            const cameraAngle = (this.rotation3D || 0) * Math.PI / 180;
+
+            // Position avec rotation de caméra
+            const camX = rotatedX * Math.cos(cameraAngle) - rotatedZ * Math.sin(cameraAngle);
+            const camZ = rotatedX * Math.sin(cameraAngle) + rotatedZ * Math.cos(cameraAngle);
+
+            // Projection isométrique
+            const isoX = centerX + camX * this.isometric.scale * zoomScale;
+            const isoY = centerY - camZ * this.isometric.scale * 0.5 * zoomScale;
 
             const rackHeight = (rack.levels?.length || 1) * 12;
             const rackWidth = rack.width * 20;
