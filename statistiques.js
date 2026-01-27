@@ -691,7 +691,12 @@ function updateStockValueTable() {
         }
     });
 
-    elements.stockValueBody.innerHTML = html || '<tr><td colspan="7" class="text-center">Aucun article en stock</td></tr>';
+    if (html) {
+        elements.stockValueBody.innerHTML = html;
+    } else {
+        // Vide le tbody complètement pour DataTables
+        elements.stockValueBody.innerHTML = '';
+    }
     elements.stockValueTotal.textContent = formatCurrency(tableTotal);
 }
 
