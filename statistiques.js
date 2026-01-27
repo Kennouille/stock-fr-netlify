@@ -355,8 +355,8 @@ async function fetchData() {
         // Récupérer les utilisateurs
         const { data: users, error: usersError } = await supabase
             .from('w_users')
-            .select('id, nom, email')
-            .order('nom');
+            .select('id, username as nom, username')
+            .order('username');
 
         if (usersError) throw usersError;
         state.data.users = users || [];
