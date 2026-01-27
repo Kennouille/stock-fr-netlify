@@ -1981,10 +1981,6 @@ class QuadViewManager {
         let currentX = startX;
 
         racks.forEach((rack) => {
-            if (rack.code === 'D') {
-                console.log(`🎨 Drawing D at: displayX=${rack.displayX}, displayY=${rack.displayY}, isDragging=${this.isDragging}, draggedRack=${this.draggedRack?.code}, selectedRack=${this.selectedRack?.code}`);
-            }
-
             // Taille d'un carré en pixels LOGIQUES (toujours 20)
             const logicalGridSize = 20;
             const scale = this.topViewScale || 1;
@@ -2042,8 +2038,7 @@ class QuadViewManager {
                 currentX += w + spacing;
             }
 
-            rack.displayWidth = w;
-            rack.displayHeight = d;
+
 
             // Ton dessin original
             ctx.fillStyle = rack.color || '#4a90e2';
