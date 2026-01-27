@@ -21,6 +21,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('loadingOverlay').style.display = 'none';
 });
 
+// AJOUTEZ CETTE FONCTION EN HAUT DU FICHIER, juste après les imports
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 // ===== AUTHENTIFICATION =====
 async function checkAuth() {
     try {
