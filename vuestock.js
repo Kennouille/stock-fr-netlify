@@ -1644,6 +1644,11 @@ class QuadViewManager {
     // Méthode pour gérer les clics sur le canvas
      handleCanvasClick(e) {
         console.log('=== handleCanvasClick ===');
+        console.log('🎯 COORDONNÉES BRUTES:');
+        console.log('  e.clientX/Y:', e.clientX, e.clientY);
+        console.log('  rect:', this.canvasTop.getBoundingClientRect());
+        console.log('  calculé x/y:', x, y);
+        console.log('  canvas width/height:', this.canvasTop.width, this.canvasTop.height);
 
         e.preventDefault();
         e.stopPropagation();
