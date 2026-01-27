@@ -748,7 +748,11 @@ function updateLowStockTable() {
         `;
     });
 
-    elements.lowStockBody.innerHTML = html || '<tr><td colspan="7" class="text-center">Aucune alerte de stock minimum</td></tr>';
+    if (html) {
+        elements.lowStockBody.innerHTML = html;
+    } else {
+        elements.lowStockBody.innerHTML = '';
+    }
 }
 
 function updateOutOfStockTable() {
@@ -788,7 +792,11 @@ function updateOutOfStockTable() {
         `;
     });
 
-    elements.outOfStockBody.innerHTML = html || '<tr><td colspan="6" class="text-center">Aucune rupture de stock</td></tr>';
+    if (html) {
+        elements.outOfStockBody.innerHTML = html;
+    } else {
+        elements.outOfStockBody.innerHTML = '';
+    }
 }
 
 function updateTopArticlesTable() {
@@ -819,7 +827,11 @@ function updateTopArticlesTable() {
         rank++;
     });
 
-    elements.topArticlesBody.innerHTML = html || '<tr><td colspan="5" class="text-center">Aucune donnée disponible</td></tr>';
+    if (html) {
+        elements.topArticlesBody.innerHTML = html;
+    } else {
+        elements.topArticlesBody.innerHTML = '';
+    }
 }
 
 function updateCategoriesTable() {
@@ -842,7 +854,11 @@ function updateCategoriesTable() {
         `;
     });
 
-    elements.categoriesBody.innerHTML = html || '<tr><td colspan="5" class="text-center">Aucune catégorie disponible</td></tr>';
+    if (html) {
+        elements.categoriesBody.innerHTML = html;
+    } else {
+        elements.categoriesBody.innerHTML = '';
+    }
 }
 
 // ===== DATATABLES INITIALISATION =====
