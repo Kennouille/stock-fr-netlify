@@ -648,6 +648,10 @@ function updateStockValueCard() {
     elements.activeArticlesCount.textContent = report.activeArticles;
     elements.averageArticleValue.textContent = formatCurrency(report.averageValue);
     elements.topCategory.textContent = report.topCategory;
+
+    // Utiliser elements.periodInfo.textContent au lieu de periodText
+    const periodText = elements.periodInfo.textContent;
+    elements.stockValuePeriod.textContent = periodText.split(':')[0].trim();
 }
 
 function updateStockValueTable() {
