@@ -2081,30 +2081,31 @@ class QuadViewManager {
 
                 // Coin supérieur droit
                 ctx.fillStyle = handleBorder;
-                ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(x + (w / scale) - handleSize/2, y - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
-                ctx.fillRect(x + w - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+                ctx.fillRect(x + (w / scale) - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
                 // Coin inférieur gauche
                 ctx.fillStyle = handleBorder;
-                ctx.fillRect(x - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(x - handleSize/2, y + (d / scale) - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
-                ctx.fillRect(x - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+                ctx.fillRect(x - handleSize/2 + 1, y + (d / scale) - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
                 // Coin inférieur droit
                 ctx.fillStyle = handleBorder;
-                ctx.fillRect(x + w - handleSize/2, y + d - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(x + (w / scale) - handleSize/2, y + (d / scale) - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
-                ctx.fillRect(x + w - handleSize/2 + 1, y + d - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+                ctx.fillRect(x + (w / scale) - handleSize/2 + 1, y + (d / scale) - handleSize/2 + 1, handleSize - 2, handleSize - 2);
+
 
                 // Poignette de rotation (au-dessus du rack)
                 const rotateHandleY = y - 25;
                 ctx.beginPath();
-                ctx.arc(x + w/2, rotateHandleY, 10, 0, Math.PI * 2);
+                ctx.arc(x + (w / scale) / 2, rotateHandleY, 10, 0, Math.PI * 2);
                 ctx.fillStyle = handleBorder;
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(x + w/2, rotateHandleY, 8, 0, Math.PI * 2);
+                ctx.arc(x + (w / scale) / 2, rotateHandleY, 8, 0, Math.PI * 2);
                 ctx.fillStyle = handleColor;
                 ctx.fill();
 
@@ -2113,15 +2114,16 @@ class QuadViewManager {
                 ctx.font = 'bold 10px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('⟳', x + w/2, rotateHandleY);
+                ctx.fillText('⟳', x + (w / scale) / 2, rotateHandleY);
+
 
                 // Stocker les positions des poignettes pour les interactions
                 this.selectionHandles = {
                     nw: { x: x - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
-                    ne: { x: x + w - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
-                    sw: { x: x - handleSize/2, y: y + d - handleSize/2, width: handleSize, height: handleSize },
-                    se: { x: x + w - handleSize/2, y: y + d - handleSize/2, width: handleSize, height: handleSize },
-                    rotate: { x: x + w/2 - 10, y: rotateHandleY - 10, width: 20, height: 20 }
+                    ne: { x: x + (w / scale) - handleSize/2, y: y - handleSize/2, width: handleSize, height: handleSize },
+                    sw: { x: x - handleSize/2, y: y + (d / scale) - handleSize/2, width: handleSize, height: handleSize },
+                    se: { x: x + (w / scale) - handleSize/2, y: y + (d / scale) - handleSize/2, width: handleSize, height: handleSize },
+                    rotate: { x: x + (w / scale)/2 - 10, y: rotateHandleY - 10, width: 20, height: 20 }
                 };
             }
 
