@@ -3757,29 +3757,27 @@ class QuadViewManager {
         if (!this.selectedRack) return null;
 
         const rack = this.selectedRack;
-
-        // ✅ SUPPRIMEZ les 3 lignes avec scale :
-        // const scale = this.topViewScale || 1;
-        // const adjustedClickX = clickX / scale;
-        // const adjustedClickY = clickY / scale;
-
-        // ✅ UTILISEZ DIRECTEMENT les coordonnées du clic (déjà en pixels canvas)
         const adjustedClickX = clickX;
         const adjustedClickY = clickY;
 
-        // Recalculer la position du rack (comme dans drawTopView)
+        // Recalculer la position du rack
         const rackX = rack.displayX;
         const rackY = rack.displayY;
         const rackWidth = rack.displayWidth;
         const rackHeight = rack.displayHeight;
 
+        // ✅ AJOUTER : scale pour calculer la largeur VISUELLE
+        const scale = this.topViewScale || 1;
+        const rackVisualWidth = rackWidth / scale;
+        const rackVisualHeight = rackHeight / scale;
+
         // Taille des poignettes
         const handleSize = 8;
         const rotateHandleSize = 20;
 
-        // Position EXACTE comme dans drawTopView
-        const rotateHandleX = rackX + (rackWidth / 2) - (rotateHandleSize / 2);
-        const rotateHandleY = rackY - 25;
+        // ✅ CORRECTION : Même calcul que dans drawTopView
+        const rotateHandleX = rackX + (rackVisualWidth / 2) - (rotateHandleSize / 2);
+        const rotateHandleY = rackY - 25 - (rotateHandleSize / 2);
 
         // Calculer les positions des poignettes
         const handles = {
@@ -3790,33 +3788,33 @@ class QuadViewManager {
                 height: handleSize
             },
             ne: {
-                x: rackX + rackWidth - handleSize/2,
+                x: rackX + rackVisualWidth - handleSize/2,
                 y: rackY - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
             sw: {
                 x: rackX - handleSize/2,
-                y: rackY + rackHeight - handleSize/2,
+                y: rackY + rackVisualHeight - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
             se: {
-                x: rackX + rackWidth - handleSize/2,
-                y: rackY + rackHeight - handleSize/2,
+                x: rackX + rackVisualWidth - handleSize/2,
+                y: rackY + rackVisualHeight - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
-            rotate: { // Poignette de rotation
-                x: rotateHandleX - (rotateHandleSize / 2),  // ← AJOUTER -10
-                y: rotateHandleY - (rotateHandleSize / 2),  // ← AJOUTER -10
+            rotate: {
+                x: rotateHandleX,
+                y: rotateHandleY,
                 width: rotateHandleSize,
                 height: rotateHandleSize
             }
         };
 
         console.log('🔍 Vérification des poignettes aux coordonnées:', adjustedClickX, adjustedClickY);
-        console.log('📏 Rack:', rack.code, 'position:', rackX, rackY, 'size:', rackWidth, rackHeight);
+        console.log('📏 Rack:', rack.code, 'position:', rackX, rackY, 'size VISUEL:', rackVisualWidth, rackVisualHeight);
 
         // Vérifier chaque poignette
         for (const [handleName, handleRect] of Object.entries(handles)) {
