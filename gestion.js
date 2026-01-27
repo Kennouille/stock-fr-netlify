@@ -1352,6 +1352,22 @@ async function handleEditSubmit(e) {
     e.preventDefault();
 
     const articleId = document.getElementById('editArticleId').value;
+
+    // RÉCUPÉRER L'ARTICLE ACTUEL AVANT MODIFICATION
+    const { data: currentArticle, error: fetchError } = await supabase
+        .from('w_articles')
+        .select('slot_id')
+        .eq('id', articleId)
+        .single();
+
+    if (fetchError) {
+        console.error('Erreur récupération article:', fetchError);
+        // Continuer quand même
+    }
+
+    const oldSlotId = currentArticle?.slot_id;
+    const newSlotId = parseInt(document.getElementById('editSlot').value) || null;
+
     const formData = {
         nom: document.getElementById('editName').value.trim(),
         numero: document.getElementById('editNumber').value.trim(),
@@ -1364,7 +1380,7 @@ async function handleEditSubmit(e) {
         caracteristiques: document.getElementById('editDescription').value.trim(),
         rack_id: parseInt(document.getElementById('editRack').value) || null,
         level_id: parseInt(document.getElementById('editLevel').value) || null,
-        slot_id: parseInt(document.getElementById('editSlot').value) || null,
+        slot_id: newSlotId,
         updated_at: new Date().toISOString()
     };
 
@@ -1375,12 +1391,38 @@ async function handleEditSubmit(e) {
     }
 
     try {
+        // ÉTAPE 1 : Mettre à jour l'article
         const { error } = await supabase
             .from('w_articles')
             .update(formData)
             .eq('id', articleId);
 
         if (error) throw error;
+
+        // ÉTAPE 2 : Gérer les changements d'emplacement
+        if (oldSlotId !== newSlotId) {
+            // Libérer l'ancien slot si différent
+            if (oldSlotId) {
+                await supabase
+                    .from('w_vuestock_slots')
+                    .update({
+                        status: 'free',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', oldSlotId);
+            }
+
+            // Occuper le nouveau slot si spécifié
+            if (newSlotId) {
+                await supabase
+                    .from('w_vuestock_slots')
+                    .update({
+                        status: 'occupied',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', newSlotId);
+            }
+        }
 
         // Fermer le modal
         document.getElementById('editModal').style.display = 'none';
