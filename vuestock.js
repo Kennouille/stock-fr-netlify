@@ -1766,8 +1766,8 @@ class QuadViewManager {
 
         // ✅ CORRECTION : Appliquer le scale inverse aux coordonnées de la souris
         const scale = this.topViewScale || 1;
-        const adjustedX = x / scale; // <-- APPLIQUER LE SCALE INVERSE
-        const adjustedY = y / scale; // <-- APPLIQUER LE SCALE INVERSE
+        const adjustedX = x / scale;
+        const adjustedY = y / scale;
 
         console.log(`🔍 Recherche parmi ${this.currentRacks.length} racks à: ${adjustedX},${adjustedY} (scale: ${scale})`);
 
@@ -1777,10 +1777,15 @@ class QuadViewManager {
                 continue;
             }
 
+            // Utiliser la taille réelle du rack (3x3, etc.)
+            const logicalGridSize = 20;
+            const w = rack.width * logicalGridSize;
+            const d = rack.depth * logicalGridSize;
+
             const left = rack.displayX;
-            const right = left + rack.displayWidth;
+            const right = left + (w / scale);
             const top = rack.displayY;
-            const bottom = top + rack.displayHeight;
+            const bottom = top + (d / scale);
 
             console.log(`  Rack ${rack.code}: ${left}-${right}, ${top}-${bottom}`);
 
@@ -1793,6 +1798,7 @@ class QuadViewManager {
         console.log('❌ Aucun rack correspond');
         return null;
     }
+
 
     // Gestion du survol (pour changer le curseur)
     handleCanvasHover(e) {
