@@ -3779,7 +3779,7 @@ class QuadViewManager {
 
         // Position EXACTE comme dans drawTopView
         const rotateHandleX = rackX + (rackWidth / 2) - (rotateHandleSize / 2);
-        const rotateHandleY = rackY - 25 - (rotateHandleSize / 2);
+        const rotateHandleY = rackY - 25;
 
         // Calculer les positions des poignettes
         const handles = {
@@ -3807,9 +3807,9 @@ class QuadViewManager {
                 width: handleSize,
                 height: handleSize
             },
-            rotate: {
-                x: rotateHandleX,
-                y: rotateHandleY,
+            rotate: { // Poignette de rotation
+                x: rotateHandleX - (rotateHandleSize / 2),  // ← AJOUTER -10
+                y: rotateHandleY - (rotateHandleSize / 2),  // ← AJOUTER -10
                 width: rotateHandleSize,
                 height: rotateHandleSize
             }
