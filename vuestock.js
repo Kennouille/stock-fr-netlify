@@ -2050,7 +2050,7 @@ class QuadViewManager {
 
             // Ton dessin original
             ctx.fillStyle = rack.color || '#4a90e2';
-            ctx.fillRect(x, y, w, d);
+            ctx.fillRect(x, y, w / scale, d / scale);
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, w, d);
