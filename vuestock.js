@@ -2109,6 +2109,8 @@ class QuadViewManager {
                 ctx.textBaseline = 'middle';
                 ctx.fillText('⟳', x + (w / scale) / 2, rotateHandleY);
 
+                                // ✅ LOG DE DÉBOGAGE : Position de la poignette rotate
+                console.log(`🎯 Rack ${rack.code}: rotate poignette à x=${x + (w / scale) / 2}, y=${rotateHandleY}, zone: ${x + (w / scale)/2 - 10}-${x + (w / scale)/2 + 10}, ${rotateHandleY - 10}-${rotateHandleY + 10}`);
 
                 // Stocker les positions des poignettes pour les interactions
                 this.selectionHandles = {
@@ -3750,7 +3752,6 @@ class QuadViewManager {
         }
     }
 
-    // Vérifier quelle poignette a été cliquée
     // Dans la méthode getClickedHandle de la classe QuadViewManager
     getClickedHandle(clickX, clickY) {
         if (!this.selectedRack) return null;
@@ -3770,6 +3771,11 @@ class QuadViewManager {
 
         // Taille des poignettes
         const handleSize = 8;
+
+        // ✅ CORRECTION IMPORTANTE : La poignette rotate doit être au CENTRE du bord supérieur
+        const rotateHandleSize = 20;
+        const rotateHandleX = rackX + (rackWidth / 2) - (rotateHandleSize / 2);
+        const rotateHandleY = rackY - 25; // 25px au-dessus du rack
 
         // Calculer les positions des poignettes
         const handles = {
@@ -3797,22 +3803,23 @@ class QuadViewManager {
                 width: handleSize,
                 height: handleSize
             },
-            rotate: { // Poignette de rotation
-                x: rackX + rackWidth/2 - 10,
-                y: rackY - 25 - 10, // 25px au-dessus du rack, moins la moitié de la taille
-                width: 20,
-                height: 20
+            rotate: { // Poignette de rotation - ✅ CORRIGÉ
+                x: rotateHandleX,
+                y: rotateHandleY,
+                width: rotateHandleSize,
+                height: rotateHandleSize
             }
         };
 
         console.log('🔍 Vérification des poignettes aux coordonnées:', adjustedClickX, adjustedClickY, '(scale:', scale + ')');
+        console.log('📏 Rack position:', rackX, rackY, 'size:', rackWidth, rackHeight);
 
         // Vérifier chaque poignette
         for (const [handleName, handleRect] of Object.entries(handles)) {
             const inX = adjustedClickX >= handleRect.x && adjustedClickX <= handleRect.x + handleRect.width;
             const inY = adjustedClickY >= handleRect.y && adjustedClickY <= handleRect.y + handleRect.height;
 
-            console.log(`  ${handleName}: ${handleRect.x}-${handleRect.x + handleRect.width}, ${handleRect.y}-${handleRect.y + handleRect.height} -> ${inX && inY ? 'HIT!' : 'miss'}`);
+            console.log(`  ${handleName}: ${handleRect.x.toFixed(1)}-${(handleRect.x + handleRect.width).toFixed(1)}, ${handleRect.y.toFixed(1)}-${(handleRect.y + handleRect.height).toFixed(1)} -> ${inX && inY ? 'HIT!' : 'miss'}`);
 
             if (inX && inY) {
                 console.log('✅ Poignette détectée:', handleName);
