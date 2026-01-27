@@ -2444,16 +2444,9 @@ class QuadViewManager {
             const rotatedX = x + this.currentOffset; // ← Directement, pas de rotation
             const rotatedZ = z; // ← Directement, pas de rotation
 
-            // Rotation de la caméra autour de l'axe Y (vertical)
-            const cameraAngle = (this.rotation3D || 0) * Math.PI / 180;
-
-            // Rotation autour de Y : (x, z) → (x', z')
-            const rotatedCamX = rotatedX * Math.cos(cameraAngle) - rotatedZ * Math.sin(cameraAngle);
-            const rotatedCamZ = rotatedX * Math.sin(cameraAngle) + rotatedZ * Math.cos(cameraAngle);
-
-            // Projection isométrique
-            const isoX = centerX + rotatedCamX * this.isometric.scale * zoomScale;
-            const isoY = centerY - rotatedCamZ * this.isometric.scale * 0.5 * zoomScale;
+            // Projection isométrique SANS rotation orbitale
+            const isoX = centerX + rotatedX * this.isometric.scale * zoomScale;
+            const isoY = centerY - rotatedZ * this.isometric.scale * 0.5 * zoomScale;
 
             const rackHeight = (rack.levels?.length || 1) * 12;
             const rackWidth = rack.width * 20;
@@ -2560,22 +2553,15 @@ class QuadViewManager {
         ctx.lineWidth = 2;
         ctx.strokeRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
 
-        // Code du rack
+        // Code du rack - TOUJOURS sur la face avant, même pour les racks tournés
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // ✅ AJOUT : Si on voit le côté, tourner le texte de 90°
-        if (showSide) {
-            ctx.save();
-            ctx.translate(x, y - cabinetHeight/2);
-            ctx.rotate(Math.PI / 2); // 90° en radians
-            ctx.fillText(rack.code, 0, 0);
-            ctx.restore();
-        } else {
-            ctx.fillText(rack.code, x, y - cabinetHeight/2);
-        }
+        // SUPPRIMER le if/else pour showSide
+        // TOUJOURS dessiner sur la face avant
+        ctx.fillText(rack.code, x, y - cabinetHeight/2);
 
         // Effet de profondeur (côté droit)
         ctx.fillStyle = this.adjustColor(rack.color, -20);
