@@ -1462,6 +1462,12 @@ function showEditError(message) {
 
 // ===== ACTIONS RAPIDES =====
 async function exportToExcel() {
+    // VÉRIFIER SI SHEETJS EST CHARGÉ
+    if (typeof XLSX === 'undefined') {
+        alert('La bibliothèque Excel n\'est pas chargée. Veuillez vérifier le script.');
+        return;
+    }
+
     try {
         // Afficher un indicateur de chargement
         const exportBtn = document.getElementById('exportExcelBtn');
