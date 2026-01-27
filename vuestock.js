@@ -1997,9 +1997,9 @@ class QuadViewManager {
 
             // Si ce rack est en cours de drag, utiliser displayX/Y existants
             if (this.isDragging && this.draggedRack && rack.id === this.draggedRack.id) {
-                // displayX/Y sont en pixels physiques, convertir en logiques
-                x = rack.displayX / scale;
-                y = rack.displayY / scale;
+                // displayX/Y sont déjà en pixels logiques, pas besoin de diviser
+                x = rack.displayX;
+                y = rack.displayY;
             }
             else if (rack.position_x !== undefined && rack.position_y !== undefined) {
                 const positionScale = 0.8; // Conversion position_x → pixels logiques
@@ -2015,17 +2015,17 @@ class QuadViewManager {
 
                 if (x > maxX) {
                     x = maxX;
-                    rack.position_x = x / positionScale; // Mettre à jour pour sauvegarde
+                    rack.position_x = x; // Mettre à jour pour sauvegarde
                 }
 
                 if (y > maxY) {
                     y = maxY;
-                    rack.position_y = y / positionScale;
+                    rack.position_y = y;
                 }
 
                 // Stocker en pixels physiques (après ctx.scale)
-                rack.displayX = x * viewScale;
-                rack.displayY = y * viewScale;
+                rack.displayX = x;
+                rack.displayY = y;
             }
             // Sinon, calculer automatiquement
             else {
@@ -2036,14 +2036,14 @@ class QuadViewManager {
                 x = currentX;
                 y = startY;
 
-                rack.displayX = x * scale; // Stocker en pixels physiques
-                rack.displayY = y * scale;
+                rack.displayX = x;
+                rack.displayY = y;
 
                 currentX += w + spacing;
             }
 
-            rack.displayWidth = w * scale;  // Stocker en pixels physiques
-            rack.displayHeight = d * scale;
+            rack.displayWidth = w;
+            rack.displayHeight = d;
 
             // Ton dessin original
             ctx.fillStyle = rack.color || '#4a90e2';
