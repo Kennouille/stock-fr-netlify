@@ -1968,8 +1968,7 @@ class QuadViewManager {
                 ctx.scale(scale, scale);
 
                 // Stocker le scale pour l'utiliser ailleurs
-                this.topViewScale = 1;
-
+                this.topViewScale = scale;
             } else {
                 this.topViewScale = 1;
             }
