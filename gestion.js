@@ -908,7 +908,12 @@ async function openEditModal(articleId) {
     try {
         const { data: article, error } = await supabase
             .from('w_articles')
-            .select('*')
+            .select(`
+                *,
+                rack_id,
+                level_id,
+                slot_id
+            `)
             .eq('id', articleId)
             .single();
 
@@ -965,19 +970,24 @@ async function openEditModal(articleId) {
             <!-- EMPLACEMENT -->
             <div class="form-group">
                 <label for="editRack">Rack</label>
-                <select id="editRack" class="form-select"></select>
+                <select id="editRack" class="form-select">
+                    <option value="">-- Sélectionner un rack --</option>
+                </select>
             </div>
 
             <div class="form-group">
                 <label for="editLevel">Niveau</label>
-                <select id="editLevel" class="form-select" disabled></select>
+                <select id="editLevel" class="form-select" disabled>
+                    <option value="">-- Sélectionner un niveau --</option>
+                </select>
             </div>
 
             <div class="form-group">
                 <label for="editSlot">Slot</label>
-                <select id="editSlot" class="form-select" disabled></select>
+                <select id="editSlot" class="form-select" disabled>
+                    <option value="">-- Sélectionner un emplacement --</option>
+                </select>
             </div>
-
 
             <div class="form-group" style="grid-column: 1 / -1;">
                 <label for="editDescription">Caractéristiques</label>
@@ -985,19 +995,155 @@ async function openEditModal(articleId) {
             </div>
         `;
 
-        // AJOUTEZ CES 2 LIGNES POUR DEBUG
-        console.log("Zone:", article.zone);
-        console.log("Rayon:", article.rayon);
-        console.log("Étagère:", article.etagere);
-        console.log("Position:", article.position);
-
         // Afficher le modal
         document.getElementById('editModal').style.display = 'flex';
+
+        // Charger les emplacements avec les valeurs actuelles
+        await loadEditModalLocationData(article);
 
     } catch (error) {
         console.error('Erreur lors du chargement de l\'article:', error);
         alert('Erreur lors du chargement de l\'article');
     }
+}
+
+async function loadEditModalLocationData(article) {
+    try {
+        // 1. Charger tous les racks
+        const { data: racks, error: racksError } = await supabase
+            .from('w_vuestock_racks')
+            .select('id, rack_code, display_name')
+            .order('rack_code');
+
+        if (racksError) throw racksError;
+
+        const rackSelect = document.getElementById('editRack');
+
+        // Ajouter les racks au select
+        racks.forEach(rack => {
+            const option = document.createElement('option');
+            option.value = rack.id;
+            option.textContent = rack.display_name || rack.rack_code;
+            // Sélectionner le rack actuel de l'article
+            if (article.rack_id === rack.id) {
+                option.selected = true;
+            }
+            rackSelect.appendChild(option);
+        });
+
+        // 2. Si l'article a un rack, charger ses niveaux
+        if (article.rack_id) {
+            await loadEditModalLevels(article.rack_id, article.level_id, article.slot_id);
+        }
+
+        // 3. Événements pour les selects
+        setupEditModalLocationEvents(article);
+
+    } catch (error) {
+        console.error('Erreur chargement emplacements:', error);
+    }
+}
+
+async function loadEditModalLevels(rackId, currentLevelId, currentSlotId) {
+    const levelSelect = document.getElementById('editLevel');
+    levelSelect.innerHTML = '<option value="">-- Sélectionner un niveau --</option>';
+    levelSelect.disabled = false;
+
+    try {
+        const { data: levels, error } = await supabase
+            .from('w_vuestock_levels')
+            .select('id, level_code')
+            .eq('rack_id', rackId)
+            .order('display_order');
+
+        if (error) throw error;
+
+        if (levels && levels.length > 0) {
+            levels.forEach(level => {
+                const option = document.createElement('option');
+                option.value = level.id;
+                option.textContent = level.level_code;
+                // Sélectionner le niveau actuel
+                if (currentLevelId === level.id) {
+                    option.selected = true;
+                }
+                levelSelect.appendChild(option);
+            });
+
+            // Si l'article a un niveau, charger ses slots
+            if (currentLevelId) {
+                await loadEditModalSlots(currentLevelId, currentSlotId);
+            }
+        }
+    } catch (error) {
+        console.error('Erreur chargement niveaux:', error);
+    }
+}
+
+async function loadEditModalSlots(levelId, currentSlotId) {
+    const slotSelect = document.getElementById('editSlot');
+    slotSelect.innerHTML = '<option value="">-- Sélectionner un emplacement --</option>';
+    slotSelect.disabled = false;
+
+    try {
+        const { data: slots, error } = await supabase
+            .from('w_vuestock_slots')
+            .select('id, slot_code, status')
+            .eq('level_id', levelId)
+            .order('display_order');
+
+        if (error) throw error;
+
+        if (slots && slots.length > 0) {
+            slots.forEach(slot => {
+                const option = document.createElement('option');
+                option.value = slot.id;
+                // Vérifier le statut
+                const isOccupied = slot.status === 'occupied';
+                option.textContent = `${slot.slot_code} ${isOccupied ? '(Occupé)' : ''}`;
+                // Ne pas désactiver le slot actuel même s'il est occupé
+                option.disabled = isOccupied && slot.id !== currentSlotId;
+                option.style.color = isOccupied && slot.id !== currentSlotId ? '#999' : '';
+                // Sélectionner le slot actuel
+                if (currentSlotId === slot.id) {
+                    option.selected = true;
+                }
+                slotSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Erreur chargement slots:', error);
+    }
+}
+
+function setupEditModalLocationEvents(article) {
+    const rackSelect = document.getElementById('editRack');
+    const levelSelect = document.getElementById('editLevel');
+    const slotSelect = document.getElementById('editSlot');
+
+    // Quand on change de rack
+    rackSelect.addEventListener('change', async function() {
+        const rackId = this.value;
+        levelSelect.disabled = !rackId;
+        slotSelect.disabled = true;
+        levelSelect.innerHTML = '<option value="">-- Sélectionner un niveau --</option>';
+        slotSelect.innerHTML = '<option value="">-- Sélectionner un emplacement --</option>';
+
+        if (rackId) {
+            await loadEditModalLevels(rackId, null, null);
+        }
+    });
+
+    // Quand on change de niveau
+    levelSelect.addEventListener('change', async function() {
+        const levelId = this.value;
+        slotSelect.disabled = !levelId;
+        slotSelect.innerHTML = '<option value="">-- Sélectionner un emplacement --</option>';
+
+        if (levelId) {
+            await loadEditModalSlots(levelId, null);
+        }
+    });
 }
 
 // ===== SUPPRESSION =====
@@ -1028,12 +1174,34 @@ async function confirmDeleteArticle(articleId) {
 
 async function deleteArticle(articleId) {
     try {
+        // Récupérer l'article AVANT suppression pour connaître son slot_id
+        const { data: article, error: fetchError } = await supabase
+            .from('w_articles')
+            .select('slot_id')
+            .eq('id', articleId)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const slotId = article.slot_id;
+
+        // Supprimer l'article
         const { error } = await supabase
             .from('w_articles')
             .delete()
             .eq('id', articleId);
 
         if (error) throw error;
+
+        // Remettre le slot à 'free' s'il y en avait un
+        if (slotId) {
+            await supabase
+                .from('w_vuestock_slots')
+                .update({
+                    status: 'free'
+                })
+                .eq('id', slotId);
+        }
 
         // Supprimer de la sélection si présent
         selectedArticles.delete(articleId);

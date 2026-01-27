@@ -844,15 +844,33 @@ async function handleFormSubmit(event) {
 
         if (insertError) throw insertError;
 
+        // MISE À JOUR DU SLOT - AJOUTÉ ICI
+        if (formData.slot_id) {
+            const { error: slotError } = await supabase
+                .from('w_vuestock_slots')
+                .update({
+                    status: 'occupied',
+                    updated_at: new Date().toISOString()  // Optionnel mais recommandé
+                })
+                .eq('id', formData.slot_id);
+
+            if (slotError) {
+                console.error('Erreur mise à jour statut slot:', slotError);
+                // Vous pouvez décider de gérer cette erreur différemment
+                // Par exemple: rollback de la création de l'article
+                // ou simplement logger l'erreur
+            }
+        }
+
         // Enregistrer le mouvement d'entrée initial
-        if (formData.stock_actuel > 0) { // CHANGÉ ICI
+        if (formData.stock_actuel > 0) {
             await supabase
                 .from('w_mouvements')
                 .insert([
                     {
                         article_id: newArticle.id,
                         type: 'entree',
-                        quantite: formData.stock_actuel, // CHANGÉ ICI
+                        quantite: formData.stock_actuel,
                         projet: 'Stock initial',
                         commentaire: 'Création de l\'article',
                         utilisateur_id: currentUser.id

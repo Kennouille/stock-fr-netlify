@@ -2399,7 +2399,7 @@ class QuadViewManager {
 
             let z = 0;
             if (rack.rotation && rack.rotation !== 0) {
-                z = -70;
+                z = 0;
             }
 
             // ✅ CORRECTION : Espacement de 120px au lieu de effectiveWidth + 10
