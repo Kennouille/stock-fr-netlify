@@ -2050,15 +2050,16 @@ class QuadViewManager {
 
             // Ton dessin original
             ctx.fillStyle = rack.color || '#4a90e2';
-            ctx.fillRect(x, y, w / scale, d / scale);
+            ctx.fillRect(x, y, w / scale, d / scale); // Appliquer le scale inverse
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
-            ctx.strokeRect(x, y, w, d);
+            ctx.strokeRect(x, y, w / scale, d / scale); // Appliquer le scale inverse
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(rack.code, x + w/2, y + d/2);
+            ctx.fillText(rack.code, x + (w / scale) / 2, y + (d / scale) / 2); // Centrer le texte dans le rectangle ajusté
+
 
             // AJOUT : POIGNETTES QUAND RACK SÉLECTIONNÉ
             if (this.selectedRack && rack.id === this.selectedRack.id) {
