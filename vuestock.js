@@ -1489,22 +1489,6 @@ class QuadViewManager {
             }
         }
 
-        // Contrôles 3D
-        document.querySelectorAll('.quad-3d-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                // Chercher le dataset sur le bouton ou son parent
-                const button = e.target.closest('.quad-3d-btn');
-                const angle = parseInt(button?.dataset?.angle);
-
-                // Vérifier que l'angle est valide
-                if (!isNaN(angle) && angle > 0) {
-                    this.set3DAngle(angle);
-                } else {
-                    console.warn('Angle invalide détecté:', angle, 'depuis:', button);
-                }
-            });
-        });
-
         // Réinitialisation 3D
         document.getElementById('quad3DReset')?.addEventListener('click', () => {
             this.reset3DView();
@@ -3216,59 +3200,6 @@ class QuadViewManager {
             ctx.lineTo(width, y);
             ctx.stroke();
         }
-    }
-
-    set3DAngle(angle) {
-        if (!angle || isNaN(angle) || !isFinite(angle)) {
-            console.error('Angle invalide reçu:', angle);
-            return;
-        }
-
-        // Annuler toute animation en cours
-        if (this.animationFrame) {
-            cancelAnimationFrame(this.animationFrame);
-            this.animationFrame = null;
-        }
-
-        // Changer l'angle isométrique (30°, 45°, 60°)
-        this.isometric.angle = angle;
-
-        // Animation fluide de rotation
-        const targetRotation = angle * 3; // Rotation proportionnelle à l'angle
-        const currentRotation = this.rotation3D || 0; // Protection contre NaN
-        const diff = targetRotation - currentRotation;
-
-        // Animer la rotation
-        let step = 0;
-        const steps = 30; // 30 frames d'animation
-        const animate = () => {
-            step++;
-            const newRotation = currentRotation + (diff * step / steps);
-
-            // Vérifier que la valeur est valide
-            if (!isNaN(newRotation) && isFinite(newRotation)) {
-                this.rotation3D = newRotation;
-            }
-
-            if (this.currentRacks) {
-                this.draw3DView(this.currentRacks);
-            }
-
-            if (step < steps) {
-                this.animationFrame = requestAnimationFrame(animate);
-            } else {
-                // Forcer la valeur finale exacte
-                this.rotation3D = targetRotation;
-                if (this.currentRacks) {
-                    this.draw3DView(this.currentRacks);
-                }
-                this.animationFrame = null;
-            }
-        };
-
-        animate();
-
-        console.log(`Vue 3D: angle isométrique ${angle}°, rotation ${targetRotation}°`);
     }
 
     reset3DView() {
