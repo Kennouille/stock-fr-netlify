@@ -74,12 +74,15 @@ function toggleSuperAdminSection() {
 
 // ===== SUPER ADMIN =====
 function setupSuperAdminInfo() {
-    // Pour le SuperAdmin, afficher les vraies valeurs
+    // TOUJOURS afficher des étoiles par défaut pour le code, même pour le SuperAdmin
     document.getElementById('superadminUsername').textContent = SUPERADMIN_USERNAME;
-    document.getElementById('superadminCode').textContent = SUPERADMIN_CODE;
+    document.getElementById('superadminCode').textContent = '**********'; // Masqué par défaut
 
-    // Pour les autres admins, afficher des étoiles
-    // (déjà fait par défaut dans le HTML)
+    // Pour les autres admins, afficher uniquement des étoiles
+    if (!isSuperAdmin) {
+        document.getElementById('superadminUsername').textContent = '**********';
+        document.getElementById('superadminCode').textContent = '**********';
+    }
 }
 
 // Révéler les informations SuperAdmin
@@ -87,14 +90,22 @@ document.getElementById('revealSuperadminBtn')?.addEventListener('click', functi
     const usernameSpan = document.getElementById('superadminUsername');
     const codeSpan = document.getElementById('superadminCode');
 
-    if (this.innerHTML.includes('fa-eye')) {
-        usernameSpan.textContent = SUPERADMIN_USERNAME;
-        codeSpan.textContent = SUPERADMIN_CODE;
-        this.innerHTML = '<i class="fas fa-eye-slash"></i> Cacher';
+    // Si le SuperAdmin est connecté
+    if (isSuperAdmin) {
+        if (this.innerHTML.includes('fa-eye')) {
+            // Révéler le code seulement
+            usernameSpan.textContent = SUPERADMIN_USERNAME;
+            codeSpan.textContent = SUPERADMIN_CODE;
+            this.innerHTML = '<i class="fas fa-eye-slash"></i> Cacher le code';
+        } else {
+            // Masquer le code avec des étoiles
+            usernameSpan.textContent = SUPERADMIN_USERNAME;
+            codeSpan.textContent = '**********';
+            this.innerHTML = '<i class="fas fa-eye"></i> Révéler le code';
+        }
     } else {
-        usernameSpan.textContent = '**********';
-        codeSpan.textContent = '**********';
-        this.innerHTML = '<i class="fas fa-eye"></i> Révéler';
+        // Pour les non-SuperAdmin, toujours masqué
+        alert('Seul le SuperAdmin peut révéler ces informations');
     }
 });
 
