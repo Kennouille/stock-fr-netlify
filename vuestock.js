@@ -2544,24 +2544,90 @@ class QuadViewManager {
         const cabinetHeight = height;
         const cabinetDepth = effectiveDepth * 0.3;
 
-        // Face avant
-        ctx.fillStyle = rack.color;
-        ctx.fillRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
+        if (showSide) {
+            // TOUT sur la face latérale pour les racks à 90°
 
-        // Bordure
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
+            // 1. Dessiner la face latérale (côté droit) comme surface principale
+            const lateralWidth = cabinetDepth;
+            const lateralHeight = cabinetHeight;
 
-        // Code du rack - TOUJOURS sur la face avant, même pour les racks tournés
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+            ctx.save();
 
-        // SUPPRIMER le if/else pour showSide
-        // TOUJOURS dessiner sur la face avant
-        ctx.fillText(rack.code, x, y - cabinetHeight/2);
+            // Positionner la face latérale
+            ctx.translate(x + cabinetWidth/2, y - cabinetHeight);
+
+            // Face latérale remplie
+            ctx.fillStyle = rack.color;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(lateralWidth, -lateralWidth*0.5);
+            ctx.lineTo(lateralWidth, lateralHeight - lateralWidth*0.5);
+            ctx.lineTo(0, lateralHeight);
+            ctx.closePath();
+            ctx.fill();
+
+            // Bordure noire
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Lettre au centre de la face latérale
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const labelX = lateralWidth/2;
+            const labelY = lateralHeight/2 - lateralWidth*0.25;
+            ctx.fillText(rack.code, labelX, labelY);
+
+            // Tiroirs (étages) sur la face latérale
+            if (rack.levels && rack.levels.length > 0) {
+                const levelHeight = lateralHeight / rack.levels.length;
+                const sortedLevels = [...rack.levels].sort((a, b) => parseInt(a.code) - parseInt(b.code));
+
+                sortedLevels.forEach((level, index) => {
+                    const levelYTop = index * levelHeight;
+                    const levelYBottom = levelYTop + levelHeight;
+
+                    // Ligne de séparation
+                    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(0, levelYBottom);
+                    ctx.lineTo(lateralWidth, levelYBottom - lateralWidth*0.5);
+                    ctx.stroke();
+
+                    // Code de l'étage
+                    if (levelHeight > 15) {
+                        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                        ctx.font = '9px Arial';
+                        const textX = lateralWidth * 0.3;
+                        const textY = levelYTop + levelHeight/2 - lateralWidth*0.15;
+                        ctx.fillText(level.code, textX, textY);
+                    }
+                });
+            }
+
+            ctx.restore();
+
+        } else {
+            // Code existant pour les racks non tournés
+            // Face avant
+            ctx.fillStyle = rack.color;
+            ctx.fillRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
+
+            // Bordure
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
+
+            // Code du rack
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(rack.code, x, y - cabinetHeight/2);
+        }
 
         // Effet de profondeur (côté droit)
         ctx.fillStyle = this.adjustColor(rack.color, -20);
