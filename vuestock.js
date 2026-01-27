@@ -2298,7 +2298,7 @@ class QuadViewManager {
         // Effacer
         ctx.clearRect(0, 0, width, height);
 
-        // Fond gradient animé selon la rotation (CORRIGÉ)
+        // Fond gradient
         const gradientAngle = (this.rotation3D % 360) * Math.PI / 180;
         const gx = Math.max(0, Math.min(width, width * 0.5 + Math.cos(gradientAngle) * width * 0.3));
         const gy = Math.max(0, Math.min(height, height * 0.5 + Math.sin(gradientAngle) * height * 0.3));
@@ -2310,117 +2310,104 @@ class QuadViewManager {
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
-        // Grille de sol en perspective
+        // Grille de sol
         this.drawFloorGrid(ctx, width, height);
 
-        // Centre de l'écran
         const centerX = width / 2;
-        const centerY = height / 2 + 50; // Décalé vers le bas
+        const centerY = height / 2 + 50;
 
-        // Disposition linéaire avec rack sélectionné au centre
-        const spacingX = 120; // Espacement entre racks
-        const baseZ = 0; // Tous à la même profondeur
-
-        // Utiliser l'ordre réel des racks
+        // ✅ MODIFICATION : Trier par rotation d'abord (racks tournés en avant)
         const sortedRacks = [...racks].sort((a, b) => {
+            // Les racks tournés (rotation !== 0) passent devant
+            const aRotated = a.rotation && a.rotation !== 0 ? 1 : 0;
+            const bRotated = b.rotation && b.rotation !== 0 ? 1 : 0;
+
+            if (aRotated !== bRotated) {
+                return bRotated - aRotated; // Tournés en premier
+            }
+
+            // Sinon, ordre par position_x
             return (a.position_x || 0) - (b.position_x || 0);
         });
 
-        // Trouver l'index du rack sélectionné
+        // Disposition
+        const spacingX = 120;
+        const baseZ = 0;
+
         const selectedIndex = sortedRacks.findIndex(r =>
             this.selectedRack && r.id === this.selectedRack.id
         );
-
-        // Si aucun rack sélectionné, utiliser le premier
         const focusIndex = selectedIndex !== -1 ? selectedIndex : 0;
-        this.cameraFocusIndex = focusIndex; // Stocker pour la navigation
+        this.cameraFocusIndex = focusIndex;
 
-        // ANIMATION FLUIDE : Calculer la position cible
         const targetOffset = - (focusIndex * spacingX);
 
-        // Si pas encore défini, initialiser à la position cible
         if (this.currentOffset === undefined) {
             this.currentOffset = targetOffset;
         }
 
-        // Animation progressive (interpolation)
-        const animationSpeed = 0.1; // Plus petit = plus lent
+        const animationSpeed = 0.1;
         this.currentOffset += (targetOffset - this.currentOffset) * animationSpeed;
 
-        // Arrêter l'animation quand c'est assez proche
         if (Math.abs(targetOffset - this.currentOffset) < 0.5) {
             this.currentOffset = targetOffset;
         }
 
         const racksWithDepth = sortedRacks.map((rack, index) => {
-            // Position avec animation fluide
-            const x = this.currentOffset + (index * spacingX);
-            const z = baseZ;
+            // ✅ Si le rack est tourné, le mettre plus en avant (z négatif)
+            let z = baseZ;
+            if (rack.rotation && rack.rotation !== 0) {
+                z = -50; // Plus proche de la caméra
+            }
 
+            const x = this.currentOffset + (index * spacingX);
             const angle = this.rotation3D;
 
             return { rack, x, z, angle };
         });
 
-        // Dessiner chaque rack avec effets Rayons X et Zoom
+        // Dessiner chaque rack
         racksWithDepth.forEach(({ rack, x, z, angle }, index) => {
-            // Déterminer si ce rack est sélectionné
             const isSelected = this.selectedRack && rack.id === this.selectedRack.id;
-
-            // Effet Rayons X si c'est le rack survolé
             const isHovered = (rack === this.hoveredRack);
             const xrayAlpha = isHovered ? this.xrayProgress : 0;
-
-            // Appliquer le zoom de la caméra
             const zoomScale = this.camera.currentScale;
 
-            // Projection isométrique avec zoom
+            // Projection avec Z
             const isoX = centerX + x * this.isometric.scale * zoomScale;
-            const isoY = centerY - z * this.isometric.scale * 0.5 * zoomScale;
+            const isoY = centerY - z * this.isometric.scale * 0.5 * zoomScale; // ✅ Z affecte Y
 
-            // Hauteur du rack (selon nombre d'étages)
             const rackHeight = (rack.levels?.length || 1) * 12;
-
-            // Dimensions du rack
             const rackWidth = rack.width * 20;
             const rackDepth = rack.depth * 20;
 
-            // Échelle selon la distance (effet de profondeur) + zoom
             const depthScale = 1 - (index / sortedRacks.length) * 0.1;
             const scale = depthScale * zoomScale;
 
-            // DÉTERMINER L'OPACITÉ FINALE
             let finalOpacity = 1;
-
-            // 1. Si rack sélectionné : 50% transparent
             if (isSelected) {
                 finalOpacity = 0.5;
-            }
-            // 2. Si autre rack est focusé : 30% transparent
-            else if (this.focusedRack && rack !== this.focusedRack) {
+            } else if (this.focusedRack && rack !== this.focusedRack) {
                 finalOpacity = 0.3;
             }
-            // 3. Sinon : 100% opaque
 
-            // Dessiner le rack en 3D isométrique avec effets
             this.drawCabinetRack(
                 ctx,
                 isoX,
                 isoY,
-                rackWidth * scale * 1.5,   // Plus large
-                rackHeight * scale * 2,     // Plus haut
+                rackWidth * scale * 1.5,
+                rackHeight * scale * 2,
                 rackDepth * scale,
                 rack,
                 finalOpacity
             );
         });
 
-        // Indicateur de rotation
+        // Indicateur
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'left';
         ctx.fillText(`🔄 ${Math.round(this.rotation3D)}°`, 10, 25);
-
         ctx.font = '12px Arial';
         ctx.fillText(`${racks.length} racks - Glissez pour tourner`, 10, 45);
     }
