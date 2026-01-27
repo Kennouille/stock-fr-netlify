@@ -2109,7 +2109,15 @@ class QuadViewManager {
                 ctx.textBaseline = 'middle';
                 ctx.fillText('⟳', x + (w / scale) / 2, rotateHandleY);
 
-                                // ✅ LOG DE DÉBOGAGE : Position de la poignette rotate
+                // ✅ TEST : Point rouge au centre exact
+                ctx.fillStyle = 'red';
+                ctx.beginPath();
+                ctx.arc(x + (w / scale) / 2, rotateHandleY, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                console.log(`🎯 TEST VISUEL: Rack ${rack.code} - Centre rotate: x=${(x + (w / scale) / 2).toFixed(1)}, y=${rotateHandleY.toFixed(1)}`);
+
+                // ✅ LOG DE DÉBOGAGE : Position de la poignette rotate
                 console.log(`🎯 Rack ${rack.code}: rotate poignette à x=${x + (w / scale) / 2}, y=${rotateHandleY}, zone: ${x + (w / scale)/2 - 10}-${x + (w / scale)/2 + 10}, ${rotateHandleY - 10}-${rotateHandleY + 10}`);
 
                 // Stocker les positions des poignettes pour les interactions
