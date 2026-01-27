@@ -3733,21 +3733,25 @@ class QuadViewManager {
 
         const rack = this.selectedRack;
 
-        // ✅ PAS de conversion de scale, on travaille directement en pixels physiques
-        const adjustedClickX = clickX;
-        const adjustedClickY = clickY;
+        // ✅ Appliquer le scale inverse
+        const scale = this.topViewScale || 1;
+        const adjustedClickX = clickX / scale;
+        const adjustedClickY = clickY / scale;
 
-        // ✅ UTILISER LES VALEURS STOCKÉES
-        if (!rack._debugRotateHandle) {
-            console.error('❌ Pas de _debugRotateHandle stocké');
-            return null;
-        }
-
-        const handleSize = 8;
         const rackX = rack.displayX;
         const rackY = rack.displayY;
-        const rackW = rack.displayWidth;
-        const rackH = rack.displayHeight;
+        const rackWidth = rack.displayWidth;
+        const rackHeight = rack.displayHeight;
+
+        const handleSize = 8;
+        const rotateHandleSize = 30;
+
+        // ✅ UTILISER EXACTEMENT LES MÊMES CALCULS QUE DANS drawTopView
+        const rackVisualWidth = rackWidth;  // Déjà en pixels logiques
+        const rackVisualHeight = rackHeight;
+
+        const rotateHandleCenterX = rackX + (rackVisualWidth / 2);
+        const rotateHandleCenterY = rackY - 25;
 
         const handles = {
             nw: {
@@ -3757,38 +3761,52 @@ class QuadViewManager {
                 height: handleSize
             },
             ne: {
-                x: rackX + rackW - handleSize/2,
+                x: rackX + rackVisualWidth - handleSize/2,
                 y: rackY - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
             sw: {
                 x: rackX - handleSize/2,
-                y: rackY + rackH - handleSize/2,
+                y: rackY + rackVisualHeight - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
             se: {
-                x: rackX + rackW - handleSize/2,
-                y: rackY + rackH - handleSize/2,
+                x: rackX + rackVisualWidth - handleSize/2,
+                y: rackY + rackVisualHeight - handleSize/2,
                 width: handleSize,
                 height: handleSize
             },
             rotate: {
-                x: rack._debugRotateHandle.left,
-                y: rack._debugRotateHandle.top,
-                width: 30,
-                height: 30
+                x: rotateHandleCenterX - rotateHandleSize/2,
+                y: rotateHandleCenterY - rotateHandleSize/2,
+                width: rotateHandleSize,
+                height: rotateHandleSize
             }
         };
 
-        console.log('🔍 Clic brut:', adjustedClickX.toFixed(1), adjustedClickY.toFixed(1));
-        console.log('🎯 Rotate zone:', handles.rotate.x.toFixed(1), '-', (handles.rotate.x + 30).toFixed(1), ',',
-                    handles.rotate.y.toFixed(1), '-', (handles.rotate.y + 30).toFixed(1));
+        console.log('🔍 Clic ajusté:', adjustedClickX.toFixed(1), adjustedClickY.toFixed(1), '(scale:', scale.toFixed(3) + ')');
+        console.log('🎯 Rotate calculée:',
+                    (rotateHandleCenterX - rotateHandleSize/2).toFixed(1), '-',
+                    (rotateHandleCenterX + rotateHandleSize/2).toFixed(1), ',',
+                    (rotateHandleCenterY - rotateHandleSize/2).toFixed(1), '-',
+                    (rotateHandleCenterY + rotateHandleSize/2).toFixed(1));
+
+        // ✅ VÉRIFICATION avec les valeurs stockées
+        if (rack._debugRotateHandle) {
+            console.log('🎯 Rotate DESSINÉE:',
+                        rack._debugRotateHandle.left.toFixed(1), '-',
+                        rack._debugRotateHandle.right.toFixed(1), ',',
+                        rack._debugRotateHandle.top.toFixed(1), '-',
+                        rack._debugRotateHandle.bottom.toFixed(1));
+        }
 
         for (const [handleName, handleRect] of Object.entries(handles)) {
             const inX = adjustedClickX >= handleRect.x && adjustedClickX <= handleRect.x + handleRect.width;
             const inY = adjustedClickY >= handleRect.y && adjustedClickY <= handleRect.y + handleRect.height;
+
+            console.log(`  ${handleName}: ${handleRect.x.toFixed(1)}-${(handleRect.x + handleRect.width).toFixed(1)}, ${handleRect.y.toFixed(1)}-${(handleRect.y + handleRect.height).toFixed(1)} -> ${inX && inY ? '✅ HIT!' : 'miss'}`);
 
             if (inX && inY) {
                 console.log('✅✅✅ Poignette détectée:', handleName);
