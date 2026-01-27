@@ -2395,7 +2395,8 @@ class QuadViewManager {
                 z = -50;
             }
 
-            currentX += effectiveWidth + 10;
+            // ✅ CORRECTION : Espacement de 120px au lieu de effectiveWidth + 10
+            currentX += 120; // Espacement fixe comme avant
 
             return { rack, x, z, effectiveWidth };
         });
