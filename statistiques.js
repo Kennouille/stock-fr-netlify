@@ -90,6 +90,9 @@ async function checkAuth() {
 
         state.user = JSON.parse(userJson);
 
+        // Mettre à jour l'interface avec le nom d'utilisateur IMMÉDIATEMENT
+        elements.usernameDisplay.textContent = state.user.username || state.user.email;
+
         // DEBUG: Afficher les permissions pour vérification
         console.log('Utilisateur connecté:', state.user.username);
         console.log('Permissions:', state.user.permissions);
@@ -115,9 +118,6 @@ async function checkAuth() {
             window.location.href = 'accueil.html';
             return false;
         }
-
-        // Mettre à jour l'interface
-        elements.usernameDisplay.textContent = state.user.username || state.user.email;
 
         return true;
 
