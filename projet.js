@@ -562,13 +562,15 @@ async function fetchArticles() {
     try {
         const { data, error } = await supabase
             .from('w_articles')
-            .select('id, nom, numero, code_barre, prix_unitaire, stock_actuel')
+            .select('id, nom, numero, code_barre, prix_unitaire, stock_actuel, stock_reserve')
             .order('nom');
 
         if (error) throw error;
-
         state.articles = data || [];
         populateArticleSelect();
+
+        // ← AJOUTE CETTE LIGNE
+        refreshReservationModal();
 
     } catch (error) {
         console.error('Erreur chargement articles:', error);
@@ -617,6 +619,7 @@ async function createProject(projectData) {
                 responsable: projectData.responsable,
                 date_fin_prevue: projectData.date_fin_prevue,
                 budget: projectData.budget,
+                actif: true,
                 created_at: new Date().toISOString(),
                 created_by: state.user.id
             }])
@@ -659,10 +662,32 @@ async function updateProject(projectId, projectData) {
 
 async function archiveProject(projectId) {
     try {
+        showLoading();
+
+        // 1. Récupérer toutes les réservations du projet
+        const { data: reservations, error: reservationsError } = await supabase
+            .from('w_reservations_actives')
+            .select('id')
+            .eq('projet_id', projectId);
+
+        if (reservationsError) throw reservationsError;
+
+        console.log('Réservations à libérer:', reservations);
+
+        // 2. Libérer chaque réservation
+        if (reservations && reservations.length > 0) {
+            for (const reservation of reservations) {
+                console.log('Libération réservation:', reservation.id);
+                await releaseReservation(reservation.id, 'Libération automatique - Projet archivé');
+            }
+        }
+
+        // 3. Archiver le projet
         const { data, error } = await supabase
             .from('w_projets')
             .update({
                 archived: true,
+                actif: false,
                 archived_at: new Date().toISOString(),
                 archived_by: state.user.id
             })
@@ -672,9 +697,15 @@ async function archiveProject(projectId) {
 
         if (error) throw error;
 
+        // 4. Mettre à jour les données locales
+        await fetchReservations();
+        await fetchArticles();
+
+        hideLoading();
         return data;
     } catch (error) {
         console.error('Erreur archivage projet:', error);
+        hideLoading();
         throw error;
     }
 }
@@ -685,6 +716,7 @@ async function unarchiveProject(projectId) {
             .from('w_projets')
             .update({
                 archived: false,
+                actif: true,
                 archived_at: null,
                 archived_by: null
             })
@@ -1275,6 +1307,21 @@ function updateArchivedProjectsDisplay() {
     });
 
     elements.archivedProjectsGrid.innerHTML = html;
+
+    // ← AJOUTE CETTE SECTION POUR LES ÉVÉNEMENTS
+    document.querySelectorAll('.view-project-details').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const projectId = this.dataset.id;
+            showProjectDetails(projectId);
+        });
+    });
+
+    document.querySelectorAll('.unarchive-project').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const projectId = this.dataset.id;
+            unarchiveProjectAction(projectId);
+        });
+    });
 }
 
 function populateManagerFilter() {
@@ -1292,9 +1339,14 @@ function populateManagerFilter() {
 function populateArticleSelect() {
     let html = '<option value="">Sélectionnez un article</option>';
     state.articles.forEach(article => {
-        // Affiche seulement les articles avec stock > 0
-        if ((article.stock_actuel || 0) > 0) {
-            html += `<option value="${article.id}">${article.nom} (${article.code || article.numero}) - Stock: ${article.stock_actuel}</option>`;
+        // Calculer le stock disponible réel
+        const stockReserve = article.stock_reserve || 0;
+        const stockActuel = article.stock_actuel || 0;
+        const stockDisponible = Math.max(0, stockActuel - stockReserve);
+
+        // Affiche seulement les articles avec stock disponible > 0
+        if (stockDisponible > 0) {
+            html += `<option value="${article.id}">${article.nom} (${article.code || article.numero}) - Stock disponible: ${stockDisponible}</option>`;
         }
     });
     elements.reservationArticle.innerHTML = html;
@@ -2788,30 +2840,45 @@ async function updateReservationStockInfo(articleId) {
     if (!articleId || !state.currentProject) return;
 
     try {
-        // Récupérer le stock total disponible
         const article = state.articles.find(a => a.id === articleId);
         if (article) {
-            elements.reservationAvailableStock.textContent = article.stock_actuel || 0;
+            const stockReserve = article.stock_reserve || 0;
+            const stockActuel = article.stock_actuel || 0;
+            const stockDisponible = Math.max(0, stockActuel - stockReserve);
+
+            // Afficher le stock disponible réel
+            elements.reservationAvailableStock.textContent = stockDisponible;
+
+            // Récupérer le nombre déjà réservé pour CE PROJET
+            const projectReservations = state.reservations.filter(r =>
+                r.projet_id === state.currentProject.id && r.article_id === articleId
+            );
+            const alreadyReserved = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
+            elements.reservationAlreadyReserved.textContent = alreadyReserved;
+
+            // Mettre à jour la quantité max avec le stock disponible
+            const currentQuantity = parseInt(elements.reservationQuantity.value) || 1;
+
+            if (currentQuantity > stockDisponible) {
+                elements.reservationQuantity.value = Math.max(1, stockDisponible);
+            }
         }
-
-        // Récupérer le nombre déjà réservé pour ce projet
-        const projectReservations = state.reservations.filter(r =>
-            r.id_projet === state.currentProject.id && r.id_article === articleId
-        );
-        const alreadyReserved = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
-        elements.reservationAlreadyReserved.textContent = alreadyReserved;
-
-        // Mettre à jour la quantité max
-        const availableStock = article?.quantite_disponible || 0;
-        const currentQuantity = parseInt(elements.reservationQuantity.value) || 1;
-
-        if (currentQuantity > availableStock) {
-            elements.reservationQuantity.value = Math.max(1, availableStock);
-        }
+        // ← Plus de code en dehors du if(article), donc pas d'erreur si article est null
 
     } catch (error) {
         console.error('Erreur mise à jour info stock:', error);
     }
+}
+
+function refreshReservationModal() {
+    // Recalculer et réafficher les infos stock
+    const articleId = elements.reservationArticle.value;
+    if (articleId) {
+        updateReservationStockInfo(articleId);
+    }
+
+    // Repeupler la liste des articles (au cas où)
+    populateArticleSelect();
 }
 
 async function confirmAddReservation() {
@@ -2833,7 +2900,7 @@ async function confirmAddReservation() {
             return;
         }
 
-        // Vérifier le stock disponible
+        // Vérifier le stock disponible réel
         const article = state.articles.find(a => a.id === articleId);
         if (!article) {
             elements.reservationErrorText.textContent = 'Article non trouvé';
@@ -2841,8 +2908,13 @@ async function confirmAddReservation() {
             return;
         }
 
-        if ((article.stock_actuel || 0) < quantity) {
-            elements.reservationErrorText.textContent = `Stock insuffisant. Disponible: ${article.stock_actuel || 0}`;
+        // Calculer le stock disponible réel
+        const stockReserve = article.stock_reserve || 0;
+        const stockActuel = article.stock_actuel || 0;
+        const stockDisponible = Math.max(0, stockActuel - stockReserve);
+
+        if (stockDisponible < quantity) {
+            elements.reservationErrorText.textContent = `Stock insuffisant. Disponible: ${stockDisponible}`;
             elements.reservationError.style.display = 'flex';
             return;
         }
@@ -2860,6 +2932,11 @@ async function confirmAddReservation() {
 
         // Ajouter à la liste des réservations
         state.reservations.push(newReservation);
+
+        // Mettre à jour le stock_reserve dans l'article local
+        if (article) {
+            article.stock_reserve = (article.stock_reserve || 0) + quantity;
+        }
 
         // Recharger les détails du projet
         await showProjectDetails(state.currentProject.id);
@@ -3306,9 +3383,12 @@ function setupEventListeners() {
 
             if (articleId) {
                 const article = state.articles.find(a => a.id === articleId);
-                const maxQuantity = article?.stock_actuel || 0; // ← Utilisez stock_actuel
+                // Calculer le stock disponible réel
+                const stockReserve = article?.stock_reserve || 0;
+                const stockActuel = article?.stock_actuel || 0;
+                const stockDisponible = Math.max(0, stockActuel - stockReserve);
 
-                if (value < maxQuantity) {
+                if (value < stockDisponible) {
                     input.value = value + 1;
                 }
             } else {

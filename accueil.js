@@ -2614,14 +2614,18 @@ async function openProjectDetailsModal(projectId) {
 
 async function openProjectSelectionModal() {
     try {
-        // Récupérer tous les projets non archivés
+        console.log('🔍 Recherche des projets actifs...');
+
         const { data: projects, error } = await supabase
             .from('w_projets')
             .select('id, nom, numero, responsable, date_fin_prevue')
-            .eq('archived', false)
+            .eq('actif', true)  // ← IMPORTANT : filtrer sur actif=true
             .order('nom');
 
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Erreur Supabase:', error);
+            throw error;
+        }
 
         if (!projects || projects.length === 0) {
             alert('Aucun projet disponible');
@@ -3899,6 +3903,12 @@ function setupEventListeners() {
     if (scanArticleBtn) {
         scanArticleBtn.addEventListener('click', handleScanArticleForReturn);
     }
+
+    // Debug: vérifier quel bouton existe
+    console.log('🔍 Recherche des boutons de projet...');
+    console.log('Bouton selectProjetBtn:', document.getElementById('selectProjetBtn'));
+    console.log('Bouton reservationProjetBtn:', document.getElementById('reservationProjetBtn'));
+    console.log('Tous les boutons avec "projet":', document.querySelectorAll('[id*="projet"],[id*="Projet"]'));
 
     if (searchArticleBtn) {
         searchArticleBtn.addEventListener('click', handleSearchArticleForReturn);
@@ -5721,7 +5731,7 @@ async function loadProjectsForSelect(selectId) {
         const { data: projets, error } = await supabase
             .from('w_projets')
             .select('id, nom, numero, date_fin_prevue, archived')
-            .eq('archived', false)
+            .eq('actif', true)
             .or(`date_fin_prevue.is.null,date_fin_prevue.gte.${today}`) // Projets non terminés
             .order('nom');
 

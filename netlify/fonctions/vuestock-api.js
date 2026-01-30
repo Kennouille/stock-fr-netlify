@@ -1,5 +1,5 @@
-// vuestock-api.js - Version finale
-exports.handler = async (event) => {
+// vuestock-api.js - Version Netlify Functions COMPLÈTE
+exports.handler = async (event, context) => {
   // D'abord, initialiser toutes les variables
   const queryParams = event.queryStringParameters || {};
   const action = queryParams.action;
@@ -23,6 +23,12 @@ exports.handler = async (event) => {
     };
   }
 
+  const supabaseUrl = 'https://mngggybayjooqkzbhvqy.supabase.co';
+  const headers = {
+    'apikey': supabaseKey,
+    'Authorization': `Bearer ${supabaseKey}`
+  };
+
   // Gérer les différentes actions
   if (action === 'ping') {
     return {
@@ -33,39 +39,89 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         success: true,
-        message: 'Pong! Function is working',
+        message: 'Pong! Netlify Function is working',
         timestamp: new Date().toISOString()
       })
     };
   }
 
-    if (action === 'get-racks') {
-        const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?select=*`, { headers });
-        return { statusCode: 200, body: JSON.stringify(await response.json()) };
+  // LES FONCTIONS QUE VOUS AVIEZ (TOUTES)
+  if (action === 'get-racks') {
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?select=*`, { headers });
+      const data = await response.json();
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify(data)
+      };
+    } catch (error) {
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ error: error.message })
+      };
     }
+  }
 
-    if (action === 'get-levels') {
-        const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?select=*`, { headers });
-        return { statusCode: 200, body: JSON.stringify(await response.json()) };
+  if (action === 'get-levels') {
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?select=*`, { headers });
+      const data = await response.json();
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify(data)
+      };
+    } catch (error) {
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ error: error.message })
+      };
     }
+  }
 
-    if (action === 'get-slots') {
-        const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots?select=*`, { headers });
-        return { statusCode: 200, body: JSON.stringify(await response.json()) };
+  if (action === 'get-slots') {
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots?select=*`, { headers });
+      const data = await response.json();
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify(data)
+      };
+    } catch (error) {
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ error: error.message })
+      };
     }
-
+  }
 
   if (action === 'get-config') {
     try {
-      const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
-
       // ✅ 1. Charger les racks
-      const racksResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?select=*&order=rack_code.asc`, {
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`
-        }
-      });
+      const racksResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?select=*&order=rack_code.asc`, { headers });
 
       if (!racksResponse.ok) {
         throw new Error(`Supabase racks error: ${racksResponse.status}`);
@@ -74,33 +130,15 @@ exports.handler = async (event) => {
       const racks = await racksResponse.json();
 
       // ✅ 2. Charger les levels
-      const levelsResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?select=*&order=display_order.asc`, {
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`
-        }
-      });
-
+      const levelsResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?select=*&order=display_order.asc`, { headers });
       const levels = levelsResponse.ok ? await levelsResponse.json() : [];
 
       // ✅ 3. Charger les slots
-      const slotsResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots?select=*&order=display_order.asc`, {
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`
-        }
-      });
-
+      const slotsResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots?select=*&order=display_order.asc`, { headers });
       const slots = slotsResponse.ok ? await slotsResponse.json() : [];
 
       // ✅ 4. Charger les articles
-      const articlesResponse = await fetch(`${supabaseUrl}/rest/v1/w_articles?select=*&actif=eq.true`, {
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`
-        }
-      });
-
+      const articlesResponse = await fetch(`${supabaseUrl}/rest/v1/w_articles?select=*&actif=eq.true`, { headers });
       const articles = articlesResponse.ok ? await articlesResponse.json() : [];
 
       // ✅ 5. Assembler la structure complète
@@ -183,538 +221,505 @@ exports.handler = async (event) => {
     }
   }
 
-  // Dans vuestock-api.js - fonction save-rack
-    if (action === 'save-rack') {
-        try {
-            let body = {};
-            if (event.body) {
-                body = JSON.parse(event.body);
-            }
+  if (action === 'save-rack') {
+    try {
+      let body = {};
+      if (event.body) {
+        body = JSON.parse(event.body);
+      }
 
-            console.log('📦 Body parsed for save-rack:', body);
-            console.log('🆔 ID présent?:', !!body.id);
+      console.log('📦 Body parsed for save-rack:', body);
+      console.log('🆔 ID présent?:', !!body.id);
 
-            const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
+      const payload = {
+        rack_code: body.code || body.rack_code || `RACK_${Date.now()}`,
+        display_name: body.name || body.display_name || `Étagère ${body.code}`,
+        position_x: Math.round(body.position_x || body.x || 100),
+        position_y: Math.round(body.position_y || body.y || 100),
+        rotation: body.rotation || 0,
+        width: body.width || 3,
+        depth: body.depth || 2,
+        color: body.color || '#4a90e2'
+      };
 
-            const payload = {
-                rack_code: body.code || body.rack_code || `RACK_${Date.now()}`,
-                display_name: body.name || body.display_name || `Étagère ${body.code}`,
-                position_x: Math.round(body.position_x || body.x || 100),
-                position_y: Math.round(body.position_y || body.y || 100),
-                rotation: body.rotation || 0,
-                width: body.width || 3,
-                depth: body.depth || 2,
-                color: body.color || '#4a90e2'
-            };
+      // CORRECTION 2 : Limiter rack_code à 10 caractères maximum
+      if (payload.rack_code && payload.rack_code.length > 10) {
+        payload.rack_code = payload.rack_code.substring(0, 10);
+        console.log(`✂️ Code rack tronqué à 10 chars: ${payload.rack_code}`);
+      }
 
-            // CORRECTION 2 : Limiter rack_code à 10 caractères maximum
-            if (payload.rack_code && payload.rack_code.length > 10) {
-                payload.rack_code = payload.rack_code.substring(0, 10);
-                console.log(`✂️ Code rack tronqué à 10 chars: ${payload.rack_code}`);
-            }
-
-            // Nettoyer le payload (enlever les undefined)
-            Object.keys(payload).forEach(key => {
-                if (payload[key] === undefined) {
-                    delete payload[key];
-                }
-            });
-
-            let response;
-            let method;
-
-            // DÉCISION : création ou mise à jour ?
-            if (body.id) {
-                // Mise à jour avec PATCH
-                console.log(`📝 Mise à jour PATCH pour ID: ${body.id}`);
-                method = 'PATCH';
-                response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?id=eq.${body.id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${supabaseKey}`,
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify(payload)
-                });
-            } else {
-                // Création avec POST
-                console.log('➕ Création POST nouvelle étagère');
-                method = 'POST';
-                response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${supabaseKey}`,
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify(payload)
-                });
-            }
-
-            const text = await response.text();
-            console.log(`📥 Supabase ${method} response:`, response.status, text);
-
-            if (!response.ok) {
-                throw new Error(`Supabase ${method} error: ${response.status} - ${text}`);
-            }
-
-            let result;
-            try {
-                result = text ? JSON.parse(text) : null;
-            } catch (e) {
-                console.error('❌ Error parsing JSON:', e);
-                result = { raw: text };
-            }
-
-            // Pour PATCH, Supabase peut retourner un tableau vide
-            const responseData = Array.isArray(result) && result.length > 0 ? result[0] : result;
-
-            return {
-                statusCode: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({
-                    success: true,
-                    data: responseData || { id: body.id, ...payload },
-                    operation: body.id ? 'updated' : 'created',
-                    method: method
-                })
-            };
-
-        } catch (error) {
-            console.error('❌ Server error in save-rack:', error);
-            return {
-                statusCode: 500,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({
-                    success: false,
-                    error: error.message
-                })
-            };
+      // Nettoyer le payload (enlever les undefined)
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === undefined) {
+          delete payload[key];
         }
+      });
+
+      let response;
+      let method;
+
+      // DÉCISION : création ou mise à jour ?
+      if (body.id) {
+        // Mise à jour avec PATCH
+        console.log(`📝 Mise à jour PATCH pour ID: ${body.id}`);
+        method = 'PATCH';
+        response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?id=eq.${body.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        // Création avec POST
+        console.log('➕ Création POST nouvelle étagère');
+        method = 'POST';
+        response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      const text = await response.text();
+      console.log(`📥 Supabase ${method} response:`, response.status, text);
+
+      if (!response.ok) {
+        throw new Error(`Supabase ${method} error: ${response.status} - ${text}`);
+      }
+
+      let result;
+      try {
+        result = text ? JSON.parse(text) : null;
+      } catch (e) {
+        console.error('❌ Error parsing JSON:', e);
+        result = { raw: text };
+      }
+
+      // Pour PATCH, Supabase peut retourner un tableau vide
+      const responseData = Array.isArray(result) && result.length > 0 ? result[0] : result;
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: true,
+          data: responseData || { id: body.id, ...payload },
+          operation: body.id ? 'updated' : 'created',
+          method: method
+        })
+      };
+
+    } catch (error) {
+      console.error('❌ Server error in save-rack:', error);
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: error.message
+        })
+      };
     }
+  }
 
-    // Gestion des niveaux (levels)
-    if (action === 'save-level') {
-        try {
-            let body = {};
-            if (event.body) {
-                body = JSON.parse(event.body);
-            }
+  // Gestion des niveaux (levels)
+  if (action === 'save-level') {
+    try {
+      let body = {};
+      if (event.body) {
+        body = JSON.parse(event.body);
+      }
 
-            console.log('📦 Body parsed for save-level:', body);
+      console.log('📦 Body parsed for save-level:', body);
 
-            const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
+      // Vérifier les données requises
+      if (!body.rack_id) {
+        throw new Error('rack_id is required');
+      }
 
-            // Vérifier les données requises
-            if (!body.rack_id) {
-                throw new Error('rack_id is required');
-            }
+      const payload = {
+        rack_id: body.rack_id,
+        level_code: body.level_code || body.code || `LVL_${Date.now()}`,
+        display_order: body.display_order || 1,
+        created_at: new Date().toISOString()
+      };
 
-            const payload = {
-                rack_id: body.rack_id,
-                level_code: body.level_code || body.code || `LVL_${Date.now()}`,
-                display_order: body.display_order || 1,
-                created_at: new Date().toISOString()
-            };
-
-            // Nettoyer le payload
-            Object.keys(payload).forEach(key => {
-                if (payload[key] === undefined) {
-                    delete payload[key];
-                }
-            });
-
-            let response;
-            let method;
-
-            // Décision: création ou mise à jour ?
-            if (body.id) {
-                // Mise à jour d'un niveau existant
-                console.log(`📝 Mise à jour PATCH du niveau ID: ${body.id}`);
-                method = 'PATCH';
-                response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?id=eq.${body.id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${supabaseKey}`,
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify(payload)
-                });
-            } else {
-                // Création d'un nouveau niveau
-                console.log('➕ Création POST nouveau niveau');
-                method = 'POST';
-                response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${supabaseKey}`,
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify(payload)
-                });
-            }
-
-            const text = await response.text();
-            console.log(`📥 Supabase ${method} response for level:`, response.status, text);
-
-            if (!response.ok) {
-                throw new Error(`Supabase ${method} error: ${response.status} - ${text}`);
-            }
-
-            let result;
-            try {
-                result = text ? JSON.parse(text) : null;
-            } catch (e) {
-                console.error('❌ Error parsing JSON:', e);
-                result = { raw: text };
-            }
-
-            // Pour PATCH, Supabase peut retourner un tableau vide
-            const responseData = Array.isArray(result) && result.length > 0 ? result[0] : result;
-
-            return {
-                statusCode: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({
-                    success: true,
-                    data: responseData || { id: body.id, ...payload },
-                    operation: body.id ? 'updated' : 'created'
-                })
-            };
-
-        } catch (error) {
-            console.error('❌ Server error in save-level:', error);
-            return {
-                statusCode: 500,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({
-                    success: false,
-                    error: error.message
-                })
-            };
+      // Nettoyer le payload
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === undefined) {
+          delete payload[key];
         }
+      });
+
+      let response;
+      let method;
+
+      // Décision: création ou mise à jour ?
+      if (body.id) {
+        // Mise à jour d'un niveau existant
+        console.log(`📝 Mise à jour PATCH du niveau ID: ${body.id}`);
+        method = 'PATCH';
+        response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?id=eq.${body.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        // Création d'un nouveau niveau
+        console.log('➕ Création POST nouveau niveau');
+        method = 'POST';
+        response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      const text = await response.text();
+      console.log(`📥 Supabase ${method} response for level:`, response.status, text);
+
+      if (!response.ok) {
+        throw new Error(`Supabase ${method} error: ${response.status} - ${text}`);
+      }
+
+      let result;
+      try {
+        result = text ? JSON.parse(text) : null;
+      } catch (e) {
+        console.error('❌ Error parsing JSON:', e);
+        result = { raw: text };
+      }
+
+      // Pour PATCH, Supabase peut retourner un tableau vide
+      const responseData = Array.isArray(result) && result.length > 0 ? result[0] : result;
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: true,
+          data: responseData || { id: body.id, ...payload },
+          operation: body.id ? 'updated' : 'created'
+        })
+      };
+
+    } catch (error) {
+      console.error('❌ Server error in save-level:', error);
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: error.message
+        })
+      };
     }
+  }
 
-    // Gestion des emplacements (slots)
-    if (action === 'save-slot') {
-        try {
-            let body = {};
-            if (event.body) {
-                body = JSON.parse(event.body);
-            }
+  // Gestion des emplacements (slots)
+  if (action === 'save-slot') {
+    try {
+      let body = {};
+      if (event.body) {
+        body = JSON.parse(event.body);
+      }
 
-            console.log('📦 Body parsed for save-slot:', body);
+      console.log('📦 Body parsed for save-slot:', body);
 
-            const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
+      // Vérifier les données requises
+      if (!body.level_id) {
+        throw new Error('level_id is required');
+      }
 
-            // Vérifier les données requises
-            if (!body.level_id) {
-                throw new Error('level_id is required');
-            }
+      // NOUVEAU : Construire le full_code
+      // Pour cela, nous devons d'abord récupérer le rack et le level
+      // 1. D'abord, récupérer le level pour avoir son rack_id et level_code
+      const levelResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?id=eq.${body.level_id}`, { headers });
 
-            // NOUVEAU : Construire le full_code
-            // Pour cela, nous devons d'abord récupérer le rack et le level
-            // 1. D'abord, récupérer le level pour avoir son rack_id et level_code
-            const levelResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_levels?id=eq.${body.level_id}`, {
-                headers: {
-                    'apikey': supabaseKey,
-                    'Authorization': `Bearer ${supabaseKey}`
-                }
-            });
+      if (!levelResponse.ok) {
+        throw new Error(`Failed to fetch level: ${levelResponse.status}`);
+      }
 
-            if (!levelResponse.ok) {
-                throw new Error(`Failed to fetch level: ${levelResponse.status}`);
-            }
+      const levels = await levelResponse.json();
+      if (!levels || levels.length === 0) {
+        throw new Error(`Level ${body.level_id} not found`);
+      }
 
-            const levels = await levelResponse.json();
-            if (!levels || levels.length === 0) {
-                throw new Error(`Level ${body.level_id} not found`);
-            }
+      const level = levels[0];
 
-            const level = levels[0];
+      // 2. Récupérer le rack pour avoir son rack_code
+      const rackResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?id=eq.${level.rack_id}`, { headers });
 
-            // 2. Récupérer le rack pour avoir son rack_code
-            const rackResponse = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?id=eq.${level.rack_id}`, {
-                headers: {
-                    'apikey': supabaseKey,
-                    'Authorization': `Bearer ${supabaseKey}`
-                }
-            });
+      if (!rackResponse.ok) {
+        throw new Error(`Failed to fetch rack: ${rackResponse.status}`);
+      }
 
-            if (!rackResponse.ok) {
-                throw new Error(`Failed to fetch rack: ${rackResponse.status}`);
-            }
+      const racks = await rackResponse.json();
+      if (!racks || racks.length === 0) {
+        throw new Error(`Rack ${level.rack_id} not found`);
+      }
 
-            const racks = await rackResponse.json();
-            if (!racks || racks.length === 0) {
-                throw new Error(`Rack ${level.rack_id} not found`);
-            }
+      const rack = racks[0];
 
-            const rack = racks[0];
+      // 3. Construire le full_code : rack_code + level_code + slot_code
+      const fullCode = `${rack.rack_code}-${level.level_code}-${body.slot_code || body.code}`;
 
-            // 3. Construire le full_code : rack_code + level_code + slot_code
-            const fullCode = `${rack.rack_code}-${level.level_code}-${body.slot_code || body.code}`;
+      const payload = {
+        level_id: body.level_id,
+        slot_code: body.slot_code || body.code || `SLOT_${Date.now()}`,
+        display_order: body.display_order || 1,
+        status: body.status || 'free',
+        capacity: body.capacity || 100,
+        full_code: fullCode, // AJOUT IMPORTANT !
+        created_at: new Date().toISOString()
+      };
 
-            const payload = {
-                level_id: body.level_id,
-                slot_code: body.slot_code || body.code || `SLOT_${Date.now()}`,
-                display_order: body.display_order || 1,
-                status: body.status || 'free',
-                capacity: body.capacity || 100,
-                full_code: fullCode, // AJOUT IMPORTANT !
-                created_at: new Date().toISOString()
-            };
+      console.log('📤 Payload avec full_code:', payload);
 
-            console.log('📤 Payload avec full_code:', payload);
-
-            // Nettoyer le payload
-            Object.keys(payload).forEach(key => {
-                if (payload[key] === undefined) {
-                    delete payload[key];
-                }
-            });
-
-            let response;
-            let method;
-
-            // Décision: création ou mise à jour ?
-            if (body.id) {
-                // Mise à jour d'un emplacement existant
-                console.log(`📝 Mise à jour PATCH du slot ID: ${body.id}`);
-                method = 'PATCH';
-                response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots?id=eq.${body.id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${supabaseKey}`,
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify(payload)
-                });
-            } else {
-                // Création d'un nouvel emplacement
-                console.log('➕ Création POST nouveau slot');
-                method = 'POST';
-                response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${supabaseKey}`,
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify(payload)
-                });
-            }
-
-            const text = await response.text();
-            console.log(`📥 Supabase ${method} response for slot:`, response.status, text);
-
-            if (!response.ok) {
-                throw new Error(`Supabase ${method} error: ${response.status} - ${text}`);
-            }
-
-            let result;
-            try {
-                result = text ? JSON.parse(text) : null;
-            } catch (e) {
-                console.error('❌ Error parsing JSON:', e);
-                result = { raw: text };
-            }
-
-            // Pour PATCH, Supabase peut retourner un tableau vide
-            const responseData = Array.isArray(result) && result.length > 0 ? result[0] : result;
-
-            return {
-                statusCode: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({
-                    success: true,
-                    data: responseData || { id: body.id, ...payload },
-                    operation: body.id ? 'updated' : 'created'
-                })
-            };
-
-        } catch (error) {
-            console.error('❌ Server error in save-slot:', error);
-            return {
-                statusCode: 500,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({
-                    success: false,
-                    error: error.message
-                })
-            };
+      // Nettoyer le payload
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === undefined) {
+          delete payload[key];
         }
+      });
+
+      let response;
+      let method;
+
+      // Décision: création ou mise à jour ?
+      if (body.id) {
+        // Mise à jour d'un emplacement existant
+        console.log(`📝 Mise à jour PATCH du slot ID: ${body.id}`);
+        method = 'PATCH';
+        response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots?id=eq.${body.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        // Création d'un nouvel emplacement
+        console.log('➕ Création POST nouveau slot');
+        method = 'POST';
+        response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_slots`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      const text = await response.text();
+      console.log(`📥 Supabase ${method} response for slot:`, response.status, text);
+
+      if (!response.ok) {
+        throw new Error(`Supabase ${method} error: ${response.status} - ${text}`);
+      }
+
+      let result;
+      try {
+        result = text ? JSON.parse(text) : null;
+      } catch (e) {
+        console.error('❌ Error parsing JSON:', e);
+        result = { raw: text };
+      }
+
+      // Pour PATCH, Supabase peut retourner un tableau vide
+      const responseData = Array.isArray(result) && result.length > 0 ? result[0] : result;
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: true,
+          data: responseData || { id: body.id, ...payload },
+          operation: body.id ? 'updated' : 'created'
+        })
+      };
+
+    } catch (error) {
+      console.error('❌ Server error in save-slot:', error);
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: error.message
+        })
+      };
     }
+  }
 
-      if (action === 'delete-rack') {
-        try {
-            // ✅ CORRECTION : Récupérer l'ID depuis les query params
-            const rackId = queryParams.rackId;
+  if (action === 'delete-rack') {
+    try {
+      // ✅ CORRECTION : Récupérer l'ID depuis les query params
+      const rackId = queryParams.rackId;
 
-            if (!rackId) {
-                throw new Error('rackId is required for deletion');
-            }
+      if (!rackId) {
+        throw new Error('rackId is required for deletion');
+      }
 
-            const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
+      console.log('🗑️ Deleting rack with ID:', rackId);
 
-            console.log('🗑️ Deleting rack with ID:', rackId);
+      const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?id=eq.${rackId}`, {
+        method: 'DELETE',
+        headers: headers
+      });
 
-            const response = await fetch(`${supabaseUrl}/rest/v1/w_vuestock_racks?id=eq.${rackId}`, {
-                method: 'DELETE',
-                headers: {
-                    'apikey': supabaseKey,
-                    'Authorization': `Bearer ${supabaseKey}`
-                }
-            });
+      const text = await response.text();
 
-            const text = await response.text();
+      if (!response.ok) {
+        throw new Error(`Supabase error: ${response.status} - ${text}`);
+      }
 
-            if (!response.ok) {
-                throw new Error(`Supabase error: ${response.status} - ${text}`);
-            }
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: true,
+          message: 'Rack deleted successfully'
+        })
+      };
 
-            return {
-                statusCode: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({
-                    success: true,
-                    message: 'Rack deleted successfully'
-                })
-            };
-
-        } catch (error) {
-            console.error('❌ Error in delete-rack:', error);
-            return {
-                statusCode: 500,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({
-                    success: false,
-                    error: error.message
-                })
-            };
-        }
+    } catch (error) {
+      console.error('❌ Error in delete-rack:', error);
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: error.message
+        })
+      };
     }
+  }
 
+  if (action === 'update-stock') {
+    try {
+      const body = JSON.parse(event.body || '{}');
+      const { article_id, new_quantity } = body;
 
-    if (action === 'update-stock') {
-        try {
-            const body = JSON.parse(event.body || '{}');
-            const { article_id, new_quantity } = body;
+      console.log('📊 Mise à jour stock:', { article_id, new_quantity });
 
-            console.log('📊 Mise à jour stock:', { article_id, new_quantity });
+      if (!article_id || new_quantity === undefined) {
+        return {
+          statusCode: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          },
+          body: JSON.stringify({
+            success: false,
+            error: 'article_id et new_quantity sont requis'
+          })
+        };
+      }
 
-            if (!article_id || new_quantity === undefined) {
-                return {
-                    statusCode: 400,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
-                    body: JSON.stringify({
-                        success: false,
-                        error: 'article_id et new_quantity sont requis'
-                    })
-                };
-            }
+      // Mettre à jour la table w_articles
+      const response = await fetch(`${supabaseUrl}/rest/v1/w_articles?id=eq.${article_id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers,
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify({
+          stock_actuel: new_quantity,
+          updated_at: new Date().toISOString(),
+          date_maj_stock: new Date().toISOString()
+        })
+      });
 
-            const supabaseUrl = 'https://lanxxvocjwpyegoxxxkj.supabase.co';
+      const text = await response.text();
+      console.log(`📥 Supabase PATCH response:`, response.status, text);
 
-            // Mettre à jour la table w_articles
-            const response = await fetch(`${supabaseUrl}/rest/v1/w_articles?id=eq.${article_id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': supabaseKey,
-                    'Authorization': `Bearer ${supabaseKey}`,
-                    'Prefer': 'return=representation'
-                },
-                body: JSON.stringify({
-                    stock_actuel: new_quantity,
-                    updated_at: new Date().toISOString(),
-                    date_maj_stock: new Date().toISOString()
-                })
-            });
+      if (!response.ok) {
+        throw new Error(`Supabase error: ${response.status} - ${text}`);
+      }
 
+      let result;
+      try {
+        result = text ? JSON.parse(text) : null;
+      } catch (e) {
+        console.error('❌ Error parsing JSON:', e);
+        result = { raw: text };
+      }
 
-            const text = await response.text();
-            console.log(`📥 Supabase PATCH response:`, response.status, text);
+      const responseData = Array.isArray(result) && result.length > 0 ? result[0] : result;
 
-            if (!response.ok) {
-                throw new Error(`Supabase error: ${response.status} - ${text}`);
-            }
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: true,
+          message: 'Stock mis à jour avec succès',
+          data: responseData
+        })
+      };
 
-            let result;
-            try {
-                result = text ? JSON.parse(text) : null;
-            } catch (e) {
-                console.error('❌ Error parsing JSON:', e);
-                result = { raw: text };
-            }
-
-            const responseData = Array.isArray(result) && result.length > 0 ? result[0] : result;
-
-            return {
-                statusCode: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({
-                    success: true,
-                    message: 'Stock mis à jour avec succès',
-                    data: responseData
-                })
-            };
-
-        } catch (error) {
-            console.error('❌ Error in update-stock:', error);
-            return {
-                statusCode: 500,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({
-                    success: false,
-                    error: error.message
-                })
-            };
-        }
+    } catch (error) {
+      console.error('❌ Error in update-stock:', error);
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: error.message
+        })
+      };
     }
+  }
 
   // Si aucune action reconnue
   return {

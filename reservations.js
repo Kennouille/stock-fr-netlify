@@ -445,7 +445,7 @@ async function createReservation(reservationData) {
                 // CE QUE TU AS DEMANDÉ
                 projet: project ? project.nom : null,
                 notes: reservationData.comment,
-                commentaire: notes,
+                commentaire: reservationData.comment,
                 utilisateur: username,
 
                 utilisateur_id: state.user.id,
@@ -571,13 +571,14 @@ async function createProject(projectData) {
                 description: projectData.description,
                 responsable: projectData.responsable,
                 date_fin_prevue: projectData.date_fin_prevue,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                actif: true, // <-- AJOUTE CETTE LIGNE
+                archived: false // <-- Optionnel mais recommandé
             }])
             .select()
             .single();
 
         if (error) throw error;
-
         return data;
     } catch (error) {
         console.error('Erreur création projet:', error);
@@ -857,9 +858,14 @@ function populateArticleFilter() {
 
 function populateProjectFilter() {
     let html = '<option value="">Tous les projets</option>';
-    state.projects.forEach(project => {
+
+    // Filtrer uniquement les projets actifs (actif = true)
+    const activeProjects = state.projects.filter(project => project.actif === true);
+
+    activeProjects.forEach(project => {
         html += `<option value="${project.id}">${project.nom}</option>`;
     });
+
     elements.filterProject.innerHTML = html;
     elements.filterProject.value = state.filters.project;
 }
@@ -875,9 +881,14 @@ function populateUserFilter() {
 
 function populateProjectSelect() {
     let html = '<option value="">Sélectionnez un projet</option>';
-    state.projects.forEach(project => {
+
+    // Filtrer uniquement les projets actifs (actif = true)
+    const activeProjects = state.projects.filter(project => project.actif === true);
+
+    activeProjects.forEach(project => {
         html += `<option value="${project.id}">${project.nom}</option>`;
     });
+
     elements.reservationProject.innerHTML = html;
 }
 
