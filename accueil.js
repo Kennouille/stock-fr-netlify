@@ -5929,19 +5929,20 @@ async function handleStockAction(type, popup, initialData) {
                 break;
 
             case 'in':
-                mouvementData.raison = document.getElementById('inReason').value || '';
-                mouvementData.commentaire = document.getElementById('inNotes').value || '';
-                mouvementData.notes = document.getElementById('inNotes').value || '';
+                mouvementData.raison = document.getElementById('inReason')?.value || '';
+                mouvementData.commentaire = document.getElementById('inNotes')?.value || '';
+                mouvementData.notes = document.getElementById('inNotes')?.value || '';
 
                 // CHAMPS POUR ENTREES
-                mouvementData.fournisseur = document.getElementById('inSupplier').value || null;
-                mouvementData.bon_commande = document.getElementById('inPurchaseOrder').value || null;
+                mouvementData.fournisseur = document.getElementById('inSupplier')?.value || null;
+                mouvementData.bon_commande = document.getElementById('inPurchaseOrder')?.value || null;
 
                 const prixUnitaireInput = document.getElementById('inUnitPrice');
                 mouvementData.prix_unitaire = prixUnitaireInput?.value ? parseFloat(prixUnitaireInput.value) : null;
 
-                mouvementData.emplacement = document.getElementById('inLocation').value || null;
+                mouvementData.emplacement = document.getElementById('inLocation')?.value || null;
                 break;
+
 
             case 'res':
                 const resProjectSelect = document.getElementById('resProject');
