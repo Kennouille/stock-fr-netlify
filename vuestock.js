@@ -4302,16 +4302,17 @@ class VueStock {
                     }
                 }
             }
+            // ⬇️ Déplacé ICI (dans le .then() pour attendre le chargement)
+            this.autoSelectTarget();
+
+            // Afficher la vue par défaut
+            this.showView('plan');
+
+            // Mettre à jour les statistiques
+            this.updateStats();
         });
-
-        this.autoSelectTarget();
-
-        // Afficher la vue par défaut
-        this.showView('plan');
-
-        // Mettre à jour les statistiques
-        this.updateStats();
     }
+
 
     // AJOUTER CETTE MÉTHODE APRÈS init()
     initQuadView() {
