@@ -4271,7 +4271,38 @@ class VueStock {
         this.initEvents();
 
         // Chargement initial des données
-        this.loadData();
+        this.loadData().then(() => {
+            // 1. Récupérer les paramètres d'URL
+            const params = new URLSearchParams(window.location.search);
+            const rack = params.get('rack');
+            const level = params.get('level');
+            const slot = params.get('slot');
+
+            // 2. Si un rack est spécifié, le sélectionner
+            if (rack) {
+                const targetRack = this.racks.find(r => r.code === rack || r.display_name === rack);
+                if (targetRack) {
+                    this.selectRack(targetRack);
+
+                    // 3. Si un niveau est spécifié, le sélectionner
+                    if (level) {
+                        const targetLevel = targetRack.levels.find(l => l.code === level);
+                        if (targetLevel) {
+                            this.selectLevel(targetLevel);
+
+                            // 4. Si un slot est spécifié, le sélectionner
+                            if (slot) {
+                                const targetSlot = targetLevel.slots.find(s => s.code === slot);
+                                if (targetSlot) {
+                                    this.selectSlot(targetSlot);
+                                    this.highlightSlot(targetSlot);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
         this.autoSelectTarget();
 
