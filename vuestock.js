@@ -4265,53 +4265,25 @@ class VueStock {
     }
 
     init() {
-        console.log('VueStock initialisé');
+        // Empêcher la double initialisation
+        if (window.vuestockInstance) {
+            console.warn("Instance VueStock déjà existante - annulation");
+            return window.vuestockInstance;
+        }
+        window.vuestockInstance = this;
 
-        // Initialisation des événements
+        console.log('VueStock initialisé (instance unique)');
+
+        // Le reste de ton code existant...
         this.initEvents();
-
-        // Chargement initial des données
         this.loadData().then(() => {
-            // 1. Récupérer les paramètres d'URL
-            const params = new URLSearchParams(window.location.search);
-            const rack = params.get('rack');
-            const level = params.get('level');
-            const slot = params.get('slot');
-
-            // 2. Si un rack est spécifié, le sélectionner
-            if (rack) {
-                const targetRack = this.racks.find(r => r.code === rack || r.display_name === rack);
-                if (targetRack) {
-                    this.selectRack(targetRack);
-
-                    // 3. Si un niveau est spécifié, le sélectionner
-                    if (level) {
-                        const targetLevel = targetRack.levels.find(l => l.code === level);
-                        if (targetLevel) {
-                            this.selectLevel(targetLevel);
-
-                            // 4. Si un slot est spécifié, le sélectionner
-                            if (slot) {
-                                const targetSlot = targetLevel.slots.find(s => s.code === slot);
-                                if (targetSlot) {
-                                    this.selectSlot(targetSlot);
-                                    this.highlightSlot(targetSlot);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            // ⬇️ Déplacé ICI (dans le .then() pour attendre le chargement)
+            // [Ton code existant pour la sélection depuis l'URL]
             this.autoSelectTarget();
-
-            // Afficher la vue par défaut
             this.showView('plan');
-
-            // Mettre à jour les statistiques
             this.updateStats();
         });
     }
+
 
 
     // AJOUTER CETTE MÉTHODE APRÈS init()
