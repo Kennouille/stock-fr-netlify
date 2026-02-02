@@ -14,14 +14,18 @@ async function loadTranslations(lang) {
     }
 }
 
-// Fonction de traduction avec paramètres
+// Fonction de traduction avec paramètres et support des clés imbriquées
 function t(key, params = {}) {
-    let text = translations[key] || key;
+    // Gérer les clés imbriquées (ex: "actions.sortie.title")
+    let keys = key.split('.');
+    let text = keys.reduce((obj, k) => obj && obj[k], translations) || key;
 
     // Remplacer les paramètres {{variable}}
-    Object.keys(params).forEach(param => {
-        text = text.replace(`{{${param}}}`, params[param]);
-    });
+    if (typeof text === 'string') {
+        Object.keys(params).forEach(param => {
+            text = text.replace(`{{${param}}}`, params[param]);
+        });
+    }
 
     return text;
 }
@@ -31,16 +35,18 @@ function translatePage() {
     // Textes normaux
     document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
-        if (translations[key]) {
-            element.textContent = translations[key];
+        const translated = t(key);
+        if (translated && translated !== key) {
+            element.textContent = translated;
         }
     });
 
     // Placeholders
     document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
         const key = element.getAttribute('data-i18n-placeholder');
-        if (translations[key]) {
-            element.placeholder = translations[key];
+        const translated = t(key);
+        if (translated && translated !== key) {
+            element.placeholder = translated;
         }
     });
 }
