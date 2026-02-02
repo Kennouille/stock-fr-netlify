@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient.js';
-howAlert(i18n.t('success.itemsMarkedAsUsed', { quantity: quantityToUse }), 'success');
+showAlert(i18n.t('success.itemsMarkedAsUsed', { quantity: quantityToUse }), 'success');
 
 // Éléments DOM
 let currentUser = null;
