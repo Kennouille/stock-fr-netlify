@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accueil - Gestion Stock</title>
+    <title>Inicio - Gestión Stock</title>
     <link rel="stylesheet" href="accueil.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -15,7 +15,7 @@
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
-            <p>Chargement...</p>
+            <p>Cargando...</p>
         </div>
     </div>
 
@@ -25,7 +25,7 @@
             <div class="header-left">
                 <h1><i class="fas fa-boxes"></i> NeXeN Store Manager</h1>
                 <div class="user-role-badge" id="userRoleBadge">
-                    <span id="roleText">Chargement...</span>
+                    <span id="roleText">Cargando...</span>
                 </div>
             </div>
             <div class="header-right">
@@ -34,7 +34,7 @@
                     <span id="usernameDisplay">...</span>
                 </span>
                 <button id="logoutBtn" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    <i class="fas fa-sign-out-alt"></i> Cerrar sesión
                 </button>
             </div>
         </header>
@@ -43,8 +43,8 @@
         <main class="main-content">
             <!-- Section Actions rapides (tous les users) -->
             <section class="actions-section">
-                <h2><i class="fas fa-bolt"></i> Actions rapides</h2>
-                <p class="section-subtitle">Opérations quotidiennes de gestion de stock</p>
+                <h2><i class="fas fa-bolt"></i> Acciones rápidas</h2>
+                <p class="section-subtitle">Operaciones diarias de gestión de stock</p>
 
                 <div class="actions-grid">
                     <!-- Sortie de stock -->
@@ -52,14 +52,14 @@
                         <div class="action-icon red">
                             <i class="fas fa-arrow-up"></i>
                         </div>
-                        <h3>Sortie de stock</h3>
-                        <p>Retirer des articles du stock pour un projet</p>
+                        <h3>Salida de stock</h3>
+                        <p>Retirar artículos del stock para un proyecto</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="sortie" data-type="scan">
-                                <i class="fas fa-camera"></i> Scanner
+                                <i class="fas fa-camera"></i> Escanear
                             </button>
                             <button class="option-btn" data-action="sortie" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> Saisir
+                                <i class="fas fa-keyboard"></i> Ingresar
                             </button>
                         </div>
                     </div>
@@ -69,14 +69,14 @@
                         <div class="action-icon green">
                             <i class="fas fa-arrow-down"></i>
                         </div>
-                        <h3>Entrée de stock</h3>
-                        <p>Ajouter de nouveaux articles ou réapprovisionner</p>
+                        <h3>Entrada de stock</h3>
+                        <p>Agregar nuevos artículos o reabastecer</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="entree" data-type="scan">
-                                <i class="fas fa-camera"></i> Scanner
+                                <i class="fas fa-camera"></i> Escanear
                             </button>
                             <button class="option-btn" data-action="entree" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> Saisir
+                                <i class="fas fa-keyboard"></i> Ingresar
                             </button>
                         </div>
                     </div>
@@ -86,14 +86,14 @@
                         <div class="action-icon orange">
                             <i class="fas fa-calendar-check"></i>
                         </div>
-                        <h3>Réservation projet</h3>
-                        <p>Réserver des articles pour un futur projet</p>
+                        <h3>Reserva proyecto</h3>
+                        <p>Reservar artículos para un proyecto futuro</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="reservation" data-type="scan">
-                                <i class="fas fa-camera"></i> Scanner
+                                <i class="fas fa-camera"></i> Escanear
                             </button>
                             <button class="option-btn" data-action="reservation" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> Saisir
+                                <i class="fas fa-keyboard"></i> Ingresar
                             </button>
                         </div>
                     </div>
@@ -103,11 +103,11 @@
                         <div class="action-icon blue">
                             <i class="fas fa-undo-alt"></i>
                         </div>
-                        <h3>Retour projet en stock</h3>
-                        <p>Retourner des articles d'un projet vers le stock</p>
+                        <h3>Devolución proyecto a stock</h3>
+                        <p>Devolver artículos de un proyecto al stock</p>
                         <div class="action-options">
                             <button class="option-btn" id="selectProjetBtn" data-action="retour_projet">
-                                <i class="fas fa-project-diagram"></i> Choisir projet
+                                <i class="fas fa-project-diagram"></i> Elegir proyecto
                             </button>
                         </div>
                     </div>
@@ -116,21 +116,21 @@
 
             <!-- Section Recherche (tous les users) -->
             <section class="search-section">
-                <h2><i class="fas fa-search"></i> Recherche d'articles</h2>
+                <h2><i class="fas fa-search"></i> Búsqueda de artículos</h2>
 
                 <div class="search-container">
                     <div class="search-box">
                         <div class="search-header">
                             <i class="fas fa-qrcode"></i>
-                            <h3>Par nom ou numéro</h3>
+                            <h3>Por nombre o número</h3>
                         </div>
                         <div class="search-input-group">
                             <input type="text"
                                    id="searchNomInput"
-                                   placeholder="Ex: perceuse, ART-001..."
+                                   placeholder="Ej: taladro, ART-001..."
                                    class="search-input">
                             <button id="searchNomBtn" class="search-btn">
-                                <i class="fas fa-search"></i> Rechercher
+                                <i class="fas fa-search"></i> Buscar
                             </button>
                         </div>
                     </div>
@@ -138,15 +138,15 @@
                     <div class="search-box">
                         <div class="search-header">
                             <i class="fas fa-barcode"></i>
-                            <h3>Par code-barre</h3>
+                            <h3>Por código de barras</h3>
                         </div>
                         <div class="search-input-group">
                             <input type="text"
                                    id="searchCodebarreInput"
-                                   placeholder="Scanner ou saisir code-barre"
+                                   placeholder="Escanear o ingresar código de barras"
                                    class="search-input">
                             <button id="searchCodebarreBtn" class="search-btn">
-                                <i class="fas fa-camera"></i> Scanner
+                                <i class="fas fa-camera"></i> Escanear
                             </button>
                         </div>
                     </div>
@@ -156,9 +156,9 @@
             <!-- Nouvelle section : Vue Quad -->
             <section class="quad-section">
                 <div class="quad-section-header">
-                    <h2><i class="fas fa-th-large"></i> Visualisation du stock</h2>
+                    <h2><i class="fas fa-th-large"></i> Visualización del stock</h2>
                     <a href="#" class="btn-inventaire" id="inventoryLink" style="display: none;">
-                        <i class="fas fa-clipboard-check"></i> Inventaire
+                        <i class="fas fa-clipboard-check"></i> Inventario
                     </a>
 
                 </div>
@@ -168,7 +168,7 @@
                     <!-- Vue du dessus -->
                     <div class="quad-view accueil-view">
                         <div class="quad-header">
-                            <span><i class="fas fa-dharmachakra"></i> Vue du dessus</span>
+                            <span><i class="fas fa-dharmachakra"></i> Vista superior</span>
                             <span class="rack-count" id="accueilRackCount">0 racks</span>
                         </div>
                         <div class="canvas-container">
@@ -179,8 +179,8 @@
                     <!-- Vue de face -->
                     <div class="quad-view accueil-view">
                         <div class="quad-header">
-                            <span><i class="fas fa-arrows-alt-h"></i> Vue de face</span>
-                            <span class="selected-rack" id="accueilSelectedRack">Aucun rack sélectionné</span>
+                            <span><i class="fas fa-arrows-alt-h"></i> Vista frontal</span>
+                            <span class="selected-rack" id="accueilSelectedRack">Ningún rack seleccionado</span>
                         </div>
                         <div class="canvas-container">
                             <canvas id="accueilCanvasFront" width="400" height="300"></canvas>
@@ -190,15 +190,15 @@
                     <!-- Détail étage -->
                     <div class="quad-view accueil-view">
                         <div class="quad-header">
-                            <span><i class="fas fa-layer-group"></i> Détail étage</span>
-                            <span class="level-info" id="accueilLevelInfo">Aucun étage</span>
+                            <span><i class="fas fa-layer-group"></i> Detalle nivel</span>
+                            <span class="level-info" id="accueilLevelInfo">Ningún nivel</span>
                         </div>
                         <div class="drawer-container" id="accueilDrawer">
                             <!-- Tiroir dynamique -->
                             <div class="empty-drawer-state">
                                 <div class="drawer-front-placeholder">
                                     <i class="fas fa-drawer fa-3x"></i>
-                                    <p>Sélectionnez un étage</p>
+                                    <p>Seleccione un nivel</p>
                                 </div>
                             </div>
                         </div>
@@ -209,10 +209,10 @@
             <!-- Section Admin (seulement pour les admins) -->
             <section id="adminSection" class="admin-section">
                 <div class="admin-header">
-                    <h2><i class="fas fa-user-shield"></i> Administration</h2>
+                    <h2><i class="fas fa-user-shield"></i> Administración</h2>
                     <div class="admin-badges">
                         <span class="badge admin-badge">ADMIN</span>
-                        <span class="badge permissions-badge" id="permissionsCount">0 permissions</span>
+                        <span class="badge permissions-badge" id="permissionsCount">0 permisos</span>
                     </div>
                 </div>
 
@@ -220,22 +220,22 @@
                 <div class="admin-alerts">
                     <div class="alert-card">
                         <div class="alert-header">
-                            <h3><i class="fas fa-exclamation-triangle"></i> Stock bas</h3>
+                            <h3><i class="fas fa-exclamation-triangle"></i> Stock bajo</h3>
                             <button id="exportStockBasBtn" class="btn-small">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </button>
                         </div>
                         <div class="alert-content">
                             <div class="alert-loading" id="stockBasLoading">
-                                <i class="fas fa-spinner fa-spin"></i> Chargement...
+                                <i class="fas fa-spinner fa-spin"></i> Cargando...
                             </div>
                             <table id="tableStockBas" class="alert-table" style="display: none;">
                                 <thead>
                                     <tr>
-                                        <th>Article</th>
+                                        <th>Artículo</th>
                                         <th>Stock</th>
-                                        <th>Minimum</th>
-                                        <th>Diff</th>
+                                        <th>Mínimo</th>
+                                        <th>Dif</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbodyStockBas">
@@ -244,28 +244,28 @@
                             </table>
                             <div id="noStockBas" class="alert-empty" style="display: none;">
                                 <i class="fas fa-check-circle"></i>
-                                <p>Aucun article en stock bas</p>
+                                <p>Ningún artículo en stock bajo</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="alert-card">
                         <div class="alert-header">
-                            <h3><i class="fas fa-times-circle"></i> Rupture de stock</h3>
+                            <h3><i class="fas fa-times-circle"></i> Ruptura de stock</h3>
                             <button id="exportRuptureBtn" class="btn-small">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </button>
                         </div>
                         <div class="alert-content">
                             <div class="alert-loading" id="ruptureLoading">
-                                <i class="fas fa-spinner fa-spin"></i> Chargement...
+                                <i class="fas fa-spinner fa-spin"></i> Cargando...
                             </div>
                             <table id="tableRupture" class="alert-table" style="display: none;">
                                 <thead>
                                     <tr>
-                                        <th>Article</th>
-                                        <th>Dernier mouvement</th>
-                                        <th>Etat</th>
+                                        <th>Artículo</th>
+                                        <th>Último movimiento</th>
+                                        <th>Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbodyRupture">
@@ -274,7 +274,7 @@
                             </table>
                             <div id="noRupture" class="alert-empty" style="display: none;">
                                 <i class="fas fa-check-circle"></i>
-                                <p>Aucune rupture de stock</p>
+                                <p>Ninguna ruptura de stock</p>
                             </div>
                         </div>
                     </div>
@@ -288,14 +288,14 @@
 
             <!-- Section statistiques rapides -->
             <section class="stats-section">
-                <h2><i class="fas fa-chart-line"></i> Vue d'ensemble</h2>
+                <h2><i class="fas fa-chart-line"></i> Resumen general</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon blue">
                             <i class="fas fa-box"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Articles total</h3>
+                            <h3>Artículos total</h3>
                             <p class="stat-value" id="totalArticles">0</p>
                         </div>
                     </div>
@@ -313,7 +313,7 @@
                             <i class="fas fa-clock"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Réservés</h3>
+                            <h3>Reservados</h3>
                             <p class="stat-value" id="articlesReserves">0</p>
                         </div>
                     </div>
@@ -322,7 +322,7 @@
                             <i class="fas fa-euro-sign"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Valeur stock</h3>
+                            <h3>Valor stock</h3>
                             <p class="stat-value" id="valeurStock">0 €</p>
                         </div>
                     </div>
@@ -332,7 +332,7 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Système de gestion de stock • Version 1.0</p>
+            <p>Sistema de gestión de stock • Versión 1.0</p>
             <p class="footer-info" id="lastSync"></p>
         </footer>
     </div>
@@ -341,7 +341,7 @@
     <div id="projectDetailsModal" class="modal-overlay" style="display: none;">
         <div class="modal modal-large">
             <div class="modal-header">
-                <h3><i class="fas fa-info-circle"></i> Détails du projet</h3>
+                <h3><i class="fas fa-info-circle"></i> Detalles del proyecto</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
@@ -357,8 +357,8 @@
                     <!-- NOUVELLE SECTION : Scanner/Recherche d'article pour retour -->
                     <div class="project-return-search-section">
                         <div class="search-header">
-                            <h4><i class="fas fa-arrow-left"></i> Retour d'article au stock</h4>
-                            <p class="search-subtitle">Scanner ou rechercher un article à retourner</p>
+                            <h4><i class="fas fa-arrow-left"></i> Devolución de artículo al stock</h4>
+                            <p class="search-subtitle">Escanear o buscar un artículo a devolver</p>
                         </div>
 
                         <div class="search-options">
@@ -368,10 +368,10 @@
                                     <i class="fas fa-camera"></i>
                                 </div>
                                 <div class="option-content">
-                                    <h5>Scanner le code-barres</h5>
-                                    <p>Utilisez la caméra pour scanner l'article</p>
+                                    <h5>Escanear código de barras</h5>
+                                    <p>Use la cámara para escanear el artículo</p>
                                     <button id="scanArticleForReturnBtn" class="btn-primary">
-                                        <i class="fas fa-camera"></i> Démarrer le scan
+                                        <i class="fas fa-camera"></i> Iniciar escaneo
                                     </button>
                                 </div>
                             </div>
@@ -382,15 +382,15 @@
                                     <i class="fas fa-search"></i>
                                 </div>
                                 <div class="option-content">
-                                    <h5>Rechercher manuellement</h5>
-                                    <p>Par nom, numéro ou code-barres</p>
+                                    <h5>Buscar manualmente</h5>
+                                    <p>Por nombre, número o código de barras</p>
                                     <div class="search-input-group">
                                         <input type="text"
                                                id="manualArticleSearchInput"
-                                               placeholder="Nom, numéro ou code-barres..."
+                                               placeholder="Nombre, número o código de barras..."
                                                class="search-input">
                                         <button id="searchArticleForReturnBtn" class="btn-primary">
-                                            <i class="fas fa-search"></i> Rechercher
+                                            <i class="fas fa-search"></i> Buscar
                                         </button>
                                     </div>
                                 </div>
@@ -400,8 +400,8 @@
                         <!-- Résultats de recherche -->
                         <div id="articleSearchResults" class="search-results-container" style="display: none;">
                             <div class="results-header">
-                                <h5>Articles trouvés</h5>
-                                <span id="resultsCount">0 résultat(s)</span>
+                                <h5>Artículos encontrados</h5>
+                                <span id="resultsCount">0 resultado(s)</span>
                             </div>
                             <div id="articleResultsList" class="results-list">
                                 <!-- Rempli dynamiquement -->
@@ -413,48 +413,48 @@
                 <div class="project-tabs">
                     <div class="project-tab-buttons">
                         <button class="project-tab-btn" data-tab="reservations">
-                            <i class="fas fa-boxes"></i> Réservations
+                            <i class="fas fa-boxes"></i> Reservas
                             <span class="tab-badge" id="projectReservationsCount">0</span>
                         </button>
                         <button class="project-tab-btn active" data-tab="info">
-                            <i class="fas fa-info-circle"></i> Informations
+                            <i class="fas fa-info-circle"></i> Información
                         </button>
                         <button class="project-tab-btn" data-tab="history">
-                            <i class="fas fa-history"></i> Historique
+                            <i class="fas fa-history"></i> Historial
                         </button>
                     </div>
 
                     <div class="project-tab-content active" id="projectInfoTab">
                         <div class="project-info-grid">
                             <div class="info-section">
-                                <h5><i class="fas fa-align-left"></i> Description</h5>
-                                <p id="projectDetailsDescription">Pas de description</p>
+                                <h5><i class="fas fa-align-left"></i> Descripción</h5>
+                                <p id="projectDetailsDescription">Sin descripción</p>
                             </div>
 
                             <div class="info-section">
-                                <h5><i class="fas fa-calendar"></i> Dates</h5>
+                                <h5><i class="fas fa-calendar"></i> Fechas</h5>
                                 <div class="info-item">
-                                    <span class="label">Créé le :</span>
+                                    <span class="label">Creado el:</span>
                                     <span class="value" id="projectDetailsCreatedAt"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Date de fin :</span>
+                                    <span class="label">Fecha de fin:</span>
                                     <span class="value" id="projectDetailsEndDate"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Dernière mise à jour :</span>
+                                    <span class="label">Última actualización:</span>
                                     <span class="value" id="projectDetailsUpdatedAt"></span>
                                 </div>
                             </div>
 
                             <div class="info-section">
-                                <h5><i class="fas fa-users"></i> Équipe</h5>
+                                <h5><i class="fas fa-users"></i> Equipo</h5>
                                 <div class="info-item">
-                                    <span class="label">Responsable :</span>
+                                    <span class="label">Responsable:</span>
                                     <span class="value" id="projectDetailsManager"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Budget :</span>
+                                    <span class="label">Presupuesto:</span>
                                     <span class="value" id="projectDetailsBudget"></span>
                                 </div>
                             </div>
@@ -464,7 +464,7 @@
                     <div class="project-tab-content" id="projectReservationsTab">
                         <div class="reservations-actions">
                             <button id="addReservationToProjectBtn" class="btn-primary">
-                                <i class="fas fa-plus"></i> Ajouter une réservation
+                                <i class="fas fa-plus"></i> Agregar una reserva
                             </button>
                         </div>
 
@@ -472,19 +472,19 @@
                             <table class="project-reservations-table">
                                 <thead>
                                     <tr>
-                                        <th>Article</th>
-                                        <th>Code</th>
-                                        <th>Quantité</th>
-                                        <th>Utilisé le</th>
-                                        <th>Date de fin</th>
-                                        <th>Utilisateur</th>
-                                        <th>Actions</th>
+                                        <th>Artículo</th>
+                                        <th>Código</th>
+                                        <th>Cantidad</th>
+                                        <th>Usado el</th>
+                                        <th>Fecha de fin</th>
+                                        <th>Usuario</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="projectReservationsBody">
                                     <tr>
                                         <td colspan="7" class="loading-row">
-                                            <i class="fas fa-spinner fa-spin"></i> Chargement des réservations...
+                                            <i class="fas fa-spinner fa-spin"></i> Cargando reservas...
                                         </td>
                                     </tr>
                                 </tbody>
@@ -495,7 +495,7 @@
                     <div class="project-tab-content" id="projectHistoryTab">
                         <div class="history-list" id="projectHistoryList">
                             <div class="loading-row">
-                                <i class="fas fa-spinner fa-spin"></i> Chargement de l'historique...
+                                <i class="fas fa-spinner fa-spin"></i> Cargando historial...
                             </div>
                         </div>
                     </div>
@@ -503,13 +503,13 @@
 
                 <div class="modal-actions">
                     <button id="archiveProjectBtn" class="btn-secondary">
-                        <i class="fas fa-archive"></i> Archiver le projet
+                        <i class="fas fa-archive"></i> Archivar proyecto
                     </button>
                     <button id="exportProjectBtn" class="btn-export">
-                        <i class="fas fa-file-export"></i> Exporter
+                        <i class="fas fa-file-export"></i> Exportar
                     </button>
                     <button type="button" class="btn-secondary close-modal">
-                        Fermer
+                        Cerrar
                     </button>
                 </div>
             </div>
@@ -520,23 +520,23 @@
     <div id="addReservationModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-plus"></i> Ajouter une réservation</h3>
+                <h3><i class="fas fa-plus"></i> Agregar una reserva</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label for="reservationArticle">
-                        <i class="fas fa-box"></i> Article *
+                        <i class="fas fa-box"></i> Artículo *
                     </label>
                     <select id="reservationArticle" class="form-select">
-                        <option value="">Sélectionnez un article</option>
+                        <option value="">Seleccione un artículo</option>
                         <!-- Rempli dynamiquement -->
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="reservationQuantity">
-                        <i class="fas fa-boxes"></i> Quantité *
+                        <i class="fas fa-boxes"></i> Cantidad *
                     </label>
                     <div class="quantity-input-group">
                         <button type="button" class="quantity-btn minus" id="reservationQuantityMinus">
@@ -552,18 +552,18 @@
                         </button>
                     </div>
                     <div class="quantity-info">
-                        <span>Stock disponible : <strong id="reservationAvailableStock">0</strong></span>
-                        <span>Déjà réservé : <strong id="reservationAlreadyReserved">0</strong></span>
+                        <span>Stock disponible: <strong id="reservationAvailableStock">0</strong></span>
+                        <span>Ya reservado: <strong id="reservationAlreadyReserved">0</strong></span>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="reservationComment">
-                        <i class="fas fa-comment"></i> Commentaire (optionnel)
+                        <i class="fas fa-comment"></i> Comentario (opcional)
                     </label>
                     <textarea id="reservationComment"
                               rows="2"
-                              placeholder="Motif de la réservation..."
+                              placeholder="Motivo de la reserva..."
                               class="form-textarea"></textarea>
                 </div>
 
@@ -574,10 +574,10 @@
 
                 <div class="modal-actions">
                     <button id="confirmAddReservationBtn" class="btn-primary">
-                        <i class="fas fa-check"></i> Ajouter la réservation
+                        <i class="fas fa-check"></i> Agregar la reserva
                     </button>
                     <button type="button" class="btn-secondary close-modal">
-                        Annuler
+                        Cancelar
                     </button>
                 </div>
             </div>
@@ -588,40 +588,40 @@
     <div id="releaseStockModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-unlock"></i> Libération du stock</h3>
+                <h3><i class="fas fa-unlock"></i> Liberación del stock</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="warning-message">
                     <i class="fas fa-exclamation-triangle"></i>
                     <div class="warning-content">
-                        <h4>Attention !</h4>
-                        <p>Vous êtes sur le point de libérer tout le stock associé à ce projet.</p>
-                        <p><strong id="releaseItemsCount">0</strong> article(s) seront libérés.</p>
-                        <p>Cette action est irréversible.</p>
+                        <h4>¡Atención!</h4>
+                        <p>Está a punto de liberar todo el stock asociado a este proyecto.</p>
+                        <p><strong id="releaseItemsCount">0</strong> artículo(s) serán liberados.</p>
+                        <p>Esta acción es irreversible.</p>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="releaseReason">
-                        <i class="fas fa-comment"></i> Raison de la libération
+                        <i class="fas fa-comment"></i> Razón de la liberación
                     </label>
                     <select id="releaseReason" class="form-select">
-                        <option value="">Sélectionnez une raison</option>
-                        <option value="project_completed">Projet terminé</option>
-                        <option value="project_cancelled">Projet annulé</option>
-                        <option value="stock_return">Retour de stock</option>
-                        <option value="other">Autre</option>
+                        <option value="">Seleccione una razón</option>
+                        <option value="project_completed">Proyecto terminado</option>
+                        <option value="project_cancelled">Proyecto cancelado</option>
+                        <option value="stock_return">Devolución de stock</option>
+                        <option value="other">Otro</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="releaseComment">
-                        <i class="fas fa-comment-dots"></i> Commentaire
+                        <i class="fas fa-comment-dots"></i> Comentario
                     </label>
                     <textarea id="releaseComment"
                               rows="3"
-                              placeholder="Détails supplémentaires..."
+                              placeholder="Detalles adicionales..."
                               class="form-textarea"></textarea>
                 </div>
 
@@ -632,10 +632,10 @@
 
                 <div class="modal-actions">
                     <button id="confirmReleaseBtn" class="btn-primary">
-                        <i class="fas fa-check"></i> Confirmer la libération
+                        <i class="fas fa-check"></i> Confirmar la liberación
                     </button>
                     <button type="button" class="btn-secondary close-modal">
-                        Annuler
+                        Cancelar
                     </button>
                 </div>
             </div>
