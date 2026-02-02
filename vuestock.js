@@ -5192,34 +5192,37 @@ class VueStock {
             if (foundSlot) break;
         }
 
-        // Si trouvé, ouvrir rack → level → slot
-        if (foundRack && foundLevel && foundSlot) {
+        // Si trouvé, utiliser QuadView pour sélectionner
+        if (foundRack && foundLevel && foundSlot && this.quadViewManager) {
             setTimeout(() => {
-                this.goToRackView(foundRack);
-                console.log('➡️ Ouverture du rack:', foundRack.code);
+                // ✅ Sélectionner le rack dans QuadView
+                this.quadViewManager.selectedRack = foundRack;
+                console.log('➡️ Rack sélectionné dans QuadView:', foundRack.code);
 
                 setTimeout(() => {
-                    this.goToLevelView(foundLevel);
-                    console.log('➡️ Ouverture du niveau:', foundLevel.code);
+                    // ✅ Sélectionner le level dans QuadView
+                    this.quadViewManager.selectedLevel = foundLevel;
+                    console.log('➡️ Level sélectionné dans QuadView:', foundLevel.code);
 
                     setTimeout(() => {
-                        const slotElement = document.querySelector(`.slot-item[data-slot-id="${foundSlot.id}"]`);
-                        if (slotElement) {
-                            slotElement.classList.add('pulse');
-                            slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            console.log('✅ Slot mis en évidence');
-                        } else {
-                            console.warn('⚠️ Élément slot non trouvé dans le DOM');
-                        }
-                    }, 500);
-                }, 500);
-            }, 500);
-        } else {
+                        // ✅ Sélectionner le slot dans QuadView
+                        this.quadViewManager.selectedSlot = foundSlot;
+                        console.log('➡️ Slot sélectionné dans QuadView:', foundSlot.code);
+
+                        // ✅ Redessiner toutes les vues avec les sélections
+                        this.quadViewManager.updateAllViews(this.racks);
+                        console.log('✅ QuadView mis à jour avec les sélections');
+
+                        // ✅ Afficher une notification
+                        this.showNotification(`Article trouvé: ${foundSlot.code} - ${foundRack.code}${foundLevel.code}`, 'success');
+                    }, 300);
+                }, 300);
+            }, 300);
+        } else if (!foundRack) {
             console.warn('❌ Article non trouvé dans le stock');
             this.showNotification('Article non trouvé', 'warning');
         }
     }
-
 
 
     displayRacksFromAPI() {
