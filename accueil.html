@@ -11,19 +11,21 @@
     <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
 </head>
 <body>
+    <!-- Overlay de chargement -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
-            <p data-i18n="loading">Chargement...</p>
+            <p>Chargement...</p>
         </div>
     </div>
 
     <div class="container">
+        <!-- Header -->
         <header class="header">
             <div class="header-left">
                 <h1><i class="fas fa-boxes"></i> NeXeN Store Manager</h1>
                 <div class="user-role-badge" id="userRoleBadge">
-                    <span id="roleText" data-i18n="loading">Chargement...</span>
+                    <span id="roleText">Chargement...</span>
                 </div>
             </div>
             <div class="header-right">
@@ -31,98 +33,81 @@
                     <i class="fas fa-user"></i>
                     <span id="usernameDisplay">...</span>
                 </span>
-                <div class="language-selector">
-                    <button class="lang-btn active" data-lang="fr">
-                        <img src="images/fr.png" alt="FR">
-                    </button>
-                    <button class="lang-btn" data-lang="en">
-                        <img src="images/en.png" alt="EN">
-                    </button>
-                    <button class="lang-btn" data-lang="es">
-                        <img src="images/mx.png" alt="ES">
-                    </button>
-                </div>
-                <button class="logout-btn" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span data-i18n="logout">Déconnexion</span>
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
                 </button>
             </div>
         </header>
 
+        <!-- Section principale -->
         <main class="main-content">
-            <section class="quick-actions">
-                <h2 data-i18n="quickActions">Actions rapides</h2>
-                <p class="section-description" data-i18n="dailyOperations">Opérations quotidiennes de gestion de stock</p>
+            <!-- Section Actions rapides (tous les users) -->
+            <section class="actions-section">
+                <h2><i class="fas fa-bolt"></i> Actions rapides</h2>
+                <p class="section-subtitle">Opérations quotidiennes de gestion de stock</p>
 
                 <div class="actions-grid">
-                    <div class="action-card sortie-stock">
-                        <div class="card-header">
-                            <div class="card-icon">
-                                <i class="fas fa-box-open"></i>
-                            </div>
-                            <h3 data-i18n="stockOut">Sortie de stock</h3>
+                    <!-- Sortie de stock -->
+                    <div class="action-card" id="sortieCard">
+                        <div class="action-icon red">
+                            <i class="fas fa-arrow-up"></i>
                         </div>
-                        <p data-i18n="stockOutDesc">Retirer des articles du stock pour un projet</p>
-                        <div class="card-actions">
-                            <button class="action-btn primary" onclick="handleSortieStock('scan')">
-                                <i class="fas fa-barcode"></i>
-                                <span data-i18n="scan">Scanner</span>
+                        <h3>Sortie de stock</h3>
+                        <p>Retirer des articles du stock pour un projet</p>
+                        <div class="action-options">
+                            <button class="option-btn" data-action="sortie" data-type="scan">
+                                <i class="fas fa-camera"></i> Scanner
                             </button>
-                            <button class="action-btn secondary" onclick="handleSortieStock('input')">
-                                <i class="fas fa-keyboard"></i>
-                                <span data-i18n="input">Saisir</span>
+                            <button class="option-btn" data-action="sortie" data-type="saisie">
+                                <i class="fas fa-keyboard"></i> Saisir
                             </button>
                         </div>
                     </div>
 
-                    <div class="action-card entree-stock">
-                        <div class="card-header">
-                            <div class="card-icon">
-                                <i class="fas fa-box"></i>
-                            </div>
-                            <h3 data-i18n="stockIn">Entrée de stock</h3>
+                    <!-- Entrée de stock -->
+                    <div class="action-card" id="entreeCard">
+                        <div class="action-icon green">
+                            <i class="fas fa-arrow-down"></i>
                         </div>
-                        <p data-i18n="stockInDesc">Ajouter de nouveaux articles ou réapprovisionner</p>
-                        <div class="card-actions">
-                            <button class="action-btn primary" onclick="handleEntreeStock('scan')">
-                                <i class="fas fa-barcode"></i>
-                                <span data-i18n="scan">Scanner</span>
+                        <h3>Entrée de stock</h3>
+                        <p>Ajouter de nouveaux articles ou réapprovisionner</p>
+                        <div class="action-options">
+                            <button class="option-btn" data-action="entree" data-type="scan">
+                                <i class="fas fa-camera"></i> Scanner
                             </button>
-                            <button class="action-btn secondary" onclick="handleEntreeStock('input')">
-                                <i class="fas fa-keyboard"></i>
-                                <span data-i18n="input">Saisir</span>
+                            <button class="option-btn" data-action="entree" data-type="saisie">
+                                <i class="fas fa-keyboard"></i> Saisir
                             </button>
                         </div>
                     </div>
 
-                    <div class="action-card reservation">
-                        <div class="card-header">
-                            <div class="card-icon">
-                                <i class="fas fa-calendar-check"></i>
-                            </div>
-                            <h3 data-i18n="reservation">Réservation projet</h3>
+                    <!-- Réservation projet -->
+                    <div class="action-card" id="reservationCard">
+                        <div class="action-icon orange">
+                            <i class="fas fa-calendar-check"></i>
                         </div>
-                        <p data-i18n="reservationDesc">Réserver des articles pour un futur projet</p>
-                        <div class="card-actions">
-                            <button class="action-btn primary full-width" onclick="handleReservation()">
-                                <i class="fas fa-list"></i>
-                                <span data-i18n="chooseProject">Choisir projet</span>
+                        <h3>Réservation projet</h3>
+                        <p>Réserver des articles pour un futur projet</p>
+                        <div class="action-options">
+                            <button class="option-btn" data-action="reservation" data-type="scan">
+                                <i class="fas fa-camera"></i> Scanner
+                            </button>
+                            <button class="option-btn" data-action="reservation" data-type="saisie">
+                                <i class="fas fa-keyboard"></i> Saisir
                             </button>
                         </div>
                     </div>
 
-                    <div class="action-card retour-stock">
-                        <div class="card-header">
-                            <div class="card-icon">
-                                <i class="fas fa-undo"></i>
-                            </div>
-                            <h3 data-i18n="returnProject">Retour projet en stock</h3>
+                    <!-- NOUVEAU : Retour projet en stock -->
+                    <div class="action-card" id="retourProjetCard">
+                        <div class="action-icon blue">
+                            <i class="fas fa-undo-alt"></i>
                         </div>
-                        <p data-i18n="returnProjectDesc">Retourner des articles d'un projet vers le stock</p>
-                        <div class="card-actions">
-                            <button class="action-btn primary full-width" onclick="handleRetourStock()">
-                                <i class="fas fa-list"></i>
-                                <span data-i18n="chooseProject">Choisir projet</span>
+                        <h3>Retour projet en stock</h3>
+                        <p>Retourner des articles d'un projet vers le stock</p>
+                        <div class="action-options">
+                            <button class="option-btn" id="selectProjetBtn" data-action="retour_projet">
+                                <i class="fas fa-project-diagram"></i> Choisir projet
                             </button>
                         </div>
                     </div>
