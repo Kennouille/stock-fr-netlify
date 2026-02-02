@@ -1,5 +1,4 @@
 import { supabase } from './supabaseClient.js';
-import { i18n } from './i18n.js';
 
 // Éléments DOM
 let currentUser = null;
@@ -23,32 +22,16 @@ let addReservationToProjectBtn = null;
 
 // ===== FONCTIONS UTILITAIRES POUR PROJETS =====
 function formatDate(dateString) {
-    if (!dateString) return i18n.t('common.na');
+    if (!dateString) return 'N/A';
     try {
         const date = new Date(dateString);
-        const currentLang = i18n.getCurrentLanguage();
-
-        if (currentLang === 'en') {
-            return date.toLocaleDateString('en-US', {
-                month: '2-digit',
-                day: '2-digit',
-                year: 'numeric'
-            });
-        } else if (currentLang === 'es') {
-            return date.toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        } else {
-            return date.toLocaleDateString('fr-FR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        }
+        return date.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
     } catch (e) {
-        return i18n.t('common.na');
+        return 'N/A';
     }
 }
 
@@ -56,7 +39,7 @@ function formatDate(dateString) {
 
 // Fonction pour agrandir l'image d'article
 function enlargeArticleImage(imageUrl, title) {
-    console.log('Agrandir image:', imageUrl, title);
+    console.log('Ampliar imagen:', imageUrl, title);
 
     const overlay = document.createElement('div');
     overlay.style.cssText = `
@@ -89,8 +72,8 @@ function enlargeArticleImage(imageUrl, title) {
 
     // Gestion des erreurs d'image
     enlargedImg.onerror = function() {
-        this.src = 'https://via.placeholder.com/400x400/cccccc/666666?text=' + encodeURIComponent(i18n.t('common.imageNotAvailable'));
-        this.alt = i18n.t('common.imageNotAvailable');
+        this.src = 'https://via.placeholder.com/400x400/cccccc/666666?text=' + encodeURIComponent('Imagen no disponible');
+        this.alt = 'Imagen no disponible';
     };
 
     const titleDiv = document.createElement('div');
@@ -212,38 +195,18 @@ function hideModal() {
 }
 
 function formatDateTime(dateString) {
-    if (!dateString) return i18n.t('common.na');
+    if (!dateString) return 'N/A';
     try {
         const date = new Date(dateString);
-        const currentLang = i18n.getCurrentLanguage();
-
-        if (currentLang === 'en') {
-            return date.toLocaleDateString('en-US', {
-                month: '2-digit',
-                day: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } else if (currentLang === 'es') {
-            return date.toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } else {
-            return date.toLocaleDateString('fr-FR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
+        return date.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     } catch (e) {
-        return i18n.t('common.na');
+        return 'N/A';
     }
 }
 
@@ -314,8 +277,8 @@ async function getProjectReservations(projectId) {
         };
 
     } catch (error) {
-        console.error('Erreur chargement données projet:', error);
-        showAlert(i18n.t('errors.loadProjectData'), 'error');
+        console.error('Error al cargar datos del proyecto:', error);
+        showAlert('Error al cargar los datos del proyecto', 'error');
         return { project: null, sorties: [], retours: [], reservations: [] };
     }
 }
@@ -365,7 +328,7 @@ async function editReservation(reservationId) {
         if (error) throw error;
 
         if (!reservation) {
-            showAlert(i18n.t('errors.reservationNotFound'), 'error');
+            showAlert('Reserva no encontrada', 'error');
             return;
         }
 
@@ -374,12 +337,12 @@ async function editReservation(reservationId) {
             <div class="modal-overlay" id="editReservationModal" style="display: flex;">
                 <div class="modal">
                     <div class="modal-header">
-                        <h3><i class="fas fa-edit"></i> ${i18n.t('modal.editReservation')}</h3>
+                        <h3><i class="fas fa-edit"></i> Editar reserva</h3>
                         <button class="close-modal">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
-                            <label>${i18n.t('modal.article')} :</label>
+                            <label>Artículo :</label>
                             <input type="text"
                                    value="${reservation.w_articles?.nom || ''}"
                                    class="form-input"
@@ -388,7 +351,7 @@ async function editReservation(reservationId) {
 
                         <div class="form-group">
                             <label for="editQuantity">
-                                <i class="fas fa-boxes"></i> ${i18n.t('modal.quantity')} *
+                                <i class="fas fa-boxes"></i> Cantidad *
                             </label>
                             <div class="quantity-input-group">
                                 <button type="button" class="quantity-btn minus" id="editQuantityMinus">
@@ -405,13 +368,13 @@ async function editReservation(reservationId) {
                                 </button>
                             </div>
                             <div class="quantity-info">
-                                <span>${i18n.t('modal.availableStock')} : <strong>${reservation.w_articles?.quantite_disponible + reservation.quantite || 0}</strong></span>
+                                <span>Stock disponible : <strong>${reservation.w_articles?.quantite_disponible + reservation.quantite || 0}</strong></span>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label for="editDateFin">
-                                <i class="fas fa-calendar"></i> ${i18n.t('modal.endDate')} *
+                                <i class="fas fa-calendar"></i> Fecha de fin *
                             </label>
                             <input type="date"
                                    id="editDateFin"
@@ -422,7 +385,7 @@ async function editReservation(reservationId) {
 
                         <div class="form-group">
                             <label for="editComment">
-                                <i class="fas fa-comment"></i> ${i18n.t('modal.comment')}
+                                <i class="fas fa-comment"></i> Comentario
                             </label>
                             <textarea id="editComment"
                                       rows="3"
@@ -436,10 +399,10 @@ async function editReservation(reservationId) {
 
                         <div class="modal-actions">
                             <button id="confirmEditReservationBtn" class="btn-primary">
-                                <i class="fas fa-save"></i> ${i18n.t('common.save')}
+                                <i class="fas fa-save"></i> Guardar
                             </button>
                             <button type="button" class="btn-secondary cancel-edit-btn">
-                                ${i18n.t('modal.cancel')}
+                                Cancelar
                             </button>
                         </div>
                     </div>
@@ -491,13 +454,13 @@ async function editReservation(reservationId) {
 
             // Validation
             if (!quantity || quantity < 1) {
-                modal.querySelector('#editReservationErrorText').textContent = i18n.t('errors.minQuantity');
+                modal.querySelector('#editReservationErrorText').textContent = 'La cantidad debe ser al menos 1';
                 modal.querySelector('#editReservationError').style.display = 'flex';
                 return;
             }
 
             if (!dateFin) {
-                modal.querySelector('#editReservationErrorText').textContent = i18n.t('errors.endDateRequired');
+                modal.querySelector('#editReservationErrorText').textContent = 'La fecha de fin es obligatoria';
                 modal.querySelector('#editReservationError').style.display = 'flex';
                 return;
             }
@@ -518,7 +481,7 @@ async function editReservation(reservationId) {
 
                 if (updateError) throw updateError;
 
-                showAlert(i18n.t('success.reservationUpdated'), 'success');
+                showAlert('Reserva actualizada con éxito', 'success');
 
                 // Recharger les données
                 await fetchReservations();
@@ -532,8 +495,8 @@ async function editReservation(reservationId) {
                 modal.remove();
 
             } catch (error) {
-                console.error('Erreur modification réservation:', error);
-                modal.querySelector('#editReservationErrorText').textContent = error.message || i18n.t('errors.updateFailed');
+                console.error('Error al modificar reserva:', error);
+                modal.querySelector('#editReservationErrorText').textContent = error.message || 'Error al actualizar la reserva';
                 modal.querySelector('#editReservationError').style.display = 'flex';
             } finally {
                 hideLoading();
@@ -541,8 +504,8 @@ async function editReservation(reservationId) {
         });
 
     } catch (error) {
-        console.error('Erreur préparation édition réservation:', error);
-        showAlert(i18n.t('errors.prepareEditFailed'), 'error');
+        console.error('Error al preparar edición de reserva:', error);
+        showAlert('Error al preparar la edición de la reserva', 'error');
     }
 }
 
@@ -565,7 +528,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">${itemsSortis}</div>
-                                <div class="stat-label">${i18n.t('stats.usedItems')}</div>
+                                <div class="stat-label">Artículos utilizados</div>
                                 <div class="stat-amount">${valeurSortis.toFixed(2)} €</div>
                             </div>
                         </div>
@@ -575,7 +538,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">${itemsReserves}</div>
-                                <div class="stat-label">${i18n.t('stats.reservedItems')}</div>
+                                <div class="stat-label">Artículos reservados</div>
                                 <div class="stat-amount">${valeurReserves.toFixed(2)} €</div>
                             </div>
                         </div>
@@ -585,7 +548,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">${itemsSortis + itemsReserves}</div>
-                                <div class="stat-label">${i18n.t('stats.totalItems')}</div>
+                                <div class="stat-label">Total de artículos</div>
                                 <div class="stat-amount">${(valeurSortis + valeurReserves).toFixed(2)} €</div>
                             </div>
                         </div>
@@ -623,7 +586,7 @@ function updateProjectReservations(sorties, retours, reservations) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="loading-row">
-                    <i class="fas fa-info-circle"></i> ${i18n.t('project.noItems')}
+                    <i class="fas fa-info-circle"></i> No hay artículos en este proyecto
                 </td>
             </tr>
         `;
@@ -637,7 +600,7 @@ function updateProjectReservations(sorties, retours, reservations) {
         html += `
             <tr>
                 <td colspan="7" class="section-header">
-                    <i class="fas fa-check-circle text-success"></i> ${i18n.t('project.usedItemsSection')}
+                    <i class="fas fa-check-circle text-success"></i> Artículos utilizados
                 </td>
             </tr>
         `;
@@ -658,11 +621,11 @@ function updateProjectReservations(sorties, retours, reservations) {
                 <tr data-id="${sortie.id}" class="sortie-row">
                     <td>
                         <div class="article-info">
-                            <strong>${sortie.article?.nom || i18n.t('common.unknownArticle')}</strong>
+                            <strong>${sortie.article?.nom || 'Artículo desconocido'}</strong>
                             <small>${sortie.article?.numero || ''}</small>
                         </div>
                     </td>
-                    <td>${sortie.article?.numero || i18n.t('common.na')}</td>
+                    <td>${sortie.article?.numero || 'N/A'}</td>
                     <td>
                         <span class="quantity-badge sortie">
                             -${sortie.quantite}
@@ -678,13 +641,13 @@ function updateProjectReservations(sorties, retours, reservations) {
                         <div class="price-info">
                             ${sortie.article?.prix_unitaire ?
                                 `${sortie.article.prix_unitaire.toFixed(2)} €` :
-                                i18n.t('common.priceNA')}
-                            <small>${i18n.t('common.total')}: ${valeurTotale} €</small>
+                                'Precio N/A'}
+                            <small>Total: ${valeurTotale} €</small>
                         </div>
                     </td>
                     <td>
                         <div class="user-info">
-                            ${sortie.utilisateur?.username || i18n.t('common.unknownUser')}
+                            ${sortie.utilisateur?.username || 'Usuario desconocido'}
                         </div>
                     </td>
                     <td>
@@ -694,14 +657,14 @@ function updateProjectReservations(sorties, retours, reservations) {
                                         data-id="${sortie.id}"
                                         data-article-id="${sortie.article_id}"
                                         data-quantity="${quantiteRestante}"
-                                        title="${i18n.t('actions.returnToStock', { quantity: quantiteRestante })}">
+                                        title="Devolver ${quantiteRestante} al stock">
                                     <i class="fas fa-arrow-left"></i>
                                 </button>
                             ` : ''}
                             <button class="btn-action btn-small view-details"
                                     data-id="${sortie.id}"
                                     data-type="sortie"
-                                    title="${i18n.t('actions.viewDetails')}">
+                                    title="Ver detalles">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
@@ -716,7 +679,7 @@ function updateProjectReservations(sorties, retours, reservations) {
         html += `
             <tr>
                 <td colspan="7" class="section-header retour-header">
-                    <i class="fas fa-undo-alt text-info"></i> ${i18n.t('project.returnedItemsSection')}
+                    <i class="fas fa-undo-alt text-info"></i> Artículos devueltos al stock
                 </td>
             </tr>
         `;
@@ -729,11 +692,11 @@ function updateProjectReservations(sorties, retours, reservations) {
                 <tr data-id="${retour.id}" class="retour-row">
                     <td>
                         <div class="article-info">
-                            <strong>${retour.article?.nom || i18n.t('common.unknownArticle')}</strong>
+                            <strong>${retour.article?.nom || 'Artículo desconocido'}</strong>
                             <small>${retour.article?.numero || ''}</small>
                         </div>
                     </td>
-                    <td>${retour.article?.numero || i18n.t('common.na')}</td>
+                    <td>${retour.article?.numero || 'N/A'}</td>
                     <td>
                         <span class="quantity-badge retour">
                             +${retour.quantite}
@@ -749,13 +712,13 @@ function updateProjectReservations(sorties, retours, reservations) {
                         <div class="price-info">
                             ${retour.article?.prix_unitaire ?
                                 `${retour.article.prix_unitaire.toFixed(2)} €` :
-                                i18n.t('common.priceNA')}
-                            <small>${i18n.t('common.total')}: ${valeurTotale} €</small>
+                                'Precio N/A'}
+                            <small>Total: ${valeurTotale} €</small>
                         </div>
                     </td>
                     <td>
                         <div class="user-info">
-                            ${retour.utilisateur?.username || i18n.t('common.unknownUser')}
+                            ${retour.utilisateur?.username || 'Usuario desconocido'}
                         </div>
                     </td>
                     <td>
@@ -763,7 +726,7 @@ function updateProjectReservations(sorties, retours, reservations) {
                             <button class="btn-action btn-small view-details"
                                     data-id="${retour.id}"
                                     data-type="retour"
-                                    title="${i18n.t('actions.viewDetails')}">
+                                    title="Ver detalles">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
@@ -778,7 +741,7 @@ function updateProjectReservations(sorties, retours, reservations) {
         html += `
             <tr>
                 <td colspan="7" class="section-header reservation-header">
-                    <i class="fas fa-clock text-warning"></i> ${i18n.t('project.reservedItemsSection')}
+                    <i class="fas fa-clock text-warning"></i> Artículos reservados
                 </td>
             </tr>
         `;
@@ -792,11 +755,11 @@ function updateProjectReservations(sorties, retours, reservations) {
                 <tr data-id="${reservation.id}" class="reservation-row">
                     <td>
                         <div class="article-info">
-                            <strong>${article?.nom || i18n.t('common.unknownArticle')}</strong>
+                            <strong>${article?.nom || 'Artículo desconocido'}</strong>
                             <small>${article?.numero || ''}</small>
                         </div>
                     </td>
-                    <td>${article?.numero || i18n.t('common.na')}</td>
+                    <td>${article?.numero || 'N/A'}</td>
                     <td>
                         <span class="quantity-badge reservation">
                             ${reservation.quantite}
@@ -812,13 +775,13 @@ function updateProjectReservations(sorties, retours, reservations) {
                         <div class="price-info">
                             ${article?.prix_unitaire ?
                                 `${article.prix_unitaire.toFixed(2)} €` :
-                                i18n.t('common.priceNA')}
-                            <small>${i18n.t('common.total')}: ${valeurTotale} €</small>
+                                'Precio N/A'}
+                            <small>Total: ${valeurTotale} €</small>
                         </div>
                     </td>
                     <td>
                         <div class="user-info">
-                            ${reservation.w_users?.username || i18n.t('common.unknownUser')}
+                            ${reservation.w_users?.username || 'Usuario desconocido'}
                         </div>
                     </td>
                     <td>
@@ -827,18 +790,18 @@ function updateProjectReservations(sorties, retours, reservations) {
                                     data-id="${reservation.id}"
                                     data-article-id="${reservation.article_id}"
                                     data-quantity="${reservation.quantite}"
-                                    title="${i18n.t('actions.markAsUsed')}">
+                                    title="Marcar como utilizado">
                                 <i class="fas fa-check"></i>
                             </button>
                             <button class="btn-action btn-small view-details"
                                     data-id="${reservation.id}"
                                     data-type="reservation"
-                                    title="${i18n.t('actions.viewDetails')}">
+                                    title="Ver detalles">
                                 <i class="fas fa-eye"></i>
                             </button>
                             <button class="btn-action btn-small release-reservation"
                                     data-id="${reservation.id}"
-                                    title="${i18n.t('actions.releaseReservation')}">
+                                    title="Liberar reserva">
                                 <i class="fas fa-unlock"></i>
                             </button>
                         </div>
@@ -883,15 +846,12 @@ function setupProjectTableEvents(sorties, retours, reservations) {
 
             if (reservation) {
                 const article = reservation.w_articles;
-                const articleName = article?.nom || i18n.t('common.unknownArticle');
+                const articleName = article?.nom || 'Artículo desconocido';
 
-                if (confirm(i18n.t('confirm.releaseReservation', {
-                    quantity: reservation.quantite,
-                    article: articleName
-                }))) {
+                if (confirm(`¿Liberar ${reservation.quantite} unidad(es) de ${articleName}?`)) {
                     try {
                         await releaseReservation(reservationId);
-                        showTemporarySuccess(i18n.t('success.reservationReleased'));
+                        showTemporarySuccess('Reserva liberada con éxito');
 
                         // Recharger les détails du projet
                         const projectId = document.querySelector('.project-tab-content.active')
@@ -902,8 +862,8 @@ function setupProjectTableEvents(sorties, retours, reservations) {
                             await openProjectDetailsModal(projectId);
                         }
                     } catch (error) {
-                        console.error('Erreur libération réservation:', error);
-                        alert(i18n.t('errors.releaseReservationFailed'));
+                        console.error('Error al liberar la reserva:', error);
+                        alert('Error al liberar la reserva');
                     }
                 }
             }
@@ -935,73 +895,73 @@ function showItemDetails(itemId, itemType, sorties, retours, reservations) {
         <div class="modal-overlay" id="itemDetailsModal">
             <div class="modal" style="max-width: 600px;">
                 <div class="modal-header">
-                    <h3><i class="fas fa-info-circle"></i> ${i18n.t('modal.details')}</h3>
+                    <h3><i class="fas fa-info-circle"></i> Detalles</h3>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="detail-section">
-                        <h4><i class="fas fa-box"></i> ${i18n.t('modal.article')}</h4>
+                        <h4><i class="fas fa-box"></i> Artículo</h4>
                         <div class="detail-item">
-                            <span class="detail-label">${i18n.t('common.name')} :</span>
-                            <span class="detail-value">${article?.nom || i18n.t('common.notSpecified')}</span>
+                            <span class="detail-label">Nombre:</span>
+                            <span class="detail-value">${article?.nom || 'No especificado'}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">${i18n.t('common.number')} :</span>
-                            <span class="detail-value">${article?.numero || i18n.t('common.notSpecified')}</span>
+                            <span class="detail-label">Número:</span>
+                            <span class="detail-value">${article?.numero || 'No especificado'}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">${i18n.t('common.barcode')} :</span>
-                            <span class="detail-value">${article?.code_barre || i18n.t('common.notSpecified')}</span>
+                            <span class="detail-label">Código de barras:</span>
+                            <span class="detail-value">${article?.code_barre || 'No especificado'}</span>
                         </div>
                     </div>
 
                     <div class="detail-section">
-                        <h4><i class="fas ${isSortie ? 'fa-arrow-up' : isRetour ? 'fa-undo' : 'fa-clock'}"></i> ${isSortie ? i18n.t('common.output') : isRetour ? i18n.t('common.returnToStock') : i18n.t('common.reservation')}</h4>
+                        <h4><i class="fas ${isSortie ? 'fa-arrow-up' : isRetour ? 'fa-undo' : 'fa-clock'}"></i> ${isSortie ? 'Salida' : isRetour ? 'Devolución al stock' : 'Reserva'}</h4>
                         <div class="detail-item">
-                            <span class="detail-label">${i18n.t('common.type')} :</span>
+                            <span class="detail-label">Tipo:</span>
                             <span class="detail-value badge ${isSortie ? 'sortie' : isRetour ? 'retour' : 'reservation'}">
-                                ${isSortie ? i18n.t('status.outputCompleted') : isRetour ? i18n.t('status.returnedToStock') : i18n.t('status.activeReservation')}
+                                ${isSortie ? 'Salida realizada' : isRetour ? 'Devuelto al stock' : 'Reserva activa'}
                             </span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">${i18n.t('common.quantity')} :</span>
+                            <span class="detail-label">Cantidad:</span>
                             <span class="detail-value">${isRetour ? '+' : (isSortie ? '-' : '')}${item.quantite}</span>
                         </div>
                         ${article?.prix_unitaire ? `
                         <div class="detail-item">
-                            <span class="detail-label">${i18n.t('common.unitPrice')} :</span>
+                            <span class="detail-label">Precio unitario:</span>
                             <span class="detail-value">${article.prix_unitaire.toFixed(2)} €</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">${i18n.t('common.totalValue')} :</span>
+                            <span class="detail-label">Valor total:</span>
                             <span class="detail-value" style="font-weight: bold;">
                                 ${(article.prix_unitaire * item.quantite).toFixed(2)} €
                             </span>
                         </div>
                         ` : ''}
                         <div class="detail-item">
-                            <span class="detail-label">${i18n.t('common.date')} :</span>
+                            <span class="detail-label">Fecha:</span>
                             <span class="detail-value">${formatDateTime(item.created_at)}</span>
                         </div>
                         ${!isSortie && !isRetour ? `
                         <div class="detail-item">
-                            <span class="detail-label">${i18n.t('common.endDate')} :</span>
+                            <span class="detail-label">Fecha fin:</span>
                             <span class="detail-value">${formatDate(item.date_fin)}</span>
                         </div>
                         ` : ''}
                     </div>
 
                     <div class="detail-section">
-                        <h4><i class="fas fa-user"></i> ${i18n.t('common.responsible')}</h4>
+                        <h4><i class="fas fa-user"></i> Responsable</h4>
                         <div class="detail-item">
-                            <span class="detail-label">${i18n.t('common.user')} :</span>
-                            <span class="detail-value">${user?.username || i18n.t('common.notSpecified')}</span>
+                            <span class="detail-label">Usuario:</span>
+                            <span class="detail-value">${user?.username || 'No especificado'}</span>
                         </div>
                     </div>
 
                     ${item.commentaire ? `
                     <div class="detail-section">
-                        <h4><i class="fas fa-comment"></i> ${i18n.t('common.comment')}</h4>
+                        <h4><i class="fas fa-comment"></i> Comentario</h4>
                         <div class="detail-comment">
                             ${item.commentaire}
                         </div>
@@ -1043,10 +1003,7 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
         }
 
         // Demander confirmation
-        if (!confirm(i18n.t('confirm.useReservation', {
-            quantityToUse,
-            originalQuantity
-        }))) {
+        if (!confirm(`¿Utilizar ${quantityToUse} de ${originalQuantity} unidad(es) reservada(s)?`)) {
             return;
         }
 
@@ -1075,15 +1032,11 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
         if (articleError) throw articleError;
 
         // Créer le mouvement de sortie avec plus d'informations
-        const articleName = reservation.w_articles?.nom || i18n.t('common.unknownArticle');
-        const projetNom = state.currentProject?.nom || i18n.t('common.unknownProject');
+        const articleName = reservation.w_articles?.nom || 'Artículo desconocido';
+        const projetNom = state.currentProject?.nom || 'Proyecto desconocido';
         const mouvementComment = comment
-            ? `${comment} | ${i18n.t('common.source')}: ${i18n.t('common.reservation')} #${reservationId} (${articleName})`
-            : i18n.t('messages.outputFromReservation', {
-                project: projetNom,
-                reservationId,
-                article: articleName
-            });
+            ? `${comment} | Origen: Reserva #${reservationId} (${articleName})`
+            : `Salida desde reserva del proyecto ${projetNom} (Reserva #${reservationId} - ${articleName})`;
 
         const { error: movementError } = await supabase
             .from('w_mouvements')
@@ -1167,11 +1120,11 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
             }
         }
 
-        showAlert(i18n.t('success.itemsMarkedAsUsed', { quantity: quantityToUse }), 'success');
+        showAlert(`${quantityToUse} artículo(s) marcado(s) como utilizado(s)`, 'success');
 
     } catch (error) {
         console.error('Erreur utilisation réservation:', error);
-        showAlert(i18n.t('errors.updateReservationFailed'), 'error');
+        showAlert('Error al actualizar la reserva', 'error');
     } finally {
         hideLoading();
     }
@@ -1182,12 +1135,12 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
         <div class="modal-overlay use-reservation-modal">
             <div class="modal" style="max-width: 500px;">
                 <div class="modal-header">
-                    <h3><i class="fas fa-check-circle"></i> ${i18n.t('modal.markAsUsed')}</h3>
+                    <h3><i class="fas fa-check-circle"></i> Marcar como utilizado</h3>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><i class="fas fa-boxes"></i> ${i18n.t('form.quantityToUse')} *</label>
+                        <label><i class="fas fa-boxes"></i> Cantidad a utilizar *</label>
                         <div class="quantity-input-group">
                             <button type="button" class="quantity-btn minus" id="useQuantityMinus">
                                 <i class="fas fa-minus"></i>
@@ -1203,15 +1156,15 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
                             </button>
                         </div>
                         <div class="quantity-info">
-                            <span>${i18n.t('form.reservedQuantity')} : <strong>${originalQuantity}</strong></span>
+                            <span>Cantidad reservada: <strong>${originalQuantity}</strong></span>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label><i class="fas fa-comment"></i> ${i18n.t('form.commentOptional')}</label>
+                        <label><i class="fas fa-comment"></i> Comentario (opcional)</label>
                         <textarea id="useComment"
                                   rows="3"
-                                  placeholder="${i18n.t('form.usageDetailsPlaceholder')}"
+                                  placeholder="Detalles de la utilización..."
                                   class="form-textarea"></textarea>
                     </div>
 
@@ -1222,10 +1175,10 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
 
                     <div class="modal-actions">
                         <button id="confirmUseReservationBtn" class="btn-success">
-                            <i class="fas fa-check"></i> ${i18n.t('actions.confirmUsage')}
+                            <i class="fas fa-check"></i> Confirmar utilización
                         </button>
                         <button type="button" class="btn-secondary close-modal">
-                            ${i18n.t('actions.cancel')}
+                            Cancelar
                         </button>
                     </div>
                 </div>
@@ -1272,7 +1225,7 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
         const comment = modal.querySelector('#useComment').value.trim();
 
         if (!quantityToUse || quantityToUse < 1 || quantityToUse > originalQuantity) {
-            modal.querySelector('#useReservationErrorText').textContent = i18n.t('errors.invalidQuantity');
+            modal.querySelector('#useReservationErrorText').textContent = 'Cantidad inválida';
             modal.querySelector('#useReservationError').style.display = 'flex';
             return;
         }
@@ -1302,7 +1255,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
         // Récupérer le projet courant depuis l'état global
         if (!state.currentProject) {
-            throw new Error(i18n.t('errors.noProjectSelected'));
+            throw new Error('Ningún proyecto seleccionado');
         }
 
         const projectId = state.currentProject.id;
@@ -1313,7 +1266,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
             <div class="modal-overlay return-stock-modal">
                 <div class="modal" style="max-width: 600px;">
                     <div class="modal-header">
-                        <h3><i class="fas fa-arrow-left"></i> ${i18n.t('modal.returnToStock.title')}</h3>
+                        <h3><i class="fas fa-arrow-left"></i> Devolver al stock</h3>
                         <button class="close-modal">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -1327,65 +1280,65 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                                              data-image-url="${article.photo_url}"
                                              data-image-title="${article.nom}"
                                              style="max-width: 150px; max-height: 150px; cursor: pointer; border-radius: 8px; border: 2px solid #ddd; object-fit: contain;">
-                                        <div><small class="image-hint" style="color: #666; font-size: 12px;">${i18n.t('common.clickToEnlarge')}</small></div>
+                                        <div><small class="image-hint" style="color: #666; font-size: 12px;">Clic para ampliar</small></div>
                                     </div>
                                     ` : ''}
                                 <div class="article-info">
                                     <h4>${article.nom} (${article.numero})</h4>
-                                    <p>${i18n.t('modal.returnToStock.takenOut')}: ${originalQuantity} ${i18n.t('common.units')}</p>
+                                    <p>Extraído: ${originalQuantity} unidad(es)</p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-boxes"></i> ${i18n.t('modal.returnToStock.returnedQuantity')} *</label>
+                            <label><i class="fas fa-boxes"></i> Cantidad devuelta *</label>
                             <input type="number"
                                    id="returnQuantity"
                                    value="${originalQuantity}"
                                    min="0"
                                    max="${originalQuantity}"
                                    class="form-input">
-                            <small>${i18n.t('modal.returnToStock.initialQuantity')}: ${originalQuantity}</small>
+                            <small>Cantidad inicial: ${originalQuantity}</small>
                         </div>
 
                         <div id="missingQuantitySection" style="display: none;">
                             <div class="form-group">
-                                <label><i class="fas fa-exclamation-triangle"></i> ${i18n.t('modal.returnToStock.reasonForDifference')}</label>
+                                <label><i class="fas fa-exclamation-triangle"></i> Razón de la diferencia</label>
                                 <select id="missingReason" class="form-select">
-                                    <option value="">${i18n.t('modal.returnToStock.selectReason')}</option>
-                                    <option value="perdu">${i18n.t('modal.returnToStock.reasons.lost')}</option>
-                                    <option value="cassé">${i18n.t('modal.returnToStock.reasons.broken')}</option>
-                                    <option value="vole">${i18n.t('modal.returnToStock.reasons.stolen')}</option>
-                                    <option value="fin_vie">${i18n.t('modal.returnToStock.reasons.endOfLife')}</option>
+                                    <option value="">Seleccionar razón...</option>
+                                    <option value="perdu">Perdido</option>
+                                    <option value="cassé">Roto</option>
+                                    <option value="vole">Robado</option>
+                                    <option value="fin_vie">Fin de vida útil</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-map-marker-alt"></i> ${i18n.t('modal.returnToStock.storageLocation')}</label>
+                            <label><i class="fas fa-map-marker-alt"></i> Ubicación de almacenamiento</label>
                             <div class="location-display">
-                                <div><strong>${i18n.t('common.rack')}:</strong> ${article.rack?.display_name || article.rack?.rack_code || i18n.t('common.notSpecified')}</div>
-                                <div><strong>${i18n.t('common.level')}:</strong> ${article.level?.level_code || i18n.t('common.notSpecified')}</div>
-                                <div><strong>${i18n.t('common.position')}:</strong> ${article.slot?.slot_code || i18n.t('common.notSpecified')}</div>
+                                <div><strong>Estantería:</strong> ${article.rack?.display_name || article.rack?.rack_code || 'No especificado'}</div>
+                                <div><strong>Nivel:</strong> ${article.level?.level_code || 'No especificado'}</div>
+                                <div><strong>Posición:</strong> ${article.slot?.slot_code || 'No especificado'}</div>
                             </div>
-                            <small><i class="fas fa-info-circle"></i> ${i18n.t('modal.returnToStock.storeAtLocation')}</small>
+                            <small><i class="fas fa-info-circle"></i> Almacenar el artículo en esta ubicación</small>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-clipboard-check"></i> ${i18n.t('modal.returnToStock.itemCondition')}</label>
+                            <label><i class="fas fa-clipboard-check"></i> Estado del artículo</label>
                             <select id="itemCondition" class="form-select">
-                                <option value="parfait">${i18n.t('modal.returnToStock.conditions.perfect')}</option>
-                                <option value="raye">${i18n.t('modal.returnToStock.conditions.wornRepaired')}</option>
-                                <option value="reparation">${i18n.t('modal.returnToStock.conditions.needsRepair')}</option>
-                                <option value="casse">${i18n.t('modal.returnToStock.conditions.needsReplacement')}</option>
+                                <option value="parfait">Perfecto estado</option>
+                                <option value="raye">Usado/Reparado</option>
+                                <option value="reparation">Necesita reparación</option>
+                                <option value="casse">Necesita reemplazo</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-comment"></i> ${i18n.t('common.comment')}</label>
+                            <label><i class="fas fa-comment"></i> Comentario</label>
                             <textarea id="returnComment"
                                       rows="3"
-                                      placeholder="${i18n.t('modal.returnToStock.returnDetails')}"
+                                      placeholder="Detalles de la devolución..."
                                       class="form-textarea"></textarea>
                         </div>
 
@@ -1396,10 +1349,10 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
                         <div class="modal-actions">
                             <button id="confirmReturnBtn" class="btn btn-success">
-                                <i class="fas fa-check"></i> ${i18n.t('modal.returnToStock.confirmReturn')}
+                                <i class="fas fa-check"></i> Confirmar devolución
                             </button>
                             <button type="button" class="btn btn-secondary close-modal">
-                                ${i18n.t('common.cancel')}
+                                Cancelar
                             </button>
                         </div>
                     </div>
@@ -1448,12 +1401,12 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
             // Vérification de sécurité
             if (returnQuantity <= 0) {
-                alert(i18n.t('errors.returnQuantityMustBePositive'));
+                alert('La cantidad devuelta debe ser mayor a 0');
                 return;
             }
 
             if (returnQuantity > originalQuantity) {
-                alert(i18n.t('errors.returnQuantityExceeds', { max: originalQuantity }));
+                alert(`La cantidad devuelta no puede exceder ${originalQuantity}`);
                 return;
             }
 
@@ -1462,7 +1415,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
     } catch (error) {
         console.error('Erreur ouverture modal retour:', error);
-        alert(i18n.t('errors.openReturnFormFailed'));
+        alert('Error al abrir el formulario de devolución');
     }
 }
 
@@ -1519,13 +1472,13 @@ async function confirmAddReservation() {
 
         // Validation
         if (!articleId) {
-            elements.reservationErrorText.textContent = i18n.t('errors.selectArticle');
+            elements.reservationErrorText.textContent = 'Por favor, seleccione un artículo';
             elements.reservationError.style.display = 'flex';
             return;
         }
 
         if (!quantity || quantity < 1) {
-            elements.reservationErrorText.textContent = i18n.t('errors.quantityMinimumOne');
+            elements.reservationErrorText.textContent = 'La cantidad debe ser al menos 1';
             elements.reservationError.style.display = 'flex';
             return;
         }
@@ -1533,13 +1486,13 @@ async function confirmAddReservation() {
         // Vérifier le stock disponible
         const article = state.articles.find(a => a.id === articleId);
         if (!article) {
-            elements.reservationErrorText.textContent = i18n.t('errors.articleNotFound');
+            elements.reservationErrorText.textContent = 'Artículo no encontrado';
             elements.reservationError.style.display = 'flex';
             return;
         }
 
         if ((article.stock_actuel || 0) < quantity) {
-            elements.reservationErrorText.textContent = i18n.t('errors.insufficientStock', { available: article.stock_actuel || 0 });
+            elements.reservationErrorText.textContent = `Stock insuficiente (disponible: ${article.stock_actuel || 0})`;
             elements.reservationError.style.display = 'flex';
             return;
         }
@@ -1567,11 +1520,11 @@ async function confirmAddReservation() {
         // Fermer le modal
         hideModal();
 
-        showAlert(i18n.t('success.reservationAdded'), 'success');
+        showAlert('Reserva añadida con éxito', 'success');
 
     } catch (error) {
         console.error('Erreur ajout réservation:', error);
-        elements.reservationErrorText.textContent = error.message || i18n.t('errors.addReservationFailed');
+        elements.reservationErrorText.textContent = error.message || 'Error al añadir la reserva';
         elements.reservationError.style.display = 'flex';
     } finally {
         hideLoading();
@@ -1585,7 +1538,7 @@ async function releaseAllProjectItems() {
     const projectReservations = state.reservations.filter(r => r.id_projet === state.currentProject.id);
 
     if (projectReservations.length === 0) {
-        showAlert(i18n.t('info.noReservationsToRelease'), 'info');
+        showAlert('No hay reservas que liberar', 'info');
         return;
     }
 
@@ -1604,12 +1557,12 @@ async function confirmReleaseAll() {
         const comment = elements.releaseComment.value.trim();
 
         if (!reason) {
-            elements.releaseErrorText.textContent = i18n.t('errors.selectReason');
+            elements.releaseErrorText.textContent = 'Por favor, seleccione una razón';
             elements.releaseError.style.display = 'flex';
             return;
         }
 
-        if (!confirm(i18n.t('confirm.releaseAllReservations', { count: elements.releaseItemsCount.textContent }))) {
+        if (!confirm(`¿Está seguro de querer liberar ${elements.releaseItemsCount.textContent} reserva(s)?`)) {
             return;
         }
 
@@ -1621,7 +1574,7 @@ async function confirmReleaseAll() {
         // Libérer chaque réservation
         for (const reservation of projectReservations) {
             try {
-                await releaseReservation(reservation.id, `${i18n.t('common.globalRelease')}: ${reason} - ${comment}`);
+                await releaseReservation(reservation.id, `Liberación global: ${reason} - ${comment}`);
             } catch (error) {
                 console.error(`Erreur libération réservation ${reservation.id}:`, error);
             }
@@ -1639,11 +1592,11 @@ async function confirmReleaseAll() {
         // Fermer le modal
         hideModal();
 
-        showAlert(i18n.t('success.allReservationsReleased'), 'success');
+        showAlert('Todas las reservas han sido liberadas', 'success');
 
     } catch (error) {
         console.error('Erreur libération globale:', error);
-        elements.releaseErrorText.textContent = error.message || i18n.t('errors.releaseStockFailed');
+        elements.releaseErrorText.textContent = error.message || 'Error al liberar el stock';
         elements.releaseError.style.display = 'flex';
     } finally {
         hideLoading();
@@ -1659,7 +1612,7 @@ async function archiveProject(projectId) {
         if (typeof supabase === 'undefined') {
             console.error('ERROR: supabase est undefined');
             console.log('Tentative avec window.supabase:', typeof window.supabase);
-            throw new Error(i18n.t('errors.databaseUnavailable'));
+            throw new Error('Base de datos no disponible');
         }
 
         const { data, error } = await supabase
@@ -1687,7 +1640,7 @@ async function archiveProject(projectId) {
 
 // ===== ARCHIVAGE/DÉSARCHIVAGE =====
 async function archiveProjectAction(projectId) {
-    if (!confirm(i18n.t('confirm.archiveProject'))) {
+    if (!confirm('¿Está seguro de querer archivar este proyecto?')) {
         return;
     }
 
@@ -1707,18 +1660,18 @@ async function archiveProjectAction(projectId) {
             hideModal();
         }
 
-        showAlert(i18n.t('success.projectArchived'), 'success');
+        showAlert('Proyecto archivado con éxito', 'success');
 
     } catch (error) {
         console.error('Erreur archivage projet:', error);
-        showAlert(i18n.t('errors.archiveProjectFailed'), 'error');
+        showAlert('Error al archivar el proyecto', 'error');
     } finally {
         hideLoading();
     }
 }
 
 async function unarchiveProjectAction(projectId) {
-    if (!confirm(i18n.t('confirm.unarchiveProject'))) {
+    if (!confirm('¿Está seguro de querer desarchivar este proyecto?')) {
         return;
     }
 
@@ -1738,11 +1691,11 @@ async function unarchiveProjectAction(projectId) {
         updateArchivedProjectsDisplay();
         updateStatistics();
 
-        showAlert(i18n.t('success.projectUnarchived'), 'success');
+        showAlert('Proyecto desarchivado con éxito', 'success');
 
     } catch (error) {
         console.error('Erreur désarchivage projet:', error);
-        showAlert(i18n.t('errors.unarchiveProjectFailed'), 'error');
+        showAlert('Error al desarchivar el proyecto', 'error');
     } finally {
         hideLoading();
     }
@@ -1766,7 +1719,7 @@ async function exportProjectDetails() {
 
     } catch (error) {
         console.error('Erreur export projet:', error);
-        showAlert(i18n.t('errors.exportProjectFailed'), 'error');
+        showAlert('Error al exportar el proyecto', 'error');
     } finally {
         hideLoading();
     }
@@ -1793,34 +1746,34 @@ async function exportProjectReservations() {
         // ===== EN-TÊTE =====
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
-        doc.text(i18n.t('pdf.projectDetails.title'), pageWidth / 2, yPos, { align: 'center' });
+        doc.text('Detalles del Proyecto', pageWidth / 2, yPos, { align: 'center' });
         yPos += 10;
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        doc.text(`${i18n.t('pdf.exportedOn')}: ${new Date().toLocaleDateString(i18n.language)}`, pageWidth - margin, yPos, { align: 'right' });
+        doc.text(`Exportado el: ${new Date().toLocaleDateString('es-ES')}`, pageWidth - margin, yPos, { align: 'right' });
         yPos += 15;
 
         // ===== INFORMATIONS PROJET =====
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(i18n.t('pdf.projectDetails.projectInfo'), margin, yPos);
+        doc.text('Información del Proyecto', margin, yPos);
         yPos += 8;
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
 
         const projectInfo = [
-            [i18n.t('pdf.projectDetails.name'), project.nom],
-            [i18n.t('pdf.projectDetails.number'), project.numero || i18n.t('common.notDefined')],
-            [i18n.t('pdf.projectDetails.description'), project.description || i18n.t('common.noDescription')],
-            [i18n.t('pdf.projectDetails.responsible'), project.responsable || i18n.t('common.notDefined')],
-            [i18n.t('pdf.projectDetails.creationDate'), formatDate(project.created_at)],
-            [i18n.t('pdf.projectDetails.expectedEndDate'), project.date_fin_prevue ? formatDate(project.date_fin_prevue) : i18n.t('common.notDefined')],
-            [i18n.t('pdf.projectDetails.budget'), project.budget ? `${project.budget} €` : i18n.t('common.notDefined')],
-            [i18n.t('pdf.projectDetails.status'), project.archived ? i18n.t('status.archived') :
-                getProjectStatus(project) === 'active' ? i18n.t('status.active') :
-                getProjectStatus(project) === 'ending' ? i18n.t('status.endingSoon') : i18n.t('status.overdue')]
+            ['Nombre', project.nom],
+            ['Número', project.numero || 'No definido'],
+            ['Descripción', project.description || 'Sin descripción'],
+            ['Responsable', project.responsable || 'No definido'],
+            ['Fecha de creación', formatDate(project.created_at)],
+            ['Fecha de fin prevista', project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'No definido'],
+            ['Presupuesto', project.budget ? `${project.budget} €` : 'No definido'],
+            ['Estado', project.archived ? 'Archivado' :
+                getProjectStatus(project) === 'active' ? 'Activo' :
+                getProjectStatus(project) === 'ending' ? 'Finalizando pronto' : 'Vencido']
         ];
 
         projectInfo.forEach(([label, value]) => {
@@ -1848,7 +1801,7 @@ async function exportProjectReservations() {
         if (sorties.length > 0 || reservations.length > 0) {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text(i18n.t('pdf.projectDetails.statistics'), margin, yPos);
+            doc.text('Estadísticas', margin, yPos);
             yPos += 8;
 
             doc.setFontSize(11);
@@ -1868,9 +1821,9 @@ async function exportProjectReservations() {
             }, 0);
 
             const stats = [
-                [i18n.t('pdf.projectDetails.stats.itemsUsed'), `${itemsSortis} ${i18n.t('common.units')}`, `${valeurSortis.toFixed(2)} €`],
-                [i18n.t('pdf.projectDetails.stats.itemsReserved'), `${itemsReserves} ${i18n.t('common.units')}`, `${valeurReserves.toFixed(2)} €`],
-                [i18n.t('pdf.projectDetails.stats.totalItems'), `${itemsSortis + itemsReserves} ${i18n.t('common.units')}`, `${(valeurSortis + valeurReserves).toFixed(2)} €`]
+                ['Artículos utilizados', `${itemsSortis} unidad(es)`, `${valeurSortis.toFixed(2)} €`],
+                ['Artículos reservados', `${itemsReserves} unidad(es)`, `${valeurReserves.toFixed(2)} €`],
+                ['Total de artículos', `${itemsSortis + itemsReserves} unidad(es)`, `${(valeurSortis + valeurReserves).toFixed(2)} €`]
             ];
 
             stats.forEach(([label, qty, value]) => {
@@ -1889,17 +1842,17 @@ async function exportProjectReservations() {
         if (sorties.length > 0) {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text(i18n.t('pdf.projectDetails.itemsUsed'), margin, yPos);
+            doc.text('Artículos Utilizados', margin, yPos);
             yPos += 8;
 
             // En-tête du tableau
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.text(i18n.t('pdf.table.article'), margin, yPos);
-            doc.text(i18n.t('pdf.table.qty'), margin + 80, yPos);
-            doc.text(i18n.t('pdf.table.date'), margin + 100, yPos);
-            doc.text(i18n.t('pdf.table.unitPrice'), margin + 130, yPos);
-            doc.text(i18n.t('pdf.table.total'), margin + 170, yPos);
+            doc.text('Artículo', margin, yPos);
+            doc.text('Cant.', margin + 80, yPos);
+            doc.text('Fecha', margin + 100, yPos);
+            doc.text('P. Unit.', margin + 130, yPos);
+            doc.text('Total', margin + 170, yPos);
 
             doc.line(margin, yPos + 1, pageWidth - margin, yPos + 1);
             yPos += 6;
@@ -1918,7 +1871,7 @@ async function exportProjectReservations() {
                     yPos = 20;
                 }
 
-                doc.text(article.nom?.substring(0, 30) || i18n.t('common.article'), margin, yPos);
+                doc.text(article.nom?.substring(0, 30) || 'Artículo', margin, yPos);
                 doc.text(item.quantite?.toString() || '0', margin + 80, yPos);
                 doc.text(formatDate(item.created_at), margin + 100, yPos);
                 doc.text(`${prixUnitaire.toFixed(2)} €`, margin + 130, yPos);
@@ -1934,17 +1887,17 @@ async function exportProjectReservations() {
         if (reservations.length > 0) {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text(i18n.t('pdf.projectDetails.itemsReserved'), margin, yPos);
+            doc.text('Artículos Reservados', margin, yPos);
             yPos += 8;
 
             // En-tête du tableau
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.text(i18n.t('pdf.table.article'), margin, yPos);
-            doc.text(i18n.t('pdf.table.qty'), margin + 80, yPos);
-            doc.text(i18n.t('pdf.table.endDate'), margin + 100, yPos);
-            doc.text(i18n.t('pdf.table.user'), margin + 130, yPos);
-            doc.text(i18n.t('pdf.table.unitPrice'), margin + 170, yPos);
+            doc.text('Artículo', margin, yPos);
+            doc.text('Cant.', margin + 80, yPos);
+            doc.text('Fecha fin', margin + 100, yPos);
+            doc.text('Usuario', margin + 130, yPos);
+            doc.text('P. Unit.', margin + 170, yPos);
 
             doc.line(margin, yPos + 1, pageWidth - margin, yPos + 1);
             yPos += 6;
@@ -1962,10 +1915,10 @@ async function exportProjectReservations() {
                     yPos = 20;
                 }
 
-                doc.text(article.nom?.substring(0, 30) || i18n.t('common.article'), margin, yPos);
+                doc.text(article.nom?.substring(0, 30) || 'Artículo', margin, yPos);
                 doc.text(res.quantite?.toString() || '0', margin + 80, yPos);
                 doc.text(formatDate(res.date_fin), margin + 100, yPos);
-                doc.text(res.w_users?.username?.substring(0, 15) || i18n.t('common.user'), margin + 130, yPos);
+                doc.text(res.w_users?.username?.substring(0, 15) || 'Usuario', margin + 130, yPos);
                 doc.text(`${prixUnitaire.toFixed(2)} €`, margin + 170, yPos);
 
                 yPos += 6;
@@ -1975,12 +1928,12 @@ async function exportProjectReservations() {
         // Pied de page
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
-        doc.text(i18n.t('pdf.footer'),
+        doc.text('Documento generado automáticamente por el sistema de gestión de almacén',
                 pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
 
         // Télécharger
-        doc.save(`${i18n.t('pdf.projectDetails.filename')}_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
-        showAlert(i18n.t('success.pdfExported'), 'success');
+        doc.save(`Proyecto_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showAlert('PDF exportado con éxito', 'success');
 
     } catch (error) {
         console.error('Erreur export PDF:', error);
@@ -2007,22 +1960,19 @@ async function exportProjectHistory() {
         // ===== EN-TÊTE =====
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
-        doc.text(i18n.t('pdf.projectHistory.title'), pageWidth / 2, yPos, { align: 'center' });
+        doc.text('Historial del Proyecto', pageWidth / 2, yPos, { align: 'center' });
         yPos += 10;
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        doc.text(i18n.t('pdf.projectHistory.project', {
-            name: project.nom,
-            number: project.numero || i18n.t('common.noNumber')
-        }), margin, yPos);
+        doc.text(`Proyecto: ${project.nom} ${project.numero ? `(#${project.numero})` : '(Sin número)'}`, margin, yPos);
         yPos += 5;
-        doc.text(`${i18n.t('pdf.exportedOn')}: ${new Date().toLocaleDateString(i18n.language)}`, pageWidth - margin, yPos, { align: 'right' });
+        doc.text(`Exportado el: ${new Date().toLocaleDateString('es-ES')}`, pageWidth - margin, yPos, { align: 'right' });
         yPos += 10;
 
         if (history.length === 0) {
             doc.setFontSize(12);
-            doc.text(i18n.t('pdf.projectHistory.noHistory'), pageWidth / 2, yPos, { align: 'center' });
+            doc.text('No hay historial disponible para este proyecto', pageWidth / 2, yPos, { align: 'center' });
         } else {
             // ===== LISTE HISTORIQUE =====
             doc.setFontSize(10);
@@ -2039,19 +1989,19 @@ async function exportProjectHistory() {
 
                 switch(item.type) {
                     case 'sortie':
-                        actionType = i18n.t('pdf.projectHistory.actions.stockOut');
+                        actionType = 'Salida de stock';
                         color = [220, 53, 69]; // Rouge
                         break;
                     case 'retour_projet':
-                        actionType = i18n.t('pdf.projectHistory.actions.stockReturn');
+                        actionType = 'Devolución al stock';
                         color = [40, 167, 69]; // Vert
                         break;
                     case 'entree':
-                        actionType = i18n.t('pdf.projectHistory.actions.stockIn');
+                        actionType = 'Entrada de stock';
                         color = [0, 123, 255]; // Bleu
                         break;
                     default:
-                        actionType = item.type || i18n.t('pdf.projectHistory.actions.action');
+                        actionType = item.type || 'Acción';
                 }
 
                 // Date et heure
@@ -2071,16 +2021,16 @@ async function exportProjectHistory() {
 
                 const details = [];
                 if (item.article?.nom) {
-                    details.push(`${i18n.t('common.article')}: ${item.article.nom}${item.article.numero ? ` (${item.article.numero})` : ''}`);
+                    details.push(`Artículo: ${item.article.nom}${item.article.numero ? ` (${item.article.numero})` : ''}`);
                 }
                 if (item.quantite) {
-                    details.push(`${i18n.t('common.quantity')}: ${item.quantite}`);
+                    details.push(`Cantidad: ${item.quantite}`);
                 }
                 if (item.projet) {
-                    details.push(`${i18n.t('common.project')}: ${item.projet}`);
+                    details.push(`Proyecto: ${item.projet}`);
                 }
                 if (item.utilisateur) {
-                    details.push(`${i18n.t('common.user')}: ${item.utilisateur}`);
+                    details.push(`Usuario: ${item.utilisateur}`);
                 }
 
                 details.forEach(detail => {
@@ -2114,12 +2064,12 @@ async function exportProjectHistory() {
         // Pied de page
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
-        doc.text(i18n.t('pdf.projectHistory.footer'),
+        doc.text('Historial completo de movimientos del proyecto',
                 pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
 
         // Télécharger
-        doc.save(`${i18n.t('pdf.projectHistory.filename')}_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
-        showAlert(i18n.t('success.historyExported'), 'success');
+        doc.save(`Historial_Proyecto_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showAlert('Historial exportado con éxito', 'success');
 
     } catch (error) {
         console.error('Erreur export historique:', error);
@@ -2146,8 +2096,8 @@ async function editProject() {
         const header = modal.querySelector('.modal-header h3');
         const submitBtn = modal.querySelector('.btn-primary');
 
-        header.innerHTML = `<i class="fas fa-edit"></i> ${i18n.t('modal.editProject.title')}`;
-        submitBtn.innerHTML = `<i class="fas fa-save"></i> ${i18n.t('modal.editProject.saveChanges')}`;
+        header.innerHTML = `<i class="fas fa-edit"></i> Editar Proyecto`;
+        submitBtn.innerHTML = `<i class="fas fa-save"></i> Guardar Cambios`;
 
         // Changer l'événement
         modal.querySelector('form').onsubmit = async function(e) {
@@ -2164,7 +2114,7 @@ async function editProject() {
         showModal(modal);
     } catch (error) {
         console.error('Erreur préparation édition:', error);
-        showAlert(i18n.t('errors.editPreparationFailed'), 'error');
+        showAlert('Error al preparar la edición del proyecto', 'error');
     }
 }
 
@@ -2181,7 +2131,7 @@ async function updateProjectAction() {
 
         // Validation
         if (!projectData.nom || !projectData.numero || !projectData.responsable) {
-            elements.projectErrorText.textContent = i18n.t('errors.fillRequiredFields');
+            elements.projectErrorText.textContent = 'Por favor, complete todos los campos obligatorios';
             elements.projectError.style.display = 'flex';
             return;
         }
@@ -2191,7 +2141,7 @@ async function updateProjectAction() {
             p.numero === projectData.numero && p.id !== state.currentProject.id
         );
         if (existingProject) {
-            elements.projectErrorText.textContent = i18n.t('errors.projectNumberExists');
+            elements.projectErrorText.textContent = 'Este número de proyecto ya existe';
             elements.projectError.style.display = 'flex';
             return;
         }
@@ -2226,7 +2176,7 @@ async function updateProjectAction() {
             await showProjectDetails(updatedProject.id);
         }
 
-        // Fermer le modal et réinitialiser
+                // Fermer le modal et réinitialiser
         hideModal();
         elements.newProjectForm.reset();
         elements.projectError.style.display = 'none';
@@ -2236,8 +2186,8 @@ async function updateProjectAction() {
         const header = modal.querySelector('.modal-header h3');
         const submitBtn = modal.querySelector('.btn-primary');
 
-        header.innerHTML = `<i class="fas fa-plus-circle"></i> ${i18n.t('modal.newProject.title')}`;
-        submitBtn.innerHTML = `<i class="fas fa-save"></i> ${i18n.t('modal.newProject.create')}`;
+        header.innerHTML = `<i class="fas fa-plus-circle"></i> Nuevo Proyecto`;
+        submitBtn.innerHTML = `<i class="fas fa-save"></i> Crear Proyecto`;
 
         // Restaurer l'événement original
         modal.querySelector('form').onsubmit = function(e) {
@@ -2245,11 +2195,11 @@ async function updateProjectAction() {
             createProjectAction();
         };
 
-        showAlert(i18n.t('success.projectUpdated'), 'success');
+        showAlert('Proyecto actualizado con éxito', 'success');
 
     } catch (error) {
         console.error('Erreur modification projet:', error);
-        elements.projectErrorText.textContent = error.message || i18n.t('errors.updateProjectFailed');
+        elements.projectErrorText.textContent = error.message || 'Error al actualizar el proyecto';
         elements.projectError.style.display = 'flex';
     } finally {
         hideLoading();
@@ -2267,19 +2217,19 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, pr
 
         // Validation
         if (!returnQuantity || returnQuantity < 0 || returnQuantity > originalQuantity) {
-            modal.querySelector('#returnErrorText').textContent = i18n.t('errors.invalidReturnQuantity');
+            modal.querySelector('#returnErrorText').textContent = 'Cantidad de devolución inválida';
             modal.querySelector('#returnError').style.display = 'flex';
             return;
         }
 
         if (missingQuantity > 0 && !missingReason) {
-            modal.querySelector('#returnErrorText').textContent = i18n.t('errors.missingReasonRequired');
+            modal.querySelector('#returnErrorText').textContent = 'Debe especificar la razón de la falta';
             modal.querySelector('#returnError').style.display = 'flex';
             return;
         }
 
         // Demander confirmation
-        if (!confirm(i18n.t('confirm.returnToStock', { quantity: returnQuantity }))) {
+        if (!confirm(`¿Está seguro de devolver ${returnQuantity} unidad(es) al stock?`)) {
             return;
         }
 
@@ -2307,10 +2257,10 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, pr
             utilisateur: currentUser.username,
             stock_avant: currentArticle.stock_actuel,
             stock_apres: currentArticle.stock_actuel + returnQuantity,
-            motif: i18n.t('movements.projectReturn.motive', { condition: itemCondition }),
-            notes: i18n.t('movements.projectReturn.condition', { condition: itemCondition }),
+            motif: `Devolución de proyecto - Estado: ${itemCondition}`,
+            notes: `Condición del artículo: ${itemCondition}`,
             date_mouvement: now.toISOString().split('T')[0],
-            heure_mouvement: now.toLocaleTimeString(i18n.language, { hour12: false }),
+            heure_mouvement: now.toLocaleTimeString('es-ES', { hour12: false }),
             created_at: now.toISOString()
         };
 
@@ -2337,7 +2287,7 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, pr
 
         // 4. Fermer le modal et afficher succès
         modal.remove();
-        showTemporarySuccess(i18n.t('success.returnedToStock', { quantity: returnQuantity }));
+        showTemporarySuccess(`${returnQuantity} unidad(es) devuelta(s) al stock con éxito`);
 
         // 5. Recharger les détails du projet
         const projectDetailsModal = document.getElementById('projectDetailsModal');
@@ -2347,7 +2297,7 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, pr
 
     } catch (error) {
         console.error('Erreur retour au stock:', error);
-        modalElement.querySelector('#returnErrorText').textContent = error.message || i18n.t('errors.returnToStockFailed');
+        modalElement.querySelector('#returnErrorText').textContent = error.message || 'Error al devolver el stock';
         modalElement.querySelector('#returnError').style.display = 'flex';
     } finally {
         hideLoading();
@@ -2405,11 +2355,11 @@ async function releaseReservation(reservationId, comment = '') {
                 type: 'annulation_reservation',
                 quantite: reservation.quantite,
                 projet_id: reservation.projet_id,
-                commentaire: comment || i18n.t('movements.reservationReleased'),
+                commentaire: comment || 'Reserva liberada',
                 utilisateur_id: currentUser.id,
                 utilisateur: currentUser.username,
                 date_mouvement: new Date().toISOString().split('T')[0],
-                heure_mouvement: new Date().toLocaleTimeString(i18n.language, { hour12: false }),
+                heure_mouvement: new Date().toLocaleTimeString('es-ES', { hour12: false }),
                 created_at: new Date().toISOString()
             }]);
 
@@ -2459,7 +2409,7 @@ async function getProjectHistory(projectId) {
 async function handleArchiveProject() {
     if (!state.currentProject) return;
 
-    const confirmArchive = confirm(i18n.t('confirm.archiveProject', { name: state.currentProject.nom }));
+    const confirmArchive = confirm(`¿Está seguro de querer archivar el proyecto "${state.currentProject.nom}"?`);
     if (!confirmArchive) return;
 
     try {
@@ -2468,10 +2418,10 @@ async function handleArchiveProject() {
         if (projectDetailsModal) {
             projectDetailsModal.style.display = 'none';
         }
-        showAlert(i18n.t('success.projectArchived'), 'success');
+        showAlert('Proyecto archivado con éxito', 'success');
     } catch (error) {
         console.error('Erreur archivage:', error);
-        showAlert(i18n.t('errors.archiveProjectFailed'), 'error');
+        showAlert('Error al archivar el proyecto', 'error');
     } finally {
         hideLoading();
     }
@@ -2500,7 +2450,7 @@ function updateProjectHistory(historyItems) {
         container.innerHTML = `
             <div class="empty-history">
                 <i class="fas fa-history"></i>
-                <p>${i18n.t('projectDetails.noHistory')}</p>
+                <p>No hay historial disponible</p>
             </div>
         `;
         return;
@@ -2509,44 +2459,30 @@ function updateProjectHistory(historyItems) {
     let html = '';
     historyItems.forEach(item => {
         let icon = 'history';
-        let actionType = i18n.t('common.action');
+        let actionType = 'Acción';
         let details = '';
-        const articleName = item.article?.nom || i18n.t('common.article');
+        const articleName = item.article?.nom || 'Artículo';
         const articleNum = item.article?.numero ? ` (${item.article.numero})` : '';
 
         if (item.type === 'sortie') {
             icon = 'arrow-up';
-            actionType = i18n.t('movements.stockOut');
-            details = i18n.t('projectDetails.history.stockOutDetails', {
-                quantity: item.quantite,
-                article: articleName + articleNum,
-                project: item.projet || 'N/A'
-            });
+            actionType = 'Salida de stock';
+            details = `${item.quantite} unidad(es) de ${articleName}${articleNum} - Proyecto: ${item.projet || 'N/A'}`;
         } else if (item.type === 'retour_projet') {
             icon = 'arrow-left';
-            actionType = i18n.t('movements.stockReturn');
-            details = i18n.t('projectDetails.history.returnDetails', {
-                quantity: item.quantite,
-                article: articleName + articleNum
-            });
+            actionType = 'Devolución al stock';
+            details = `${item.quantite} unidad(es) de ${articleName}${articleNum}`;
             if (item.raison) {
                 details += ` | ${item.raison}`;
             }
         } else if (item.type === 'entree') {
             icon = 'arrow-down';
-            actionType = i18n.t('movements.stockIn');
-            details = i18n.t('projectDetails.history.entryDetails', {
-                quantity: item.quantite,
-                article: articleName + articleNum,
-                supplier: item.fournisseur || i18n.t('common.initialStock')
-            });
+            actionType = 'Entrada de stock';
+            details = `${item.quantite} unidad(es) de ${articleName}${articleNum} - Proveedor: ${item.fournisseur || 'Stock inicial'}`;
         } else if (item.type === 'reservation') {
             icon = 'clock';
-            actionType = i18n.t('movements.reservation');
-            details = i18n.t('projectDetails.history.reservationDetails', {
-                quantity: item.quantite,
-                article: articleName + articleNum
-            });
+            actionType = 'Reserva';
+            details = `${item.quantite} unidad(es) de ${articleName}${articleNum}`;
         }
 
         html += `
@@ -2564,7 +2500,7 @@ function updateProjectHistory(historyItems) {
                         ${item.commentaire ? `<div class="history-comment"><i class="fas fa-comment"></i> ${item.commentaire}</div>` : ''}
                     </div>
                     <div class="history-footer">
-                        <span class="history-user"><i class="fas fa-user"></i> ${item.utilisateur || i18n.t('common.system')}</span>
+                        <span class="history-user"><i class="fas fa-user"></i> ${item.utilisateur || 'Sistema'}</span>
                     </div>
                 </div>
             </div>
@@ -2613,7 +2549,7 @@ async function openProjectDetailsModal(projectId) {
         const { project, sorties, retours, reservations } = projectData;
 
         if (!project) {
-            alert(i18n.t('errors.projectNotFound'));
+            alert('Proyecto no encontrado');
             return;
         }
 
@@ -2632,27 +2568,27 @@ async function openProjectDetailsModal(projectId) {
 
         // 4. Remplir les informations de base
         document.getElementById('projectDetailsName').textContent = project.nom;
-        document.getElementById('projectDetailsNumber').textContent = project.numero || i18n.t('common.noNumber');
+        document.getElementById('projectDetailsNumber').textContent = project.numero || 'Sin número';
 
         const statusText =
-            status === 'active' ? i18n.t('status.active') :
-            status === 'ending' ? i18n.t('status.endingSoon') :
-            status === 'overdue' ? i18n.t('status.overdue') :
-            i18n.t('status.archived');
+            status === 'active' ? 'Activo' :
+            status === 'ending' ? 'Finalizando pronto' :
+            status === 'overdue' ? 'Vencido' :
+            'Archivado';
         document.getElementById('projectDetailsStatus').textContent = statusText;
 
         // 6. Remplir les informations détaillées
         document.getElementById('projectDetailsDescription').textContent =
-            project.description || i18n.t('common.noDescription');
+            project.description || 'Sin descripción';
         document.getElementById('projectDetailsCreatedAt').textContent = formatDateTime(project.created_at);
         document.getElementById('projectDetailsEndDate').textContent =
-            project.date_fin_prevue ? formatDate(project.date_fin_prevue) : i18n.t('common.notDefined');
+            project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'No definido';
         document.getElementById('projectDetailsUpdatedAt').textContent =
-            project.updated_at ? formatDateTime(project.updated_at) : i18n.t('common.never');
+            project.updated_at ? formatDateTime(project.updated_at) : 'Nunca';
         document.getElementById('projectDetailsManager').textContent =
-            project.responsable || i18n.t('common.notDefined');
+            project.responsable || 'No definido';
         document.getElementById('projectDetailsBudget').textContent =
-            project.budget ? `${project.budget} €` : i18n.t('common.notDefined');
+            project.budget ? `${project.budget} €` : 'No definido';
 
         // 7. Afficher les réservations, retours et l'historique
         updateProjectReservations(sorties, retours, reservations);
@@ -2663,8 +2599,8 @@ async function openProjectDetailsModal(projectId) {
         if (archiveBtn) {
             archiveBtn.style.display = project.archived ? 'none' : 'block';
             archiveBtn.textContent = project.archived ?
-                i18n.t('actions.unarchive') :
-                i18n.t('actions.archive');
+                'Desarchivar' :
+                'Archivar';
         }
 
         // 9. Afficher le modal
@@ -2673,7 +2609,7 @@ async function openProjectDetailsModal(projectId) {
 
     } catch (error) {
         console.error('Erreur ouverture détails projet:', error);
-        alert(i18n.t('errors.loadProjectFailed'));
+        alert('Error al cargar los detalles del proyecto');
     }
 }
 
@@ -2693,7 +2629,7 @@ async function openProjectSelectionModal() {
         }
 
         if (!projects || projects.length === 0) {
-            alert(i18n.t('errors.noProjectsAvailable'));
+            alert('No hay proyectos disponibles');
             return;
         }
 
@@ -2702,7 +2638,7 @@ async function openProjectSelectionModal() {
             <div class="modal-overlay" id="projectSelectionModal">
                 <div class="modal" style="max-width: 600px;">
                     <div class="modal-header">
-                        <h3><i class="fas fa-project-diagram"></i> ${i18n.t('modal.selectProject.title')}</h3>
+                        <h3><i class="fas fa-project-diagram"></i> Seleccionar Proyecto</h3>
                         <button class="close-modal">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -2711,15 +2647,15 @@ async function openProjectSelectionModal() {
                                 <div class="project-item" data-id="${project.id}">
                                     <div class="project-item-header">
                                         <h4>${project.nom}</h4>
-                                        <span class="project-number">${project.numero || i18n.t('common.noNumber')}</span>
+                                        <span class="project-number">${project.numero || 'Sin número'}</span>
                                     </div>
                                     <div class="project-item-details">
-                                        <span><i class="fas fa-user-tie"></i> ${project.responsable || i18n.t('common.notDefined')}</span>
+                                        <span><i class="fas fa-user-tie"></i> ${project.responsable || 'No definido'}</span>
                                         ${project.date_fin_prevue ?
-                                            `<span><i class="fas fa-calendar"></i> ${i18n.t('common.end')}: ${formatDate(project.date_fin_prevue)}</span>` : ''}
+                                            `<span><i class="fas fa-calendar"></i> Fin: ${formatDate(project.date_fin_prevue)}</span>` : ''}
                                     </div>
                                     <button class="btn-primary select-project-btn" data-id="${project.id}">
-                                        <i class="fas fa-eye"></i> ${i18n.t('actions.viewDetails')}
+                                        <i class="fas fa-eye"></i> Ver Detalles
                                     </button>
                                 </div>
                             `).join('')}
@@ -2729,7 +2665,7 @@ async function openProjectSelectionModal() {
             </div>
         `;
 
-        // Ajouter au DOM
+                // Ajouter au DOM
         const modalContainer = document.createElement('div');
         modalContainer.innerHTML = modalHtml;
         document.body.appendChild(modalContainer);
@@ -2771,7 +2707,7 @@ async function openProjectSelectionModal() {
 
     } catch (error) {
         console.error('Erreur chargement projets:', error);
-        alert(i18n.t('errors.loadProjectsFailed'));
+        alert('Error al cargar los proyectos');
     }
 }
 
@@ -2851,15 +2787,10 @@ function updateUserInterface() {
 
     if (currentUser.isAdmin) {
         roleBadge.classList.add('admin');
-        roleText.setAttribute('data-i18n', 'role.admin');
+        roleText.textContent = 'Administrador';
     } else {
         roleBadge.classList.add('user');
-        roleText.setAttribute('data-i18n', 'role.user');
-    }
-
-    // Réappliquer les traductions
-    if (typeof translatePage === 'function') {
-        translatePage();
+        roleText.textContent = 'Usuario';
     }
 
     // Gestion du bouton Inventaire
@@ -2877,7 +2808,7 @@ function updateUserInterface() {
             }
 
             if (!article) {
-                alert(i18n.t('alert.selectArticle'));
+                alert('Por favor, seleccione un artículo primero');
                 return;
             }
 
@@ -2943,7 +2874,7 @@ async function handleSearchArticleForReturn() {
     const searchTerm = searchInput.value.trim();
 
     if (!searchTerm) {
-        showNotification(i18n.t('search.enterSearchTerm'), 'warning');
+        showNotification('Introduzca un término de búsqueda', 'warning');
         return;
     }
 
@@ -2958,7 +2889,7 @@ async function handleSearchArticleForReturn() {
         const articleIdsDuProjet = [...new Set(sorties.map(s => s.article_id))];
 
         if (articleIdsDuProjet.length === 0) {
-            afficherMessageResultats('info', i18n.t('search.projectHasNoArticles'));
+            afficherMessageResultats('info', 'Este proyecto no tiene artículos');
             return;
         }
 
@@ -2973,7 +2904,7 @@ async function handleSearchArticleForReturn() {
         if (error) throw error;
 
         if (!articles || articles.length === 0) {
-            afficherMessageResultats('warning', i18n.t('search.noMatchingArticles', { term: searchTerm }));
+            afficherMessageResultats('warning', `No se encontraron artículos que coincidan con "${searchTerm}"`);
             return;
         }
 
@@ -3005,18 +2936,18 @@ async function handleSearchArticleForReturn() {
             }
         });
 
-        // 5. Afficher selon le résultat
+                // 5. Afficher selon le résultat
         if (articlesAvecFleche.length > 0) {
             displayArticlesAvecFleche(articlesAvecFleche);
         } else if (articlesDejaRetournes.length > 0) {
             displayArticlesDejaRetournes(articlesDejaRetournes);
         } else {
-            afficherMessageResultats('info', i18n.t('search.articleInProjectNoMovement', { name: articles[0].nom }));
+            afficherMessageResultats('info', `El artículo "${articles[0].nom}" está en el proyecto pero no tiene movimientos de devolución pendientes`);
         }
 
     } catch (error) {
         console.error('Erreur recherche article:', error);
-        showNotification(i18n.t('errors.searchFailed'), 'error');
+        showNotification('Error al buscar el artículo', 'error');
     } finally {
         hideLoading();
     }
@@ -3037,7 +2968,7 @@ function afficherMessageResultats(type, message) {
             <p>${message}</p>
         </div>
     `;
-    resultsCount.textContent = i18n.t('search.resultsCount', { count: 0 });
+    resultsCount.textContent = '0 resultado(s)';
     resultsContainer.style.display = 'block';
 }
 
@@ -3080,12 +3011,12 @@ function displayArticlesAvecFleche(articlesAvecFleche) {
                 <div class="article-result-info">
                     <h6>${article.nom}</h6>
                     <div class="article-result-details">
-                        <span>${article.numero || i18n.t('common.noNumber')}</span>
-                        <span class="status-arrow">${i18n.t('search.toReturn')}: ${quantiteRestante}</span>
+                        <span>${article.numero || 'Sin número'}</span>
+                        <span class="status-arrow">Por devolver: ${quantiteRestante}</span>
                         ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
                     </div>
                     <div class="article-date-info">
-                        <small><i class="far fa-calendar"></i> ${i18n.t('search.lastStockOut')}: ${formatDate(derniereSortie?.created_at)}</small>
+                        <small><i class="far fa-calendar"></i> Última salida: ${formatDate(derniereSortie?.created_at)}</small>
                     </div>
                 </div>
                 <div class="article-result-actions">
@@ -3093,7 +3024,7 @@ function displayArticlesAvecFleche(articlesAvecFleche) {
                             data-mouvement-id="${derniereSortie?.id}"
                             data-article-id="${article.id}"
                             data-quantity="${quantiteRestante}">
-                        <i class="fas fa-arrow-left"></i> ${i18n.t('actions.return')}
+                        <i class="fas fa-arrow-left"></i> Devolver
                     </button>
                 </div>
             </div>
@@ -3101,7 +3032,7 @@ function displayArticlesAvecFleche(articlesAvecFleche) {
     });
 
     resultsList.innerHTML = html;
-    resultsCount.textContent = i18n.t('search.articlesToReturn', { count: articlesAvecFleche.length });
+    resultsCount.textContent = `${articlesAvecFleche.length} artículo(s) por devolver`;
     resultsContainer.style.display = 'block';
 
     // Ajouter les événements
@@ -3135,13 +3066,13 @@ function displayArticlesDejaRetournes(articlesDejaRetournes) {
                 <div class="article-result-info">
                     <h6>${article.nom}</h6>
                     <div class="article-result-details">
-                        <span>${article.numero || i18n.t('common.noNumber')}</span>
-                        <span class="status-none">${i18n.t('search.alreadyReturned')}: ${totalRetourne}/${totalSorti}</span>
+                        <span>${article.numero || 'Sin número'}</span>
+                        <span class="status-none">Ya devuelto: ${totalRetourne}/${totalSorti}</span>
                         ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
                     </div>
                     <div class="article-date-info">
                         ${derniereSortie ?
-                            `<small><i class="far fa-calendar"></i> ${i18n.t('search.lastStockOut')}: ${formatDate(derniereSortie.created_at)}</small>` :
+                            `<small><i class="far fa-calendar"></i> Última salida: ${formatDate(derniereSortie.created_at)}</small>` :
                             ''
                         }
                     </div>
@@ -3149,7 +3080,7 @@ function displayArticlesDejaRetournes(articlesDejaRetournes) {
                 <div class="article-result-actions">
                     <button class="btn-secondary add-article-btn"
                             data-article-id="${article.id}">
-                        <i class="fas fa-plus"></i> ${i18n.t('actions.return')}
+                        <i class="fas fa-plus"></i> Devolver
                     </button>
                 </div>
             </div>
@@ -3157,7 +3088,7 @@ function displayArticlesDejaRetournes(articlesDejaRetournes) {
     });
 
     resultsList.innerHTML = html;
-    resultsCount.textContent = i18n.t('search.articlesAlreadyReturned', { count: articlesDejaRetournes.length });
+    resultsCount.textContent = `${articlesDejaRetournes.length} artículo(s) ya devuelto(s)`;
     resultsContainer.style.display = 'block';
 
     // Ajouter les événements
@@ -3171,7 +3102,7 @@ function displayArticlesDejaRetournes(articlesDejaRetournes) {
 
             if (article) {
                 const confirmer = confirm(
-                    i18n.t('confirm.allItemsAlreadyReturned', { name: article.nom })
+                    `Todos los artículos de "${article.nom}" ya han sido devueltos.\n\n¿Desea realizar una nueva salida y devolución de este artículo?`
                 );
 
                 if (confirmer) {
@@ -3216,17 +3147,17 @@ async function creerSortieEtRetour(article) {
         <div class="modal-overlay simple-return-modal">
             <div class="modal" style="max-width: 400px;">
                 <div class="modal-header">
-                    <h3><i class="fas fa-plus-circle"></i> ${i18n.t('modal.returnToStock.title')}</h3>
+                    <h3><i class="fas fa-plus-circle"></i> Devolver al Stock</h3>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="article-info-simple">
                         <h4>${article.nom}</h4>
-                        <p>${i18n.t('stock.current')}: ${article.stock_actuel || 0}</p>
+                        <p>Stock actual: ${article.stock_actuel || 0}</p>
                     </div>
 
                     <div class="form-group">
-                        <label><i class="fas fa-boxes"></i> ${i18n.t('modal.returnToStock.quantityToReturn')} *</label>
+                        <label><i class="fas fa-boxes"></i> Cantidad a devolver *</label>
                         <input type="number"
                                id="simpleQuantity"
                                value="1"
@@ -3235,30 +3166,30 @@ async function creerSortieEtRetour(article) {
                     </div>
 
                     <div class="form-group">
-                        <label><i class="fas fa-clipboard-list"></i> ${i18n.t('modal.returnToStock.reason')} *</label>
+                        <label><i class="fas fa-clipboard-list"></i> Razón *</label>
                         <select id="simpleReason" class="form-select">
-                            <option value="perdu_retrouve">${i18n.t('returnReasons.lostFound')}</option>
-                            <option value="casse_repare">${i18n.t('returnReasons.brokenRepaired')}</option>
-                            <option value="vole_remplace">${i18n.t('returnReasons.stolenReplaced')}</option>
-                            <option value="fin_vie_remplace">${i18n.t('returnReasons.endOfLifeReplaced')}</option>
-                            <option value="autre">${i18n.t('returnReasons.other')}</option>
+                            <option value="perdu_retrouve">Perdido/Encontrado</option>
+                            <option value="casse_repare">Roto/Reparado</option>
+                            <option value="vole_remplace">Robado/Reemplazado</option>
+                            <option value="fin_vie_remplace">Fin de vida/Reemplazado</option>
+                            <option value="autre">Otro</option>
                         </select>
                     </div>
 
                     <div class="form-group" id="simpleCommentGroup" style="display: none;">
-                        <label><i class="fas fa-comment"></i> ${i18n.t('common.comment')}</label>
+                        <label><i class="fas fa-comment"></i> Comentario</label>
                         <textarea id="simpleComment"
                                   rows="2"
-                                  placeholder="${i18n.t('common.details')}"
+                                  placeholder="Detalles adicionales"
                                   class="form-textarea"></textarea>
                     </div>
 
                     <div class="modal-actions">
                         <button type="button" class="btn-secondary close-modal">
-                            ${i18n.t('actions.cancel')}
+                            Cancelar
                         </button>
                         <button id="confirmSimpleAdd" class="btn-primary">
-                            <i class="fas fa-check"></i> ${i18n.t('actions.confirm')}
+                            <i class="fas fa-check"></i> Confirmar
                         </button>
                     </div>
                 </div>
@@ -3302,7 +3233,7 @@ async function creerSortieEtRetour(article) {
         const comment = modal.querySelector('#simpleComment').value;
 
         if (!quantity || quantity < 1) {
-            alert(i18n.t('errors.invalidQuantity'));
+            alert('Por favor, introduzca una cantidad válida');
             return;
         }
 
@@ -3329,20 +3260,20 @@ async function enregistrerAjoutSimple(article, quantity, reason, comment, closeM
 
         // 2. Créer un mouvement simple
         const motifMapping = {
-            'perdu_retrouve': i18n.t('returnReasons.lostFound'),
-            'casse_repare': i18n.t('returnReasons.brokenRepaired'),
-            'vole_remplace': i18n.t('returnReasons.stolenReplaced'),
-            'fin_vie_remplace': i18n.t('returnReasons.endOfLifeReplaced'),
-            'autre': i18n.t('returnReasons.other') + ': ' + (comment || '')
+            'perdu_retrouve': 'Perdido/Encontrado',
+            'casse_repare': 'Roto/Reparado',
+            'vole_remplace': 'Robado/Reemplazado',
+            'fin_vie_remplace': 'Fin de vida/Reemplazado',
+            'autre': 'Otro: ' + (comment || '')
         };
 
         const mouvementData = {
             article_id: article.id,
             type: 'ajustement',
             quantite: quantity,
-            projet: state.currentProject?.nom || i18n.t('movements.adjustment'),
+            projet: state.currentProject?.nom || 'Ajuste de stock',
             projet_id: state.currentProject?.id || null,
-            commentaire: `${i18n.t('movements.stockAdjustment')}: ${motifMapping[reason] || reason} | ${comment || ''}`.trim(),
+            commentaire: `Ajuste de stock: ${motifMapping[reason] || reason} | ${comment || ''}`.trim(),
             utilisateur_id: currentUser.id,
             utilisateur: currentUser.username,
             stock_avant: article.stock_actuel || 0,
@@ -3360,11 +3291,11 @@ async function enregistrerAjoutSimple(article, quantity, reason, comment, closeM
 
         // 3. Succès
         closeModal();
-        showAlert(i18n.t('success.addedToStock', { quantity, name: article.nom }), 'success');
+        showAlert(`${quantity} unidad(es) de "${article.nom}" agregada(s) al stock`, 'success');
 
     } catch (error) {
         console.error('Erreur ajout stock:', error);
-        alert(i18n.t('errors.addToStockFailed'));
+        alert('Error al agregar al stock');
     } finally {
         hideLoading();
     }
@@ -3399,11 +3330,11 @@ function displayArticleSearchResults(articles, sorties, retours) {
         resultsList.innerHTML = `
             <div class="no-results">
                 <i class="fas fa-search"></i>
-                <p>${i18n.t('search.noArticlesWithArrow', { term: searchTerm })}</p>
-                <p class="small-text">${i18n.t('search.noUnreturnedStockOut')}</p>
+                <p>No se encontraron artículos con devolución pendiente para "${searchTerm}"</p>
+                <p class="small-text">No hay salidas de stock sin devolver para este artículo en este proyecto</p>
             </div>
         `;
-        resultsCount.textContent = i18n.t('search.resultsCount', { count: 0 });
+        resultsCount.textContent = '0 resultado(s)';
         resultsContainer.style.display = 'block';
         return;
     }
@@ -3421,7 +3352,7 @@ function displayArticleSearchResults(articles, sorties, retours) {
         articleQuantitesRestantes[article.id] = totalSorti - totalRetourne;
     });
 
-    // Afficher les résultats
+        // Afficher les résultats
     let html = '';
     articlesAvecFleche.forEach(article => {
         const quantiteRestante = articleQuantitesRestantes[article.id] || 0;
@@ -3448,12 +3379,12 @@ function displayArticleSearchResults(articles, sorties, retours) {
                 <div class="article-result-info">
                     <h6>${article.nom}</h6>
                     <div class="article-result-details">
-                        <span>${article.numero || i18n.t('common.noNumber')}</span>
-                        <span>${i18n.t('search.toReturn')}: ${quantiteRestante}</span>
+                        <span>${article.numero || 'Sin número'}</span>
+                        <span>Por devolver: ${quantiteRestante}</span>
                         ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
                     </div>
                     <div class="article-date-info">
-                        <small><i class="far fa-calendar"></i> ${i18n.t('movements.stockOutOn')}: ${formatDate(sortieArticle?.created_at)}</small>
+                        <small><i class="far fa-calendar"></i> Salida el: ${formatDate(sortieArticle?.created_at)}</small>
                     </div>
                 </div>
                 <div class="article-result-actions">
@@ -3461,7 +3392,7 @@ function displayArticleSearchResults(articles, sorties, retours) {
                             data-mouvement-id="${sortieArticle?.id}"
                             data-article-id="${article.id}"
                             data-quantity="${quantiteRestante}">
-                        <i class="fas fa-arrow-left"></i> ${i18n.t('actions.return')}
+                        <i class="fas fa-arrow-left"></i> Devolver
                     </button>
                 </div>
             </div>
@@ -3469,7 +3400,7 @@ function displayArticleSearchResults(articles, sorties, retours) {
     });
 
     resultsList.innerHTML = html;
-    resultsCount.textContent = i18n.t('search.resultsCount', { count: articlesAvecFleche.length });
+    resultsCount.textContent = `${articlesAvecFleche.length} resultado(s)`;
     resultsContainer.style.display = 'block';
 
     // Ajouter les événements aux images
@@ -3508,10 +3439,10 @@ function displayAllSearchResults(articles, sorties, retours) {
         resultsList.innerHTML = `
             <div class="no-results">
                 <i class="fas fa-search"></i>
-                <p>${i18n.t('noArticlesFound')}</p>
+                <p>No se encontraron artículos</p>
             </div>
         `;
-        resultsCount.textContent = `0 ${i18n.t('results')}`;
+        resultsCount.textContent = '0 resultado(s)';
         resultsContainer.style.display = 'block';
         return;
     }
@@ -3560,18 +3491,18 @@ function displayAllSearchResults(articles, sorties, retours) {
                 <div class="article-result-info">
                     <h6>${article.nom}</h6>
                     <div class="article-result-details">
-                        <span>${article.numero || i18n.t('noNumber')}</span>
+                        <span>${article.numero || 'Sin número'}</span>
                         ${stats ? `
                             <span class="${aUneFleche ? 'status-arrow' : 'status-none'}">
-                                ${aUneFleche ? `${i18n.t('toReturn')} ${stats.quantiteRestante}` : i18n.t('allReturned')}
+                                ${aUneFleche ? `Por devolver: ${stats.quantiteRestante}` : 'Todo devuelto'}
                             </span>
-                        ` : `<span class="status-none">${i18n.t('notUsed')}</span>`}
+                        ` : `<span class="status-none">No utilizado</span>`}
                         ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
                     </div>
                     <div class="article-date-info">
                         ${stats?.derniereSortie ?
-                            `<small><i class="far fa-calendar"></i> ${i18n.t('lastExit')} ${formatDate(stats.derniereSortie.created_at)}</small>` :
-                            `<small><i class="fas fa-info-circle"></i> ${i18n.t('notUsedInProject')}</small>`
+                            `<small><i class="far fa-calendar"></i> Última salida: ${formatDate(stats.derniereSortie.created_at)}</small>` :
+                            `<small><i class="fas fa-info-circle"></i> No utilizado en este proyecto</small>`
                         }
                     </div>
                 </div>
@@ -3581,12 +3512,12 @@ function displayAllSearchResults(articles, sorties, retours) {
                                 data-mouvement-id="${stats.derniereSortie?.id}"
                                 data-article-id="${article.id}"
                                 data-quantity="${stats.quantiteRestante}">
-                            <i class="fas fa-arrow-left"></i> ${i18n.t('return')}
+                            <i class="fas fa-arrow-left"></i> Devolver
                         </button>
                     ` : `
                         <button class="btn-secondary add-article-btn"
                                 data-article-id="${article.id}">
-                            <i class="fas fa-plus"></i> ${i18n.t('add')}
+                            <i class="fas fa-plus"></i> Agregar
                         </button>
                     `}
                 </div>
@@ -3595,7 +3526,7 @@ function displayAllSearchResults(articles, sorties, retours) {
     });
 
     resultsList.innerHTML = html;
-    resultsCount.textContent = `${articles.length} ${i18n.t('results')}`;
+    resultsCount.textContent = `${articles.length} resultado(s)`;
     resultsContainer.style.display = 'block';
 
     // Ajouter les événements aux images
@@ -3630,7 +3561,7 @@ function displayAllSearchResults(articles, sorties, retours) {
             const article = articles.find(a => a.id === articleId);
 
             if (article) {
-                const confirmer = confirm(i18n.t('confirmAddArticle', { articleName: article.nom }));
+                const confirmer = confirm(`Todos los artículos de "${article.nom}" ya han sido devueltos o no han sido utilizados.\n\n¿Desea realizar una nueva salida de este artículo?`);
 
                 if (confirmer) {
                     creerSortieEtRetour(article);
@@ -3655,7 +3586,7 @@ async function handleScanForReturn(barcode) {
         if (error) throw error;
 
         if (!articles || articles.length === 0) {
-            alert(i18n.t('barcodeNotFound', { barcode }));
+            alert(`Código de barras "${barcode}" no encontrado`);
             return;
         }
 
@@ -3668,7 +3599,7 @@ async function handleScanForReturn(barcode) {
         const articleSortie = sorties.find(s => s.article_id === article.id);
 
         if (!articleSortie) {
-            alert(i18n.t('articleNotUsedInProject', { projectName: state.currentProject.nom }));
+            alert(`El artículo no está siendo utilizado en el proyecto "${state.currentProject.nom}"`);
             return;
         }
 
@@ -3677,7 +3608,7 @@ async function handleScanForReturn(barcode) {
 
     } catch (error) {
         console.error('Erreur scan retour:', error);
-        alert(i18n.t('scanError'));
+        alert('Error al escanear el código de barras');
     }
 }
 
@@ -3777,7 +3708,7 @@ async function loadStockBas() {
 
             row.innerHTML = `
                 <td>${article.nom}</td>
-                <td>${disponible} (${i18n.t('stock')}: ${article.stock_actuel}, ${i18n.t('reserved')}: ${article.stock_reserve})</td>
+                <td>${disponible} (Stock: ${article.stock_actuel}, Reservado: ${article.stock_reserve})</td>
                 <td>${article.stock_minimum}</td>
                 <td class="${diff < 0 ? 'text-danger' : diff === 0 ? 'text-warning' : ''}">
                     ${diff}
@@ -3839,8 +3770,8 @@ async function loadRuptures() {
 
             row.innerHTML = `
                 <td>${article.nom}</td>
-                <td>${i18n.t('stock')}: ${article.stock_actuel}, ${i18n.t('reserved')}: ${article.stock_reserve}</td>
-                <td class="text-danger">${disponible} ${i18n.t('unitsAvailable')}</td>
+                <td>Stock: ${article.stock_actuel}, Reservado: ${article.stock_reserve}</td>
+                <td class="text-danger">${disponible} unidades disponibles</td>
             `;
 
             tbody.appendChild(row);
@@ -3858,15 +3789,15 @@ function setupAdminButtons() {
 
     // Boutons avec leurs permissions correspondantes
     const buttons = [
-        { id: 'statistiques', icon: 'fas fa-chart-bar', text: i18n.t('statistics'), perm: 'stats' },
-        { id: 'creation', icon: 'fas fa-plus-circle', text: i18n.t('createArticle'), perm: 'creation' },
-        { id: 'historique', icon: 'fas fa-history', text: i18n.t('history'), perm: 'historique' },
-        { id: 'impression', icon: 'fas fa-print', text: i18n.t('printing'), perm: 'impression' },
-        { id: 'configuration', icon: 'fas fa-cog', text: i18n.t('configuration'), perm: 'config' },
-        { id: 'gestion', icon: 'fas fa-box-open', text: i18n.t('articleManagement'), perm: 'gestion' },
-        { id: 'projet', icon: 'fas fa-project-diagram', text: i18n.t('projectManagement'), perm: 'projets' },
-        { id: 'reservations', icon: 'fas fa-clipboard-list', text: i18n.t('reservations'), perm: 'reservations' },
-        { id: 'vuestock', icon: 'fas fa-boxes', text: i18n.t('stock3DView'), perm: 'vuestock' }
+        { id: 'statistiques', icon: 'fas fa-chart-bar', text: 'Estadísticas', perm: 'stats' },
+        { id: 'creation', icon: 'fas fa-plus-circle', text: 'Crear Artículo', perm: 'creation' },
+        { id: 'historique', icon: 'fas fa-history', text: 'Historial', perm: 'historique' },
+        { id: 'impression', icon: 'fas fa-print', text: 'Impresión', perm: 'impression' },
+        { id: 'configuration', icon: 'fas fa-cog', text: 'Configuración', perm: 'config' },
+        { id: 'gestion', icon: 'fas fa-box-open', text: 'Gestión de Artículos', perm: 'gestion' },
+        { id: 'projet', icon: 'fas fa-project-diagram', text: 'Gestión de Proyectos', perm: 'projets' },
+        { id: 'reservations', icon: 'fas fa-clipboard-list', text: 'Reservas', perm: 'reservations' },
+        { id: 'vuestock', icon: 'fas fa-boxes', text: 'Vista 3D del Stock', perm: 'vuestock' }
     ];
 
     // Filtrer les boutons selon les permissions
@@ -3874,7 +3805,7 @@ function setupAdminButtons() {
 
     // Mettre à jour le compteur de permissions
     document.getElementById('permissionsCount').textContent =
-        `${allowedButtons.length} ${i18n.t('permissions')}`;
+        `${allowedButtons.length} permiso(s)`;
 
     // Créer les boutons
     adminButtons.innerHTML = '';
@@ -3900,7 +3831,7 @@ function setupAdminButtons() {
         adminButtons.innerHTML = `
             <div class="alert-empty">
                 <i class="fas fa-info-circle"></i>
-                <p>${i18n.t('noAdminPermissions')}</p>
+                <p>No tienes permisos de administrador asignados</p>
             </div>
         `;
     }
@@ -4033,7 +3964,7 @@ function openSearchPopup(results, searchType) {
     popup.innerHTML = `
         <div class="search-popup">
             <div class="popup-header">
-                <h3>${i18n.t('searchResults')} (${results.length})</h3>
+                <h3>Resultados de búsqueda (${results.length})</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
@@ -4044,21 +3975,21 @@ function openSearchPopup(results, searchType) {
                                 <h4>${article.nom}</h4>
                                 <div class="result-details">
                                     <span>${article.numero}</span>
-                                    <span>${article.code_barre || i18n.t('noBarcode')}</span>
-                                    <span>${i18n.t('stock')}: ${article.stock_actuel || 0}</span>
+                                    <span>${article.code_barre || 'Sin código de barras'}</span>
+                                    <span>Stock: ${article.stock_actuel || 0}</span>
                                     <span>${article.prix_unitaire ? article.prix_unitaire + '€' : ''}</span>
                                     ${article.emplacement ? `<span class="article-location">📍 ${article.emplacement}</span>` : ''}
                                 </div>
                             </div>
                             <div class="result-actions">
                                 <button class="btn-action view-details" data-index="${index}">
-                                    <i class="fas fa-eye"></i> ${i18n.t('details')}
+                                    <i class="fas fa-eye"></i> Detalles
                                 </button>
                                 <button class="btn-action print-label" data-id="${article.id}">
-                                    <i class="fas fa-print"></i> ${i18n.t('label')}
+                                    <i class="fas fa-print"></i> Etiqueta
                                 </button>
                                 <button class="btn-action show-location" data-index="${index}">
-                                    <i class="fas fa-map-marker-alt"></i> ${i18n.t('locate')}
+                                    <i class="fas fa-map-marker-alt"></i> Localizar
                                 </button>
                             </div>
                         </div>
@@ -4066,7 +3997,7 @@ function openSearchPopup(results, searchType) {
                 </div>
             </div>
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">${i18n.t('close')}</button>
+                <button class="btn btn-secondary close-popup-btn">Cerrar</button>
             </div>
         </div>
     `;
@@ -4150,7 +4081,7 @@ function openSearchPopup(results, searchType) {
             // METTRE À JOUR LE BOUTON INVENTAIRE (ajoute cette partie)
             const inventoryBtn = document.getElementById('inventoryBtn');
             if (inventoryBtn) {
-                inventoryBtn.textContent = `${i18n.t('inventory')} (${article.nom})`;
+                inventoryBtn.textContent = `Inventario (${article.nom})`;
                 inventoryBtn.disabled = false;
             }
         });
@@ -4170,47 +4101,47 @@ function openArticleDetailsPopup(article) {
             <div class="popup-content">
                 <div class="article-details-grid">
                     <div class="detail-item">
-                        <label>${i18n.t('number')}:</label>
-                        <span>${article.numero || i18n.t('notSpecified')}</span>
+                        <label>Número:</label>
+                        <span>${article.numero || 'No especificado'}</span>
                     </div>
                     <div class="detail-item">
-                        <label>${i18n.t('barcode')}:</label>
-                        <span>${article.code_barre || i18n.t('notSpecified')}</span>
+                        <label>Código de barras:</label>
+                        <span>${article.code_barre || 'No especificado'}</span>
                     </div>
                     <div class="detail-item">
-                        <label>${i18n.t('currentStock')}:</label>
+                        <label>Stock actual:</label>
                         <span class="${article.stock_actuel <= (article.stock_minimum || 0) ? 'text-danger' : ''}">
                             ${article.stock_actuel || 0}
                         </span>
                     </div>
                     <div class="detail-item">
-                        <label>${i18n.t('minimumStock')}:</label>
+                        <label>Stock mínimo:</label>
                         <span>${article.stock_minimum || 0}</span>
                     </div>
                     <div class="detail-item">
-                        <label>${i18n.t('reservedStock')}:</label>
+                        <label>Stock reservado:</label>
                         <span>${article.stock_reserve || 0}</span>
                     </div>
                     <div class="detail-item">
-                        <label>${i18n.t('unitPrice')}:</label>
-                        <span>${article.prix_unitaire ? article.prix_unitaire + '€' : i18n.t('notSpecified')}</span>
+                        <label>Precio unitario:</label>
+                        <span>${article.prix_unitaire ? article.prix_unitaire + '€' : 'No especificado'}</span>
                     </div>
                     <div class="detail-item full-width">
-                        <label>${i18n.t('description')}:</label>
-                        <p>${article.description || i18n.t('noDescription')}</p>
+                        <label>Descripción:</label>
+                        <p>${article.description || 'Sin descripción'}</p>
                     </div>
                     <div class="detail-item full-width">
-                        <label>${i18n.t('location')}:</label>
-                        <span>${article.emplacement || i18n.t('notSpecified')}</span>
+                        <label>Ubicación:</label>
+                        <span>${article.emplacement || 'No especificado'}</span>
                     </div>
                 </div>
 
                 <div class="action-buttons">
                     <button class="btn btn-primary edit-article-btn" data-id="${article.id}">
-                        <i class="fas fa-edit"></i> ${i18n.t('modify')}
+                        <i class="fas fa-edit"></i> Modificar
                     </button>
                     <button class="btn btn-secondary print-single-btn" data-id="${article.id}">
-                        <i class="fas fa-print"></i> ${i18n.t('printLabel')}
+                        <i class="fas fa-print"></i> Imprimir Etiqueta
                     </button>
                 </div>
             </div>
@@ -4258,54 +4189,54 @@ async function openEditArticlePopup(articleId) {
         popup.innerHTML = `
             <div class="edit-popup">
                 <div class="popup-header">
-                    <h3>${i18n.t('modify')}: ${article.nom}</h3>
+                    <h3>Modificar: ${article.nom}</h3>
                     <button class="close-popup">&times;</button>
                 </div>
                 <div class="popup-content">
                     <form id="editArticleForm">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="editNom">${i18n.t('name')} *</label>
+                                <label for="editNom">Nombre *</label>
                                 <input type="text" id="editNom" value="${article.nom || ''}" required>
                             </div>
                             <div class="form-group">
-                                <label for="editNumero">${i18n.t('number')} *</label>
+                                <label for="editNumero">Número *</label>
                                 <input type="text" id="editNumero" value="${article.numero || ''}" required>
                             </div>
                             <div class="form-group">
-                                <label for="editCodeBarre">${i18n.t('barcode')}</label>
+                                <label for="editCodeBarre">Código de barras</label>
                                 <input type="text" id="editCodeBarre" value="${article.code_barre || ''}">
                             </div>
                             <div class="form-group">
-                                <label for="editStockActuel">${i18n.t('currentStock')}</label>
+                                <label for="editStockActuel">Stock actual</label>
                                 <input type="number" id="editStockActuel" value="${article.stock_actuel || 0}" min="0">
                             </div>
                             <div class="form-group">
-                                <label for="editStockMinimum">${i18n.t('minimumStock')}</label>
+                                <label for="editStockMinimum">Stock mínimo</label>
                                 <input type="number" id="editStockMinimum" value="${article.stock_minimum || 0}" min="0">
                             </div>
                             <div class="form-group">
-                                <label for="editPrix">${i18n.t('unitPrice')} (€)</label>
+                                <label for="editPrix">Precio unitario (€)</label>
                                 <input type="number" id="editPrix" step="0.01" value="${article.prix_unitaire || ''}">
                             </div>
                             <div class="form-group full-width">
-                                <label for="editDescription">${i18n.t('description')}</label>
+                                <label for="editDescription">Descripción</label>
                                 <textarea id="editDescription" rows="3">${article.description || ''}</textarea>
                             </div>
                             <div class="form-group">
-                                <label for="editEmplacement">${i18n.t('location')}</label>
+                                <label for="editEmplacement">Ubicación</label>
                                 <input type="text" id="editEmplacement" value="${article.emplacement || ''}">
                             </div>
                             <div class="form-group">
-                                <label for="editCategorie">${i18n.t('category')}</label>
+                                <label for="editCategorie">Categoría</label>
                                 <input type="text" id="editCategorie" value="${article.categorie || ''}">
                             </div>
                         </div>
 
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
+                            <button type="button" class="btn btn-secondary close-popup-btn">Cancelar</button>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> ${i18n.t('save')}
+                                <i class="fas fa-save"></i> Guardar
                             </button>
                         </div>
                     </form>
@@ -4355,7 +4286,7 @@ async function openEditArticlePopup(articleId) {
 
                 if (error) throw error;
 
-                alert(i18n.t('articleModifiedSuccess'));
+                alert('Artículo modificado con éxito');
                 document.body.removeChild(popup);
 
                 // Recharger les données
@@ -4363,13 +4294,13 @@ async function openEditArticlePopup(articleId) {
 
             } catch (error) {
                 console.error('Erreur modification article:', error);
-                alert(i18n.t('modificationError'));
+                alert('Error al modificar el artículo');
             }
         });
 
     } catch (error) {
         console.error('Erreur chargement article:', error);
-        alert(i18n.t('articleLoadError'));
+        alert('Error al cargar el artículo');
     }
 }
 
@@ -4380,7 +4311,7 @@ function openPrintLabelPopup(article) {
     popup.innerHTML = `
         <div class="print-popup">
             <div class="popup-header">
-                <h3>${i18n.t('printLabel')}</h3>
+                <h3>Imprimir Etiqueta</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
@@ -4389,7 +4320,7 @@ function openPrintLabelPopup(article) {
                         <div class="label-title">${article.nom}</div>
                         <div class="label-details">
                             <div>${article.numero}</div>
-                            <div>${i18n.t('stock')}: ${article.stock_actuel || 0}</div>
+                            <div>Stock: ${article.stock_actuel || 0}</div>
                             ${article.prix_unitaire ? `<div>${article.prix_unitaire}€</div>` : ''}
                         </div>
                         <div class="label-barcode">
@@ -4400,39 +4331,39 @@ function openPrintLabelPopup(article) {
 
                 <div class="print-options">
                     <div class="form-group">
-                        <label for="printCopies">${i18n.t('numberOfCopies')}</label>
+                        <label for="printCopies">Número de copias</label>
                         <input type="number" id="printCopies" value="1" min="1" max="100">
                     </div>
 
                     <div class="form-group">
-                        <label for="printFormat">${i18n.t('format')}</label>
+                        <label for="printFormat">Formato</label>
                         <select id="printFormat">
-                            <option value="small">${i18n.t('small')} (40x20mm)</option>
-                            <option value="medium" selected>${i18n.t('medium')} (60x40mm)</option>
-                            <option value="large">${i18n.t('large')} (100x70mm)</option>
+                            <option value="small">Pequeño (40x20mm)</option>
+                            <option value="medium" selected>Mediano (60x40mm)</option>
+                            <option value="large">Grande (100x70mm)</option>
                         </select>
                     </div>
 
                     <div class="checkbox-group">
                         <label>
-                            <input type="checkbox" id="showPrice" checked> ${i18n.t('showPrice')}
+                            <input type="checkbox" id="showPrice" checked> Mostrar precio
                         </label>
                         <label>
-                            <input type="checkbox" id="showStock" checked> ${i18n.t('showStock')}
+                            <input type="checkbox" id="showStock" checked> Mostrar stock
                         </label>
                         <label>
-                            <input type="checkbox" id="showDate"> ${i18n.t('showDate')}
+                            <input type="checkbox" id="showDate"> Mostrar fecha
                         </label>
                     </div>
                 </div>
 
                 <div class="print-actions">
-                    <button type="button" class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
+                    <button type="button" class="btn btn-secondary close-popup-btn">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="printLabelBtn">
-                        <i class="fas fa-print"></i> ${i18n.t('print')}
+                        <i class="fas fa-print"></i> Imprimir
                     </button>
                     <button type="button" class="btn btn-info" id="addToPrintQueueBtn">
-                        <i class="fas fa-list"></i> ${i18n.t('addToQueue')}
+                        <i class="fas fa-list"></i> Añadir a la cola
                     </button>
                 </div>
             </div>
@@ -4459,14 +4390,14 @@ function openPrintLabelPopup(article) {
     // Bouton imprimer
     popup.querySelector('#printLabelBtn').addEventListener('click', () => {
         const copies = parseInt(popup.querySelector('#printCopies').value) || 1;
-        alert(i18n.t('printingLabels', { copies, articleName: article.nom }));
+        alert(`Imprimiendo ${copies} etiqueta(s) para: ${article.nom}`);
         document.body.removeChild(popup);
     });
 
     // Bouton ajouter à la file
     popup.querySelector('#addToPrintQueueBtn').addEventListener('click', () => {
         const copies = parseInt(popup.querySelector('#printCopies').value) || 1;
-        alert(i18n.t('labelsAddedToQueue', { copies, articleName: article.nom }));
+        alert(`${copies} etiqueta(s) añadida(s) a la cola de impresión para: ${article.nom}`);
         document.body.removeChild(popup);
     });
 }
@@ -4497,14 +4428,14 @@ async function openHistoryPopup(articleId) {
                     <table class="history-table">
                         <thead>
                             <tr>
-                                <th>${i18n.t('date')}</th>
-                                <th>${i18n.t('type')}</th>
-                                <th>${i18n.t('quantity')}</th>
-                                <th>${i18n.t('stockBefore')}</th>
-                                <th>${i18n.t('stockAfter')}</th>
-                                <th>${i18n.t('project')}</th>
-                                <th>${i18n.t('user')}</th>
-                                <th>${i18n.t('reasonComment')}</th>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Cantidad</th>
+                                <th>Stock Antes</th>
+                                <th>Stock Después</th>
+                                <th>Proyecto</th>
+                                <th>Usuario</th>
+                                <th>Razón/Comentario</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -4520,33 +4451,33 @@ async function openHistoryPopup(articleId) {
                                 switch(mvt.type) {
                                     case 'entree':
                                         typeIcon = 'fa-plus-circle';
-                                        typeText = i18n.t('entry');
+                                        typeText = 'Entrada';
                                         typeClass = 'success';
                                         break;
                                     case 'sortie':
                                         typeIcon = 'fa-minus-circle';
-                                        typeText = i18n.t('exit');
+                                        typeText = 'Salida';
                                         typeClass = 'danger';
                                         break;
                                     case 'reservation':
                                         typeIcon = 'fa-calendar-check';
-                                        typeText = i18n.t('reservation');
+                                        typeText = 'Reserva';
                                         typeClass = 'warning';
                                         break;
                                     default:
                                         typeIcon = 'fa-exchange-alt';
-                                        typeText = i18n.t('adjustment');
+                                        typeText = 'Ajuste';
                                         typeClass = 'info';
                                 }
 
                                 // Formatage date
                                 const dateFormatted = mvt.date_mouvement ?
                                     mvt.date_mouvement.split('-').reverse().join('/') : // Convertir 2024-01-15 en 15/01/2024
-                                    new Date(mvt.created_at).toLocaleDateString('fr-FR');
+                                    new Date(mvt.created_at).toLocaleDateString('es-ES');
 
                                 const timeFormatted = mvt.heure_mouvement ?
                                     mvt.heure_mouvement.substring(0, 5) : // Garder HH:MM seulement
-                                    new Date(mvt.created_at).toLocaleTimeString('fr-FR', {
+                                    new Date(mvt.created_at).toLocaleTimeString('es-ES', {
                                         hour: '2-digit',
                                         minute: '2-digit'
                                     });
@@ -4562,13 +4493,13 @@ async function openHistoryPopup(articleId) {
                                 // Raison/Commentaire
                                 let raisonComment = '';
                                 if (mvt.raison) {
-                                    raisonComment += `<div><strong>${i18n.t('reason')}:</strong> ${mvt.raison}</div>`;
+                                    raisonComment += `<div><strong>Razón:</strong> ${mvt.raison}</div>`;
                                 }
                                 if (mvt.commentaire) {
-                                    raisonComment += `<div><strong>${i18n.t('comment')}:</strong> ${mvt.commentaire}</div>`;
+                                    raisonComment += `<div><strong>Comentario:</strong> ${mvt.commentaire}</div>`;
                                 }
                                 if (mvt.motif) {
-                                    raisonComment += `<div><strong>${i18n.t('motive')}:</strong> ${mvt.motif}</div>`;
+                                    raisonComment += `<div><strong>Motivo:</strong> ${mvt.motif}</div>`;
                                 }
 
                                 return `
@@ -4590,7 +4521,7 @@ async function openHistoryPopup(articleId) {
                                         <td>${projetInfo || '-'}</td>
                                         <td>
                                             <div>${mvt.utilisateur || '-'}</div>
-                                            ${mvt.responsable ? `<small>${i18n.t('responsible')}: ${mvt.responsable}</small>` : ''}
+                                            ${mvt.responsable ? `<small>Responsable: ${mvt.responsable}</small>` : ''}
                                         </td>
                                         <td class="text-left">${raisonComment || '-'}</td>
                                     </tr>
@@ -4604,7 +4535,7 @@ async function openHistoryPopup(articleId) {
             tableHTML = `
                 <div class="empty-history">
                     <i class="fas fa-history"></i>
-                    <p>${i18n.t('noMovementRecorded')}</p>
+                    <p>No hay movimientos registrados para este artículo</p>
                 </div>
             `;
         }
@@ -4612,14 +4543,14 @@ async function openHistoryPopup(articleId) {
         popup.innerHTML = `
             <div class="history-popup">
                 <div class="popup-header">
-                    <h3><i class="fas fa-history"></i> ${i18n.t('movementHistory')}</h3>
+                    <h3><i class="fas fa-history"></i> Historial de Movimientos</h3>
                     <button class="close-popup">&times;</button>
                 </div>
                 <div class="popup-content">
                     ${tableHTML}
                 </div>
                 <div class="popup-footer">
-                    <button class="btn btn-secondary close-popup-btn">${i18n.t('close')}</button>
+                    <button class="btn btn-secondary close-popup-btn">Cerrar</button>
                 </div>
             </div>
         `;
@@ -4643,7 +4574,7 @@ async function openHistoryPopup(articleId) {
 
     } catch (error) {
         console.error('Erreur chargement historique:', error);
-        alert(i18n.t('historyLoadError'));
+        alert('Error al cargar el historial');
     }
 }
 
@@ -4675,7 +4606,7 @@ async function searchByName() {
     const searchTerm = document.getElementById('searchNomInput').value.trim();
 
     if (!searchTerm) {
-        alert(i18n.t('enterSearchTerm'));
+        alert('Por favor ingrese un término de búsqueda');
         return;
     }
 
@@ -4689,18 +4620,15 @@ async function searchByName() {
         if (error) throw error;
 
         if (!articles || articles.length === 0) {
-            alert(i18n.t('noArticlesFound'));
+            alert('No se encontraron artículos');
             return;
         }
 
         openSearchPopup(articles, 'nom');
 
-
-        // ========== FIN AJOUT ==========
-
     } catch (error) {
         console.error('Erreur de recherche:', error);
-        alert(i18n.t('searchError'));
+        alert('Error en la búsqueda');
     }
 }
 
@@ -4708,7 +4636,7 @@ async function searchByCodebarre() {
     const codebarre = document.getElementById('searchCodebarreInput').value.trim();
 
     if (!codebarre) {
-        alert(i18n.t('enterOrScanBarcode'));
+        alert('Por favor ingrese o escanee un código de barras');
         return;
     }
 
@@ -4722,7 +4650,7 @@ async function searchByCodebarre() {
         if (error) throw error;
 
         if (!articles || articles.length === 0) {
-            alert(i18n.t('barcodeNotFoundSimple'));
+            alert('Código de barras no encontrado');
             return;
         }
 
@@ -4730,7 +4658,7 @@ async function searchByCodebarre() {
 
     } catch (error) {
         console.error('Erreur de recherche par code-barre:', error);
-        alert(i18n.t('searchError'));
+        alert('Error en la búsqueda');
     }
 }
 
@@ -4754,11 +4682,11 @@ async function openStockOutPopup(article = null, scanMode = false) {
     const buildLocationString = (article) => {
         const parts = [];
         if (article.rack_display_name || article.rack_code) {
-            parts.push(`${i18n.t('location')}: ${article.rack_display_name || article.rack_code}`);
+            parts.push(`Ubicación: ${article.rack_display_name || article.rack_code}`);
         }
-        if (article.level_code) parts.push(`${i18n.t('floor')}: ${article.level_code}`);
-        if (article.slot_code) parts.push(`${i18n.t('position')}: ${article.slot_code}`);
-        return parts.join(' - ') || i18n.t('notSpecified');
+        if (article.level_code) parts.push(`Piso: ${article.level_code}`);
+        if (article.slot_code) parts.push(`Posición: ${article.slot_code}`);
+        return parts.join(' - ') || 'No especificado';
     };
 
     const locationString = initialData ? buildLocationString(article) : '';
@@ -4766,24 +4694,24 @@ async function openStockOutPopup(article = null, scanMode = false) {
     popup.innerHTML = `
         <div class="stock-popup">
             <div class="popup-header">
-                <h3><i class="fas fa-arrow-up"></i> ${i18n.t('stockOut')}</h3>
+                <h3><i class="fas fa-arrow-up"></i> Salida de Stock</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
                 <div class="popup-section">
-                    <h4><i class="fas fa-search"></i> ${i18n.t('articleSelection')}</h4>
+                    <h4><i class="fas fa-search"></i> Selección del Artículo</h4>
                     <div class="form-group">
-                        <label>${i18n.t('quickSearch')}</label>
+                        <label>Búsqueda Rápida</label>
                         <div class="search-combo">
                             <input type="text"
                                    id="outSearchInput"
-                                   placeholder="${i18n.t('nameNumberOrBarcode')}"
+                                   placeholder="Nombre, número o código de barras"
                                    class="search-input">
                             <button id="outSearchBtn" class="search-btn-sm">
                                 <i class="fas fa-search"></i>
                             </button>
                             <button id="outScanBtn" class="scan-btn-sm">
-                                <i class="fas fa-camera"></i> ${i18n.t('scan')}
+                                <i class="fas fa-camera"></i> Escanear
                             </button>
                         </div>
                     </div>
@@ -4794,10 +4722,10 @@ async function openStockOutPopup(article = null, scanMode = false) {
                                 <strong>${initialData.articleName}</strong>
                                 <div class="article-details">
                                     <span>${initialData.articleNumber}</span>
-                                    <span>${i18n.t('stock')}: ${initialData.currentStock}</span>
-                                    ${initialData.barcode ? `<span>${i18n.t('barcodeShort')}: ${initialData.barcode}</span>` : ''}
+                                    <span>Stock: ${initialData.currentStock}</span>
+                                    ${initialData.barcode ? `<span>CB: ${initialData.barcode}</span>` : ''}
                                 </div>
-                                ${initialData.unitPrice > 0 ? `<div class="article-price">${i18n.t('price')}: ${initialData.unitPrice} €</div>` : ''}
+                                ${initialData.unitPrice > 0 ? `<div class="article-price">Precio: ${initialData.unitPrice} €</div>` : ''}
                                 ${locationString ? `<div class="article-location"><i class="fas fa-map-marker-alt"></i> ${locationString}</div>` : ''}
                             </div>
                         </div>
@@ -4809,91 +4737,91 @@ async function openStockOutPopup(article = null, scanMode = false) {
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-edit"></i> ${i18n.t('outDetails')}</h4>
+                    <h4><i class="fas fa-edit"></i> Detalles de la Salida</h4>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="outQuantity">${i18n.t('quantity')} *</label>
+                            <label for="outQuantity">Cantidad *</label>
                             <input type="number"
                                    id="outQuantity"
                                    value="1"
                                    min="1"
                                    ${initialData ? `max="${initialData.currentStock}"` : ''}
                                    required>
-                            <small id="outStockInfo">${initialData ? `${i18n.t('availableStock')}: ${initialData.currentStock}` : ''}</small>
+                            <small id="outStockInfo">${initialData ? `Stock disponible: ${initialData.currentStock}` : ''}</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="outProject">${i18n.t('projectDestination')} *</label>
+                            <label for="outProject">Proyecto Destino *</label>
                             <select id="outProject" required>
-                                <option value="">${i18n.t('select')}</option>
+                                <option value="">Seleccionar</option>
                                 <!-- Les options seront chargées dynamiquement -->
-                                <option value="vente_simple">${i18n.t('simpleSale')}</option>
+                                <option value="venta_simple">Venta Simple</option>
                             </select>
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="outReason">${i18n.t('outReason')} *</label>
+                            <label for="outReason">Razón de Salida *</label>
                             <select id="outReason" required>
-                                <option value="">${i18n.t('selectReason')}</option>
-                                <option value="utilisation_projet">${i18n.t('projectUse')}</option>
-                                <option value="vente_simple">${i18n.t('simpleSale')}</option>
-                                <option value="retour_fournisseur">${i18n.t('supplierReturn')}</option>
-                                <option value="don">${i18n.t('donation')}</option>
-                                <option value="perte">${i18n.t('lossDamage')}</option>
-                                <option value="autre">${i18n.t('other')}</option>
+                                <option value="">Seleccionar razón</option>
+                                <option value="utilisation_projet">Uso en Proyecto</option>
+                                <option value="vente_simple">Venta Simple</option>
+                                <option value="retour_fournisseur">Devolución a Proveedor</option>
+                                <option value="don">Donación</option>
+                                <option value="perte">Pérdida/Daño</option>
+                                <option value="autre">Otro</option>
                             </select>
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="outNotes">${i18n.t('additionalNotes')}</label>
+                            <label for="outNotes">Notas Adicionales</label>
                             <textarea id="outNotes"
                                       rows="3"
-                                      placeholder="${i18n.t('additionalDetails')}"></textarea>
+                                      placeholder="Detalles adicionales"></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-info-circle"></i> ${i18n.t('locationInfo')}</h4>
+                    <h4><i class="fas fa-info-circle"></i> Información de Ubicación</h4>
                     <div class="location-display">
                         <div class="location-header">
                             <i class="fas fa-map-marker-alt"></i>
-                            <span>${i18n.t('articleLocation')}</span>
+                            <span>Ubicación del Artículo</span>
                         </div>
                         <div class="location-details" id="outLocationDetails">
-                            ${locationString || i18n.t('notSpecified')}
+                            ${locationString || 'No especificado'}
                         </div>
                         <div class="location-note">
-                            <small><i class="fas fa-lightbulb"></i> ${i18n.t('checkLocationNote')}</small>
+                            <small><i class="fas fa-lightbulb"></i> Verifica la ubicación antes de retirar el artículo</small>
                         </div>
                     </div>
 
                     <div class="form-group" style="margin-top: 15px;">
-                        <label for="outUnitPrice">${i18n.t('outUnitPrice')} (€)</label>
+                        <label for="outUnitPrice">Precio Unitario de Salida (€)</label>
                         <input type="number"
                                id="outUnitPrice"
                                step="0.01"
                                placeholder="0.00"
                                value="${initialData ? initialData.unitPrice : ''}">
-                        <small>${i18n.t('saleOrOutPrice')}</small>
+                        <small>Precio de venta o salida si aplica</small>
                     </div>
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-user"></i> ${i18n.t('responsible')}</h4>
+                    <h4><i class="fas fa-user"></i> Responsable</h4>
                     <div class="form-group">
                         <div class="user-badge current-user">
                             <i class="fas fa-user"></i>
-                            <span>${currentUser.username} (${currentUser.isAdmin ? i18n.t('administrator') : i18n.t('user')})</span>
+                            <span>${currentUser.username} (${currentUser.isAdmin ? 'Administrador' : 'Usuario'})</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
+                <button class="btn btn-secondary close-popup-btn">Cancelar</button>
                 <button class="btn btn-danger" id="confirmStockOutBtn">
-                    <i class="fas fa-check-circle"></i> ${i18n.t('confirmOut')}
+                    <i class="fas fa-check-circle"></i> Confirmar Salida
                 </button>
             </div>
         </div>
@@ -4910,10 +4838,10 @@ async function openStockOutPopup(article = null, scanMode = false) {
 
             if (quantity > stock) {
                 stockInfo.style.color = 'var(--danger-color)';
-                stockInfo.textContent = `⚠️ ${i18n.t('exceedsAvailableStock', { stock })}`;
+                stockInfo.textContent = `⚠️ La cantidad supera el stock disponible (${stock})`;
             } else {
                 stockInfo.style.color = '';
-                stockInfo.textContent = `${i18n.t('availableStock')}: ${stock}`;
+                stockInfo.textContent = `Stock disponible: ${stock}`;
             }
         });
 
@@ -4922,14 +4850,14 @@ async function openStockOutPopup(article = null, scanMode = false) {
         const reasonSelect = document.getElementById('outReason');
 
         projectSelect.addEventListener('change', function() {
-            if (this.value === 'vente_simple') {
+            if (this.value === 'venta_simple') {
                 reasonSelect.value = 'vente_simple';
             }
         });
 
         reasonSelect.addEventListener('change', function() {
-            if (this.value === 'vente_simple') {
-                projectSelect.value = 'vente_simple';
+            if (this.value === 'venta_simple') {
+                projectSelect.value = 'venta_simple';
             }
         });
     }
@@ -4961,11 +4889,11 @@ async function openStockInPopup(article = null, scanMode = false) {
     const buildLocationString = (article) => {
         const parts = [];
         if (article.rack_display_name || article.rack_code) {
-            parts.push(`${i18n.t('location')}: ${article.rack_display_name || article.rack_code}`);
+            parts.push(`Ubicación: ${article.rack_display_name || article.rack_code}`);
         }
-        if (article.level_code) parts.push(`${i18n.t('floor')}: ${article.level_code}`);
-        if (article.slot_code) parts.push(`${i18n.t('position')}: ${article.slot_code}`);
-        return parts.join(' - ') || i18n.t('notSpecified');
+        if (article.level_code) parts.push(`Piso: ${article.level_code}`);
+        if (article.slot_code) parts.push(`Posición: ${article.slot_code}`);
+        return parts.join(' - ') || 'No especificado';
     };
 
     const locationString = initialData ? buildLocationString(article) : '';
@@ -4973,24 +4901,24 @@ async function openStockInPopup(article = null, scanMode = false) {
     popup.innerHTML = `
         <div class="stock-popup">
             <div class="popup-header">
-                <h3><i class="fas fa-arrow-down"></i> ${i18n.t('stockIn')}</h3>
+                <h3><i class="fas fa-arrow-down"></i> Entrada de Stock</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
                 <div class="popup-section">
-                    <h4><i class="fas fa-search"></i> ${i18n.t('articleSelection')}</h4>
+                    <h4><i class="fas fa-search"></i> Selección del Artículo</h4>
                     <div class="form-group">
-                        <label>${i18n.t('quickSearch')}</label>
+                        <label>Búsqueda Rápida</label>
                         <div class="search-combo">
                             <input type="text"
                                    id="inSearchInput"
-                                   placeholder="${i18n.t('nameNumberOrBarcode')}"
+                                   placeholder="Nombre, número o código de barras"
                                    class="search-input">
                             <button id="inSearchBtn" class="search-btn-sm">
                                 <i class="fas fa-search"></i>
                             </button>
                             <button id="inScanBtn" class="scan-btn-sm">
-                                <i class="fas fa-camera"></i> ${i18n.t('scan')}
+                                <i class="fas fa-camera"></i> Escanear
                             </button>
                         </div>
                     </div>
@@ -5001,10 +4929,10 @@ async function openStockInPopup(article = null, scanMode = false) {
                                 <strong>${initialData.articleName}</strong>
                                 <div class="article-details">
                                     <span>${initialData.articleNumber}</span>
-                                    ${initialData.barcode ? `<span>${i18n.t('barcodeShort')}: ${initialData.barcode}</span>` : ''}
-                                    <span>${i18n.t('currentStock')}: ${initialData.currentStock}</span>
+                                    ${initialData.barcode ? `<span>CB: ${initialData.barcode}</span>` : ''}
+                                    <span>Stock actual: ${initialData.currentStock}</span>
                                 </div>
-                                ${initialData.unitPrice > 0 ? `<div class="article-price">${i18n.t('unitPrice')}: ${initialData.unitPrice} €</div>` : ''}
+                                ${initialData.unitPrice > 0 ? `<div class="article-price">Precio unitario: ${initialData.unitPrice} €</div>` : ''}
                                 ${locationString ? `<div class="article-location"><i class="fas fa-map-marker-alt"></i> ${locationString}</div>` : ''}
                             </div>
                         </div>
@@ -5016,10 +4944,10 @@ async function openStockInPopup(article = null, scanMode = false) {
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-plus-circle"></i> ${i18n.t('inDetails')}</h4>
+                    <h4><i class="fas fa-plus-circle"></i> Detalles de la Entrada</h4>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="inQuantity">${i18n.t('quantity')} *</label>
+                            <label for="inQuantity">Cantidad *</label>
                             <input type="number"
                                    id="inQuantity"
                                    value="1"
@@ -5029,68 +4957,68 @@ async function openStockInPopup(article = null, scanMode = false) {
                         </div>
 
                         <div class="form-group">
-                            <label for="inSupplier">${i18n.t('supplier')}</label>
+                            <label for="inSupplier">Proveedor</label>
                             <input type="text"
                                    id="inSupplier"
-                                   placeholder="${i18n.t('supplierName')}">
+                                   placeholder="Nombre del proveedor">
                         </div>
 
                         <div class="form-group">
-                            <label for="inPurchaseOrder">${i18n.t('purchaseOrder')}</label>
+                            <label for="inPurchaseOrder">Orden de Compra</label>
                             <input type="text"
                                    id="inPurchaseOrder"
-                                   placeholder="${i18n.t('orderNumber')}">
+                                   placeholder="Número de pedido">
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="inReason">${i18n.t('inType')} *</label>
+                            <label for="inReason">Tipo de Entrada *</label>
                             <select id="inReason" required>
-                                <option value="">${i18n.t('selectType')}</option>
-                                <option value="achat">${i18n.t('newPurchase')}</option>
-                                <option value="reappro">${i18n.t('restocking')}</option>
-                                <option value="retour_projet">${i18n.t('projectReturn')}</option>
-                                <option value="inventaire">${i18n.t('inventoryCorrection')}</option>
-                                <option value="don">${i18n.t('donation')}</option>
-                                <option value="vente_simple">${i18n.t('simpleSaleReturn')}</option>
-                                <option value="autre">${i18n.t('other')}</option>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="achat">Nueva Compra</option>
+                                <option value="reappro">Reabastecimiento</option>
+                                <option value="retour_projet">Devolución de Proyecto</option>
+                                <option value="inventaire">Corrección de Inventario</option>
+                                <option value="don">Donación</option>
+                                <option value="vente_simple">Devolución Venta Simple</option>
+                                <option value="autre">Otro</option>
                             </select>
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="inNotes">${i18n.t('notes')}</label>
+                            <label for="inNotes">Notas</label>
                             <textarea id="inNotes"
                                       rows="3"
-                                      placeholder="${i18n.t('additionalDetails')}"></textarea>
+                                      placeholder="Detalles adicionales"></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-tags"></i> ${i18n.t('articleInfo')}</h4>
+                    <h4><i class="fas fa-tags"></i> Información del Artículo</h4>
                     <div class="info-grid">
                         <div class="info-item">
-                            <label>${i18n.t('currentUnitPrice')}:</label>
+                            <label>Precio Unitario Actual:</label>
                             <div class="info-value" id="inCurrentPrice">
-                                ${initialData ? `${initialData.unitPrice} €` : i18n.t('notDefined')}
+                                ${initialData ? `${initialData.unitPrice} €` : 'No definido'}
                             </div>
                         </div>
                         <div class="info-item">
-                            <label>${i18n.t('usualLocation')}:</label>
+                            <label>Ubicación Habitual:</label>
                             <div class="info-value" id="inCurrentLocation">
-                                ${locationString || i18n.t('notSpecified')}
+                                ${locationString || 'No especificado'}
                             </div>
                         </div>
                     </div>
 
                     <div class="form-grid" style="margin-top: 15px;">
                         <div class="form-group">
-                            <label for="inUnitPrice">${i18n.t('newUnitPrice')} (€)</label>
+                            <label for="inUnitPrice">Nuevo Precio Unitario (€)</label>
                             <input type="number"
                                    id="inUnitPrice"
                                    step="0.01"
                                    placeholder="0.00"
                                    value="${initialData ? initialData.unitPrice : ''}">
-                            <small>${i18n.t('leaveEmptyToKeepCurrent')}</small>
+                            <small>Dejar vacío para mantener el actual</small>
                         </div>
 
                     </div>
@@ -5098,9 +5026,9 @@ async function openStockInPopup(article = null, scanMode = false) {
             </div>
 
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
+                <button class="btn btn-secondary close-popup-btn">Cancelar</button>
                 <button class="btn btn-success" id="confirmStockInBtn">
-                    <i class="fas fa-check-circle"></i> ${i18n.t('confirmIn')}
+                    <i class="fas fa-check-circle"></i> Confirmar Entrada
                 </button>
             </div>
         </div>
@@ -5133,11 +5061,11 @@ async function openProjectReservationPopup(article = null) {
     const buildLocationString = (article) => {
         const parts = [];
         if (article.rack_display_name || article.rack_code) {
-            parts.push(`${i18n.t('aisle')}: ${article.rack_display_name || article.rack_code}`);
+            parts.push(`Pasillo: ${article.rack_display_name || article.rack_code}`);
         }
-        if (article.level_code) parts.push(`${i18n.t('shelf')}: ${article.level_code}`);
-        if (article.slot_code) parts.push(`${i18n.t('position')}: ${article.slot_code}`);
-        return parts.join(' - ') || i18n.t('notSpecified');
+        if (article.level_code) parts.push(`Estante: ${article.level_code}`);
+        if (article.slot_code) parts.push(`Posición: ${article.slot_code}`);
+        return parts.join(' - ') || 'No especificado';
     };
 
     const locationString = initialData ? buildLocationString(article) : '';
@@ -5145,24 +5073,24 @@ async function openProjectReservationPopup(article = null) {
     popup.innerHTML = `
         <div class="stock-popup">
             <div class="popup-header">
-                <h3><i class="fas fa-calendar-check"></i> ${i18n.t('projectReservation')}</h3>
+                <h3><i class="fas fa-calendar-check"></i> Reserva para Proyecto</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
                 <div class="popup-section">
-                    <h4><i class="fas fa-search"></i> ${i18n.t('articleToReserve')}</h4>
+                    <h4><i class="fas fa-search"></i> Artículo a Reservar</h4>
                     <div class="form-group">
-                        <label>${i18n.t('quickSearch')}</label>
+                        <label>Búsqueda Rápida</label>
                         <div class="search-combo">
                             <input type="text"
                                    id="resSearchInput"
-                                   placeholder="${i18n.t('nameNumberOrBarcode')}"
+                                   placeholder="Nombre, número o código de barras"
                                    class="search-input">
                             <button id="resSearchBtn" class="search-btn-sm">
                                 <i class="fas fa-search"></i>
                             </button>
                             <button id="resScanBtn" class="scan-btn-sm">
-                                <i class="fas fa-camera"></i> ${i18n.t('scan')}
+                                <i class="fas fa-camera"></i> Escanear
                             </button>
                         </div>
                     </div>
@@ -5173,10 +5101,10 @@ async function openProjectReservationPopup(article = null) {
                                 <strong>${initialData.articleName}</strong>
                                 <div class="article-details">
                                     <span>${initialData.articleNumber}</span>
-                                    <span>${i18n.t('availableStock')}: ${initialData.currentStock - initialData.reservedStock}</span>
-                                    ${initialData.barcode ? `<span>${i18n.t('barcodeShort')}: ${initialData.barcode}</span>` : ''}
+                                    <span>Stock disponible: ${initialData.currentStock - initialData.reservedStock}</span>
+                                    ${initialData.barcode ? `<span>CB: ${initialData.barcode}</span>` : ''}
                                 </div>
-                                ${initialData.unitPrice > 0 ? `<div class="article-price">${i18n.t('price')}: ${initialData.unitPrice} €</div>` : ''}
+                                ${initialData.unitPrice > 0 ? `<div class="article-price">Precio: ${initialData.unitPrice} €</div>` : ''}
                                 ${locationString ? `<div class="article-location"><i class="fas fa-map-marker-alt"></i> ${locationString}</div>` : ''}
                             </div>
                         </div>
@@ -5188,10 +5116,10 @@ async function openProjectReservationPopup(article = null) {
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-project-diagram"></i> ${i18n.t('reservationDetails')}</h4>
+                    <h4><i class="fas fa-project-diagram"></i> Detalles de la Reserva</h4>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="resQuantity">${i18n.t('quantityToReserve')} *</label>
+                            <label for="resQuantity">Cantidad a Reservar *</label>
                             <input type="number"
                                    id="resQuantity"
                                    value="1"
@@ -5200,94 +5128,94 @@ async function openProjectReservationPopup(article = null) {
                                    required>
                             <small id="resStockInfo">
                                 ${initialData ?
-                                    `${i18n.t('available')}: ${initialData.currentStock - initialData.reservedStock}
-                                     (${i18n.t('stock')}: ${initialData.currentStock}, ${i18n.t('alreadyReserved')}: ${initialData.reservedStock})`
+                                    `Disponible: ${initialData.currentStock - initialData.reservedStock}
+                                     (Stock: ${initialData.currentStock}, Ya reservado: ${initialData.reservedStock})`
                                     : ''}
                             </small>
                         </div>
 
                         <div class="form-group">
-                            <label for="resProject">${i18n.t('project')} *</label>
+                            <label for="resProject">Proyecto *</label>
                             <select id="resProject" required>
-                                <option value="">${i18n.t('selectProject')}</option>
+                                <option value="">Seleccionar proyecto</option>
                                 <!-- Les options seront chargées dynamiquement -->
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label for="resStartDate">${i18n.t('startDate')}</label>
+                            <label for="resStartDate">Fecha de Inicio</label>
                             <input type="date"
                                    id="resStartDate"
                                    value="${new Date().toISOString().split('T')[0]}">
                         </div>
 
                         <div class="form-group">
-                            <label for="resEndDate">${i18n.t('expectedEndDate')}</label>
+                            <label for="resEndDate">Fecha de Fin Estimada</label>
                             <input type="date"
                                    id="resEndDate"
                                    value="${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}">
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="resPurpose">${i18n.t('reservationPurpose')} *</label>
+                            <label for="resPurpose">Motivo de la Reserva *</label>
                             <select id="resPurpose" required>
-                                <option value="" disabled selected>${i18n.t('whyReserveArticle')}</option>
-                                <option value="utilisation_projet">${i18n.t('projectUse')}</option>
-                                <option value="mise_de_cote">${i18n.t('temporaryAside')}</option>
-                                <option value="demonstration">${i18n.t('demonstration')}</option>
-                                <option value="exposition">${i18n.t('exhibition')}</option>
-                                <option value="autre">${i18n.t('other')}</option>
+                                <option value="" disabled selected>¿Por qué reservar este artículo?</option>
+                                <option value="utilisation_projet">Uso en Proyecto</option>
+                                <option value="mise_de_cote">Apartado Temporal</option>
+                                <option value="demonstration">Demostración</option>
+                                <option value="exposition">Exposición</option>
+                                <option value="autre">Otro</option>
                             </select>
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="resNotes">${i18n.t('notes')}</label>
+                            <label for="resNotes">Notas</label>
                             <textarea id="resNotes"
                                       rows="2"
-                                      placeholder="${i18n.t('additionalDetails')}"></textarea>
+                                      placeholder="Detalles adicionales"></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-map-marker-alt"></i> ${i18n.t('articleLocalization')}</h4>
+                    <h4><i class="fas fa-map-marker-alt"></i> Localización del Artículo</h4>
                     <div class="location-info">
                         <div class="location-display">
-                            <strong>${i18n.t('currentLocation')}:</strong>
+                            <strong>Ubicación Actual:</strong>
                             <div class="location-details">
-                                ${locationString || i18n.t('notSpecified')}
+                                ${locationString || 'No especificado'}
                             </div>
                         </div>
                         <div class="location-note">
-                            <small><i class="fas fa-info-circle"></i> ${i18n.t('articleCurrentlyLocatedAt')}</small>
+                            <small><i class="fas fa-info-circle"></i> El artículo se encuentra actualmente en esta ubicación</small>
                         </div>
                     </div>
 
                     <div class="form-group" style="margin-top: 15px;">
-                        <label for="resUnitPrice">${i18n.t('unitPrice')} (€)</label>
+                        <label for="resUnitPrice">Precio Unitario (€)</label>
                         <input type="text"
                                id="resUnitPrice"
                                value="${initialData ? initialData.unitPrice : ''}"
                                readonly
                                class="readonly-input">
-                        <small>${i18n.t('referenceUnitPrice')}</small>
+                        <small>Precio unitario de referencia</small>
                     </div>
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-user-check"></i> ${i18n.t('responsibleInfo')}</h4>
+                    <h4><i class="fas fa-user-check"></i> Información del Responsable</h4>
                     <div class="form-group">
                         <div class="user-badge current-user">
                             <i class="fas fa-user"></i>
                             <span>${currentUser.username}</span>
-                            <small>${i18n.t('performingReservation')}</small>
+                            <small>Realizando la reserva</small>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="resResponsible">${i18n.t('projectResponsible')} *</label>
+                        <label for="resResponsible">Responsable del Proyecto *</label>
                         <select id="resResponsible" required>
-                            <option value="">${i18n.t('selectResponsible')}</option>
+                            <option value="">Seleccionar responsable</option>
                             <!-- Les options seront chargées dynamiquement -->
                         </select>
                     </div>
@@ -5295,9 +5223,9 @@ async function openProjectReservationPopup(article = null) {
             </div>
 
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
-                    <button class="btn btn-warning" id="confirmStockReservationBtn">
-                    <i class="fas fa-calendar-plus"></i> ${i18n.t('createReservation')}
+                <button class="btn btn-secondary close-popup-btn">Cancelar</button>
+                <button class="btn btn-warning" id="confirmStockReservationBtn">
+                    <i class="fas fa-calendar-plus"></i> Crear Reserva
                 </button>
             </div>
         </div>
@@ -5314,10 +5242,10 @@ async function openProjectReservationPopup(article = null) {
 
             if (quantity > available) {
                 stockInfo.style.color = 'var(--danger-color)';
-                stockInfo.textContent = `⚠️ ${i18n.t('exceedsAvailableStock', { stock: available })}`;
+                stockInfo.textContent = `⚠️ Supera el stock disponible (${available})`;
             } else {
                 stockInfo.style.color = '';
-                stockInfo.textContent = `${i18n.t('available')}: ${available} (${i18n.t('stock')}: ${initialData.currentStock}, ${i18n.t('alreadyReserved')}: ${initialData.reservedStock})`;
+                stockInfo.textContent = `Disponible: ${available} (Stock: ${initialData.currentStock}, Ya reservado: ${initialData.reservedStock})`;
             }
         });
     }
@@ -5336,47 +5264,47 @@ async function openScanPopup(actionType, scanType) {
     popup.className = 'scan-popup-overlay';
 
     const actionNames = {
-        'sortie': i18n.t('stockOut'),
-        'entree': i18n.t('stockIn'),
-        'reservation': i18n.t('projectReservation')
+        'sortie': 'Salida de Stock',
+        'entree': 'Entrada de Stock',
+        'reservation': 'Reserva para Proyecto'
     };
 
     popup.innerHTML = `
         <div class="scan-popup">
             <div class="popup-header">
-                <h3><i class="fas fa-camera"></i> ${i18n.t('scanFor')} ${actionNames[actionType]}</h3>
+                <h3><i class="fas fa-camera"></i> Escanear para ${actionNames[actionType]}</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
                 <div class="scan-section">
                     <div class="camera-placeholder" id="cameraPlaceholder">
                         <i class="fas fa-camera"></i>
-                        <p>${i18n.t('cameraNotActivated')}</p>
+                        <p>Cámara no activada</p>
                     </div>
                     <video id="cameraPreview" autoplay playsinline style="display: none;"></video>
 
                     <div class="scan-controls">
                         <button id="startCameraBtn" class="btn btn-primary">
-                            <i class="fas fa-video"></i> ${i18n.t('activateCamera')}
+                            <i class="fas fa-video"></i> Activar Cámara
                         </button>
                         <button id="stopCameraBtn" class="btn btn-secondary" style="display: none;">
-                            <i class="fas fa-stop"></i> ${i18n.t('stop')}
+                            <i class="fas fa-stop"></i> Detener
                         </button>
                         <button id="toggleFlashBtn" class="btn btn-info" style="display: none;">
-                            <i class="fas fa-lightbulb"></i> ${i18n.t('flash')}
+                            <i class="fas fa-lightbulb"></i> Flash
                         </button>
                     </div>
                 </div>
 
                 <div class="manual-section">
-                    <h4><i class="fas fa-keyboard"></i> ${i18n.t('manualInput')}</h4>
+                    <h4><i class="fas fa-keyboard"></i> Entrada Manual</h4>
                     <div class="form-group">
                         <input type="text"
                                id="manualBarcodeInput"
-                               placeholder="${i18n.t('enterBarcodeManually')}"
+                               placeholder="Ingresar código de barras manualmente"
                                class="scan-input">
                         <button id="confirmManualBtn" class="btn">
-                            <i class="fas fa-check"></i> ${i18n.t('validate')}
+                            <i class="fas fa-check"></i> Validar
                         </button>
                     </div>
                 </div>
@@ -5384,19 +5312,19 @@ async function openScanPopup(actionType, scanType) {
                 <div class="scan-instructions">
                     <div class="instruction">
                         <i class="fas fa-lightbulb"></i>
-                        <p>${i18n.t('placeBarcodeInFrame')}</p>
+                        <p>Coloque el código de barras en el marco</p>
                     </div>
                     <div class="instruction">
                         <i class="fas fa-bolt"></i>
-                        <p>${i18n.t('ensureGoodLighting')}</p>
+                        <p>Asegure una buena iluminación</p>
                     </div>
                 </div>
             </div>
 
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
+                <button class="btn btn-secondary close-popup-btn">Cancelar</button>
                 <div class="scan-stats">
-                    <span id="scanStatus">${i18n.t('waitingForScan')}</span>
+                    <span id="scanStatus">Esperando escaneo</span>
                 </div>
             </div>
         </div>
@@ -5466,7 +5394,7 @@ async function openScanPopup(actionType, scanType) {
 
             // 2. UTILISER QUAGGA UNIQUEMENT (plus fiable)
             if (typeof Quagga === 'undefined') {
-                throw new Error(i18n.t('scannerLibraryNotLoaded'));
+                throw new Error('Librería de escáner no cargada');
             }
 
             Quagga.init({
@@ -5490,8 +5418,8 @@ async function openScanPopup(actionType, scanType) {
                     popup.querySelector('#scanStatus').innerHTML = `
                         <div style="background: #f44336; color: white; padding: 10px; border-radius: 5px;">
                             <i class="fas fa-exclamation-triangle"></i>
-                            ${i18n.t('scannerIncompatible')}<br>
-                            <small>${i18n.t('useManualInput')}</small>
+                            Escáner incompatible con este dispositivo<br>
+                            <small>Por favor, use la entrada manual</small>
                         </div>
                     `;
                     popup.querySelector('#manualBarcodeInput').focus();
@@ -5504,8 +5432,8 @@ async function openScanPopup(actionType, scanType) {
                 popup.querySelector('#scanStatus').innerHTML = `
                     <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
                         <i class="fas fa-check-circle"></i>
-                        ${i18n.t('scannerReady')}<br>
-                        <small>${i18n.t('centerBarcode')}</small>
+                        Escáner listo<br>
+                        <small>Centre el código de barras en la cámara</small>
                     </div>
                 `;
             });
@@ -5525,8 +5453,8 @@ async function openScanPopup(actionType, scanType) {
                 popup.querySelector('#scanStatus').innerHTML = `
                     <div style="background: #2196F3; color: white; padding: 10px; border-radius: 5px;">
                         <i class="fas fa-barcode"></i>
-                        ${i18n.t('codeDetected')}: <strong>${code}</strong><br>
-                        <small>${i18n.t('searchingInProgress')}</small>
+                        Código detectado: <strong>${code}</strong><br>
+                        <small>Buscando en la base de datos...</small>
                     </div>
                 `;
 
@@ -5545,8 +5473,8 @@ async function openScanPopup(actionType, scanType) {
             popup.querySelector('#scanStatus').innerHTML = `
                 <div style="background: #FF9800; color: white; padding: 10px; border-radius: 5px;">
                     <i class="fas fa-video-slash"></i>
-                    ${i18n.t('cameraInaccessible')}<br>
-                    <small>${error.message || i18n.t('permissionDenied')}</small>
+                    Cámara inaccesible<br>
+                    <small>${error.message || 'Permiso denegado'}</small>
                 </div>
             `;
             popup.querySelector('#manualBarcodeInput').focus();
@@ -5581,8 +5509,8 @@ async function openScanPopup(actionType, scanType) {
                 popup.querySelector('#scanStatus').innerHTML = `
                     <div style="background: #f44336; color: white; padding: 10px; border-radius: 5px;">
                         <i class="fas fa-times-circle"></i>
-                        ${i18n.t('barcodeNotFoundFull')}: <strong>${barcode}</strong><br>
-                        <small>${i18n.t('checkDatabase')}</small>
+                        Código de barras no encontrado: <strong>${barcode}</strong><br>
+                        <small>Verifique la base de datos o intente otro código</small>
                     </div>
                 `;
 
@@ -5591,8 +5519,8 @@ async function openScanPopup(actionType, scanType) {
                     popup.querySelector('#scanStatus').innerHTML = `
                         <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
                             <i class="fas fa-redo"></i>
-                            ${i18n.t('scannerReactivated')}<br>
-                            <small>${i18n.t('scanAgain')}</small>
+                            Escáner reactivado<br>
+                            <small>Escanee otro código</small>
                         </div>
                     `;
                     if (scanStream) {
@@ -5637,8 +5565,8 @@ async function openScanPopup(actionType, scanType) {
             popup.querySelector('#scanStatus').innerHTML = `
                 <div style="background: #9C27B0; color: white; padding: 10px; border-radius: 5px;">
                     <i class="fas fa-exclamation-circle"></i>
-                    ${i18n.t('connectionError')}<br>
-                    <small>${error.message || i18n.t('checkConnection')}</small>
+                    Error de conexión<br>
+                    <small>${error.message || 'Verifique su conexión a Internet'}</small>
                 </div>
             `;
         }
@@ -5743,7 +5671,7 @@ async function setupStockPopupEvents(popup, type, initialData) {
 
 async function searchArticleInPopup(searchTerm, type) {
     if (!searchTerm.trim()) {
-        alert(i18n.t('enterSearchTermPlease'));
+        alert('Por favor, ingrese un término de búsqueda');
         return;
     }
 
@@ -5774,7 +5702,7 @@ async function searchArticleInPopup(searchTerm, type) {
         const container = document.getElementById(`${type}SearchResults`);
 
         if (!transformedArticles || transformedArticles.length === 0) {
-            resultsDiv.innerHTML = `<div class="no-results">${i18n.t('noArticlesFound')}</div>`;
+            resultsDiv.innerHTML = `<div class="no-results">No se encontraron artículos</div>`;
             container.style.display = 'block';
             return;
         }
@@ -5785,12 +5713,12 @@ async function searchArticleInPopup(searchTerm, type) {
                     <h5>${article.nom}</h5>
                     <div class="result-details">
                         <span>${article.numero}</span>
-                        <span>${i18n.t('stock')}: ${article.stock_actuel || 0}</span>
+                        <span>Stock: ${article.stock_actuel || 0}</span>
                         ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
                     </div>
                 </div>
                 <button class="btn-select-article" data-id="${article.id}">
-                    <i class="fas fa-check"></i> ${i18n.t('selectAction')}
+                    <i class="fas fa-check"></i> Seleccionar
                 </button>
             </div>
         `).join('');
@@ -5825,7 +5753,7 @@ async function searchArticleInPopup(searchTerm, type) {
 
     } catch (error) {
         console.error('Erreur recherche:', error);
-        alert(i18n.t('searchError'));
+        alert('Error al buscar artículos');
     }
 }
 
@@ -5844,7 +5772,7 @@ async function loadProjectsForSelect(selectId) {
 
         const select = document.getElementById(selectId);
         if (select) {
-            select.innerHTML = `<option value="">${i18n.t('selectProject')}</option>`;
+            select.innerHTML = `<option value="">Seleccionar proyecto</option>`;
 
             if (projets && projets.length > 0) {
                 projets.forEach(projet => {
@@ -5856,7 +5784,7 @@ async function loadProjectsForSelect(selectId) {
                     if (projet.date_fin_prevue) {
                         const daysLeft = calculateDaysLeft(projet.date_fin_prevue);
                         if (daysLeft <= 7) {
-                            statusInfo = ` (${daysLeft}${i18n.t('daysRemaining')})`;
+                            statusInfo = ` (${daysLeft} días restantes)`;
                         }
                     }
 
@@ -5866,7 +5794,7 @@ async function loadProjectsForSelect(selectId) {
             } else {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = i18n.t('noActiveProjectAvailable');
+                option.textContent = 'No hay proyectos activos disponibles';
                 option.disabled = true;
                 select.appendChild(option);
             }
@@ -5878,7 +5806,7 @@ async function loadProjectsForSelect(selectId) {
         if (select) {
             const option = document.createElement('option');
             option.value = '';
-            option.textContent = i18n.t('projectLoadError');
+            option.textContent = 'Error al cargar proyectos';
             option.disabled = true;
             select.innerHTML = '';
             select.appendChild(option);
@@ -5903,14 +5831,14 @@ async function loadEmployeesForSelect(selectId, defaultValue = null) {
             console.error('Erreur chargement employés:', error);
             // Option de secours : met l'utilisateur courant
             select.innerHTML = `
-                <option value="">${i18n.t('selectResponsible')}</option>
-                <option value="${currentUser.username}" selected>${currentUser.username} (${i18n.t('current')})</option>
+                <option value="">Seleccionar responsable</option>
+                <option value="${currentUser.username}" selected>${currentUser.username} (actual)</option>
             `;
             return;
         }
 
         // CONSTRUIRE LE SELECT
-        select.innerHTML = `<option value="">${i18n.t('selectResponsible')}</option>`;
+        select.innerHTML = `<option value="">Seleccionar responsable</option>`;
 
         if (users && users.length > 0) {
             users.forEach(user => {
@@ -5955,12 +5883,12 @@ async function handleStockAction(type, popup, initialData) {
         const quantity = parseInt(document.getElementById(`${type}Quantity`).value) || 0;
 
         if (!articleId) {
-            alert(i18n.t('selectArticlePlease'));
+            alert('Por favor, seleccione un artículo');
             return;
         }
 
         if (quantity <= 0) {
-            alert(i18n.t('quantityMustBePositive'));
+            alert('La cantidad debe ser mayor que 0');
             return;
         }
 
@@ -6074,7 +6002,7 @@ async function handleStockAction(type, popup, initialData) {
 
         // 5. VALIDATIONS SUPPLÉMENTAIRES
         if (type === 'out' && quantity > stockAvant) {
-            alert(i18n.t('insufficientStock', { stock: stockAvant }));
+            alert(`Stock insuficiente (disponible: ${stockAvant})`);
             return;
         }
 
@@ -6085,7 +6013,7 @@ async function handleStockAction(type, popup, initialData) {
 
         if (mouvementError) {
             console.error('Erreur insertion mouvement:', mouvementError);
-            throw new Error(`${i18n.t('recordingError')}: ${mouvementError.message}`);
+            throw new Error(`Error al registrar: ${mouvementError.message}`);
         }
 
         // 7. SI C'EST UNE RÉSERVATION, FAIRE UN UPSERT DANS w_reservations_actives
@@ -6123,11 +6051,11 @@ async function handleStockAction(type, popup, initialData) {
                 const heureAjout = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
                 if (existingReservation.notes && notes) {
-                    nouvellesNotes = `${existingReservation.notes}\n\n--- ${i18n.t('addedOn')} ${dateAjout} ${i18n.t('at')} ${heureAjout} ---\n${notes}`;
+                    nouvellesNotes = `${existingReservation.notes}\n\n--- Agregado el ${dateAjout} a las ${heureAjout} ---\n${notes}`;
                 } else if (existingReservation.notes) {
                     nouvellesNotes = existingReservation.notes;
                 } else if (notes) {
-                    nouvellesNotes = `--- ${i18n.t('createdOn')} ${dateAjout} ${i18n.t('at')} ${heureAjout} ---\n${notes}`;
+                    nouvellesNotes = `--- Creado el ${dateAjout} a las ${heureAjout} ---\n${notes}`;
                 }
 
                 // Garder les valeurs existantes si les nouvelles sont vides
@@ -6198,17 +6126,17 @@ async function handleStockAction(type, popup, initialData) {
                                 .eq('id', existing.id);
 
                             if (updateError) {
-                                throw new Error(`${i18n.t('reservationUpdateError')}: ${updateError.message}`);
+                                throw new Error(`Error al actualizar la reserva: ${updateError.message}`);
                             }
                         } else {
-                            throw new Error(`${i18n.t('reservationFetchError')}: ${fetchError?.message || i18n.t('unknown')}`);
+                            throw new Error(`Error al obtener la reserva: ${fetchError?.message || 'desconocido'}`);
                         }
                     } catch (fallbackError) {
                         console.error('Erreur fallback:', fallbackError);
-                        throw new Error(`${i18n.t('reservationCreationError')}: ${reservationError.message}`);
+                        throw new Error(`Error al crear la reserva: ${reservationError.message}`);
                     }
                 } else {
-                    throw new Error(`${i18n.t('reservationCreationError')}: ${reservationError.message}`);
+                    throw new Error(`Error al crear la reserva: ${reservationError.message}`);
                 }
             }
 
@@ -6243,9 +6171,8 @@ async function handleStockAction(type, popup, initialData) {
         if (updateError) throw updateError;
 
         // 9. SUCCÈS
-        showTemporarySuccess(i18n.t('actionRecordedSuccess', {
-            action: type === 'out' ? i18n.t('out') : type === 'in' ? i18n.t('in') : i18n.t('reservation')
-        }));
+        const actionName = type === 'out' ? 'Salida' : type === 'in' ? 'Entrada' : 'Reserva';
+        showTemporarySuccess(`${actionName} registrada correctamente`);
         document.body.removeChild(popup);
 
         // 10. RE-RAFRACHIR LES DONNÉES
@@ -6253,7 +6180,7 @@ async function handleStockAction(type, popup, initialData) {
 
     } catch (error) {
         console.error(`Erreur ${type} stock:`, error);
-        alert(i18n.t('recordingErrorGeneral', { message: error.message || i18n.t('unknownError') }));
+        alert(`Error al registrar: ${error.message || 'Error desconocido'}`);
     }
 }
 
@@ -6324,7 +6251,7 @@ async function exportStockBasPDF() {
         // Vérification jsPDF - NOTE: c'est window.jspdf (minuscule)
         if (!window.jspdf || typeof window.jspdf.jsPDF === 'undefined') {
             console.error('jsPDF non trouvé:', window.jspdf);
-            alert(i18n.t('pdfLibraryError'));
+            alert('Error: Librería PDF no cargada. Recargue la página.');
             return;
         }
 
@@ -6349,7 +6276,7 @@ async function exportStockBasPDF() {
         console.log(`${stockBas.length} articles en stock bas`);
 
         if (stockBas.length === 0) {
-            alert(i18n.t('noLowStockToExport'));
+            alert('No hay artículos con stock bajo para exportar');
             return;
         }
 
@@ -6371,19 +6298,19 @@ async function exportStockBasPDF() {
         // En-tête
         doc.setFontSize(20);
         doc.setTextColor(230, 126, 34);
-        doc.text(i18n.t('lowStockReportTitle'), pageWidth / 2, yPosition, { align: 'center' });
+        doc.text('Informe de Stock Bajo', pageWidth / 2, yPosition, { align: 'center' });
 
         doc.setFontSize(11);
         doc.setTextColor(100, 100, 100);
         yPosition += 10;
-        const generatedDate = i18n.t('generatedOn') + ' ' + new Date().toLocaleDateString(i18n.locale);
+        const generatedDate = 'Generado el ' + new Date().toLocaleDateString('es-ES');
         doc.text(generatedDate, pageWidth / 2, yPosition, { align: 'center' });
 
         doc.setTextColor(0, 0, 0);
         yPosition += 15;
 
         // Tableau
-        const headers = [[i18n.t('article'), i18n.t('number'), i18n.t('available'), i18n.t('minimum'), i18n.t('difference')]];
+        const headers = [['Artículo', 'Número', 'Disponible', 'Mínimo', 'Diferencia']];
         const data = stockBas.map(article => {
             const disponible = article.stock_actuel - article.stock_reserve;
             const diff = disponible - article.stock_minimum;
@@ -6391,7 +6318,7 @@ async function exportStockBasPDF() {
             return [
                 article.nom,
                 article.numero || '-',
-                `${disponible} (${i18n.t('stock')}: ${article.stock_actuel}, ${i18n.t('reserved')}: ${article.stock_reserve})`,
+                `${disponible} (Stock: ${article.stock_actuel}, Reservado: ${article.stock_reserve})`,
                 article.stock_minimum,
                 diff
             ];
@@ -6413,34 +6340,34 @@ async function exportStockBasPDF() {
         const finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(10);
         doc.setTextColor(150, 150, 150);
-        doc.text(`${i18n.t('total')}: ${stockBas.length} ${i18n.t('lowStockItems')}`, margin, finalY);
+        doc.text(`Total: ${stockBas.length} ${'artículos con bajo stock'}`, margin, finalY);
 
         // Sauvegarder le PDF
-        console.log('Sauvegarde du PDF...');
-        const filename = `stock_bas_${new Date().toISOString().split('T')[0]}.pdf`;
+        console.log('Guardando el PDF...');
+        const filename = `bajo_stock_${new Date().toISOString().split('T')[0]}.pdf`;
         doc.save(filename);
 
-        console.log('Export PDF terminé avec succès:', filename);
+        console.log('Exportación PDF completada con éxito:', filename);
 
     } catch (error) {
-        console.error('Erreur export PDF stock bas:', error);
-        alert(`${i18n.t('pdfExportError')}: ${error.message || i18n.t('unknownError')}`);
+        console.error('Error exportación PDF bajo stock:', error);
+        alert(`Error al exportar el PDF: ${error.message || 'Error desconocido'}`);
     }
 }
 
 async function exportRupturePDF() {
     try {
-        console.log('Début export PDF ruptures...');
+        console.log('Iniciando exportación PDF de roturas...');
 
         // Vérification jsPDF - NOTE: c'est window.jspdf (minuscule)
         if (!window.jspdf || typeof window.jspdf.jsPDF === 'undefined') {
-            console.error('jsPDF non trouvé:', window.jspdf);
-            alert(i18n.t('pdfLibraryError'));
+            console.error('jsPDF no encontrado:', window.jspdf);
+            alert('La biblioteca jsPDF no está disponible.');
             return;
         }
 
         // Récupérer les articles
-        console.log('Récupération des données depuis Supabase...');
+        console.log('Recuperando datos desde Supabase...');
         const { data: articles, error } = await supabase
             .from('w_articles')
             .select('nom, numero, stock_actuel, stock_reserve, updated_at')
@@ -6448,7 +6375,7 @@ async function exportRupturePDF() {
 
         if (error) throw error;
 
-        console.log(`${articles?.length || 0} articles récupérés`);
+        console.log(`${articles?.length || 0} artículos recuperados`);
 
         // Filtrer les ruptures
         const ruptures = articles.filter(article => {
@@ -6456,21 +6383,21 @@ async function exportRupturePDF() {
             return disponible <= 0;
         });
 
-        console.log(`${ruptures.length} articles en rupture`);
+        console.log(`${ruptures.length} artículos en rotura`);
 
         if (ruptures.length === 0) {
-            alert(i18n.t('noStockOutageToExport'));
+            alert('No hay artículos en rotura para exportar.');
             return;
         }
 
         // Créer le PDF - IMPORTANT: utiliser window.jspdf.jsPDF
-        console.log('Création du PDF...');
+        console.log('Creando el PDF...');
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
         // Vérifier autoTable
         if (typeof doc.autoTable === 'undefined') {
-            throw new Error('Extension autoTable non disponible');
+            throw new Error('Extensión autoTable no disponible');
         }
 
         const pageWidth = doc.internal.pageSize.width;
@@ -6480,30 +6407,30 @@ async function exportRupturePDF() {
         // En-tête
         doc.setFontSize(20);
         doc.setTextColor(231, 76, 60); // Rouge
-        doc.text(i18n.t('stockOutageReportTitle'), pageWidth / 2, yPosition, { align: 'center' });
+        doc.text('Informe de Rotura de Stock', pageWidth / 2, yPosition, { align: 'center' });
 
         doc.setFontSize(11);
         doc.setTextColor(100, 100, 100);
         yPosition += 10;
-        const generatedDate = i18n.t('generatedOn') + ' ' + new Date().toLocaleDateString(i18n.locale);
+        const generatedDate = 'Generado el ' + new Date().toLocaleDateString('es-ES');
         doc.text(generatedDate, pageWidth / 2, yPosition, { align: 'center' });
 
         doc.setTextColor(0, 0, 0);
         yPosition += 15;
 
         // Tableau
-        const headers = [[i18n.t('article'), i18n.t('number'), i18n.t('stock'), i18n.t('reserved'), i18n.t('available')]];
+        const headers = [['Artículo', 'Número', 'Stock', 'Reservado', 'Disponible']];
         const data = ruptures.map(article => {
             const disponible = article.stock_actuel - article.stock_reserve;
             const lastUpdate = article.updated_at ?
-                new Date(article.updated_at).toLocaleDateString(i18n.locale) : '-';
+                new Date(article.updated_at).toLocaleDateString('es-ES') : '-';
 
             return [
                 article.nom,
                 article.numero || '-',
                 article.stock_actuel,
                 article.stock_reserve,
-                `${disponible} (${disponible < 0 ? i18n.t('deficit') : i18n.t('outage')})`
+                `${disponible} (${disponible < 0 ? 'Déficit' : 'Rotura'})`
             ];
         });
 
@@ -6523,29 +6450,29 @@ async function exportRupturePDF() {
         const finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(10);
         doc.setTextColor(150, 150, 150);
-        doc.text(`${i18n.t('total')}: ${ruptures.length} ${i18n.t('outageItems')}`, margin, finalY);
+        doc.text(`Total: ${ruptures.length} ${'artículos en rotura'}`, margin, finalY);
 
         // Message d'urgence
         doc.setFontSize(12);
         doc.setTextColor(231, 76, 60);
-        doc.text(`⚠️ ${i18n.t('urgentOrderRequired')} ⚠️`, pageWidth / 2, finalY + 15, { align: 'center' });
+        doc.text(`⚠️ Se requiere pedido urgente ⚠️`, pageWidth / 2, finalY + 15, { align: 'center' });
 
         // Sauvegarder le PDF
-        console.log('Sauvegarde du PDF...');
-        const filename = `ruptures_stock_${new Date().toISOString().split('T')[0]}.pdf`;
+        console.log('Guardando el PDF...');
+        const filename = `roturas_stock_${new Date().toISOString().split('T')[0]}.pdf`;
         doc.save(filename);
 
-        console.log('Export PDF terminé avec succès:', filename);
+        console.log('Exportación PDF completada con éxito:', filename);
 
     } catch (error) {
-        console.error('Erreur export PDF ruptures:', error);
+        console.error('Error exportación PDF roturas:', error);
 
         // Messages d'erreur plus clairs
-        let message = i18n.t('pdfExportError');
-        if (error.message.includes('jsPDF') || error.message.includes('Bibliothèque')) {
-            message = i18n.t('pdfLibraryErrorRefresh');
+        let message = 'Error al exportar el PDF';
+        if (error.message.includes('jsPDF') || error.message.includes('Biblioteca')) {
+            message = 'Error en la biblioteca jsPDF. Por favor, recarga la página.';
         } else if (error.message.includes('Supabase') || error.code) {
-            message = `${i18n.t('connectionError')}: ${error.message || i18n.t('cannotRetrieveData')}`;
+            message = `Error de conexión: ${error.message || 'No se pueden recuperar los datos'}`;
         }
 
         alert(message);
@@ -6565,13 +6492,13 @@ function updateLastSync() {
         year: 'numeric'
     };
 
-    const formattedDate = now.toLocaleDateString(i18n.locale, options);
-    document.getElementById('lastSync').textContent = `${i18n.t('lastSync')}: ${formattedDate}`;
+    const formattedDate = now.toLocaleDateString('es-ES', options);
+    document.getElementById('lastSync').textContent = `Última sincronización: ${formattedDate}`;
 }
 
 function logout() {
     // Demander confirmation
-    if (!confirm(i18n.t('logoutConfirmation'))) {
+    if (!confirm('¿Seguro que quieres cerrar sesión?')) {
         return;
     }
 
@@ -6598,7 +6525,7 @@ document.head.appendChild(style);
 // Utiliser exactement le même ApiManager que vuestock.js
 class AccueilQuadManager {
     constructor() {
-        console.log('🎯 Initialisation AccueilQuadManager');
+        console.log('🎯 Inicializando AccueilQuadManager');
 
         // Références aux éléments HTML
         this.canvasTop = document.getElementById('accueilCanvasTop');
@@ -6611,7 +6538,7 @@ class AccueilQuadManager {
 
 
         if (!this.canvasTop || !this.canvasFront || !this.drawerContainer) {
-            console.error('❌ Éléments QuadView non trouvés dans accueil.html');
+            console.error('❌ Elementos QuadView no encontrados en accueil.html');
             return;
         }
 
@@ -6634,7 +6561,7 @@ class AccueilQuadManager {
     }
 
     async init() {
-        console.log('🔧 Configuration AccueilQuadManager');
+        console.log('🔧 Configurando AccueilQuadManager');
 
         // 1. Ajuster les dimensions des canvas
         this.resizeCanvases();
@@ -6646,7 +6573,7 @@ class AccueilQuadManager {
         // 4. Dessiner l'état initial
         this.drawAllViews();
 
-        console.log('✅ AccueilQuadManager prêt');
+        console.log('✅ AccueilQuadManager listo');
     }
 
     showAllSlotsForLevel(level) {
@@ -6657,7 +6584,7 @@ class AccueilQuadManager {
 
     async loadRealData() {
         try {
-            console.log('📡 Chargement des racks depuis Supabase...');
+            console.log('📡 Cargando racks desde Supabase...');
 
             // Charger seulement les données (sans afficher)
             const { data: racks, error: racksError } = await supabase
@@ -6719,19 +6646,19 @@ class AccueilQuadManager {
                         ...rack,
                         code: rack.rack_code,
                         name: rack.display_name,
-                        color: rack.color || '#4a90e2', // <-- GARDEZ LA COULEUR
+                        color: rack.color || '#4a90e2', // <-- MANTENER EL COLOR
                         levels: levelsWithSlots
                     };
                 });
 
-                console.log(`✅ ${this.racks.length} racks chargés (non affichés)`);
+                console.log(`✅ ${this.racks.length} racks cargados (no mostrados)`);
 
                 // NE PAS DESSINER - laisser les canvas vides
                 this.clearAllViews();
             }
 
         } catch (error) {
-            console.error('❌ Erreur chargement:', error);
+            console.error('❌ Error de carga:', error);
         }
     }
 
@@ -6744,7 +6671,7 @@ class AccueilQuadManager {
             this.ctxTop.fillStyle = '#6c757d';
             this.ctxTop.font = '14px Arial';
             this.ctxTop.textAlign = 'center';
-            this.ctxTop.fillText(i18n.t('searchToLocateArticle'),
+            this.ctxTop.fillText('Busca para localizar un artículo',
                                this.canvasTop.width/2, this.canvasTop.height/2);
         }
 
@@ -6756,7 +6683,7 @@ class AccueilQuadManager {
             this.ctxFront.fillStyle = '#6c757d';
             this.ctxFront.font = '14px Arial';
             this.ctxFront.textAlign = 'center';
-            this.ctxFront.fillText(i18n.t('selectArticleInResults'),
+            this.ctxFront.fillText('Selecciona un artículo en los resultados',
                                  this.canvasFront.width/2, this.canvasFront.height/2);
         }
 
@@ -6766,7 +6693,7 @@ class AccueilQuadManager {
                 <div class="empty-drawer-state">
                     <div class="drawer-front-placeholder">
                         <i class="fas fa-search fa-3x"></i>
-                        <p>${i18n.t('searchArticleToSeeLocation')}</p>
+                        <p>Busca un artículo para ver su ubicación</p>
                     </div>
                 </div>
             `;
@@ -6775,8 +6702,8 @@ class AccueilQuadManager {
         // 4. Réinitialiser les sélections
         this.selectedRack = null;
         this.selectedLevel = null;
-        document.getElementById('accueilSelectedRack').textContent = i18n.t('noRackSelected');
-        document.getElementById('accueilLevelInfo').textContent = i18n.t('noLevel');
+        document.getElementById('accueilSelectedRack').textContent = 'Ningún rack seleccionado';
+        document.getElementById('accueilLevelInfo').textContent = 'Sin nivel';
     }
 
     normalizeRackData() {
@@ -6806,7 +6733,7 @@ class AccueilQuadManager {
     }
 
     connectToRealSearchSystem() {
-        console.log('🔗 Connexion au système de recherche...');
+        console.log('🔗 Conectando al sistema de búsqueda...');
 
         // 1. Recherche par nom
         const searchNomBtn = document.getElementById('searchNomBtn');
@@ -6843,7 +6770,7 @@ class AccueilQuadManager {
 
     async performSearch(searchTerm, searchType) {
         try {
-            console.log(`🔍 Recherche de "${searchTerm}" (type: ${searchType})...`);
+            console.log(`🔍 Buscando "${searchTerm}" (tipo: ${searchType})...`);
 
             // 1. Rechercher l'article dans Supabase
             const { data: articles, error: articlesError } = await supabase
@@ -6862,7 +6789,7 @@ class AccueilQuadManager {
                 .single();
 
             if (articlesError) throw articlesError;
-            if (!articles) throw new Error(i18n.t('articleNotFound'));
+            if (!articles) throw new Error('Artículo no encontrado');
 
             // 2. Stocker l'article et sa localisation
             this.currentArticle = articles;
@@ -6878,7 +6805,7 @@ class AccueilQuadManager {
             this.displaySearchResults([articles]);
 
         } catch (error) {
-            console.error('❌ Erreur de recherche:', error);
+            console.error('❌ Error de búsqueda:', error);
             this.showNotification(error.message, 'error');
         }
     }
@@ -6892,12 +6819,11 @@ class AccueilQuadManager {
         };
     }
 
-
     highlightArticleLocation(fullCode) {
         // Parser le code complet: A-10-20
         const parts = fullCode.split('-');
         if (parts.length !== 3) {
-            console.error('Format de code invalide:', fullCode);
+            console.error('Formato de código inválido:', fullCode);
             return;
         }
 
@@ -6906,8 +6832,8 @@ class AccueilQuadManager {
         // 1. Trouver le rack
         const rack = this.racks.find(r => r.code === rackCode);
         if (!rack) {
-            console.error(`Rack ${rackCode} non trouvé`);
-            this.showNotification(`${i18n.t('rackNotFound')}: ${rackCode}`, 'error');
+            console.error(`Rack ${rackCode} no encontrado`);
+            this.showNotification(`Rack ${rackCode} no encontrado`, 'error');
             return;
         }
 
@@ -6917,8 +6843,8 @@ class AccueilQuadManager {
         // 3. Trouver le niveau
         const level = rack.levels?.find(l => l.code === levelCode);
         if (!level) {
-            console.error(`Étage ${levelCode} non trouvé dans rack ${rackCode}`);
-            this.showNotification(`${i18n.t('levelNotFound')}: ${levelCode}`, 'error');
+            console.error(`Nivel ${levelCode} no encontrado en rack ${rackCode}`);
+            this.showNotification(`Nivel ${levelCode} no encontrado en rack ${rackCode}`, 'error');
             return;
         }
 
@@ -6937,7 +6863,7 @@ class AccueilQuadManager {
         this.selectedLevel = null;
 
         document.getElementById('accueilSelectedRack').textContent =
-            `${i18n.t('rack')} ${rack.code}`;
+            `Rack ${rack.code}`;
 
         // Dessiner avec surbrillance
         this.drawTopView();
@@ -6948,7 +6874,7 @@ class AccueilQuadManager {
         this.selectedLevel = level;
 
         document.getElementById('accueilLevelInfo').textContent =
-            `${i18n.t('level')} ${level.code} - ${level.slots?.length || 0} ${i18n.t('slots')}`;
+            `Nivel ${level.code} - ${level.slots?.length || 0} espacios`;
 
         // Mettre à jour le tiroir
         this.updateDrawer(level); // <-- IMPORTANT
@@ -6967,11 +6893,11 @@ class AccueilQuadManager {
     }
 
     showSingleArticleLocation(article) {
-        console.log('🎯 Affichage UNIQUE de l\'article:', article.nom);
+        console.log('🎯 Mostrando UBICACIÓN ÚNICA del artículo:', article.nom);
 
         // 1. Trouver l'emplacement (sans changer les sélections)
         if (!article.rack_id || !article.level_id || !article.slot_id) {
-            console.warn('Article sans localisation');
+            console.warn('Artículo sin ubicación');
             return false;
         }
 
@@ -6990,10 +6916,10 @@ class AccueilQuadManager {
         this.updateSingleSlotView(level, slot, article, rack);
 
         // 3. MAIS NE PAS changer les sélections globales
-        // this.selectedRack = rack;     // <-- NE PAS FAIRE
-        // this.selectedLevel = level;   // <-- NE PAS FAIRE
+        // this.selectedRack = rack;     // <-- NO HACER
+        // this.selectedLevel = level;   // <-- NO HACER
 
-        console.log(`✅ Affichage unique: ${rack.code}-${level.code}-${slot.code}`);
+        console.log(`✅ Ubicación única mostrada: ${rack.code}-${level.code}-${slot.code}`);
         return true;
     }
 
@@ -7108,7 +7034,7 @@ class AccueilQuadManager {
             html = `
                 <div class="empty-drawer-message">
                     <i class="fas fa-box-open"></i>
-                    <p>${i18n.t('noSlotsInLevel')}</p>
+                    <p>No hay espacios en este nivel</p>
                 </div>
             `;
         } else {
@@ -7155,11 +7081,11 @@ class AccueilQuadManager {
         let html = `
             <div class="single-slot-view">
                 <div class="slot-header">
-                    <h4>${i18n.t('slot')} ${slot.full_code || `${level.code}-${slot.code}`}</h4>
+                    <h4>Espacio ${slot.full_code || `${level.code}-${slot.code}`}</h4>
                     <div class="slot-location">
-                        <span class="rack-badge">${i18n.t('rack')} ${this.selectedRack.code}</span>
-                        <span class="level-badge">${i18n.t('level')} ${level.code}</span>
-                        <span class="slot-badge">${i18n.t('slot')} ${slot.code}</span>
+                        <span class="rack-badge">Rack ${this.selectedRack.code}</span>
+                        <span class="level-badge">Nivel ${level.code}</span>
+                        <span class="slot-badge">Espacio ${slot.code}</span>
                     </div>
                 </div>
 
@@ -7172,7 +7098,7 @@ class AccueilQuadManager {
         if (articleInSlot) {
             const imageUrl = articleInSlot.photo_url || articleInSlot.photo ||
                 'https://via.placeholder.com/150x150/cccccc/666666?text=📦';
-            const articleName = articleInSlot.nom || articleInSlot.name || i18n.t('article');
+            const articleName = articleInSlot.nom || articleInSlot.name || 'Artículo';
             const stock = articleInSlot.stock_actuel || articleInSlot.quantity || 0;
 
             html += `
@@ -7185,22 +7111,22 @@ class AccueilQuadManager {
                         <h5>${articleName}</h5>
                         <div class="article-details">
                             <div class="detail-item">
-                                <span class="detail-label">${i18n.t('number')}:</span>
-                                <span class="detail-value">${articleInSlot.numero || i18n.t('na')}</span>
+                                <span class="detail-label">Número:</span>
+                                <span class="detail-value">${articleInSlot.numero || 'N/A'}</span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">${i18n.t('stock')}:</span>
+                                <span class="detail-label">Stock:</span>
                                 <span class="detail-value ${stock === 0 ? 'stock-zero' : (stock <= (articleInSlot.stock_minimum || 3) ? 'stock-low' : 'stock-good')}">
-                                    ${stock} ${i18n.t('units')}
+                                    ${stock} unidades
                                 </span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">${i18n.t('barcode')}:</span>
-                                <span class="detail-value">${articleInSlot.code_barre || i18n.t('na')}</span>
+                                <span class="detail-label">Código de barras:</span>
+                                <span class="detail-value">${articleInSlot.code_barre || 'N/A'}</span>
                             </div>
                             ${articleInSlot.prix_unitaire ? `
                             <div class="detail-item">
-                                <span class="detail-label">${i18n.t('price')}:</span>
+                                <span class="detail-label">Precio:</span>
                                 <span class="detail-value">${articleInSlot.prix_unitaire}€</span>
                             </div>` : ''}
                         </div>
@@ -7211,7 +7137,7 @@ class AccueilQuadManager {
             html += `
                 <div class="empty-slot-large">
                     <i class="fas fa-box-open fa-4x"></i>
-                    <p>${i18n.t('emptySlot')}</p>
+                    <p>Espacio vacío</p>
                 </div>
             `;
         }
@@ -7220,7 +7146,7 @@ class AccueilQuadManager {
                 </div>
                 <div class="slot-footer">
                     <button class="btn btn-sm btn-secondary" onclick="window.accueilQuadManager.showAllSlotsForLevel(${JSON.stringify(level)})">
-                        <i class="fas fa-th-large"></i> ${i18n.t('viewAllSlots')}
+                        <i class="fas fa-th-large"></i> Ver todos los espacios
                     </button>
                 </div>
             </div>
@@ -7241,34 +7167,34 @@ class AccueilQuadManager {
     }
 
     generateSlotTooltip(slot, article) {
-        const baseText = `${i18n.t('slot')} ${slot.code}`;
+        const baseText = `Espacio ${slot.code}`;
 
-        if (!article) return `${baseText} - ${i18n.t('free')}`;
+        if (!article) return `${baseText} - Libre`;
 
         const stockActuel = article.stock_actuel || article.quantity || 0;
         const stockMinimum = article.stock_minimum || 3;
-        const articleName = article.nom || article.name || i18n.t('article');
+        const articleName = article.nom || article.name || 'Artículo';
 
         let status = '';
-        if (stockActuel === 0) status = i18n.t('stockDepleted');
-        else if (stockActuel <= stockMinimum) status = `${i18n.t('lowStock')} (${i18n.t('min')}: ${stockMinimum})`;
-        else status = `${i18n.t('stockOk')} (${i18n.t('min')}: ${stockMinimum})`;
+        if (stockActuel === 0) status = 'Agotado';
+        else if (stockActuel <= stockMinimum) status = `Bajo stock (Mín: ${stockMinimum})`;
+        else status = `Stock OK (Mín: ${stockMinimum})`;
 
-        return `${baseText} - ${articleName}\n${stockActuel} ${i18n.t('units')} - ${status}`;
+        return `${baseText} - ${articleName}\n${stockActuel} unidades - ${status}`;
     }
 
     generateSlotContent(slot, article, zoomClass) {
         if (!article) {
             return `
                 <div class="quad-slot-code">${slot.code}</div>
-                <div class="quad-slot-status">${i18n.t('free')}</div>
+                <div class="quad-slot-status">Libre</div>
             `;
         }
 
         const imageUrl = article.photo || article.photo_url ||
             'https://via.placeholder.com/40x40/cccccc/666666?text=📦';
         const stock = article.quantity || article.stock_actuel || 0;
-        const articleName = article.name || article.nom || i18n.t('article');
+        const articleName = article.name || article.nom || 'Artículo';
 
         return `
             <div class="slot-content">
@@ -7296,7 +7222,7 @@ class AccueilQuadManager {
             this.drawFrontView(); // Redessiner avec mise en évidence
         }
 
-        console.log(`🎯 ${i18n.t('slot')} ${slotCode} ${i18n.t('highlighted')}`);
+        console.log(`🎯 Espacio ${slotCode} resaltado`);
     }
 
     drawGrid(ctx, width, height, size) {
@@ -7341,7 +7267,7 @@ class AccueilQuadManager {
     updateRackCount() {
         const countElement = document.getElementById('accueilRackCount');
         if (countElement) {
-            countElement.textContent = `${this.racks.length} ${i18n.t('racks')}`;
+            countElement.textContent = `${this.racks.length} racks`;
         }
     }
 
@@ -7391,12 +7317,12 @@ class AccueilQuadManager {
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${i18n.t('rack').toUpperCase()} ${rack.code}`, x + w/2, y + h/2);
+        ctx.fillText(`RACK ${rack.code}`, x + w/2, y + h/2);
 
         // Légende
         ctx.fillStyle = '#333';
         ctx.font = '12px Arial';
-        ctx.fillText(`${i18n.t('articleLocatedHere')}`, width/2, y + h + 20);
+        ctx.fillText('Artículo localizado aquí', width/2, y + h + 20);
     }
 
     enlargePhoto(imageUrl, title) {
@@ -7485,12 +7411,12 @@ class AccueilQuadManager {
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${i18n.t('level').toUpperCase()} ${level.code}`, x + levelWidth/2, y + levelHeight/2);
+        ctx.fillText(`NIVEL ${level.code}`, x + levelWidth/2, y + levelHeight/2);
 
         // Info rack
         ctx.fillStyle = '#666';
         ctx.font = '11px Arial';
-        ctx.fillText(`${i18n.t('rack')}: ${rack.code}`, width/2, y + levelHeight + 15);
+        ctx.fillText(`Rack: ${rack.code}`, width/2, y + levelHeight + 15);
     }
 
     // Affiche UN SEUL slot avec la photo
@@ -7505,21 +7431,21 @@ class AccueilQuadManager {
         this.drawerContainer.innerHTML = `
             <div class="single-slot-view">
                 <div class="slot-header">
-                    <h3>📍 ${i18n.t('slot')} ${slot.full_code || `${level.code}-${slot.code}`}</h3>
+                    <h3>📍 Espacio ${slot.full_code || `${level.code}-${slot.code}`}</h3>
                     <div class="location-badges">
-                        <span class="badge">${i18n.t('rack')} ${rack.code}</span>
-                        <span class="badge">${i18n.t('level')} ${level.code}</span>
-                        <span class="badge">${i18n.t('slot')} ${slot.code}</span>
+                        <span class="badge">Rack ${rack.code}</span>
+                        <span class="badge">Nivel ${level.code}</span>
+                        <span class="badge">Espacio ${slot.code}</span>
                     </div>
                 </div>
 
                 <div class="slot-main">
                     <div class="article-photo-container">
                         <img src="${imageUrl}"
-                         alt="${articleInSlot?.nom || i18n.t('article')}"
+                         alt="${articleInSlot?.nom || 'Artículo'}"
                          class="article-photo"
                          style="width: 120px; height: 120px; object-fit: contain;"
-                         onclick="window.accueilQuadManager.enlargePhoto('${imageUrl}', '${articleInSlot?.nom || i18n.t('article')}')"
+                         onclick="window.accueilQuadManager.enlargePhoto('${imageUrl}', '${articleInSlot?.nom || 'Artículo'}')"
                          onerror="this.src='https://via.placeholder.com/120x120/cccccc/666666?text=📦'">
                     </div>
 
@@ -7527,15 +7453,15 @@ class AccueilQuadManager {
                     <div class="article-info">
                         <h4>${articleInSlot.nom}</h4>
                         <div class="article-details">
-                            <div><strong>${i18n.t('number')}:</strong> ${articleInSlot.numero || i18n.t('na')}</div>
-                            <div><strong>${i18n.t('stock')}:</strong> ${articleInSlot.stock_actuel || 0} ${i18n.t('units')}</div>
-                            ${articleInSlot.code_barre ? `<div><strong>${i18n.t('barcode')}:</strong> ${articleInSlot.code_barre}</div>` : ''}
+                            <div><strong>Número:</strong> ${articleInSlot.numero || 'N/A'}</div>
+                            <div><strong>Stock:</strong> ${articleInSlot.stock_actuel || 0} unidades</div>
+                            ${articleInSlot.code_barre ? `<div><strong>Código de barras:</strong> ${articleInSlot.code_barre}</div>` : ''}
                         </div>
                     </div>
                     ` : `
                     <div class="empty-slot-info">
                         <i class="fas fa-box-open fa-2x"></i>
-                        <p>${i18n.t('emptySlot')}</p>
+                        <p>Espacio vacío</p>
                     </div>
                     `}
                 </div>
@@ -7555,29 +7481,29 @@ class AccueilQuadManager {
 
         // Si pas d'IDs, on ne peut pas localiser
         if (!article.rack_id || !article.level_id || !article.slot_id) {
-            console.warn('Article sans IDs de localisation');
-            this.showNotification(i18n.t('articleNotLocated'), 'warning');
+            console.warn('Artículo sin IDs de ubicación');
+            this.showNotification('El artículo no tiene IDs de ubicación', 'warning');
             return false;
         }
 
         // 1. Trouver le rack
         const rack = this.racks.find(r => r.id === article.rack_id);
         if (!rack) {
-            console.error(`Rack ID ${article.rack_id} non trouvé`);
+            console.error(`Rack ID ${article.rack_id} no encontrado`);
             return false;
         }
 
         // 2. Trouver le niveau
         const level = rack.levels?.find(l => l.id === article.level_id);
         if (!level) {
-            console.error(`Level ID ${article.level_id} non trouvé dans rack ${rack.code}`);
+            console.error(`Level ID ${article.level_id} no encontrado en rack ${rack.code}`);
             return false;
         }
 
         // 3. Trouver l'emplacement
         const slot = level.slots?.find(s => s.id === article.slot_id);
         if (!slot) {
-            console.error(`Slot ID ${article.slot_id} non trouvé dans level ${level.code}`);
+            console.error(`Slot ID ${article.slot_id} no encontrado en level ${level.code}`);
             return false;
         }
 
@@ -7590,7 +7516,7 @@ class AccueilQuadManager {
         this.drawSingleLevel(rack, level);
         this.updateSingleSlotView(level, slot, article, rack);
 
-        console.log(`✅ Article localisé: ${rack.code}-${level.code}-${slot.code}`);
+        console.log(`✅ Artículo localizado: ${rack.code}-${level.code}-${slot.code}`);
         return true;
     }
 
