@@ -174,7 +174,67 @@
     "form.commentOptional": "Comentario (opcional)",
     "form.usageDetailsPlaceholder": "Detalles de uso...",
     "actions.confirmUsage": "Confirmar uso",
-    "errors.invalidQuantity": "Cantidad inválida"
+    "errors.invalidQuantity": "Cantidad inválida",
+    "modal": {
+        "returnToStock": {
+          "title": "Devolución al Stock",
+          "takenOut": "Retirado",
+          "returnedQuantity": "Cantidad Devuelta",
+          "initialQuantity": "Cantidad inicial",
+          "reasonForDifference": "Razón de la Diferencia",
+          "selectReason": "Seleccionar una razón...",
+          "reasons": {
+            "lost": "Perdido(s)",
+            "broken": "Roto(s)",
+            "stolen": "Robado(s)",
+            "endOfLife": "Fin de vida útil"
+          },
+          "storageLocation": "Ubicación de Almacenamiento",
+          "storeAtLocation": "Guarde el artículo en esta ubicación",
+          "itemCondition": "Estado de los Artículos",
+          "conditions": {
+            "perfect": "Condición 1 Estado perfecto",
+            "wornRepaired": "Condición 2 Usado / Reparado",
+            "needsRepair": "Condición 3 Necesita reparación",
+            "needsReplacement": "Condición 4 Necesita reemplazo"
+          },
+          "returnDetails": "Detalles de la devolución...",
+          "confirmReturn": "Confirmar Devolución"
+        }
+      },
+      "errors": {
+        "noProjectSelected": "ID del proyecto no encontrado - Ningún proyecto seleccionado",
+        "returnQuantityMustBePositive": "La cantidad devuelta debe ser mayor que 0",
+        "returnQuantityExceeds": "La cantidad devuelta no puede superar {{max}} unidad(es)",
+        "openReturnFormFailed": "Error al abrir el formulario de devolución",
+        "selectArticle": "Por favor seleccione un artículo",
+        "quantityMinimumOne": "La cantidad debe ser al menos 1",
+        "articleNotFound": "Artículo no encontrado",
+        "insufficientStock": "Stock insuficiente. Disponible: {{available}}",
+        "addReservationFailed": "Error al agregar la reserva",
+        "selectReason": "Por favor seleccione una razón",
+        "releaseStockFailed": "Error al liberar el stock",
+        "databaseUnavailable": "Base de datos no disponible",
+        "archiveProjectFailed": "Error al archivar el proyecto",
+        "unarchiveProjectFailed": "Error al desarchivar el proyecto"
+      },
+      "success": {
+        "reservationAdded": "Reserva agregada con éxito",
+        "allReservationsReleased": "Todas las reservas han sido liberadas",
+        "projectArchived": "Proyecto archivado con éxito",
+        "projectUnarchived": "Proyecto desarchivado con éxito"
+      },
+      "info": {
+        "noReservationsToRelease": "No hay reservas para liberar para este proyecto"
+      },
+      "confirm": {
+        "releaseAllReservations": "¿Está seguro de que desea liberar todas las reservas de este proyecto? ({{count}} reserva(s))",
+        "archiveProject": "¿Archivar este proyecto? El proyecto ya no aparecerá en los proyectos activos.",
+        "unarchiveProject": "¿Desarchivar este proyecto? El proyecto reaparecerá en los proyectos activos."
+      },
+      "common": {
+        "globalRelease": "Liberación global"
+      }
 
 
 

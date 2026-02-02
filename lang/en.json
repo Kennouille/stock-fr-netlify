@@ -174,7 +174,67 @@
     "form.commentOptional": "Comment (optional)",
     "form.usageDetailsPlaceholder": "Usage details...",
     "actions.confirmUsage": "Confirm usage",
-    "errors.invalidQuantity": "Invalid quantity"
+    "errors.invalidQuantity": "Invalid quantity",
+    "modal": {
+        "returnToStock": {
+          "title": "Return to Stock",
+          "takenOut": "Taken out",
+          "returnedQuantity": "Returned Quantity",
+          "initialQuantity": "Initial quantity",
+          "reasonForDifference": "Reason for Difference",
+          "selectReason": "Select a reason...",
+          "reasons": {
+            "lost": "Lost",
+            "broken": "Broken",
+            "stolen": "Stolen",
+            "endOfLife": "End of useful life"
+          },
+          "storageLocation": "Storage Location",
+          "storeAtLocation": "Store the item at this location",
+          "itemCondition": "Item Condition",
+          "conditions": {
+            "perfect": "Condition 1 Perfect state",
+            "wornRepaired": "Condition 2 Worn / Repaired",
+            "needsRepair": "Condition 3 Needs repair",
+            "needsReplacement": "Condition 4 Needs replacement"
+          },
+          "returnDetails": "Return details...",
+          "confirmReturn": "Confirm Return"
+        }
+      },
+      "errors": {
+        "noProjectSelected": "Project ID not found - No project selected",
+        "returnQuantityMustBePositive": "The returned quantity must be greater than 0",
+        "returnQuantityExceeds": "The returned quantity cannot exceed {{max}} unit(s)",
+        "openReturnFormFailed": "Error opening the return form",
+        "selectArticle": "Please select an article",
+        "quantityMinimumOne": "The quantity must be at least 1",
+        "articleNotFound": "Article not found",
+        "insufficientStock": "Insufficient stock. Available: {{available}}",
+        "addReservationFailed": "Error adding the reservation",
+        "selectReason": "Please select a reason",
+        "releaseStockFailed": "Error releasing stock",
+        "databaseUnavailable": "Database unavailable",
+        "archiveProjectFailed": "Error archiving the project",
+        "unarchiveProjectFailed": "Error unarchiving the project"
+      },
+      "success": {
+        "reservationAdded": "Reservation added successfully",
+        "allReservationsReleased": "All reservations have been released",
+        "projectArchived": "Project archived successfully",
+        "projectUnarchived": "Project unarchived successfully"
+      },
+      "info": {
+        "noReservationsToRelease": "No reservations to release for this project"
+      },
+      "confirm": {
+        "releaseAllReservations": "Are you sure you want to release all reservations for this project? ({{count}} reservation(s))",
+        "archiveProject": "Archive this project? The project will no longer appear in active projects.",
+        "unarchiveProject": "Unarchive this project? The project will reappear in active projects."
+      },
+      "common": {
+        "globalRelease": "Global release"
+      }
 
 
 

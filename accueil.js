@@ -1282,7 +1282,6 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
     });
 }
 
-
 async function openReturnToStockModal(mouvementId, articleId, originalQuantity) {
     try {
         // Récupérer l'article avec ses détails
@@ -1303,7 +1302,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
         // Récupérer le projet courant depuis l'état global
         if (!state.currentProject) {
-            throw new Error('ID du projet non trouvé - Aucun projet sélectionné');
+            throw new Error(i18n.t('errors.noProjectSelected'));
         }
 
         const projectId = state.currentProject.id;
@@ -1314,7 +1313,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
             <div class="modal-overlay return-stock-modal">
                 <div class="modal" style="max-width: 600px;">
                     <div class="modal-header">
-                        <h3><i class="fas fa-arrow-left"></i> Retour au stock</h3>
+                        <h3><i class="fas fa-arrow-left"></i> ${i18n.t('modal.returnToStock.title')}</h3>
                         <button class="close-modal">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -1328,65 +1327,65 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                                              data-image-url="${article.photo_url}"
                                              data-image-title="${article.nom}"
                                              style="max-width: 150px; max-height: 150px; cursor: pointer; border-radius: 8px; border: 2px solid #ddd; object-fit: contain;">
-                                        <div><small class="image-hint" style="color: #666; font-size: 12px;">Cliquez pour agrandir</small></div>
+                                        <div><small class="image-hint" style="color: #666; font-size: 12px;">${i18n.t('common.clickToEnlarge')}</small></div>
                                     </div>
                                     ` : ''}
                                 <div class="article-info">
                                     <h4>${article.nom} (${article.numero})</h4>
-                                    <p>Sorti : ${originalQuantity} unité(s)</p>
+                                    <p>${i18n.t('modal.returnToStock.takenOut')}: ${originalQuantity} ${i18n.t('common.units')}</p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-boxes"></i> Quantité retournée *</label>
+                            <label><i class="fas fa-boxes"></i> ${i18n.t('modal.returnToStock.returnedQuantity')} *</label>
                             <input type="number"
                                    id="returnQuantity"
                                    value="${originalQuantity}"
                                    min="0"
                                    max="${originalQuantity}"
                                    class="form-input">
-                            <small>Quantité initiale: ${originalQuantity}</small>
+                            <small>${i18n.t('modal.returnToStock.initialQuantity')}: ${originalQuantity}</small>
                         </div>
 
                         <div id="missingQuantitySection" style="display: none;">
                             <div class="form-group">
-                                <label><i class="fas fa-exclamation-triangle"></i> Raison de la différence</label>
+                                <label><i class="fas fa-exclamation-triangle"></i> ${i18n.t('modal.returnToStock.reasonForDifference')}</label>
                                 <select id="missingReason" class="form-select">
-                                    <option value="">Sélectionner une raison...</option>
-                                    <option value="perdu">Perdu(s)</option>
-                                    <option value="cassé">Cassé(s)</option>
-                                    <option value="vole">Volé(s)</option>
-                                    <option value="fin_vie">Fin de vie utile</option>
+                                    <option value="">${i18n.t('modal.returnToStock.selectReason')}</option>
+                                    <option value="perdu">${i18n.t('modal.returnToStock.reasons.lost')}</option>
+                                    <option value="cassé">${i18n.t('modal.returnToStock.reasons.broken')}</option>
+                                    <option value="vole">${i18n.t('modal.returnToStock.reasons.stolen')}</option>
+                                    <option value="fin_vie">${i18n.t('modal.returnToStock.reasons.endOfLife')}</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-map-marker-alt"></i> Emplacement de rangement</label>
+                            <label><i class="fas fa-map-marker-alt"></i> ${i18n.t('modal.returnToStock.storageLocation')}</label>
                             <div class="location-display">
-                                <div><strong>Rayon:</strong> ${article.rack?.display_name || article.rack?.rack_code || 'Non spécifié'}</div>
-                                <div><strong>Étage:</strong> ${article.level?.level_code || 'Non spécifié'}</div>
-                                <div><strong>Position:</strong> ${article.slot?.slot_code || 'Non spécifié'}</div>
+                                <div><strong>${i18n.t('common.rack')}:</strong> ${article.rack?.display_name || article.rack?.rack_code || i18n.t('common.notSpecified')}</div>
+                                <div><strong>${i18n.t('common.level')}:</strong> ${article.level?.level_code || i18n.t('common.notSpecified')}</div>
+                                <div><strong>${i18n.t('common.position')}:</strong> ${article.slot?.slot_code || i18n.t('common.notSpecified')}</div>
                             </div>
-                            <small><i class="fas fa-info-circle"></i> Rangez l'article à cet emplacement</small>
+                            <small><i class="fas fa-info-circle"></i> ${i18n.t('modal.returnToStock.storeAtLocation')}</small>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-clipboard-check"></i> État des articles</label>
+                            <label><i class="fas fa-clipboard-check"></i> ${i18n.t('modal.returnToStock.itemCondition')}</label>
                             <select id="itemCondition" class="form-select">
-                                <option value="parfait">Condition 1 Parfait état</option>
-                                <option value="raye">Condition 2 Usé / Réparé</option>
-                                <option value="reparation">Condition 3 A réparer</option>
-                                <option value="casse">Condition 4 A remplacer</option>
+                                <option value="parfait">${i18n.t('modal.returnToStock.conditions.perfect')}</option>
+                                <option value="raye">${i18n.t('modal.returnToStock.conditions.wornRepaired')}</option>
+                                <option value="reparation">${i18n.t('modal.returnToStock.conditions.needsRepair')}</option>
+                                <option value="casse">${i18n.t('modal.returnToStock.conditions.needsReplacement')}</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-comment"></i> Commentaire</label>
+                            <label><i class="fas fa-comment"></i> ${i18n.t('common.comment')}</label>
                             <textarea id="returnComment"
                                       rows="3"
-                                      placeholder="Détails du retour..."
+                                      placeholder="${i18n.t('modal.returnToStock.returnDetails')}"
                                       class="form-textarea"></textarea>
                         </div>
 
@@ -1397,10 +1396,10 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
                         <div class="modal-actions">
                             <button id="confirmReturnBtn" class="btn btn-success">
-                                <i class="fas fa-check"></i> Confirmer le retour
+                                <i class="fas fa-check"></i> ${i18n.t('modal.returnToStock.confirmReturn')}
                             </button>
                             <button type="button" class="btn btn-secondary close-modal">
-                                Annuler
+                                ${i18n.t('common.cancel')}
                             </button>
                         </div>
                     </div>
@@ -1449,12 +1448,12 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
             // Vérification de sécurité
             if (returnQuantity <= 0) {
-                alert('La quantité retournée doit être supérieure à 0');
+                alert(i18n.t('errors.returnQuantityMustBePositive'));
                 return;
             }
 
             if (returnQuantity > originalQuantity) {
-                alert(`La quantité retournée ne peut pas dépasser ${originalQuantity} unité(s)`);
+                alert(i18n.t('errors.returnQuantityExceeds', { max: originalQuantity }));
                 return;
             }
 
@@ -1463,7 +1462,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
     } catch (error) {
         console.error('Erreur ouverture modal retour:', error);
-        alert('Erreur lors de l\'ouverture du formulaire de retour');
+        alert(i18n.t('errors.openReturnFormFailed'));
     }
 }
 
@@ -1478,14 +1477,6 @@ async function addReservationToProject() {
     elements.reservationError.style.display = 'none';
     elements.reservationAvailableStock.textContent = '0';
     elements.reservationAlreadyReserved.textContent = '0';
-
-    // Stocker le modal précédent avant d'ouvrir le nouveau
-    console.log('addReservationToProject - Setting previousModal:', {
-        before: state.previousModal?.id,
-        currentModal: state.currentModal?.id
-    });
-
-    showModal(elements.addReservationModal);
 
     showModal(elements.addReservationModal);
 }
@@ -1528,13 +1519,13 @@ async function confirmAddReservation() {
 
         // Validation
         if (!articleId) {
-            elements.reservationErrorText.textContent = 'Veuillez sélectionner un article';
+            elements.reservationErrorText.textContent = i18n.t('errors.selectArticle');
             elements.reservationError.style.display = 'flex';
             return;
         }
 
         if (!quantity || quantity < 1) {
-            elements.reservationErrorText.textContent = 'La quantité doit être au moins de 1';
+            elements.reservationErrorText.textContent = i18n.t('errors.quantityMinimumOne');
             elements.reservationError.style.display = 'flex';
             return;
         }
@@ -1542,13 +1533,13 @@ async function confirmAddReservation() {
         // Vérifier le stock disponible
         const article = state.articles.find(a => a.id === articleId);
         if (!article) {
-            elements.reservationErrorText.textContent = 'Article non trouvé';
+            elements.reservationErrorText.textContent = i18n.t('errors.articleNotFound');
             elements.reservationError.style.display = 'flex';
             return;
         }
 
         if ((article.stock_actuel || 0) < quantity) {
-            elements.reservationErrorText.textContent = `Stock insuffisant. Disponible: ${article.stock_actuel || 0}`;
+            elements.reservationErrorText.textContent = i18n.t('errors.insufficientStock', { available: article.stock_actuel || 0 });
             elements.reservationError.style.display = 'flex';
             return;
         }
@@ -1576,11 +1567,11 @@ async function confirmAddReservation() {
         // Fermer le modal
         hideModal();
 
-        showAlert('Réservation ajoutée avec succès', 'success');
+        showAlert(i18n.t('success.reservationAdded'), 'success');
 
     } catch (error) {
         console.error('Erreur ajout réservation:', error);
-        elements.reservationErrorText.textContent = error.message || 'Erreur lors de l\'ajout de la réservation';
+        elements.reservationErrorText.textContent = error.message || i18n.t('errors.addReservationFailed');
         elements.reservationError.style.display = 'flex';
     } finally {
         hideLoading();
@@ -1594,7 +1585,7 @@ async function releaseAllProjectItems() {
     const projectReservations = state.reservations.filter(r => r.id_projet === state.currentProject.id);
 
     if (projectReservations.length === 0) {
-        showAlert('Aucune réservation à libérer pour ce projet', 'info');
+        showAlert(i18n.t('info.noReservationsToRelease'), 'info');
         return;
     }
 
@@ -1613,12 +1604,12 @@ async function confirmReleaseAll() {
         const comment = elements.releaseComment.value.trim();
 
         if (!reason) {
-            elements.releaseErrorText.textContent = 'Veuillez sélectionner une raison';
+            elements.releaseErrorText.textContent = i18n.t('errors.selectReason');
             elements.releaseError.style.display = 'flex';
             return;
         }
 
-        if (!confirm(`Êtes-vous sûr de vouloir libérer toutes les réservations de ce projet ? (${elements.releaseItemsCount.textContent} réservation(s))`)) {
+        if (!confirm(i18n.t('confirm.releaseAllReservations', { count: elements.releaseItemsCount.textContent }))) {
             return;
         }
 
@@ -1630,7 +1621,7 @@ async function confirmReleaseAll() {
         // Libérer chaque réservation
         for (const reservation of projectReservations) {
             try {
-                await releaseReservation(reservation.id, `Libération globale: ${reason} - ${comment}`);
+                await releaseReservation(reservation.id, `${i18n.t('common.globalRelease')}: ${reason} - ${comment}`);
             } catch (error) {
                 console.error(`Erreur libération réservation ${reservation.id}:`, error);
             }
@@ -1648,11 +1639,11 @@ async function confirmReleaseAll() {
         // Fermer le modal
         hideModal();
 
-        showAlert('Toutes les réservations ont été libérées', 'success');
+        showAlert(i18n.t('success.allReservationsReleased'), 'success');
 
     } catch (error) {
         console.error('Erreur libération globale:', error);
-        elements.releaseErrorText.textContent = error.message || 'Erreur lors de la libération du stock';
+        elements.releaseErrorText.textContent = error.message || i18n.t('errors.releaseStockFailed');
         elements.releaseError.style.display = 'flex';
     } finally {
         hideLoading();
@@ -1668,7 +1659,7 @@ async function archiveProject(projectId) {
         if (typeof supabase === 'undefined') {
             console.error('ERROR: supabase est undefined');
             console.log('Tentative avec window.supabase:', typeof window.supabase);
-            throw new Error('Base de données non disponible');
+            throw new Error(i18n.t('errors.databaseUnavailable'));
         }
 
         const { data, error } = await supabase
@@ -1696,7 +1687,7 @@ async function archiveProject(projectId) {
 
 // ===== ARCHIVAGE/DÉSARCHIVAGE =====
 async function archiveProjectAction(projectId) {
-    if (!confirm('Archiver ce projet ? Le projet n\'apparaîtra plus dans les projets actifs.')) {
+    if (!confirm(i18n.t('confirm.archiveProject'))) {
         return;
     }
 
@@ -1711,28 +1702,23 @@ async function archiveProjectAction(projectId) {
             state.archivedProjects.unshift(archivedProject);
         }
 
-        // Mettre à jour l'affichage
-        // updateProjectsDisplay();
-        // updateArchivedProjectsDisplay();
-        // updateStatistics();
-
         // Si on est dans les détails, fermer le modal
         if (state.currentProject?.id === projectId) {
             hideModal();
         }
 
-        showAlert('Projet archivé avec succès', 'success');
+        showAlert(i18n.t('success.projectArchived'), 'success');
 
     } catch (error) {
         console.error('Erreur archivage projet:', error);
-        showAlert('Erreur lors de l\'archivage du projet', 'error');
+        showAlert(i18n.t('errors.archiveProjectFailed'), 'error');
     } finally {
         hideLoading();
     }
 }
 
 async function unarchiveProjectAction(projectId) {
-    if (!confirm('Désarchiver ce projet ? Le projet réapparaîtra dans les projets actifs.')) {
+    if (!confirm(i18n.t('confirm.unarchiveProject'))) {
         return;
     }
 
@@ -1752,15 +1738,16 @@ async function unarchiveProjectAction(projectId) {
         updateArchivedProjectsDisplay();
         updateStatistics();
 
-        showAlert('Projet désarchivé avec succès', 'success');
+        showAlert(i18n.t('success.projectUnarchived'), 'success');
 
     } catch (error) {
         console.error('Erreur désarchivage projet:', error);
-        showAlert('Erreur lors du désarchivage du projet', 'error');
+        showAlert(i18n.t('errors.unarchiveProjectFailed'), 'error');
     } finally {
         hideLoading();
     }
 }
+
 
 async function exportProjectDetails() {
     if (!state.currentProject) return;
