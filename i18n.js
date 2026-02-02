@@ -16,13 +16,23 @@ async function loadTranslations(lang) {
 
 // Traduire la page
 function translatePage() {
+    // Textes normaux
     document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
         if (translations[key]) {
             element.textContent = translations[key];
         }
     });
+
+    // Placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+        const key = element.getAttribute('data-i18n-placeholder');
+        if (translations[key]) {
+            element.placeholder = translations[key];
+        }
+    });
 }
+
 
 // Changer de langue
 async function changeLanguage(lang) {

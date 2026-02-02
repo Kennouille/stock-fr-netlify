@@ -128,21 +128,22 @@
 
             <!-- Section Recherche (tous les users) -->
             <section class="search-section">
-                <h2><i class="fas fa-search"></i> Recherche d'articles</h2>
+                <h2><i class="fas fa-search"></i> <span data-i18n="search.title">Recherche d'articles</span></h2>
 
                 <div class="search-container">
                     <div class="search-box">
                         <div class="search-header">
                             <i class="fas fa-qrcode"></i>
-                            <h3>Par nom ou numéro</h3>
+                            <h3 data-i18n="search.byName">Par nom ou numéro</h3>
                         </div>
                         <div class="search-input-group">
                             <input type="text"
                                    id="searchNomInput"
+                                   data-i18n-placeholder="search.namePlaceholder"
                                    placeholder="Ex: perceuse, ART-001..."
                                    class="search-input">
                             <button id="searchNomBtn" class="search-btn">
-                                <i class="fas fa-search"></i> Rechercher
+                                <i class="fas fa-search"></i> <span data-i18n="search.searchBtn">Rechercher</span>
                             </button>
                         </div>
                     </div>
@@ -150,15 +151,16 @@
                     <div class="search-box">
                         <div class="search-header">
                             <i class="fas fa-barcode"></i>
-                            <h3>Par code-barre</h3>
+                            <h3 data-i18n="search.byBarcode">Par code-barre</h3>
                         </div>
                         <div class="search-input-group">
                             <input type="text"
                                    id="searchCodebarreInput"
+                                   data-i18n-placeholder="search.barcodePlaceholder"
                                    placeholder="Scanner ou saisir code-barre"
                                    class="search-input">
                             <button id="searchCodebarreBtn" class="search-btn">
-                                <i class="fas fa-camera"></i> Scanner
+                                <i class="fas fa-camera"></i> <span data-i18n="search.scanBtn">Scanner</span>
                             </button>
                         </div>
                     </div>
@@ -168,19 +170,18 @@
             <!-- Nouvelle section : Vue Quad -->
             <section class="quad-section">
                 <div class="quad-section-header">
-                    <h2><i class="fas fa-th-large"></i> Visualisation du stock</h2>
+                    <h2><i class="fas fa-th-large"></i> <span data-i18n="quad.title">Visualisation du stock</span></h2>
                     <a href="#" class="btn-inventaire" id="inventoryLink" style="display: none;">
-                        <i class="fas fa-clipboard-check"></i> Inventaire
+                        <i class="fas fa-clipboard-check"></i> <span data-i18n="quad.inventory">Inventaire</span>
                     </a>
                 </div>
 
-                <!-- Le reste de votre code quad-section reste inchangé -->
                 <div class="quad-container">
                     <!-- Vue du dessus -->
                     <div class="quad-view accueil-view">
                         <div class="quad-header">
-                            <span><i class="fas fa-dharmachakra"></i> Vue du dessus</span>
-                            <span class="rack-count" id="accueilRackCount">0 racks</span>
+                            <span><i class="fas fa-dharmachakra"></i> <span data-i18n="quad.topView">Vue du dessus</span></span>
+                            <span class="rack-count" id="accueilRackCount"><span data-i18n="quad.racks">0 racks</span></span>
                         </div>
                         <div class="canvas-container">
                             <canvas id="accueilCanvasTop" width="400" height="300"></canvas>
@@ -190,8 +191,8 @@
                     <!-- Vue de face -->
                     <div class="quad-view accueil-view">
                         <div class="quad-header">
-                            <span><i class="fas fa-arrows-alt-h"></i> Vue de face</span>
-                            <span class="selected-rack" id="accueilSelectedRack">Aucun rack sélectionné</span>
+                            <span><i class="fas fa-arrows-alt-h"></i> <span data-i18n="quad.frontView">Vue de face</span></span>
+                            <span class="selected-rack" id="accueilSelectedRack" data-i18n="quad.noRack">Aucun rack sélectionné</span>
                         </div>
                         <div class="canvas-container">
                             <canvas id="accueilCanvasFront" width="400" height="300"></canvas>
@@ -201,15 +202,14 @@
                     <!-- Détail étage -->
                     <div class="quad-view accueil-view">
                         <div class="quad-header">
-                            <span><i class="fas fa-layer-group"></i> Détail étage</span>
-                            <span class="level-info" id="accueilLevelInfo">Aucun étage</span>
+                            <span><i class="fas fa-layer-group"></i> <span data-i18n="quad.levelDetail">Détail étage</span></span>
+                            <span class="level-info" id="accueilLevelInfo" data-i18n="quad.noLevel">Aucun étage</span>
                         </div>
                         <div class="drawer-container" id="accueilDrawer">
-                            <!-- Tiroir dynamique -->
                             <div class="empty-drawer-state">
                                 <div class="drawer-front-placeholder">
                                     <i class="fas fa-drawer fa-3x"></i>
-                                    <p>Sélectionnez un étage</p>
+                                    <p data-i18n="quad.selectLevel">Sélectionnez un étage</p>
                                 </div>
                             </div>
                         </div>
@@ -220,10 +220,10 @@
             <!-- Section Admin (seulement pour les admins) -->
             <section id="adminSection" class="admin-section">
                 <div class="admin-header">
-                    <h2><i class="fas fa-user-shield"></i> Administration</h2>
+                    <h2><i class="fas fa-user-shield"></i> <span data-i18n="admin.title">Administration</span></h2>
                     <div class="admin-badges">
-                        <span class="badge admin-badge">ADMIN</span>
-                        <span class="badge permissions-badge" id="permissionsCount">0 permissions</span>
+                        <span class="badge admin-badge" data-i18n="admin.badge">ADMIN</span>
+                        <span class="badge permissions-badge" id="permissionsCount"><span data-i18n="admin.permissions">0 permissions</span></span>
                     </div>
                 </div>
 
@@ -231,61 +231,57 @@
                 <div class="admin-alerts">
                     <div class="alert-card">
                         <div class="alert-header">
-                            <h3><i class="fas fa-exclamation-triangle"></i> Stock bas</h3>
+                            <h3><i class="fas fa-exclamation-triangle"></i> <span data-i18n="admin.lowStock">Stock bas</span></h3>
                             <button id="exportStockBasBtn" class="btn-small">
-                                <i class="fas fa-file-pdf"></i> PDF
+                                <i class="fas fa-file-pdf"></i> <span data-i18n="admin.pdf">PDF</span>
                             </button>
                         </div>
                         <div class="alert-content">
                             <div class="alert-loading" id="stockBasLoading">
-                                <i class="fas fa-spinner fa-spin"></i> Chargement...
+                                <i class="fas fa-spinner fa-spin"></i> <span data-i18n="loading">Chargement...</span>
                             </div>
                             <table id="tableStockBas" class="alert-table" style="display: none;">
                                 <thead>
                                     <tr>
-                                        <th>Article</th>
-                                        <th>Stock</th>
-                                        <th>Minimum</th>
-                                        <th>Diff</th>
+                                        <th data-i18n="admin.article">Article</th>
+                                        <th data-i18n="admin.stock">Stock</th>
+                                        <th data-i18n="admin.minimum">Minimum</th>
+                                        <th data-i18n="admin.diff">Diff</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tbodyStockBas">
-                                    <!-- Rempli dynamiquement -->
-                                </tbody>
+                                <tbody id="tbodyStockBas"></tbody>
                             </table>
                             <div id="noStockBas" class="alert-empty" style="display: none;">
                                 <i class="fas fa-check-circle"></i>
-                                <p>Aucun article en stock bas</p>
+                                <p data-i18n="admin.noLowStock">Aucun article en stock bas</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="alert-card">
                         <div class="alert-header">
-                            <h3><i class="fas fa-times-circle"></i> Rupture de stock</h3>
+                            <h3><i class="fas fa-times-circle"></i> <span data-i18n="admin.outOfStock">Rupture de stock</span></h3>
                             <button id="exportRuptureBtn" class="btn-small">
-                                <i class="fas fa-file-pdf"></i> PDF
+                                <i class="fas fa-file-pdf"></i> <span data-i18n="admin.pdf">PDF</span>
                             </button>
                         </div>
                         <div class="alert-content">
                             <div class="alert-loading" id="ruptureLoading">
-                                <i class="fas fa-spinner fa-spin"></i> Chargement...
+                                <i class="fas fa-spinner fa-spin"></i> <span data-i18n="loading">Chargement...</span>
                             </div>
                             <table id="tableRupture" class="alert-table" style="display: none;">
                                 <thead>
                                     <tr>
-                                        <th>Article</th>
-                                        <th>Dernier mouvement</th>
-                                        <th>Etat</th>
+                                        <th data-i18n="admin.article">Article</th>
+                                        <th data-i18n="admin.lastMovement">Dernier mouvement</th>
+                                        <th data-i18n="admin.state">Etat</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tbodyRupture">
-                                    <!-- Rempli dynamiquement -->
-                                </tbody>
+                                <tbody id="tbodyRupture"></tbody>
                             </table>
                             <div id="noRupture" class="alert-empty" style="display: none;">
                                 <i class="fas fa-check-circle"></i>
-                                <p>Aucune rupture de stock</p>
+                                <p data-i18n="admin.noOutOfStock">Aucune rupture de stock</p>
                             </div>
                         </div>
                     </div>
@@ -299,14 +295,14 @@
 
             <!-- Section statistiques rapides -->
             <section class="stats-section">
-                <h2><i class="fas fa-chart-line"></i> Vue d'ensemble</h2>
+                <h2><i class="fas fa-chart-line"></i> <span data-i18n="stats.title">Vue d'ensemble</span></h2>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon blue">
                             <i class="fas fa-box"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Articles total</h3>
+                            <h3 data-i18n="stats.totalArticles">Articles total</h3>
                             <p class="stat-value" id="totalArticles">0</p>
                         </div>
                     </div>
@@ -315,7 +311,7 @@
                             <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>En stock</h3>
+                            <h3 data-i18n="stats.inStock">En stock</h3>
                             <p class="stat-value" id="articlesEnStock">0</p>
                         </div>
                     </div>
@@ -324,7 +320,7 @@
                             <i class="fas fa-clock"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Réservés</h3>
+                            <h3 data-i18n="stats.reserved">Réservés</h3>
                             <p class="stat-value" id="articlesReserves">0</p>
                         </div>
                     </div>
@@ -333,7 +329,7 @@
                             <i class="fas fa-euro-sign"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Valeur stock</h3>
+                            <h3 data-i18n="stats.stockValue">Valeur stock</h3>
                             <p class="stat-value" id="valeurStock">0 €</p>
                         </div>
                     </div>
@@ -343,7 +339,7 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Système de gestion de stock • Version 1.0</p>
+            <p data-i18n="footer.system">Système de gestion de stock • Version 1.0</p>
             <p class="footer-info" id="lastSync"></p>
         </footer>
     </div>
@@ -352,7 +348,7 @@
     <div id="projectDetailsModal" class="modal-overlay" style="display: none;">
         <div class="modal modal-large">
             <div class="modal-header">
-                <h3><i class="fas fa-info-circle"></i> Détails du projet</h3>
+                <h3><i class="fas fa-info-circle"></i> <span data-i18n="modal.projectDetails">Détails du projet</span></h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
@@ -368,8 +364,8 @@
                     <!-- NOUVELLE SECTION : Scanner/Recherche d'article pour retour -->
                     <div class="project-return-search-section">
                         <div class="search-header">
-                            <h4><i class="fas fa-arrow-left"></i> Retour d'article au stock</h4>
-                            <p class="search-subtitle">Scanner ou rechercher un article à retourner</p>
+                            <h4><i class="fas fa-arrow-left"></i> <span data-i18n="modal.returnArticle">Retour d'article au stock</span></h4>
+                            <p class="search-subtitle" data-i18n="modal.returnSubtitle">Scanner ou rechercher un article à retourner</p>
                         </div>
 
                         <div class="search-options">
@@ -379,10 +375,10 @@
                                     <i class="fas fa-camera"></i>
                                 </div>
                                 <div class="option-content">
-                                    <h5>Scanner le code-barres</h5>
-                                    <p>Utilisez la caméra pour scanner l'article</p>
+                                    <h5 data-i18n="modal.scanBarcode">Scanner le code-barres</h5>
+                                    <p data-i18n="modal.scanDescription">Utilisez la caméra pour scanner l'article</p>
                                     <button id="scanArticleForReturnBtn" class="btn-primary">
-                                        <i class="fas fa-camera"></i> Démarrer le scan
+                                        <i class="fas fa-camera"></i> <span data-i18n="modal.startScan">Démarrer le scan</span>
                                     </button>
                                 </div>
                             </div>
@@ -393,15 +389,16 @@
                                     <i class="fas fa-search"></i>
                                 </div>
                                 <div class="option-content">
-                                    <h5>Rechercher manuellement</h5>
-                                    <p>Par nom, numéro ou code-barres</p>
+                                    <h5 data-i18n="modal.searchManually">Rechercher manuellement</h5>
+                                    <p data-i18n="modal.searchBy">Par nom, numéro ou code-barres</p>
                                     <div class="search-input-group">
                                         <input type="text"
                                                id="manualArticleSearchInput"
+                                               data-i18n-placeholder="modal.searchPlaceholder"
                                                placeholder="Nom, numéro ou code-barres..."
                                                class="search-input">
                                         <button id="searchArticleForReturnBtn" class="btn-primary">
-                                            <i class="fas fa-search"></i> Rechercher
+                                            <i class="fas fa-search"></i> <span data-i18n="search.searchBtn">Rechercher</span>
                                         </button>
                                     </div>
                                 </div>
@@ -411,8 +408,8 @@
                         <!-- Résultats de recherche -->
                         <div id="articleSearchResults" class="search-results-container" style="display: none;">
                             <div class="results-header">
-                                <h5>Articles trouvés</h5>
-                                <span id="resultsCount">0 résultat(s)</span>
+                                <h5 data-i18n="modal.articlesFound">Articles trouvés</h5>
+                                <span id="resultsCount">0 <span data-i18n="modal.results">résultat(s)</span></span>
                             </div>
                             <div id="articleResultsList" class="results-list">
                                 <!-- Rempli dynamiquement -->
@@ -424,48 +421,48 @@
                 <div class="project-tabs">
                     <div class="project-tab-buttons">
                         <button class="project-tab-btn" data-tab="reservations">
-                            <i class="fas fa-boxes"></i> Réservations
+                            <i class="fas fa-boxes"></i> <span data-i18n="modal.reservations">Réservations</span>
                             <span class="tab-badge" id="projectReservationsCount">0</span>
                         </button>
                         <button class="project-tab-btn active" data-tab="info">
-                            <i class="fas fa-info-circle"></i> Informations
+                            <i class="fas fa-info-circle"></i> <span data-i18n="modal.information">Informations</span>
                         </button>
                         <button class="project-tab-btn" data-tab="history">
-                            <i class="fas fa-history"></i> Historique
+                            <i class="fas fa-history"></i> <span data-i18n="modal.history">Historique</span>
                         </button>
                     </div>
 
                     <div class="project-tab-content active" id="projectInfoTab">
                         <div class="project-info-grid">
                             <div class="info-section">
-                                <h5><i class="fas fa-align-left"></i> Description</h5>
-                                <p id="projectDetailsDescription">Pas de description</p>
+                                <h5><i class="fas fa-align-left"></i> <span data-i18n="modal.description">Description</span></h5>
+                                <p id="projectDetailsDescription" data-i18n="modal.noDescription">Pas de description</p>
                             </div>
 
                             <div class="info-section">
-                                <h5><i class="fas fa-calendar"></i> Dates</h5>
+                                <h5><i class="fas fa-calendar"></i> <span data-i18n="modal.dates">Dates</span></h5>
                                 <div class="info-item">
-                                    <span class="label">Créé le :</span>
+                                    <span class="label" data-i18n="modal.createdOn">Créé le :</span>
                                     <span class="value" id="projectDetailsCreatedAt"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Date de fin :</span>
+                                    <span class="label" data-i18n="modal.endDate">Date de fin :</span>
                                     <span class="value" id="projectDetailsEndDate"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Dernière mise à jour :</span>
+                                    <span class="label" data-i18n="modal.lastUpdate">Dernière mise à jour :</span>
                                     <span class="value" id="projectDetailsUpdatedAt"></span>
                                 </div>
                             </div>
 
                             <div class="info-section">
-                                <h5><i class="fas fa-users"></i> Équipe</h5>
+                                <h5><i class="fas fa-users"></i> <span data-i18n="modal.team">Équipe</span></h5>
                                 <div class="info-item">
-                                    <span class="label">Responsable :</span>
+                                    <span class="label" data-i18n="modal.manager">Responsable :</span>
                                     <span class="value" id="projectDetailsManager"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Budget :</span>
+                                    <span class="label" data-i18n="modal.budget">Budget :</span>
                                     <span class="value" id="projectDetailsBudget"></span>
                                 </div>
                             </div>
@@ -475,7 +472,7 @@
                     <div class="project-tab-content" id="projectReservationsTab">
                         <div class="reservations-actions">
                             <button id="addReservationToProjectBtn" class="btn-primary">
-                                <i class="fas fa-plus"></i> Ajouter une réservation
+                                <i class="fas fa-plus"></i> <span data-i18n="modal.addReservation">Ajouter une réservation</span>
                             </button>
                         </div>
 
@@ -483,19 +480,19 @@
                             <table class="project-reservations-table">
                                 <thead>
                                     <tr>
-                                        <th>Article</th>
-                                        <th>Code</th>
-                                        <th>Quantité</th>
-                                        <th>Utilisé le</th>
-                                        <th>Date de fin</th>
-                                        <th>Utilisateur</th>
-                                        <th>Actions</th>
+                                        <th data-i18n="admin.article">Article</th>
+                                        <th data-i18n="modal.code">Code</th>
+                                        <th data-i18n="modal.quantity">Quantité</th>
+                                        <th data-i18n="modal.usedOn">Utilisé le</th>
+                                        <th data-i18n="modal.endDate">Date de fin</th>
+                                        <th data-i18n="modal.user">Utilisateur</th>
+                                        <th data-i18n="modal.actions">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="projectReservationsBody">
                                     <tr>
                                         <td colspan="7" class="loading-row">
-                                            <i class="fas fa-spinner fa-spin"></i> Chargement des réservations...
+                                            <i class="fas fa-spinner fa-spin"></i> <span data-i18n="modal.loadingReservations">Chargement des réservations...</span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -506,7 +503,7 @@
                     <div class="project-tab-content" id="projectHistoryTab">
                         <div class="history-list" id="projectHistoryList">
                             <div class="loading-row">
-                                <i class="fas fa-spinner fa-spin"></i> Chargement de l'historique...
+                                <i class="fas fa-spinner fa-spin"></i> <span data-i18n="modal.loadingHistory">Chargement de l'historique...</span>
                             </div>
                         </div>
                     </div>
@@ -514,12 +511,12 @@
 
                 <div class="modal-actions">
                     <button id="archiveProjectBtn" class="btn-secondary">
-                        <i class="fas fa-archive"></i> Archiver le projet
+                        <i class="fas fa-archive"></i> <span data-i18n="modal.archiveProject">Archiver le projet</span>
                     </button>
                     <button id="exportProjectBtn" class="btn-export">
-                        <i class="fas fa-file-export"></i> Exporter
+                        <i class="fas fa-file-export"></i> <span data-i18n="modal.export">Exporter</span>
                     </button>
-                    <button type="button" class="btn-secondary close-modal">
+                    <button type="button" class="btn-secondary close-modal" data-i18n="modal.close">
                         Fermer
                     </button>
                 </div>
@@ -531,23 +528,23 @@
     <div id="addReservationModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-plus"></i> Ajouter une réservation</h3>
+                <h3><i class="fas fa-plus"></i> <span data-i18n="modal.addReservation">Ajouter une réservation</span></h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label for="reservationArticle">
-                        <i class="fas fa-box"></i> Article *
+                        <i class="fas fa-box"></i> <span data-i18n="modal.article">Article</span> *
                     </label>
                     <select id="reservationArticle" class="form-select">
-                        <option value="">Sélectionnez un article</option>
+                        <option value="" data-i18n="modal.selectArticle">Sélectionnez un article</option>
                         <!-- Rempli dynamiquement -->
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="reservationQuantity">
-                        <i class="fas fa-boxes"></i> Quantité *
+                        <i class="fas fa-boxes"></i> <span data-i18n="modal.quantity">Quantité</span> *
                     </label>
                     <div class="quantity-input-group">
                         <button type="button" class="quantity-btn minus" id="reservationQuantityMinus">
@@ -563,17 +560,18 @@
                         </button>
                     </div>
                     <div class="quantity-info">
-                        <span>Stock disponible : <strong id="reservationAvailableStock">0</strong></span>
-                        <span>Déjà réservé : <strong id="reservationAlreadyReserved">0</strong></span>
+                        <span><span data-i18n="modal.availableStock">Stock disponible</span> : <strong id="reservationAvailableStock">0</strong></span>
+                        <span><span data-i18n="modal.alreadyReserved">Déjà réservé</span> : <strong id="reservationAlreadyReserved">0</strong></span>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="reservationComment">
-                        <i class="fas fa-comment"></i> Commentaire (optionnel)
+                        <i class="fas fa-comment"></i> <span data-i18n="modal.comment">Commentaire</span> (<span data-i18n="modal.optional">optionnel</span>)
                     </label>
                     <textarea id="reservationComment"
                               rows="2"
+                              data-i18n-placeholder="modal.commentPlaceholder"
                               placeholder="Motif de la réservation..."
                               class="form-textarea"></textarea>
                 </div>
@@ -585,9 +583,9 @@
 
                 <div class="modal-actions">
                     <button id="confirmAddReservationBtn" class="btn-primary">
-                        <i class="fas fa-check"></i> Ajouter la réservation
+                        <i class="fas fa-check"></i> <span data-i18n="modal.addReservationBtn">Ajouter la réservation</span>
                     </button>
-                    <button type="button" class="btn-secondary close-modal">
+                    <button type="button" class="btn-secondary close-modal" data-i18n="modal.cancel">
                         Annuler
                     </button>
                 </div>
@@ -595,43 +593,45 @@
         </div>
     </div>
 
+
     <!-- Modal libération stock -->
     <div id="releaseStockModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-unlock"></i> Libération du stock</h3>
+                <h3><i class="fas fa-unlock"></i> <span data-i18n="modal.releaseStock">Libération du stock</span></h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="warning-message">
                     <i class="fas fa-exclamation-triangle"></i>
                     <div class="warning-content">
-                        <h4>Attention !</h4>
-                        <p>Vous êtes sur le point de libérer tout le stock associé à ce projet.</p>
-                        <p><strong id="releaseItemsCount">0</strong> article(s) seront libérés.</p>
-                        <p>Cette action est irréversible.</p>
+                        <h4 data-i18n="modal.warning">Attention !</h4>
+                        <p data-i18n="modal.releaseWarning1">Vous êtes sur le point de libérer tout le stock associé à ce projet.</p>
+                        <p><strong id="releaseItemsCount">0</strong> <span data-i18n="modal.releaseWarning2">article(s) seront libérés.</span></p>
+                        <p data-i18n="modal.irreversible">Cette action est irréversible.</p>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="releaseReason">
-                        <i class="fas fa-comment"></i> Raison de la libération
+                        <i class="fas fa-comment"></i> <span data-i18n="modal.releaseReason">Raison de la libération</span>
                     </label>
                     <select id="releaseReason" class="form-select">
-                        <option value="">Sélectionnez une raison</option>
-                        <option value="project_completed">Projet terminé</option>
-                        <option value="project_cancelled">Projet annulé</option>
-                        <option value="stock_return">Retour de stock</option>
-                        <option value="other">Autre</option>
+                        <option value="" data-i18n="modal.selectReason">Sélectionnez une raison</option>
+                        <option value="project_completed" data-i18n="modal.projectCompleted">Projet terminé</option>
+                        <option value="project_cancelled" data-i18n="modal.projectCancelled">Projet annulé</option>
+                        <option value="stock_return" data-i18n="modal.stockReturn">Retour de stock</option>
+                        <option value="other" data-i18n="modal.other">Autre</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="releaseComment">
-                        <i class="fas fa-comment-dots"></i> Commentaire
+                        <i class="fas fa-comment-dots"></i> <span data-i18n="modal.comment">Commentaire</span>
                     </label>
                     <textarea id="releaseComment"
                               rows="3"
+                              data-i18n-placeholder="modal.additionalDetails"
                               placeholder="Détails supplémentaires..."
                               class="form-textarea"></textarea>
                 </div>
@@ -643,9 +643,9 @@
 
                 <div class="modal-actions">
                     <button id="confirmReleaseBtn" class="btn-primary">
-                        <i class="fas fa-check"></i> Confirmer la libération
+                        <i class="fas fa-check"></i> <span data-i18n="modal.confirmRelease">Confirmer la libération</span>
                     </button>
-                    <button type="button" class="btn-secondary close-modal">
+                    <button type="button" class="btn-secondary close-modal" data-i18n="modal.cancel">
                         Annuler
                     </button>
                 </div>

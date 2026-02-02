@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient.js';
+import { i18n } from './i18n.js'; // ← IMPORT DU SYSTÈME DE TRADUCTION
 
 // Éléments DOM
 let currentUser = null;
@@ -22,16 +23,32 @@ let addReservationToProjectBtn = null;
 
 // ===== FONCTIONS UTILITAIRES POUR PROJETS =====
 function formatDate(dateString) {
-    if (!dateString) return 'N/A';
+    if (!dateString) return i18n.t('common.na');
     try {
         const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        const currentLang = i18n.getCurrentLanguage();
+
+        if (currentLang === 'en') {
+            return date.toLocaleDateString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric'
+            });
+        } else if (currentLang === 'es') {
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } else {
+            return date.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
     } catch (e) {
-        return 'N/A';
+        return i18n.t('common.na');
     }
 }
 
@@ -72,8 +89,8 @@ function enlargeArticleImage(imageUrl, title) {
 
     // Gestion des erreurs d'image
     enlargedImg.onerror = function() {
-        this.src = 'https://via.placeholder.com/400x400/cccccc/666666?text=Image+non+disponible';
-        this.alt = 'Image non disponible';
+        this.src = 'https://via.placeholder.com/400x400/cccccc/666666?text=' + encodeURIComponent(i18n.t('common.imageNotAvailable'));
+        this.alt = i18n.t('common.imageNotAvailable');
     };
 
     const titleDiv = document.createElement('div');
@@ -152,8 +169,13 @@ function showAlert(message, type = 'info') {
     // Créer une alerte temporaire
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert-message ${type}`;
+
+    let icon = 'info-circle';
+    if (type === 'success') icon = 'check-circle';
+    else if (type === 'error') icon = 'exclamation-circle';
+
     alertDiv.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <i class="fas fa-${icon}"></i>
         <span>${message}</span>
     `;
 
@@ -190,18 +212,38 @@ function hideModal() {
 }
 
 function formatDateTime(dateString) {
-    if (!dateString) return 'N/A';
+    if (!dateString) return i18n.t('common.na');
     try {
         const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        const currentLang = i18n.getCurrentLanguage();
+
+        if (currentLang === 'en') {
+            return date.toLocaleDateString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } else if (currentLang === 'es') {
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } else {
+            return date.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
     } catch (e) {
-        return 'N/A';
+        return i18n.t('common.na');
     }
 }
 
@@ -267,13 +309,14 @@ async function getProjectReservations(projectId) {
         return {
             project: project,
             sorties: sorties || [],
-            retours: retours || [],  // ← NOUVEAU : Ajout des retours
+            retours: retours || [],
             reservations: reservations || []
         };
 
     } catch (error) {
         console.error('Erreur chargement données projet:', error);
-        return { project: null, sorties: [], retours: [], reservations: [] };  // ← MODIFIÉ
+        showAlert(i18n.t('errors.loadProjectData'), 'error');
+        return { project: null, sorties: [], retours: [], reservations: [] };
     }
 }
 
@@ -322,7 +365,7 @@ async function editReservation(reservationId) {
         if (error) throw error;
 
         if (!reservation) {
-            showAlert('Réservation non trouvée', 'error');
+            showAlert(i18n.t('errors.reservationNotFound'), 'error');
             return;
         }
 
@@ -331,12 +374,12 @@ async function editReservation(reservationId) {
             <div class="modal-overlay" id="editReservationModal" style="display: flex;">
                 <div class="modal">
                     <div class="modal-header">
-                        <h3><i class="fas fa-edit"></i> Modifier la réservation</h3>
+                        <h3><i class="fas fa-edit"></i> ${i18n.t('modal.editReservation')}</h3>
                         <button class="close-modal">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
-                            <label>Article :</label>
+                            <label>${i18n.t('modal.article')} :</label>
                             <input type="text"
                                    value="${reservation.w_articles?.nom || ''}"
                                    class="form-input"
@@ -345,7 +388,7 @@ async function editReservation(reservationId) {
 
                         <div class="form-group">
                             <label for="editQuantity">
-                                <i class="fas fa-boxes"></i> Quantité *
+                                <i class="fas fa-boxes"></i> ${i18n.t('modal.quantity')} *
                             </label>
                             <div class="quantity-input-group">
                                 <button type="button" class="quantity-btn minus" id="editQuantityMinus">
@@ -362,13 +405,13 @@ async function editReservation(reservationId) {
                                 </button>
                             </div>
                             <div class="quantity-info">
-                                <span>Stock disponible : <strong>${reservation.w_articles?.quantite_disponible + reservation.quantite || 0}</strong></span>
+                                <span>${i18n.t('modal.availableStock')} : <strong>${reservation.w_articles?.quantite_disponible + reservation.quantite || 0}</strong></span>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label for="editDateFin">
-                                <i class="fas fa-calendar"></i> Date de fin *
+                                <i class="fas fa-calendar"></i> ${i18n.t('modal.endDate')} *
                             </label>
                             <input type="date"
                                    id="editDateFin"
@@ -379,7 +422,7 @@ async function editReservation(reservationId) {
 
                         <div class="form-group">
                             <label for="editComment">
-                                <i class="fas fa-comment"></i> Commentaire
+                                <i class="fas fa-comment"></i> ${i18n.t('modal.comment')}
                             </label>
                             <textarea id="editComment"
                                       rows="3"
@@ -393,10 +436,10 @@ async function editReservation(reservationId) {
 
                         <div class="modal-actions">
                             <button id="confirmEditReservationBtn" class="btn-primary">
-                                <i class="fas fa-save"></i> Enregistrer
+                                <i class="fas fa-save"></i> ${i18n.t('common.save')}
                             </button>
                             <button type="button" class="btn-secondary cancel-edit-btn">
-                                Annuler
+                                ${i18n.t('modal.cancel')}
                             </button>
                         </div>
                     </div>
@@ -448,13 +491,13 @@ async function editReservation(reservationId) {
 
             // Validation
             if (!quantity || quantity < 1) {
-                modal.querySelector('#editReservationErrorText').textContent = 'La quantité doit être au moins de 1';
+                modal.querySelector('#editReservationErrorText').textContent = i18n.t('errors.minQuantity');
                 modal.querySelector('#editReservationError').style.display = 'flex';
                 return;
             }
 
             if (!dateFin) {
-                modal.querySelector('#editReservationErrorText').textContent = 'La date de fin est obligatoire';
+                modal.querySelector('#editReservationErrorText').textContent = i18n.t('errors.endDateRequired');
                 modal.querySelector('#editReservationError').style.display = 'flex';
                 return;
             }
@@ -475,14 +518,14 @@ async function editReservation(reservationId) {
 
                 if (updateError) throw updateError;
 
-                showAlert('Réservation modifiée avec succès', 'success');
+                showAlert(i18n.t('success.reservationUpdated'), 'success');
 
                 // Recharger les données
                 await fetchReservations();
 
                 // Recharger les détails du projet si ouvert
                 if (state.currentProject) {
-                    await showProjectDetails(state.currentProject.id); // ← PROBLÈME ICI
+                    await showProjectDetails(state.currentProject.id);
                 }
 
                 // Fermer le modal
@@ -490,7 +533,7 @@ async function editReservation(reservationId) {
 
             } catch (error) {
                 console.error('Erreur modification réservation:', error);
-                modal.querySelector('#editReservationErrorText').textContent = error.message || 'Erreur lors de la modification';
+                modal.querySelector('#editReservationErrorText').textContent = error.message || i18n.t('errors.updateFailed');
                 modal.querySelector('#editReservationError').style.display = 'flex';
             } finally {
                 hideLoading();
@@ -499,7 +542,7 @@ async function editReservation(reservationId) {
 
     } catch (error) {
         console.error('Erreur préparation édition réservation:', error);
-        showAlert('Erreur lors de la préparation de l\'édition', 'error');
+        showAlert(i18n.t('errors.prepareEditFailed'), 'error');
     }
 }
 
@@ -522,7 +565,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">${itemsSortis}</div>
-                                <div class="stat-label">Articles utilisés</div>
+                                <div class="stat-label">${i18n.t('stats.usedItems')}</div>
                                 <div class="stat-amount">${valeurSortis.toFixed(2)} €</div>
                             </div>
                         </div>
@@ -532,7 +575,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">${itemsReserves}</div>
-                                <div class="stat-label">Articles réservés</div>
+                                <div class="stat-label">${i18n.t('stats.reservedItems')}</div>
                                 <div class="stat-amount">${valeurReserves.toFixed(2)} €</div>
                             </div>
                         </div>
@@ -542,7 +585,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">${itemsSortis + itemsReserves}</div>
-                                <div class="stat-label">Total articles</div>
+                                <div class="stat-label">${i18n.t('stats.totalItems')}</div>
                                 <div class="stat-amount">${(valeurSortis + valeurReserves).toFixed(2)} €</div>
                             </div>
                         </div>
@@ -580,7 +623,7 @@ function updateProjectReservations(sorties, retours, reservations) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="loading-row">
-                    <i class="fas fa-info-circle"></i> Aucun article pour ce projet
+                    <i class="fas fa-info-circle"></i> ${i18n.t('project.noItems')}
                 </td>
             </tr>
         `;
@@ -594,7 +637,7 @@ function updateProjectReservations(sorties, retours, reservations) {
         html += `
             <tr>
                 <td colspan="7" class="section-header">
-                    <i class="fas fa-check-circle text-success"></i> Articles utilisés (sorties)
+                    <i class="fas fa-check-circle text-success"></i> ${i18n.t('project.usedItemsSection')}
                 </td>
             </tr>
         `;
@@ -615,11 +658,11 @@ function updateProjectReservations(sorties, retours, reservations) {
                 <tr data-id="${sortie.id}" class="sortie-row">
                     <td>
                         <div class="article-info">
-                            <strong>${sortie.article?.nom || 'Article inconnu'}</strong>
+                            <strong>${sortie.article?.nom || i18n.t('common.unknownArticle')}</strong>
                             <small>${sortie.article?.numero || ''}</small>
                         </div>
                     </td>
-                    <td>${sortie.article?.numero || 'N/A'}</td>
+                    <td>${sortie.article?.numero || i18n.t('common.na')}</td>
                     <td>
                         <span class="quantity-badge sortie">
                             -${sortie.quantite}
@@ -635,13 +678,13 @@ function updateProjectReservations(sorties, retours, reservations) {
                         <div class="price-info">
                             ${sortie.article?.prix_unitaire ?
                                 `${sortie.article.prix_unitaire.toFixed(2)} €` :
-                                'Prix N/A'}
-                            <small>Total: ${valeurTotale} €</small>
+                                i18n.t('common.priceNA')}
+                            <small>${i18n.t('common.total')}: ${valeurTotale} €</small>
                         </div>
                     </td>
                     <td>
                         <div class="user-info">
-                            ${sortie.utilisateur?.username || 'Utilisateur inconnu'}
+                            ${sortie.utilisateur?.username || i18n.t('common.unknownUser')}
                         </div>
                     </td>
                     <td>
@@ -651,14 +694,14 @@ function updateProjectReservations(sorties, retours, reservations) {
                                         data-id="${sortie.id}"
                                         data-article-id="${sortie.article_id}"
                                         data-quantity="${quantiteRestante}"
-                                        title="Retour ${quantiteRestante} unité(s) au stock">
+                                        title="${i18n.t('actions.returnToStock', { quantity: quantiteRestante })}">
                                     <i class="fas fa-arrow-left"></i>
                                 </button>
                             ` : ''}
                             <button class="btn-action btn-small view-details"
                                     data-id="${sortie.id}"
                                     data-type="sortie"
-                                    title="Voir les détails">
+                                    title="${i18n.t('actions.viewDetails')}">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
@@ -673,7 +716,7 @@ function updateProjectReservations(sorties, retours, reservations) {
         html += `
             <tr>
                 <td colspan="7" class="section-header retour-header">
-                    <i class="fas fa-undo-alt text-info"></i> Articles retournés au stock
+                    <i class="fas fa-undo-alt text-info"></i> ${i18n.t('project.returnedItemsSection')}
                 </td>
             </tr>
         `;
@@ -686,11 +729,11 @@ function updateProjectReservations(sorties, retours, reservations) {
                 <tr data-id="${retour.id}" class="retour-row">
                     <td>
                         <div class="article-info">
-                            <strong>${retour.article?.nom || 'Article inconnu'}</strong>
+                            <strong>${retour.article?.nom || i18n.t('common.unknownArticle')}</strong>
                             <small>${retour.article?.numero || ''}</small>
                         </div>
                     </td>
-                    <td>${retour.article?.numero || 'N/A'}</td>
+                    <td>${retour.article?.numero || i18n.t('common.na')}</td>
                     <td>
                         <span class="quantity-badge retour">
                             +${retour.quantite}
@@ -706,13 +749,13 @@ function updateProjectReservations(sorties, retours, reservations) {
                         <div class="price-info">
                             ${retour.article?.prix_unitaire ?
                                 `${retour.article.prix_unitaire.toFixed(2)} €` :
-                                'Prix N/A'}
-                            <small>Total: ${valeurTotale} €</small>
+                                i18n.t('common.priceNA')}
+                            <small>${i18n.t('common.total')}: ${valeurTotale} €</small>
                         </div>
                     </td>
                     <td>
                         <div class="user-info">
-                            ${retour.utilisateur?.username || 'Utilisateur inconnu'}
+                            ${retour.utilisateur?.username || i18n.t('common.unknownUser')}
                         </div>
                     </td>
                     <td>
@@ -720,7 +763,7 @@ function updateProjectReservations(sorties, retours, reservations) {
                             <button class="btn-action btn-small view-details"
                                     data-id="${retour.id}"
                                     data-type="retour"
-                                    title="Voir les détails">
+                                    title="${i18n.t('actions.viewDetails')}">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
@@ -735,7 +778,7 @@ function updateProjectReservations(sorties, retours, reservations) {
         html += `
             <tr>
                 <td colspan="7" class="section-header reservation-header">
-                    <i class="fas fa-clock text-warning"></i> Articles réservés (non utilisés)
+                    <i class="fas fa-clock text-warning"></i> ${i18n.t('project.reservedItemsSection')}
                 </td>
             </tr>
         `;
@@ -749,11 +792,11 @@ function updateProjectReservations(sorties, retours, reservations) {
                 <tr data-id="${reservation.id}" class="reservation-row">
                     <td>
                         <div class="article-info">
-                            <strong>${article?.nom || 'Article inconnu'}</strong>
+                            <strong>${article?.nom || i18n.t('common.unknownArticle')}</strong>
                             <small>${article?.numero || ''}</small>
                         </div>
                     </td>
-                    <td>${article?.numero || 'N/A'}</td>
+                    <td>${article?.numero || i18n.t('common.na')}</td>
                     <td>
                         <span class="quantity-badge reservation">
                             ${reservation.quantite}
@@ -769,13 +812,13 @@ function updateProjectReservations(sorties, retours, reservations) {
                         <div class="price-info">
                             ${article?.prix_unitaire ?
                                 `${article.prix_unitaire.toFixed(2)} €` :
-                                'Prix N/A'}
-                            <small>Total: ${valeurTotale} €</small>
+                                i18n.t('common.priceNA')}
+                            <small>${i18n.t('common.total')}: ${valeurTotale} €</small>
                         </div>
                     </td>
                     <td>
                         <div class="user-info">
-                            ${reservation.w_users?.username || 'Utilisateur inconnu'}
+                            ${reservation.w_users?.username || i18n.t('common.unknownUser')}
                         </div>
                     </td>
                     <td>
@@ -784,18 +827,18 @@ function updateProjectReservations(sorties, retours, reservations) {
                                     data-id="${reservation.id}"
                                     data-article-id="${reservation.article_id}"
                                     data-quantity="${reservation.quantite}"
-                                    title="Marquer comme utilisé">
+                                    title="${i18n.t('actions.markAsUsed')}">
                                 <i class="fas fa-check"></i>
                             </button>
                             <button class="btn-action btn-small view-details"
                                     data-id="${reservation.id}"
                                     data-type="reservation"
-                                    title="Voir les détails">
+                                    title="${i18n.t('actions.viewDetails')}">
                                 <i class="fas fa-eye"></i>
                             </button>
                             <button class="btn-action btn-small release-reservation"
                                     data-id="${reservation.id}"
-                                    title="Libérer la réservation">
+                                    title="${i18n.t('actions.releaseReservation')}">
                                 <i class="fas fa-unlock"></i>
                             </button>
                         </div>
@@ -840,12 +883,15 @@ function setupProjectTableEvents(sorties, retours, reservations) {
 
             if (reservation) {
                 const article = reservation.w_articles;
-                const articleName = article?.nom || 'Article inconnu';
+                const articleName = article?.nom || i18n.t('common.unknownArticle');
 
-                if (confirm(`Libérer la réservation de ${reservation.quantite} ${articleName} ?`)) {
+                if (confirm(i18n.t('confirm.releaseReservation', {
+                    quantity: reservation.quantite,
+                    article: articleName
+                }))) {
                     try {
                         await releaseReservation(reservationId);
-                        showTemporarySuccess('Réservation libérée avec succès');
+                        showTemporarySuccess(i18n.t('success.reservationReleased'));
 
                         // Recharger les détails du projet
                         const projectId = document.querySelector('.project-tab-content.active')
@@ -857,7 +903,7 @@ function setupProjectTableEvents(sorties, retours, reservations) {
                         }
                     } catch (error) {
                         console.error('Erreur libération réservation:', error);
-                        alert('Erreur lors de la libération de la réservation');
+                        alert(i18n.t('errors.releaseReservationFailed'));
                     }
                 }
             }
@@ -889,73 +935,73 @@ function showItemDetails(itemId, itemType, sorties, retours, reservations) {
         <div class="modal-overlay" id="itemDetailsModal">
             <div class="modal" style="max-width: 600px;">
                 <div class="modal-header">
-                    <h3><i class="fas fa-info-circle"></i> Détails</h3>
+                    <h3><i class="fas fa-info-circle"></i> ${i18n.t('modal.details')}</h3>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="detail-section">
-                        <h4><i class="fas fa-box"></i> Article</h4>
+                        <h4><i class="fas fa-box"></i> ${i18n.t('modal.article')}</h4>
                         <div class="detail-item">
-                            <span class="detail-label">Nom :</span>
-                            <span class="detail-value">${article?.nom || 'Non spécifié'}</span>
+                            <span class="detail-label">${i18n.t('common.name')} :</span>
+                            <span class="detail-value">${article?.nom || i18n.t('common.notSpecified')}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Numéro :</span>
-                            <span class="detail-value">${article?.numero || 'Non spécifié'}</span>
+                            <span class="detail-label">${i18n.t('common.number')} :</span>
+                            <span class="detail-value">${article?.numero || i18n.t('common.notSpecified')}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Code-barre :</span>
-                            <span class="detail-value">${article?.code_barre || 'Non spécifié'}</span>
+                            <span class="detail-label">${i18n.t('common.barcode')} :</span>
+                            <span class="detail-value">${article?.code_barre || i18n.t('common.notSpecified')}</span>
                         </div>
                     </div>
 
                     <div class="detail-section">
-                        <h4><i class="fas ${isSortie ? 'fa-arrow-up' : isRetour ? 'fa-undo' : 'fa-clock'}"></i> ${isSortie ? 'Sortie' : isRetour ? 'Retour au stock' : 'Réservation'}</h4>
+                        <h4><i class="fas ${isSortie ? 'fa-arrow-up' : isRetour ? 'fa-undo' : 'fa-clock'}"></i> ${isSortie ? i18n.t('common.output') : isRetour ? i18n.t('common.returnToStock') : i18n.t('common.reservation')}</h4>
                         <div class="detail-item">
-                            <span class="detail-label">Type :</span>
+                            <span class="detail-label">${i18n.t('common.type')} :</span>
                             <span class="detail-value badge ${isSortie ? 'sortie' : isRetour ? 'retour' : 'reservation'}">
-                                ${isSortie ? 'Sortie effectuée' : isRetour ? 'Retour au stock' : 'Réservation active'}
+                                ${isSortie ? i18n.t('status.outputCompleted') : isRetour ? i18n.t('status.returnedToStock') : i18n.t('status.activeReservation')}
                             </span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Quantité :</span>
+                            <span class="detail-label">${i18n.t('common.quantity')} :</span>
                             <span class="detail-value">${isRetour ? '+' : (isSortie ? '-' : '')}${item.quantite}</span>
                         </div>
                         ${article?.prix_unitaire ? `
                         <div class="detail-item">
-                            <span class="detail-label">Prix unitaire :</span>
+                            <span class="detail-label">${i18n.t('common.unitPrice')} :</span>
                             <span class="detail-value">${article.prix_unitaire.toFixed(2)} €</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Valeur totale :</span>
+                            <span class="detail-label">${i18n.t('common.totalValue')} :</span>
                             <span class="detail-value" style="font-weight: bold;">
                                 ${(article.prix_unitaire * item.quantite).toFixed(2)} €
                             </span>
                         </div>
                         ` : ''}
                         <div class="detail-item">
-                            <span class="detail-label">Date :</span>
+                            <span class="detail-label">${i18n.t('common.date')} :</span>
                             <span class="detail-value">${formatDateTime(item.created_at)}</span>
                         </div>
                         ${!isSortie && !isRetour ? `
                         <div class="detail-item">
-                            <span class="detail-label">Date de fin :</span>
+                            <span class="detail-label">${i18n.t('common.endDate')} :</span>
                             <span class="detail-value">${formatDate(item.date_fin)}</span>
                         </div>
                         ` : ''}
                     </div>
 
                     <div class="detail-section">
-                        <h4><i class="fas fa-user"></i> Responsable</h4>
+                        <h4><i class="fas fa-user"></i> ${i18n.t('common.responsible')}</h4>
                         <div class="detail-item">
-                            <span class="detail-label">Utilisateur :</span>
-                            <span class="detail-value">${user?.username || 'Non spécifié'}</span>
+                            <span class="detail-label">${i18n.t('common.user')} :</span>
+                            <span class="detail-value">${user?.username || i18n.t('common.notSpecified')}</span>
                         </div>
                     </div>
 
                     ${item.commentaire ? `
                     <div class="detail-section">
-                        <h4><i class="fas fa-comment"></i> Commentaire</h4>
+                        <h4><i class="fas fa-comment"></i> ${i18n.t('common.comment')}</h4>
                         <div class="detail-comment">
                             ${item.commentaire}
                         </div>
@@ -997,7 +1043,10 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
         }
 
         // Demander confirmation
-        if (!confirm(`Utiliser ${quantityToUse} article(s) sur ${originalQuantity} réservés ?`)) {
+        if (!confirm(i18n.t('confirm.useReservation', {
+            quantityToUse,
+            originalQuantity
+        }))) {
             return;
         }
 
@@ -1026,11 +1075,15 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
         if (articleError) throw articleError;
 
         // Créer le mouvement de sortie avec plus d'informations
-        const articleName = reservation.w_articles?.nom || 'Article inconnu';
-        const projetNom = state.currentProject?.nom || 'Projet inconnu';
+        const articleName = reservation.w_articles?.nom || i18n.t('common.unknownArticle');
+        const projetNom = state.currentProject?.nom || i18n.t('common.unknownProject');
         const mouvementComment = comment
-            ? `${comment} | Source: Réservation #${reservationId} (${articleName})`
-            : `Sortie pour projet "${projetNom}" depuis réservation #${reservationId} (${articleName})`;
+            ? `${comment} | ${i18n.t('common.source')}: ${i18n.t('common.reservation')} #${reservationId} (${articleName})`
+            : i18n.t('messages.outputFromReservation', {
+                project: projetNom,
+                reservationId,
+                article: articleName
+            });
 
         const { error: movementError } = await supabase
             .from('w_mouvements')
@@ -1110,33 +1163,31 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
             // Trouver l'ID du projet depuis le modal
             const projectId = document.querySelector('[data-project-id]')?.dataset.projectId;
             if (projectId) {
-                await openProjectDetailsModal(projectId); // ← CORRIGÉ : appel à la bonne fonction
+                await openProjectDetailsModal(projectId);
             }
         }
 
-        showAlert(`${quantityToUse} article(s) marqué(s) comme utilisé(s)`, 'success');
+        showAlert(i18n.t('success.itemsMarkedAsUsed', { quantity: quantityToUse }), 'success');
 
     } catch (error) {
         console.error('Erreur utilisation réservation:', error);
-        showAlert('Erreur lors de la mise à jour de la réservation', 'error');
+        showAlert(i18n.t('errors.updateReservationFailed'), 'error');
     } finally {
         hideLoading();
     }
 }
 
-// Ajoutez cette fonction après useReservation
 async function showUseReservationModal(reservationId, articleId, originalQuantity) {
-    // Créer la modal
     const modalHtml = `
         <div class="modal-overlay use-reservation-modal">
             <div class="modal" style="max-width: 500px;">
                 <div class="modal-header">
-                    <h3><i class="fas fa-check-circle"></i> Marquer comme utilisé</h3>
+                    <h3><i class="fas fa-check-circle"></i> ${i18n.t('modal.markAsUsed')}</h3>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><i class="fas fa-boxes"></i> Quantité à utiliser *</label>
+                        <label><i class="fas fa-boxes"></i> ${i18n.t('form.quantityToUse')} *</label>
                         <div class="quantity-input-group">
                             <button type="button" class="quantity-btn minus" id="useQuantityMinus">
                                 <i class="fas fa-minus"></i>
@@ -1152,15 +1203,15 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
                             </button>
                         </div>
                         <div class="quantity-info">
-                            <span>Quantité réservée : <strong>${originalQuantity}</strong></span>
+                            <span>${i18n.t('form.reservedQuantity')} : <strong>${originalQuantity}</strong></span>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label><i class="fas fa-comment"></i> Commentaire (optionnel)</label>
+                        <label><i class="fas fa-comment"></i> ${i18n.t('form.commentOptional')}</label>
                         <textarea id="useComment"
                                   rows="3"
-                                  placeholder="Détails de l'utilisation..."
+                                  placeholder="${i18n.t('form.usageDetailsPlaceholder')}"
                                   class="form-textarea"></textarea>
                     </div>
 
@@ -1171,10 +1222,10 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
 
                     <div class="modal-actions">
                         <button id="confirmUseReservationBtn" class="btn-success">
-                            <i class="fas fa-check"></i> Confirmer l'utilisation
+                            <i class="fas fa-check"></i> ${i18n.t('actions.confirmUsage')}
                         </button>
                         <button type="button" class="btn-secondary close-modal">
-                            Annuler
+                            ${i18n.t('actions.cancel')}
                         </button>
                     </div>
                 </div>
@@ -1182,7 +1233,6 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
         </div>
     `;
 
-    // Ajouter au DOM
     const modalContainer = document.createElement('div');
     modalContainer.innerHTML = modalHtml;
     document.body.appendChild(modalContainer);
@@ -1190,7 +1240,6 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
     const modal = modalContainer.querySelector('.use-reservation-modal');
     modal.style.display = 'flex';
 
-    // Gestion des boutons de quantité
     const quantityInput = modal.querySelector('#useQuantity');
     modal.querySelector('#useQuantityMinus').addEventListener('click', () => {
         let value = parseInt(quantityInput.value) || 1;
@@ -1206,7 +1255,6 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
         }
     });
 
-    // Gestion de la fermeture
     modal.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', () => {
             modal.remove();
@@ -1219,13 +1267,12 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
         }
     });
 
-    // Confirmation
     modal.querySelector('#confirmUseReservationBtn').addEventListener('click', async () => {
         const quantityToUse = parseInt(quantityInput.value);
         const comment = modal.querySelector('#useComment').value.trim();
 
         if (!quantityToUse || quantityToUse < 1 || quantityToUse > originalQuantity) {
-            modal.querySelector('#useReservationErrorText').textContent = 'Quantité invalide';
+            modal.querySelector('#useReservationErrorText').textContent = i18n.t('errors.invalidQuantity');
             modal.querySelector('#useReservationError').style.display = 'flex';
             return;
         }
@@ -1234,6 +1281,7 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
         await useReservation(reservationId, articleId, originalQuantity, quantityToUse, comment);
     });
 }
+
 
 async function openReturnToStockModal(mouvementId, articleId, originalQuantity) {
     try {
