@@ -5707,51 +5707,79 @@ class VueStock {
 
 // ===== INITIALISATION AU CHARGEMENT =====
 document.addEventListener('DOMContentLoaded', () => {
-    // Récupérer les paramètres URL
     const urlParams = new URLSearchParams(window.location.search);
-    const rackCode = urlParams.get('rack');
-    const levelCode = urlParams.get('level');
-    const slotCode = urlParams.get('slot');
+    const articleId = urlParams.get('articleId');
+
+    if (!articleId) {
+        alert("Paramètre manquant : articleId obligatoire dans l'URL.");
+        return;
+    }
 
     window.vueStock = new VueStock();
 
-    // Initialiser la vue quad après un délai
-    setTimeout(() => {
-        if (window.vueStock.quadViewManager) {
-            window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
+    // Récupérer l'article côté serveur pour obtenir rack/level/slot (on accepte snake_case ou camelCase)
+    fetch(`/api/articles/${encodeURIComponent(articleId)}`)
+        .then(res => {
+            if (!res.ok) throw new Error(`Erreur réseau ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            const rackId = data.rack_id ?? data.rackId;
+            const levelId = data.level_id ?? data.levelId;
+            const slotId = data.slot_id ?? data.slotId;
 
-            // Si on a des paramètres de localisation, les utiliser
-            if (rackCode) {
-                const rack = window.vueStock.racks.find(r => r.code === rackCode);
-                if (rack) {
-                    window.vueStock.goToRackView(rack);
-
-                    if (levelCode) {
-                        setTimeout(() => {
-                            const level = rack.levels?.find(l => l.code === levelCode);
-                            if (level) {
-                                window.vueStock.goToLevelView(level);
-
-                                if (slotCode) {
-                                    setTimeout(() => {
-                                        const slot = level.slots?.find(s => s.code === slotCode);
-                                        if (slot) {
-                                            const slotElement = document.querySelector(`.slot-item[data-slot-id="${slot.id}"]`);
-                                            if (slotElement) {
-                                                slotElement.classList.add('pulse');
-                                                slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                            }
-                                        }
-                                    }, 500);
-                                }
-                            }
-                        }, 500);
-                    }
-                }
+            if (!rackId || !levelId || !slotId) {
+                throw new Error("La réponse de l'API ne contient pas rack_id/level_id/slot_id.");
             }
-        }
-    }, 1000);
+
+            // Attendre l'initialisation des vues puis naviguer
+            setTimeout(() => {
+                if (!window.vueStock.quadViewManager) {
+                    console.error("quadViewManager non initialisé.");
+                    return;
+                }
+
+                window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
+
+                // Trouver par id (on compare en Number pour couvrir string/number)
+                const rack = window.vueStock.racks.find(r => Number(r.id) === Number(rackId));
+                if (!rack) {
+                    console.error("Rack introuvable :", rackId);
+                    return;
+                }
+                window.vueStock.goToRackView(rack);
+
+                setTimeout(() => {
+                    const level = rack.levels?.find(l => Number(l.id) === Number(levelId));
+                    if (!level) {
+                        console.error("Level introuvable :", levelId);
+                        return;
+                    }
+                    window.vueStock.goToLevelView(level);
+
+                    setTimeout(() => {
+                        const slot = level.slots?.find(s => Number(s.id) === Number(slotId));
+                        if (!slot) {
+                            console.error("Slot introuvable :", slotId);
+                            return;
+                        }
+                        const slotElement = document.querySelector(`.slot-item[data-slot-id="${slot.id}"]`);
+                        if (slotElement) {
+                            slotElement.classList.add('pulse');
+                            slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                            console.error("Élément DOM du slot introuvable pour id :", slot.id);
+                        }
+                    }, 500);
+                }, 500);
+            }, 1000);
+        })
+        .catch(err => {
+            console.error("Impossible de récupérer l'article :", err);
+            alert("Erreur : impossible de charger l'article. Voir la console pour détails.");
+        });
 });
+
 
 
 // Debug button pour tester QuadView
