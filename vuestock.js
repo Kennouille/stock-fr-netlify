@@ -5706,6 +5706,7 @@ class VueStock {
 }
 
 // ===== INITIALISATION AU CHARGEMENT =====
+// ===== INITIALISATION AU CHARGEMENT =====
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const articleId = urlParams.get('articleId');
@@ -5715,71 +5716,101 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    window.vueStock = new VueStock();
+    // crée l'instance si elle n'existe pas (comme avant)
+    if (!window.vueStock) window.vueStock = new VueStock();
 
-    // Récupérer l'article côté serveur pour obtenir rack/level/slot (on accepte snake_case ou camelCase)
-    fetch(`/api/articles/${encodeURIComponent(articleId)}`)
+    // utilitaires
+    const waitFor = (predicate, timeout = 5000, interval = 100) => {
+        const start = Date.now();
+        return new Promise((resolve, reject) => {
+            (function poll() {
+                try {
+                    if (predicate()) return resolve();
+                    if (Date.now() - start >= timeout) return reject(new Error('Timeout'));
+                    setTimeout(poll, interval);
+                } catch (e) { reject(e); }
+            })();
+        });
+    };
+
+    // 1) Essayer l'API Netlify custom (remplace si nécessaire)
+    const netlifyUrl = `/.netlify/functions/vuestock-api?action=get-article&articleId=${encodeURIComponent(articleId)}`;
+
+    fetch(netlifyUrl)
         .then(res => {
+            if (res.status === 404) throw new Error('API_NOT_FOUND');
             if (!res.ok) throw new Error(`Erreur réseau ${res.status}`);
             return res.json();
         })
-        .then(data => {
+        .then(json => {
+            // Suppose réponse { success: true, data: { rack_id, level_id, slot_id } } ou similaire
+            const data = json.data ?? json;
             const rackId = data.rack_id ?? data.rackId;
             const levelId = data.level_id ?? data.levelId;
             const slotId = data.slot_id ?? data.slotId;
-
-            if (!rackId || !levelId || !slotId) {
-                throw new Error("La réponse de l'API ne contient pas rack_id/level_id/slot_id.");
-            }
-
-            // Attendre l'initialisation des vues puis naviguer
-            setTimeout(() => {
-                if (!window.vueStock.quadViewManager) {
-                    console.error("quadViewManager non initialisé.");
-                    return;
-                }
-
-                window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
-
-                // Trouver par id (on compare en Number pour couvrir string/number)
-                const rack = window.vueStock.racks.find(r => Number(r.id) === Number(rackId));
-                if (!rack) {
-                    console.error("Rack introuvable :", rackId);
-                    return;
-                }
-                window.vueStock.goToRackView(rack);
-
-                setTimeout(() => {
-                    const level = rack.levels?.find(l => Number(l.id) === Number(levelId));
-                    if (!level) {
-                        console.error("Level introuvable :", levelId);
-                        return;
-                    }
-                    window.vueStock.goToLevelView(level);
-
-                    setTimeout(() => {
-                        const slot = level.slots?.find(s => Number(s.id) === Number(slotId));
-                        if (!slot) {
-                            console.error("Slot introuvable :", slotId);
-                            return;
-                        }
-                        const slotElement = document.querySelector(`.slot-item[data-slot-id="${slot.id}"]`);
-                        if (slotElement) {
-                            slotElement.classList.add('pulse');
-                            slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        } else {
-                            console.error("Élément DOM du slot introuvable pour id :", slot.id);
-                        }
-                    }, 500);
-                }, 500);
-            }, 1000);
+            if (!rackId || !levelId || !slotId) throw new Error('INVALID_API_RESPONSE');
+            return { rackId, levelId, slotId };
         })
         .catch(err => {
-            console.error("Impossible de récupérer l'article :", err);
-            alert("Erreur : impossible de charger l'article. Voir la console pour détails.");
+            if (err.message === 'API_NOT_FOUND' || err.message === 'INVALID_API_RESPONSE' || err.message.startsWith('Erreur réseau')) {
+                // Fallback: chercher dans window.vueStock.racks (si les slots contiennent articleId)
+                console.warn('API article introuvable ou invalide — utilisation du fallback local.', err);
+                // attendre que window.vueStock.racks soit prêt
+                return waitFor(() => Array.isArray(window.vueStock?.racks) && window.vueStock.racks.length > 0, 8000)
+                    .then(() => {
+                        // parcourir racks -> levels -> slots pour trouver l'articleId
+                        for (const r of window.vueStock.racks) {
+                            if (!r.levels) continue;
+                            for (const l of r.levels) {
+                                if (!l.slots) continue;
+                                for (const s of l.slots) {
+                                    // adapte la condition suivant où est stocké articleId dans ton modèle :
+                                    // s.articleId ou s.article_id ou s.content?.articleId, etc.
+                                    if (String(s.articleId ?? s.article_id ?? s.content?.articleId) === String(articleId)) {
+                                        return { rackId: r.id, levelId: l.id, slotId: s.id };
+                                    }
+                                }
+                            }
+                        }
+                        throw new Error('ARTICLE_NOT_FOUND_LOCAL');
+                    });
+            }
+            throw err; // autre erreur => laisse remonter
+        })
+        .then(({ rackId, levelId, slotId }) => {
+            // navigation vers rack/level/slot — on attend l'initialisation des vues proprement
+            return waitFor(() => !!window.vueStock?.quadViewManager, 8000)
+                .then(() => {
+                    window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
+                    // chercher le rack
+                    const rack = window.vueStock.racks.find(r => String(r.id) === String(rackId));
+                    if (!rack) throw new Error('RACK_NOT_FOUND');
+                    window.vueStock.goToRackView(rack);
+                    // attendre que le niveau soit présent sur le rack (petit polling)
+                    return waitFor(() => rack.levels && rack.levels.find(l => String(l.id) === String(levelId)), 5000)
+                        .then(() => {
+                            const level = rack.levels.find(l => String(l.id) === String(levelId));
+                            window.vueStock.goToLevelView(level);
+                            return waitFor(() => level.slots && level.slots.find(s => String(s.id) === String(slotId)), 5000)
+                                .then(() => {
+                                    const slot = level.slots.find(s => String(s.id) === String(slotId));
+                                    // mettre en évidence l'élément DOM si présent
+                                    const slotEl = document.querySelector(`.slot-item[data-slot-id="${slot.id}"]`);
+                                    if (slotEl) {
+                                        slotEl.classList.add('pulse');
+                                        slotEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    } else {
+                                        console.warn('Élément DOM du slot introuvable pour id :', slot.id);
+                                    }
+                                });
+                        });
+                });
+        })
+        .catch(err => {
+            console.error('Impossible de localiser l\'article/slot :', err);
+            alert('Erreur : l\'article/slot n\'a pas été trouvé. Voir console pour détails.');
         });
 });
-
 
 
 // Debug button pour tester QuadView
