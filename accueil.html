@@ -54,8 +54,8 @@
         <main class="main-content">
             <!-- Section Actions rapides (tous les users) -->
             <section class="actions-section">
-                <h2><i class="fas fa-bolt"></i> <span data-i18n="actions.title">Actions rapides</span></h2>
-                <p class="section-subtitle" data-i18n="actions.subtitle">Opérations quotidiennes de gestion de stock</p>
+                <h2><i class="fas fa-bolt"></i> <span data-i18n="quickActions">Actions rapides</span></h2>
+                <p class="section-subtitle" data-i18n="dailyOperations">Opérations quotidiennes de gestion de stock</p>
 
                 <div class="actions-grid">
                     <!-- Sortie de stock -->
@@ -63,14 +63,14 @@
                         <div class="action-icon red">
                             <i class="fas fa-arrow-up"></i>
                         </div>
-                        <h3 data-i18n="actions.sortie.title">Sortie de stock</h3>
-                        <p data-i18n="actions.sortie.description">Retirer des articles du stock pour un projet</p>
+                        <h3 data-i18n="stockOut">Sortie de stock</h3>
+                        <p data-i18n="stockOutDesc">Retirer des articles du stock pour un projet</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="sortie" data-type="scan">
-                                <i class="fas fa-camera"></i> <span data-i18n="actions.scan">Scanner</span>
+                                <i class="fas fa-camera"></i> <span data-i18n="scan">Scanner</span>
                             </button>
                             <button class="option-btn" data-action="sortie" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> <span data-i18n="actions.input">Saisir</span>
+                                <i class="fas fa-keyboard"></i> <span data-i18n="input">Saisir</span>
                             </button>
                         </div>
                     </div>
@@ -80,14 +80,14 @@
                         <div class="action-icon green">
                             <i class="fas fa-arrow-down"></i>
                         </div>
-                        <h3 data-i18n="actions.entree.title">Entrée de stock</h3>
-                        <p data-i18n="actions.entree.description">Ajouter de nouveaux articles ou réapprovisionner</p>
+                        <h3 data-i18n="stockIn">Entrée de stock</h3>
+                        <p data-i18n="stockInDesc">Ajouter de nouveaux articles ou réapprovisionner</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="entree" data-type="scan">
-                                <i class="fas fa-camera"></i> <span data-i18n="actions.scan">Scanner</span>
+                                <i class="fas fa-camera"></i> <span data-i18n="scan">Scanner</span>
                             </button>
                             <button class="option-btn" data-action="entree" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> <span data-i18n="actions.input">Saisir</span>
+                                <i class="fas fa-keyboard"></i> <span data-i18n="input">Saisir</span>
                             </button>
                         </div>
                     </div>
@@ -97,14 +97,14 @@
                         <div class="action-icon orange">
                             <i class="fas fa-calendar-check"></i>
                         </div>
-                        <h3 data-i18n="actions.reservation.title">Réservation projet</h3>
-                        <p data-i18n="actions.reservation.description">Réserver des articles pour un futur projet</p>
+                        <h3 data-i18n="reservation">Réservation projet</h3>
+                        <p data-i18n="reservationDesc">Réserver des articles pour un futur projet</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="reservation" data-type="scan">
-                                <i class="fas fa-camera"></i> <span data-i18n="actions.scan">Scanner</span>
+                                <i class="fas fa-camera"></i> <span data-i18n="scan">Scanner</span>
                             </button>
                             <button class="option-btn" data-action="reservation" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> <span data-i18n="actions.input">Saisir</span>
+                                <i class="fas fa-keyboard"></i> <span data-i18n="input">Saisir</span>
                             </button>
                         </div>
                     </div>
@@ -114,11 +114,11 @@
                         <div class="action-icon blue">
                             <i class="fas fa-undo-alt"></i>
                         </div>
-                        <h3 data-i18n="actions.retour.title">Retour projet en stock</h3>
-                        <p data-i18n="actions.retour.description">Retourner des articles d'un projet vers le stock</p>
+                        <h3 data-i18n="returnProject">Retour projet en stock</h3>
+                        <p data-i18n="returnProjectDesc">Retourner des articles d'un projet vers le stock</p>
                         <div class="action-options">
                             <button class="option-btn" id="selectProjetBtn" data-action="retour_projet">
-                                <i class="fas fa-project-diagram"></i> <span data-i18n="actions.retour.button">Choisir projet</span>
+                                <i class="fas fa-project-diagram"></i> <span data-i18n="chooseProject">Choisir projet</span>
                             </button>
                         </div>
                     </div>

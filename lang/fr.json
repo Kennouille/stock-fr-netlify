@@ -361,35 +361,6 @@
           "reservationDetails": "{{quantity}} × {{article}} réservé(s)"
         }
     },
-    "actions": {
-        "viewDetails": "Voir détails",
-        "archive": "Archiver",
-        "unarchive": "Désarchiver",
-        "return": "Retourner",
-        "cancel": "Annuler",
-        "confirm": "Confirmer",
-        "title": "Actions rapides",
-        "subtitle": "Opérations quotidiennes de gestion de stock",
-        "sortie": {
-            "title": "Sortie de stock",
-            "description": "Retirer des articles du stock pour un projet"
-        },
-        "entree": {
-            "title": "Entrée de stock",
-            "description": "Ajouter de nouveaux articles ou réapprovisionner"
-        },
-        "reservation": {
-            "title": "Réservation projet",
-            "description": "Réserver des articles pour un futur projet"
-        },
-        "retour": {
-            "title": "Retour projet en stock",
-            "description": "Retourner des articles d'un projet vers le stock",
-            "button": "Choisir projet"
-        },
-        "scan": "Scanner",
-        "input": "Saisir"
-    },
     "alert": {
         "selectArticle": "Sélectionnez d'abord un article dans l'interface ou via la recherche."
     },
