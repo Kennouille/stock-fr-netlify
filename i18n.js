@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // 🔥 EXPORT : Ajoute cette ligne à la fin
-window.i18n = {
+export const i18n = {
     t,
     changeLanguage,
     translatePage,
