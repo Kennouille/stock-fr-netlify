@@ -5705,8 +5705,8 @@ class VueStock {
     }
 }
 
-// Navigateur vers un slot contenant un article (articleId) ou via rack/level/slot codes.
-// Usage URL: ?articleId=UUID  (or ?rackCode=A&levelCode=20&slotCode=10)
+// NAV → Quad view : sélectionne rack/level/slot dans la vue Quad (essaye plusieurs méthodes).
+// Usage : ?articleId=UUID  (ou ?rackCode=...&levelCode=...&slotCode=...)
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const articleIdParam = params.get('articleId');
@@ -5715,10 +5715,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const slotCodeParam = params.get('slotCode');
 
   if (!articleIdParam && !(rackCodeParam && levelCodeParam && slotCodeParam)) {
-    console.warn('[nav-slot] Aucun paramètre utile détecté (articleId ou rackCode+levelCode+slotCode).');
+    console.warn('[nav-quad] Aucun param détecté (articleId ou rackCode+levelCode+slotCode).');
     return;
   }
-
   if (!window.vueStock) window.vueStock = new VueStock();
 
   const waitFor = (predicate, timeout = 20000, interval = 100) =>
@@ -5733,110 +5732,219 @@ document.addEventListener('DOMContentLoaded', () => {
       })();
   });
 
-  const debug = (...args) => console.log('[nav-slot]', ...args);
-
-  // Ajouter un style simple pour surligner le slot ciblé
-  (function addHighlightStyle() {
-    if (document.getElementById('vuestock-highlight-style')) return;
-    const s = document.createElement('style');
-    s.id = 'vuestock-highlight-style';
-    s.textContent = `
-      .vuestock-highlight { outline: 3px solid #ffcc00 !important; box-shadow: 0 0 8px #ffcc00; transition: box-shadow .3s; }
-      .vuestock-pulse { animation: vuestock-pulse 1s ease-in-out 3; }
-      @keyframes vuestock-pulse { 0% { transform: scale(1) } 50% { transform: scale(1.02) } 100% { transform: scale(1) } }
-    `;
-    document.head.appendChild(s);
-  })();
+  const debug = (...args) => console.log('[nav-quad]', ...args);
 
   (async () => {
     try {
-      debug('Attente que window.vueStock.racks soit initialisé et non vide...');
+      debug('Attente données racks...');
       await waitFor(() => Array.isArray(window.vueStock?.racks) && window.vueStock.racks.length > 0, 20000);
-      debug('Racks disponibles, count =', window.vueStock.racks.length);
+      debug('Racks count =', window.vueStock.racks.length);
 
-      // Recherche par codes explicites (priorité si fournis)
+      // --- Trouver rack/level/slot comme avant ---
+      let found = null;
       if (rackCodeParam && levelCodeParam && slotCodeParam) {
-        debug('Recherche par codes:', rackCodeParam, levelCodeParam, slotCodeParam);
         const rack = window.vueStock.racks.find(r => String(r.code) === String(rackCodeParam));
         if (!rack) throw new Error('RACK_NOT_FOUND');
-        const level = (rack.levels || []).find(l => String(l.code) === String(levelCodeParam));
+        const level = (rack.levels||[]).find(l => String(l.code) === String(levelCodeParam));
         if (!level) throw new Error('LEVEL_NOT_FOUND');
-        const slot = (level.slots || []).find(s => String(s.code) === String(slotCodeParam));
+        const slot = (level.slots||[]).find(s => String(s.code) === String(slotCodeParam));
         if (!slot) throw new Error('SLOT_NOT_FOUND');
-        debug('Éléments trouvés par code', { rackId: rack.id, levelId: level.id, slotId: slot.id });
-        window.vueStock.goToRackView(rack);
-        await waitFor(() => rack.levels && rack.levels.includes(level), 5000).catch(()=>{});
-        window.vueStock.goToLevelView(level);
-        await waitFor(() => level.slots && level.slots.includes(slot), 5000).catch(()=>{});
-        const el = document.querySelector(`.slot-item[data-slot-id="${slot.id}"]`);
-        if (el) { el.classList.add('vuestock-highlight','vuestock-pulse'); el.scrollIntoView({behavior:'smooth', block:'center'}); }
-        else debug('DOM du slot introuvable pour id:', slot.id);
-        return;
-      }
-
-      // Recherche par articleId dans slots[*].articles[*].id
-      const articleId = articleIdParam;
-      debug('Recherche articleId dans les slots :', articleId);
-      let found = null;
-      const sampleSlots = [];
-
-      for (const r of window.vueStock.racks) {
-        if (!r.levels) continue;
-        for (const l of r.levels) {
-          if (!l.slots) continue;
-          for (const s of l.slots) {
-            // Collecte d'exemples pour debug si besoin
-            if (sampleSlots.length < 6) sampleSlots.push({
-              rack: r.code, level: l.code, slot: s.code, status: s.status, articlesCount: Array.isArray(s.articles) ? s.articles.length : null
-            });
-            if (Array.isArray(s.articles)) {
-              for (const a of s.articles) {
-                if (a && (String(a.id) === String(articleId))) {
-                  found = { rack: r, level: l, slot: s, article: a };
-                  break;
+        found = { rack, level, slot, article: null };
+      } else {
+        const articleId = articleIdParam;
+        for (const r of window.vueStock.racks) {
+          if (!r.levels) continue;
+          for (const l of r.levels) {
+            if (!l.slots) continue;
+            for (const s of l.slots) {
+              if (Array.isArray(s.articles)) {
+                for (const a of s.articles) {
+                  if (a && String(a.id) === String(articleId)) {
+                    found = { rack: r, level: l, slot: s, article: a };
+                    break;
+                  }
                 }
               }
+              if (found) break;
             }
             if (found) break;
           }
           if (found) break;
         }
-        if (found) break;
+        if (!found) throw new Error('ARTICLE_NOT_FOUND_LOCAL');
+      }
+      debug('Position trouvée:', { rack: found.rack.code, level: found.level.code, slot: found.slot.code, slotId: found.slot.id });
+
+      // --- Essayer d'abord d'utiliser les helpers existants (API interne) ---
+      // 1) naviguer vers la rack/level via VueStock (fonctionne déjà)
+      try {
+        window.vueStock.goToRackView(found.rack);
+        await waitFor(() => window.vueStock.currentRack && window.vueStock.currentRack.id === found.rack.id, 2000).catch(()=>{});
+        window.vueStock.goToLevelView(found.level);
+        await waitFor(() => window.vueStock.selectedLevel && window.vueStock.selectedLevel.id === found.level.id, 2000).catch(()=>{});
+        debug('goToRackView/goToLevelView appelés.');
+      } catch (e) {
+        debug('goToRackView/goToLevelView : échec (continuation) -', e);
       }
 
-      if (!found) {
-        debug('Article non trouvé localement. Exemples de slots (pour debug):', sampleSlots);
-        throw new Error('ARTICLE_NOT_FOUND_LOCAL');
-      }
+      // 2) Si QuadViewManager expose des méthodes utilitaires, les appeler.
+      const qvm = window.vueStock.quadViewManager || window.quadViewManager || null;
+      if (qvm) {
+        debug('QuadViewManager trouvé, tentative d\'API interne...');
+        // Try common method names (non-exhaustive)
+        const tryCall = (obj, name, ...args) => {
+          if (!obj) return false;
+          const fn = obj[name];
+          if (typeof fn === 'function') {
+            try { fn.apply(obj, args); return true; } catch(e){ debug('Erreur appel',name,e); return false; }
+          }
+          return false;
+        };
 
-      debug('Article trouvé localement:', { rackCode: found.rack.code, levelCode: found.level.code, slotCode: found.slot.code, slotId: found.slot.id });
-      // Naviguer et surligner
-      window.vueStock.goToRackView(found.rack);
-      await waitFor(() => found.rack.levels && found.rack.levels.includes(found.level), 5000).catch(()=>{});
-      window.vueStock.goToLevelView(found.level);
-      await waitFor(() => found.level.slots && found.level.slots.includes(found.slot), 5000).catch(()=>{});
-      const slotEl = document.querySelector(`.slot-item[data-slot-id="${found.slot.id}"]`);
-      if (slotEl) {
-        slotEl.classList.add('vuestock-highlight','vuestock-pulse');
-        slotEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        let ok = false;
+        ok = ok || tryCall(qvm, 'selectRack', found.rack.id);
+        ok = ok || tryCall(qvm, 'selectRackById', found.rack.id);
+        ok = ok || tryCall(qvm, 'goToRack', found.rack.id);
+        ok = ok || tryCall(qvm, 'highlightRack', found.rack.id);
+        if (ok) debug('QuadViewManager: sélection rack via API interne OK.');
+
+        // level
+        ok = false;
+        ok = ok || tryCall(qvm, 'selectLevel', found.level.id);
+        ok = ok || tryCall(qvm, 'selectLevelById', found.level.id);
+        ok = ok || tryCall(qvm, 'goToLevel', found.level.id);
+        ok = ok || tryCall(qvm, 'highlightLevel', found.level.id);
+        if (ok) debug('QuadViewManager: sélection level via API interne OK.');
+
+        // slot highlight
+        ok = false;
+        ok = ok || tryCall(qvm, 'highlightSlot', found.slot.id);
+        ok = ok || tryCall(qvm, 'selectSlot', found.slot.id);
+        ok = ok || tryCall(qvm, 'openSlot', found.slot.id);
+        if (ok) {
+          debug('QuadViewManager: highlight slot via API interne OK.');
+          return;
+        } else {
+          debug('QuadViewManager : pas d\'API pour highlight slot connue — on passe au fallback canvas.');
+        }
       } else {
-        debug('DOM du slot introuvable (data-slot-id="' + found.slot.id + '"). Vérifie le sélecteur .slot-item[data-slot-id="..."]');
+        debug('QuadViewManager non trouvé.');
       }
 
+      // --- Fallback : simuler clics souris sur les canvases (canvasTop -> canvasFront -> canvas3D) ---
+      debug('Fallback canvas : tentative de clics simulés.');
+
+      const synthClick = (el, x, y) => {
+        if (!el) return false;
+        const rect = el.getBoundingClientRect();
+        const clientX = rect.left + x;
+        const clientY = rect.top + y;
+        const make = (type) => new MouseEvent(type, {
+          view: window, bubbles: true, cancelable: true,
+          clientX, clientY, screenX: window.screenX + clientX, screenY: window.screenY + clientY
+        });
+        el.dispatchEvent(make('mousedown'));
+        el.dispatchEvent(make('mouseup'));
+        el.dispatchEvent(make('click'));
+        return true;
+      };
+
+      // helper pour calculer coords sur canvas à partir de displayX/displayY (position plan)
+      const clickOnCanvasForRack = (canvasEl, rack) => {
+        if (!canvasEl || !rack) return false;
+        try {
+          // canvas size vs logical plan: on se base sur les canvas width/height et les coordonnées displayX/displayY
+          // displayX/Y semblent être en pixels affichés (d'après ton JSON). On normalise sur le canvas.
+          const rect = canvasEl.getBoundingClientRect();
+          // Si displayX/Y correspondent déjà à la grille d'affichage, on les mappe directement
+          let x = (rack.displayX || rack.displayX === 0) ? rack.displayX : (rack.position_x || 0);
+          let y = (rack.displayY || rack.displayY === 0) ? rack.displayY : (rack.position_y || 0);
+          // Si les valeurs semblent plus grandes que la taille canvas, on scale down proportionnellement:
+          if (x > rect.width || y > rect.height) {
+            // essayer une normalisation simple basée sur plan supposé 400x300 (ajuste si nécessaire)
+            const planW = 400, planH = 300;
+            x = Math.round((x / planW) * rect.width);
+            y = Math.round((y / planH) * rect.height);
+          }
+          return synthClick(canvasEl, x, y);
+        } catch (e) {
+          debug('Erreur clickOnCanvasForRack', e);
+          return false;
+        }
+      };
+
+      // canvasTop -> sélectionner rack (utilise displayX/displayY)
+      const canvasTop = document.getElementById('canvasTop') || document.querySelector('#canvasTop') || document.querySelector('.quad-canvas');
+      let clicked = clickOnCanvasForRack(canvasTop, found.rack);
+      debug('Clic simulé canvasTop (rack) ->', clicked);
+
+      // small delay to let UI react
+      await new Promise(r => setTimeout(r, 250));
+
+      // canvasFront -> sélectionner level (approximate Y position using rack/displayWidth and level index)
+      const canvasFront = document.getElementById('canvasFront') || document.querySelector('#canvasFront') || document.querySelectorAll('.quad-canvas')[1];
+      let levelClicked = false;
+      if (canvasFront && found.rack && Array.isArray(found.rack.levels)) {
+        try {
+          // compute approximate x,y for level on front canvas:
+          const rect = canvasFront.getBoundingClientRect();
+          const levelIndex = (found.rack.levels.findIndex(l => l.id === found.level.id) + 1) || 1;
+          // spread levels vertically in canvas height
+          const x = Math.round(rect.width / 2);
+          const y = Math.round((levelIndex / (found.rack.levels.length + 1)) * rect.height);
+          synthClick(canvasFront, x, y);
+          levelClicked = true;
+        } catch (e) { debug('Erreur calcul level click', e); levelClicked = false; }
+      } else {
+        debug('canvasFront non trouvé ou pas de levels.');
+      }
+      debug('Clic simulé canvasFront (level) ->', levelClicked);
+
+      await new Promise(r => setTimeout(r, 250));
+
+      // canvas3D -> highlight slot (approximate location)
+      const canvas3D = document.getElementById('canvas3D') || document.querySelector('#canvas3D') || document.querySelectorAll('.quad-canvas')[2];
+      let slotClicked = false;
+      if (canvas3D) {
+        try {
+          const rect = canvas3D.getBoundingClientRect();
+          // approx: compute slot position based on slot.code as index (if numeric) or random-ish
+          let slotIndex = parseInt(found.slot.code, 10);
+          if (isNaN(slotIndex)) slotIndex = (found.level.slots ? found.level.slots.findIndex(s=>s.id===found.slot.id)+1 : 1);
+          const slotsCount = (found.level.slots||[]).length || 4;
+          const cols = Math.ceil(Math.sqrt(slotsCount));
+          const row = Math.ceil(slotIndex / cols);
+          const col = ((slotIndex-1) % cols) + 1;
+          const x = Math.round((col / (cols + 1)) * rect.width);
+          const y = Math.round((row / (Math.ceil(slotsCount/cols) + 1)) * rect.height);
+          synthClick(canvas3D, x, y);
+          slotClicked = true;
+        } catch (e) { debug('Erreur click slot canvas3D', e); slotClicked = false; }
+      } else {
+        debug('canvas3D non trouvé.');
+      }
+      debug('Clic simulé canvas3D (slot) ->', slotClicked);
+
+      // Dernier recours: cliquer sur le DOM .slot-item[data-slot-id="..."] (s'il existe dans l'UI Quad)
+      await new Promise(r => setTimeout(r, 300));
+      const slotDom = document.querySelector(`.slot-item[data-slot-id="${found.slot.id}"]`);
+      if (slotDom) {
+        debug('Element DOM .slot-item trouvé, clic simulé dessus.');
+        slotDom.classList.add('vuestock-highlight','vuestock-pulse');
+        slotDom.click();
+        slotDom.scrollIntoView({behavior:'smooth', block:'center'});
+        return;
+      } else {
+        debug('Element .slot-item[data-slot-id] introuvable après tentatives.');
+      }
+
+      debug('Terminé : si la sélection Quad n\'est pas correcte, dis‑moi quels sont les selecteurs DOM spécifiques de la vue Quad ou quelles méthodes expose quadViewManager.');
     } catch (err) {
-      console.error('[nav-slot] Erreur:', err);
-      // erreurs explicites utiles pour debug
-      if (err.message === 'ARTICLE_NOT_FOUND_LOCAL') {
-        console.warn('[nav-slot] L\'article n\'a pas été trouvé dans window.vueStock.racks. Vérifie que l\'articleId est correct et que les racks contiennent bien articles[].id.');
-      } else if (err.message === 'Timeout') {
-        console.warn('[nav-slot] Timeout : les données n\'ont pas été initialisées dans le délai.');
-      } else {
-        console.warn('[nav-slot] Détail erreur:', err.message);
-      }
+      console.error('[nav-quad] Erreur:', err);
+      if (err.message === 'Timeout') console.warn('[nav-quad] Timeout : données non initialisées.');
     }
   })();
 });
-
 
 
 // Debug button pour tester QuadView
