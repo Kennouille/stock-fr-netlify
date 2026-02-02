@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio - Gestión de Stock</title>
+    <title data-i18n="page.title">Accueil - Gestion Stock</title>
     <link rel="stylesheet" href="accueil.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -15,15 +15,17 @@
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
-            <p>Cargando...</p>
+            <p data-i18n="loading">Chargement...</p>
         </div>
-    </div><div class="container">
+    </div>
+
+    <div class="container">
         <!-- Header -->
         <header class="header">
             <div class="header-left">
                 <h1><i class="fas fa-boxes"></i> NeXeN Store Manager</h1>
                 <div class="user-role-badge" id="userRoleBadge">
-                    <span id="roleText">Cargando...</span>
+                    <span id="roleText" data-i18n="loading">Chargement...</span>
                 </div>
             </div>
             <div class="header-right">
@@ -43,15 +45,17 @@
                     </button>
                 </div>
                 <button id="logoutBtn" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span>
+                    <i class="fas fa-sign-out-alt"></i> <span data-i18n="logout">Déconnexion</span>
                 </button>
             </div>
-        </header><!-- Section principale -->
+        </header>
+
+        <!-- Section principale -->
         <main class="main-content">
             <!-- Section Actions rapides (tous les users) -->
             <section class="actions-section">
-                <h2><i class="fas fa-bolt"></i> <span>Acciones rápidas</span></h2>
-                <p class="section-subtitle">Operaciones diarias de gestión de stock</p>
+                <h2><i class="fas fa-bolt"></i> <span data-i18n="quickActions">Actions rapides</span></h2>
+                <p class="section-subtitle" data-i18n="dailyOperations">Opérations quotidiennes de gestion de stock</p>
 
                 <div class="actions-grid">
                     <!-- Sortie de stock -->
@@ -59,246 +63,224 @@
                         <div class="action-icon red">
                             <i class="fas fa-arrow-up"></i>
                         </div>
-                        <h3>Salida de stock</h3>
-                        <p>Retirar artículos del stock para un proyecto</p>
+                        <h3 data-i18n="stockOut">Sortie de stock</h3>
+                        <p data-i18n="stockOutDesc">Retirer des articles du stock pour un projet</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="sortie" data-type="scan">
-                                <i class="fas fa-camera"></i> <span>Escanear</span>
+                                <i class="fas fa-camera"></i> <span data-i18n="scan">Scanner</span>
                             </button>
                             <button class="option-btn" data-action="sortie" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> <span>Ingresar</span>
+                                <i class="fas fa-keyboard"></i> <span data-i18n="input">Saisir</span>
                             </button>
                         </div>
-                    </div><!-- Entrée de stock -->
+                    </div>
+
+                    <!-- Entrée de stock -->
                     <div class="action-card" id="entreeCard">
                         <div class="action-icon green">
                             <i class="fas fa-arrow-down"></i>
                         </div>
-                        <h3>Entrada de stock</h3>
-                        <p>Agregar nuevos artículos o reabastecer</p>
+                        <h3 data-i18n="stockIn">Entrée de stock</h3>
+                        <p data-i18n="stockInDesc">Ajouter de nouveaux articles ou réapprovisionner</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="entree" data-type="scan">
-                                <i class="fas fa-camera"></i> <span>Escanear</span>
+                                <i class="fas fa-camera"></i> <span data-i18n="scan">Scanner</span>
                             </button>
                             <button class="option-btn" data-action="entree" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> <span>Ingresar</span>
+                                <i class="fas fa-keyboard"></i> <span data-i18n="input">Saisir</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Réservation -->
+                    <!-- Réservation projet -->
                     <div class="action-card" id="reservationCard">
-                        <div class="action-icon blue">
-                            <i class="fas fa-bookmark"></i>
+                        <div class="action-icon orange">
+                            <i class="fas fa-calendar-check"></i>
                         </div>
-                        <h3>Reserva</h3>
-                        <p>Reservar artículos para un proyecto futuro</p>
+                        <h3 data-i18n="reservation">Réservation projet</h3>
+                        <p data-i18n="reservationDesc">Réserver des articles pour un futur projet</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="reservation" data-type="scan">
-                                <i class="fas fa-camera"></i> <span>Escanear</span>
+                                <i class="fas fa-camera"></i> <span data-i18n="scan">Scanner</span>
                             </button>
                             <button class="option-btn" data-action="reservation" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> <span>Ingresar</span>
+                                <i class="fas fa-keyboard"></i> <span data-i18n="input">Saisir</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Consultation stock -->
-                    <div class="action-card" id="consultationCard">
-                        <div class="action-icon purple">
-                            <i class="fas fa-search"></i>
+                    <!-- NOUVEAU : Retour projet en stock -->
+                    <div class="action-card" id="retourProjetCard">
+                        <div class="action-icon blue">
+                            <i class="fas fa-undo-alt"></i>
                         </div>
-                        <h3>Consulta</h3>
-                        <p>Ver información de stock y ubicación</p>
+                        <h3 data-i18n="returnProject">Retour projet en stock</h3>
+                        <p data-i18n="returnProjectDesc">Retourner des articles d'un projet vers le stock</p>
                         <div class="action-options">
-                            <button class="option-btn" data-action="consultation" data-type="scan">
-                                <i class="fas fa-camera"></i> <span>Escanear</span>
-                            </button>
-                            <button class="option-btn" data-action="consultation" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> <span>Ingresar</span>
+                            <button class="option-btn" id="selectProjetBtn" data-action="retour_projet">
+                                <i class="fas fa-project-diagram"></i> <span data-i18n="chooseProject">Choisir projet</span>
                             </button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Section recherche -->
+            <!-- Section Recherche (tous les users) -->
             <section class="search-section">
-                <h2><i class="fas fa-search"></i> <span>Búsqueda rápida</span></h2>
-                <p class="section-subtitle">Buscar artículos por diferentes criterios</p>
+                <h2><i class="fas fa-search"></i> <span data-i18n="search.title">Recherche d'articles</span></h2>
 
-                <div class="search-grid">
-                    <!-- Recherche par code-barre -->
+                <div class="search-container">
+                    <div class="search-box">
+                        <div class="search-header">
+                            <i class="fas fa-qrcode"></i>
+                            <h3 data-i18n="search.byName">Par nom ou numéro</h3>
+                        </div>
+                        <div class="search-input-group">
+                            <input type="text"
+                                   id="searchNomInput"
+                                   data-i18n-placeholder="search.namePlaceholder"
+                                   placeholder="Ex: perceuse, ART-001..."
+                                   class="search-input">
+                            <button id="searchNomBtn" class="search-btn">
+                                <i class="fas fa-search"></i> <span data-i18n="search.searchBtn">Rechercher</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="search-box">
                         <div class="search-header">
                             <i class="fas fa-barcode"></i>
-                            <h3>Por código de barras</h3>
+                            <h3 data-i18n="search.byBarcode">Par code-barre</h3>
                         </div>
                         <div class="search-input-group">
                             <input type="text"
                                    id="searchCodebarreInput"
-                                   placeholder="Escanear o ingresar código de barras"
+                                   data-i18n-placeholder="search.barcodePlaceholder"
+                                   placeholder="Scanner ou saisir code-barre"
                                    class="search-input">
                             <button id="searchCodebarreBtn" class="search-btn">
-                                <i class="fas fa-camera"></i> <span>Escanear</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Recherche par référence -->
-                    <div class="search-box">
-                        <div class="search-header">
-                            <i class="fas fa-hashtag"></i>
-                            <h3>Por referencia</h3>
-                        </div>
-                        <div class="search-input-group">
-                            <input type="text"
-                                   id="searchReferenceInput"
-                                   placeholder="Ingresar referencia del artículo"
-                                   class="search-input">
-                            <button id="searchReferenceBtn" class="search-btn">
-                                <i class="fas fa-search"></i> <span>Buscar</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Recherche par nom -->
-                    <div class="search-box">
-                        <div class="search-header">
-                            <i class="fas fa-font"></i>
-                            <h3>Por nombre</h3>
-                        </div>
-                        <div class="search-input-group">
-                            <input type="text"
-                                   id="searchNameInput"
-                                   placeholder="Ingresar nombre del artículo"
-                                   class="search-input">
-                            <button id="searchNameBtn" class="search-btn">
-                                <i class="fas fa-search"></i> <span>Buscar</span>
+                                <i class="fas fa-camera"></i> <span data-i18n="search.scanBtn">Scanner</span>
                             </button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Section Visualisation 3D -->
-            <section class="visualization-section">
-                <h2><i class="fas fa-cube"></i> <span>Visualización del almacén</span></h2>
-                <p class="section-subtitle">Vista 3D interactiva de los racks</p>
-
-                <div class="quad-controls">
-                    <div class="control-group">
-                        <label for="rackSelect"><i class="fas fa-layer-group"></i> <span>Seleccionar rack</span></label>
-                        <select id="rackSelect" class="form-select">
-                            <option value="">Cargando...</option>
-                        </select>
-                    </div>
+            <!-- Nouvelle section : Vue Quad -->
+            <section class="quad-section">
+                <div class="quad-section-header">
+                    <h2><i class="fas fa-th-large"></i> <span data-i18n="quad.title">Visualisation du stock</span></h2>
+                    <a href="#" class="btn-inventaire" id="inventoryLink" style="display: none;">
+                        <i class="fas fa-clipboard-check"></i> <span data-i18n="quad.inventory">Inventaire</span>
+                    </a>
                 </div>
 
                 <div class="quad-container">
-                    <!-- Vue de face -->
-                    <div class="quad-view accueil-view">
-                        <div class="quad-header">
-                            <span><i class="fas fa-arrows-alt-h"></i> <span>Vista frontal</span></span>
-                            <span class="selected-rack" id="accueilSelectedRack">Ningún rack seleccionado</span>
-                        </div>
-                        <div class="canvas-container">
-                            <canvas id="accueilCanvasFront" width="400" height="300"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Vue de côté -->
-                    <div class="quad-view accueil-view">
-                        <div class="quad-header">
-                            <span><i class="fas fa-arrows-alt-v"></i> <span>Vista lateral</span></span>
-                        </div>
-                        <div class="canvas-container">
-                            <canvas id="accueilCanvasSide" width="400" height="300"></canvas>
-                        </div>
-                    </div>
-
                     <!-- Vue du dessus -->
                     <div class="quad-view accueil-view">
                         <div class="quad-header">
-                            <span><i class="fas fa-compress-arrows-alt"></i> <span>Vista superior</span></span>
+                            <span><i class="fas fa-dharmachakra"></i> <span data-i18n="quad.topView">Vue du dessus</span></span>
+                            <span class="rack-count" id="accueilRackCount"><span data-i18n="quad.racks">0 racks</span></span>
                         </div>
                         <div class="canvas-container">
                             <canvas id="accueilCanvasTop" width="400" height="300"></canvas>
                         </div>
                     </div>
 
-                    <!-- Vue isométrique -->
+                    <!-- Vue de face -->
                     <div class="quad-view accueil-view">
                         <div class="quad-header">
-                            <span><i class="fas fa-cube"></i> <span>Vista isométrica</span></span>
+                            <span><i class="fas fa-arrows-alt-h"></i> <span data-i18n="quad.frontView">Vue de face</span></span>
+                            <span class="selected-rack" id="accueilSelectedRack" data-i18n="quad.noRack">Aucun rack sélectionné</span>
                         </div>
                         <div class="canvas-container">
-                            <canvas id="accueilCanvasIso" width="400" height="300"></canvas>
+                            <canvas id="accueilCanvasFront" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Détail étage -->
+                    <div class="quad-view accueil-view">
+                        <div class="quad-header">
+                            <span><i class="fas fa-layer-group"></i> <span data-i18n="quad.levelDetail">Détail étage</span></span>
+                            <span class="level-info" id="accueilLevelInfo" data-i18n="quad.noLevel">Aucun étage</span>
+                        </div>
+                        <div class="drawer-container" id="accueilDrawer">
+                            <div class="empty-drawer-state">
+                                <div class="drawer-front-placeholder">
+                                    <i class="fas fa-drawer fa-3x"></i>
+                                    <p data-i18n="quad.selectLevel">Sélectionnez un étage</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Section Administration (pour admin uniquement) -->
-            <section class="admin-section" id="adminSection" style="display: none;">
-                <h2><i class="fas fa-shield-alt"></i> <span>Administración</span></h2>
-                <p class="section-subtitle">Panel de control y alertas</p>
+            <!-- Section Admin (seulement pour les admins) -->
+            <section id="adminSection" class="admin-section">
+                <div class="admin-header">
+                    <h2><i class="fas fa-user-shield"></i> <span data-i18n="admin.title">Administration</span></h2>
+                    <div class="admin-badges">
+                        <span class="badge admin-badge" data-i18n="admin.badge">ADMIN</span>
+                        <span class="badge permissions-badge" id="permissionsCount"><span data-i18n="admin.permissions">0 permissions</span></span>
+                    </div>
+                </div>
 
                 <!-- Alertes en temps réel -->
                 <div class="admin-alerts">
                     <div class="alert-card">
                         <div class="alert-header">
-                            <h3><i class="fas fa-exclamation-triangle"></i> <span>Stock bajo</span></h3>
+                            <h3><i class="fas fa-exclamation-triangle"></i> <span data-i18n="admin.lowStock">Stock bas</span></h3>
                             <button id="exportStockBasBtn" class="btn-small">
-                                <i class="fas fa-file-pdf"></i> <span>PDF</span>
+                                <i class="fas fa-file-pdf"></i> <span data-i18n="admin.pdf">PDF</span>
                             </button>
                         </div>
                         <div class="alert-content">
                             <div class="alert-loading" id="stockBasLoading">
-                                <i class="fas fa-spinner fa-spin"></i> <span>Cargando...</span>
+                                <i class="fas fa-spinner fa-spin"></i> <span data-i18n="loading">Chargement...</span>
                             </div>
                             <table id="tableStockBas" class="alert-table" style="display: none;">
                                 <thead>
                                     <tr>
-                                        <th>Artículo</th>
-                                        <th>Stock</th>
-                                        <th>Mínimo</th>
-                                        <th>Dif</th>
+                                        <th data-i18n="admin.article">Article</th>
+                                        <th data-i18n="admin.stock">Stock</th>
+                                        <th data-i18n="admin.minimum">Minimum</th>
+                                        <th data-i18n="admin.diff">Diff</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbodyStockBas"></tbody>
                             </table>
-                            <div id="stockBasEmpty" class="alert-empty" style="display: none;">
+                            <div id="noStockBas" class="alert-empty" style="display: none;">
                                 <i class="fas fa-check-circle"></i>
-                                <p>No hay stock bajo</p>
+                                <p data-i18n="admin.noLowStock">Aucun article en stock bas</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="alert-card">
                         <div class="alert-header">
-                            <h3><i class="fas fa-times-circle"></i> <span>Ruptura de stock</span></h3>
+                            <h3><i class="fas fa-times-circle"></i> <span data-i18n="admin.outOfStock">Rupture de stock</span></h3>
                             <button id="exportRuptureBtn" class="btn-small">
-                                <i class="fas fa-file-pdf"></i> <span>PDF</span>
+                                <i class="fas fa-file-pdf"></i> <span data-i18n="admin.pdf">PDF</span>
                             </button>
                         </div>
                         <div class="alert-content">
                             <div class="alert-loading" id="ruptureLoading">
-                                <i class="fas fa-spinner fa-spin"></i> <span>Cargando...</span>
+                                <i class="fas fa-spinner fa-spin"></i> <span data-i18n="loading">Chargement...</span>
                             </div>
                             <table id="tableRupture" class="alert-table" style="display: none;">
                                 <thead>
                                     <tr>
-                                        <th>Artículo</th>
-                                        <th>Referencia</th>
-                                        <th>Última salida</th>
+                                        <th data-i18n="admin.article">Article</th>
+                                        <th data-i18n="admin.lastMovement">Dernier mouvement</th>
+                                        <th data-i18n="admin.state">Etat</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbodyRupture"></tbody>
                             </table>
-                            <div id="ruptureEmpty" class="alert-empty" style="display: none;">
+                            <div id="noRupture" class="alert-empty" style="display: none;">
                                 <i class="fas fa-check-circle"></i>
-                                <p>No hay ruptura de stock</p>
+                                <p data-i18n="admin.noOutOfStock">Aucune rupture de stock</p>
                             </div>
                         </div>
                     </div>
@@ -312,14 +294,14 @@
 
             <!-- Section statistiques rapides -->
             <section class="stats-section">
-                <h2><i class="fas fa-chart-line"></i> <span>Resumen general</span></h2>
+                <h2><i class="fas fa-chart-line"></i> <span data-i18n="stats.title">Vue d'ensemble</span></h2>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon blue">
                             <i class="fas fa-box"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Artículos totales</h3>
+                            <h3 data-i18n="stats.totalArticles">Articles total</h3>
                             <p class="stat-value" id="totalArticles">0</p>
                         </div>
                     </div>
@@ -328,7 +310,7 @@
                             <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>En stock</h3>
+                            <h3 data-i18n="stats.inStock">En stock</h3>
                             <p class="stat-value" id="articlesEnStock">0</p>
                         </div>
                     </div>
@@ -337,67 +319,26 @@
                             <i class="fas fa-clock"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Reservados</h3>
+                            <h3 data-i18n="stats.reserved">Réservés</h3>
                             <p class="stat-value" id="articlesReserves">0</p>
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon red">
-                            <i class="fas fa-exclamation-triangle"></i>
+                        <div class="stat-icon purple">
+                            <i class="fas fa-euro-sign"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Stock bajo</h3>
-                            <p class="stat-value" id="articlesStockBas">0</p>
+                            <h3 data-i18n="stats.stockValue">Valeur stock</h3>
+                            <p class="stat-value" id="valeurStock">0 €</p>
                         </div>
                     </div>
-                </div>
-            </section>
-
-            <!-- Section projets actifs -->
-            <section class="projects-section">
-                <h2><i class="fas fa-project-diagram"></i> <span>Proyectos activos</span></h2>
-                <p class="section-subtitle">Gestión de proyectos y reservas</p>
-
-                <div class="projects-header">
-                    <button id="newProjectBtn" class="btn-primary">
-                        <i class="fas fa-plus"></i> <span>Nuevo proyecto</span>
-                    </button>
-                    <div class="projects-filters">
-                        <input type="text"
-                               id="projectSearchInput"
-                               placeholder="Buscar proyecto..."
-                               class="search-input-small">
-                        <select id="projectStatusFilter" class="form-select-small">
-                            <option value="">Todos los estados</option>
-                            <option value="en_cours">En curso</option>
-                            <option value="en_attente">En espera</option>
-                            <option value="termine">Terminado</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="projects-loading" id="projectsLoading">
-                    <i class="fas fa-spinner fa-spin"></i> <span>Cargando proyectos...</span>
-                </div>
-
-                <div id="projectsContainer" class="projects-grid" style="display: none;">
-                    <!-- Rempli dynamiquement -->
-                </div>
-
-                <div id="projectsEmpty" class="empty-state" style="display: none;">
-                    <i class="fas fa-project-diagram"></i>
-                    <h3>No hay proyectos activos</h3>
-                    <p>Cree un nuevo proyecto para comenzar</p>
-                    <button class="btn-primary" onclick="document.getElementById('newProjectBtn').click()">
-                        <i class="fas fa-plus"></i> Crear primer proyecto
-                    </button>
                 </div>
             </section>
         </main>
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Sistema de gestión de stock • Versión 1.0</p>
+            <p data-i18n="footer.system">Système de gestion de stock • Version 1.0</p>
             <p class="footer-info" id="lastSync"></p>
         </footer>
     </div>
@@ -406,7 +347,7 @@
     <div id="projectDetailsModal" class="modal-overlay" style="display: none;">
         <div class="modal modal-large">
             <div class="modal-header">
-                <h3><i class="fas fa-info-circle"></i> <span>Detalles del proyecto</span></h3>
+                <h3><i class="fas fa-info-circle"></i> <span data-i18n="modal.projectDetails">Détails du projet</span></h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
@@ -418,37 +359,56 @@
                             <span class="project-status" id="projectDetailsStatus"></span>
                         </div>
                     </div>
-                    <div class="project-header-actions">
-                        <button id="editProjectBtn" class="btn-icon" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button id="releaseAllStockBtn" class="btn-icon" title="Liberar stock">
-                            <i class="fas fa-unlock"></i>
-                        </button>
-                    </div>
-                </div>
 
-                <div class="project-search-section">
-                    <h4><i class="fas fa-plus-circle"></i> Agregar artículos al proyecto</h4>
-                    <div class="article-search-wrapper">
-                        <div class="search-input-group">
-                            <input type="text"
-                                   id="articleSearchInput"
-                                   placeholder="Buscar por nombre, referencia o código de barras"
-                                   class="search-input">
-                            <button id="articleSearchBtn" class="search-btn">
-                                <i class="fas fa-search"></i> <span>Buscar</span>
-                            </button>
-                            <button id="articleScanBtn" class="search-btn">
-                                <i class="fas fa-camera"></i> <span>Escanear</span>
-                            </button>
+                    <!-- NOUVELLE SECTION : Scanner/Recherche d'article pour retour -->
+                    <div class="project-return-search-section">
+                        <div class="search-header">
+                            <h4><i class="fas fa-arrow-left"></i> <span data-i18n="modal.returnArticle">Retour d'article au stock</span></h4>
+                            <p class="search-subtitle" data-i18n="modal.returnSubtitle">Scanner ou rechercher un article à retourner</p>
+                        </div>
+
+                        <div class="search-options">
+                            <!-- Option 1 : Scanner -->
+                            <div class="search-option">
+                                <div class="option-icon">
+                                    <i class="fas fa-camera"></i>
+                                </div>
+                                <div class="option-content">
+                                    <h5 data-i18n="modal.scanBarcode">Scanner le code-barres</h5>
+                                    <p data-i18n="modal.scanDescription">Utilisez la caméra pour scanner l'article</p>
+                                    <button id="scanArticleForReturnBtn" class="btn-primary">
+                                        <i class="fas fa-camera"></i> <span data-i18n="modal.startScan">Démarrer le scan</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Option 2 : Recherche manuelle -->
+                            <div class="search-option">
+                                <div class="option-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <div class="option-content">
+                                    <h5 data-i18n="modal.searchManually">Rechercher manuellement</h5>
+                                    <p data-i18n="modal.searchBy">Par nom, numéro ou code-barres</p>
+                                    <div class="search-input-group">
+                                        <input type="text"
+                                               id="manualArticleSearchInput"
+                                               data-i18n-placeholder="modal.searchPlaceholder"
+                                               placeholder="Nom, numéro ou code-barres..."
+                                               class="search-input">
+                                        <button id="searchArticleForReturnBtn" class="btn-primary">
+                                            <i class="fas fa-search"></i> <span data-i18n="search.searchBtn">Rechercher</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Résultats de recherche -->
                         <div id="articleSearchResults" class="search-results-container" style="display: none;">
                             <div class="results-header">
-                                <h5>Artículos encontrados</h5>
-                                <span id="resultsCount">0 <span>resultado(s)</span></span>
+                                <h5 data-i18n="modal.articlesFound">Articles trouvés</h5>
+                                <span id="resultsCount">0 <span data-i18n="modal.results">résultat(s)</span></span>
                             </div>
                             <div id="articleResultsList" class="results-list">
                                 <!-- Rempli dynamiquement -->
@@ -460,90 +420,78 @@
                 <div class="project-tabs">
                     <div class="project-tab-buttons">
                         <button class="project-tab-btn" data-tab="reservations">
-                            <i class="fas fa-boxes"></i> <span>Reservas</span>
+                            <i class="fas fa-boxes"></i> <span data-i18n="modal.reservations">Réservations</span>
                             <span class="tab-badge" id="projectReservationsCount">0</span>
                         </button>
                         <button class="project-tab-btn active" data-tab="info">
-                            <i class="fas fa-info-circle"></i> <span>Información</span>
+                            <i class="fas fa-info-circle"></i> <span data-i18n="modal.information">Informations</span>
                         </button>
                         <button class="project-tab-btn" data-tab="history">
-                            <i class="fas fa-history"></i> <span>Historial</span>
+                            <i class="fas fa-history"></i> <span data-i18n="modal.history">Historique</span>
                         </button>
                     </div>
 
                     <div class="project-tab-content active" id="projectInfoTab">
                         <div class="project-info-grid">
                             <div class="info-section">
-                                <h5><i class="fas fa-align-left"></i> <span>Descripción</span></h5>
-                                <p id="projectDetailsDescription">Sin descripción</p>
+                                <h5><i class="fas fa-align-left"></i> <span data-i18n="modal.description">Description</span></h5>
+                                <p id="projectDetailsDescription" data-i18n="modal.noDescription">Pas de description</p>
                             </div>
 
                             <div class="info-section">
-                                <h5><i class="fas fa-calendar"></i> <span>Fechas</span></h5>
+                                <h5><i class="fas fa-calendar"></i> <span data-i18n="modal.dates">Dates</span></h5>
                                 <div class="info-item">
-                                    <span class="label">Creado el:</span>
+                                    <span class="label" data-i18n="modal.createdOn">Créé le :</span>
                                     <span class="value" id="projectDetailsCreatedAt"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Fecha de fin:</span>
+                                    <span class="label" data-i18n="modal.endDate">Date de fin :</span>
                                     <span class="value" id="projectDetailsEndDate"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Última actualización:</span>
+                                    <span class="label" data-i18n="modal.lastUpdate">Dernière mise à jour :</span>
                                     <span class="value" id="projectDetailsUpdatedAt"></span>
                                 </div>
                             </div>
 
                             <div class="info-section">
-                                <h5><i class="fas fa-users"></i> <span>Equipo</span></h5>
+                                <h5><i class="fas fa-users"></i> <span data-i18n="modal.team">Équipe</span></h5>
                                 <div class="info-item">
-                                    <span class="label">Creado por:</span>
-                                    <span class="value" id="projectDetailsCreatedBy"></span>
+                                    <span class="label" data-i18n="modal.manager">Responsable :</span>
+                                    <span class="value" id="projectDetailsManager"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Responsable:</span>
-                                    <span class="value" id="projectDetailsResponsable"></span>
-                                </div>
-                            </div>
-
-                            <div class="info-section full-width">
-                                <h5><i class="fas fa-chart-pie"></i> <span>Estadísticas</span></h5>
-                                <div class="stats-inline">
-                                    <div class="stat-inline">
-                                        <span class="label">Total de reservas:</span>
-                                        <span class="value" id="projectTotalReservations">0</span>
-                                    </div>
-                                    <div class="stat-inline">
-                                        <span class="label">Cantidad total:</span>
-                                        <span class="value" id="projectTotalQuantity">0</span>
-                                    </div>
-                                    <div class="stat-inline">
-                                        <span class="label">Artículos utilizados:</span>
-                                        <span class="value" id="projectArticlesUsed">0</span>
-                                    </div>
+                                    <span class="label" data-i18n="modal.budget">Budget :</span>
+                                    <span class="value" id="projectDetailsBudget"></span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="project-tab-content" id="projectReservationsTab">
+                        <div class="reservations-actions">
+                            <button id="addReservationToProjectBtn" class="btn-primary">
+                                <i class="fas fa-plus"></i> <span data-i18n="modal.addReservation">Ajouter une réservation</span>
+                            </button>
+                        </div>
+
                         <div class="table-container">
                             <table class="project-reservations-table">
                                 <thead>
                                     <tr>
-                                        <th>Artículo</th>
-                                        <th>Código</th>
-                                        <th>Cantidad</th>
-                                        <th>Utilizado el</th>
-                                        <th>Fecha de fin</th>
-                                        <th>Usuario</th>
-                                        <th>Acciones</th>
+                                        <th data-i18n="admin.article">Article</th>
+                                        <th data-i18n="modal.code">Code</th>
+                                        <th data-i18n="modal.quantity">Quantité</th>
+                                        <th data-i18n="modal.usedOn">Utilisé le</th>
+                                        <th data-i18n="modal.endDate">Date de fin</th>
+                                        <th data-i18n="modal.user">Utilisateur</th>
+                                        <th data-i18n="modal.actions">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="projectReservationsBody">
                                     <tr>
                                         <td colspan="7" class="loading-row">
-                                            <i class="fas fa-spinner fa-spin"></i> <span>Cargando reservas...</span>
+                                            <i class="fas fa-spinner fa-spin"></i> <span data-i18n="modal.loadingReservations">Chargement des réservations...</span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -554,7 +502,7 @@
                     <div class="project-tab-content" id="projectHistoryTab">
                         <div class="history-list" id="projectHistoryList">
                             <div class="loading-row">
-                                <i class="fas fa-spinner fa-spin"></i> <span>Cargando historial...</span>
+                                <i class="fas fa-spinner fa-spin"></i> <span data-i18n="modal.loadingHistory">Chargement de l'historique...</span>
                             </div>
                         </div>
                     </div>
@@ -562,221 +510,128 @@
 
                 <div class="modal-actions">
                     <button id="archiveProjectBtn" class="btn-secondary">
-                        <i class="fas fa-archive"></i> <span>Archivar proyecto</span>
+                        <i class="fas fa-archive"></i> <span data-i18n="modal.archiveProject">Archiver le projet</span>
                     </button>
                     <button id="exportProjectBtn" class="btn-export">
-                        <i class="fas fa-file-export"></i> <span>Exportar</span>
+                        <i class="fas fa-file-export"></i> <span data-i18n="modal.export">Exporter</span>
                     </button>
-                    <button type="button" class="btn-secondary close-modal">
-                        Cerrar
+                    <button type="button" class="btn-secondary close-modal" data-i18n="modal.close">
+                        Fermer
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal création/édition projet -->
-    <div id="projectFormModal" class="modal-overlay" style="display: none;">
+    <!-- Modal ajout réservation au projet -->
+    <div id="addReservationModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-project-diagram"></i> <span id="projectFormTitle">Nuevo proyecto</span></h3>
+                <h3><i class="fas fa-plus"></i> <span data-i18n="modal.addReservation">Ajouter une réservation</span></h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="projectForm">
-                    <div class="form-group">
-                        <label for="projectName">
-                            <i class="fas fa-tag"></i> <span>Nombre del proyecto</span> *
-                        </label>
-                        <input type="text"
-                               id="projectName"
-                               placeholder="Ingrese el nombre del proyecto"
-                               class="form-input"
-                               required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="projectNumber">
-                            <i class="fas fa-hashtag"></i> <span>Número de proyecto</span>
-                        </label>
-                        <input type="text"
-                               id="projectNumber"
-                               placeholder="Ej: PRJ-2024-001"
-                               class="form-input">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="projectDescription">
-                            <i class="fas fa-align-left"></i> <span>Descripción</span>
-                        </label>
-                        <textarea id="projectDescription"
-                                  rows="3"
-                                  placeholder="Descripción del proyecto..."
-                                  class="form-textarea"></textarea>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="projectStartDate">
-                                <i class="fas fa-calendar-alt"></i> <span>Fecha de inicio</span>
-                            </label>
-                            <input type="date"
-                                   id="projectStartDate"
-                                   class="form-input">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="projectEndDate">
-                                <i class="fas fa-calendar-check"></i> <span>Fecha de fin</span>
-                            </label>
-                            <input type="date"
-                                   id="projectEndDate"
-                                   class="form-input">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="projectResponsable">
-                            <i class="fas fa-user-tie"></i> <span>Responsable</span>
-                        </label>
-                        <input type="text"
-                               id="projectResponsable"
-                               placeholder="Nombre del responsable"
-                               class="form-input">
-                    </div>
-
-                    <div id="projectFormError" class="error-message" style="display: none;">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <span id="projectFormErrorText"></span>
-                    </div>
-
-                    <div class="modal-actions">
-                        <button type="submit" class="btn-primary">
-                            <i class="fas fa-save"></i> <span>Guardar</span>
-                        </button>
-                        <button type="button" class="btn-secondary close-modal">
-                            Cancelar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal réservation article -->
-    <div id="reservationModal" class="modal-overlay" style="display: none;">
-        <div class="modal">
-            <div class="modal-header">
-                <h3><i class="fas fa-bookmark"></i> <span>Reservar artículo</span></h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="article-preview" id="reservationArticlePreview">
-                    <!-- Article info -->
+                <div class="form-group">
+                    <label for="reservationArticle">
+                        <i class="fas fa-box"></i> <span data-i18n="modal.article">Article</span> *
+                    </label>
+                    <select id="reservationArticle" class="form-select">
+                        <option value="" data-i18n="modal.selectArticle">Sélectionnez un article</option>
+                        <!-- Rempli dynamiquement -->
+                    </select>
                 </div>
 
-                <form id="reservationForm">
-                    <input type="hidden" id="reservationArticleId">
-                    <input type="hidden" id="reservationProjectId">
-
-                    <div class="form-group">
-                        <label for="reservationQuantity">
-                            <i class="fas fa-boxes"></i> <span>Cantidad</span> *
-                        </label>
-                        <div class="quantity-input-group">
-                            <button type="button" class="quantity-btn minus" id="reservationQuantityMinus">
-                                <i class="fas fa-minus"></i>
-                            </button>
-                            <input type="number"
-                                   id="reservationQuantity"
-                                   min="1"
-                                   value="1"
-                                   class="form-input quantity">
-                            <button type="button" class="quantity-btn plus" id="reservationQuantityPlus">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                        <div class="quantity-info">
-                            <span><span>Stock disponible</span>: <strong id="reservationAvailableStock">0</strong></span>
-                            <span><span>Ya reservado</span>: <strong id="reservationAlreadyReserved">0</strong></span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="reservationEndDate">
-                            <i class="fas fa-calendar-check"></i> <span>Retorno esperado</span>
-                        </label>
-                        <input type="date"
-                               id="reservationEndDate"
-                               class="form-input">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="reservationComment">
-                            <i class="fas fa-comment"></i> <span>Comentario</span>
-                        </label>
-                        <textarea id="reservationComment"
-                                  rows="2"
-                                  placeholder="Comentario opcional..."
-                                  class="form-textarea"></textarea>
-                    </div>
-
-                    <div id="reservationError" class="error-message" style="display: none;">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <span id="reservationErrorText"></span>
-                    </div>
-
-                    <div class="modal-actions">
-                        <button type="submit" class="btn-primary">
-                            <i class="fas fa-check"></i> <span>Confirmar</span>
+                <div class="form-group">
+                    <label for="reservationQuantity">
+                        <i class="fas fa-boxes"></i> <span data-i18n="modal.quantity">Quantité</span> *
+                    </label>
+                    <div class="quantity-input-group">
+                        <button type="button" class="quantity-btn minus" id="reservationQuantityMinus">
+                            <i class="fas fa-minus"></i>
                         </button>
-                        <button type="button" class="btn-secondary close-modal">
-                            Cancelar
+                        <input type="number"
+                               id="reservationQuantity"
+                               min="1"
+                               value="1"
+                               class="form-input quantity">
+                        <button type="button" class="quantity-btn plus" id="reservationQuantityPlus">
+                            <i class="fas fa-plus"></i>
                         </button>
                     </div>
-                </form>
+                    <div class="quantity-info">
+                        <span><span data-i18n="modal.availableStock">Stock disponible</span> : <strong id="reservationAvailableStock">0</strong></span>
+                        <span><span data-i18n="modal.alreadyReserved">Déjà réservé</span> : <strong id="reservationAlreadyReserved">0</strong></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reservationComment">
+                        <i class="fas fa-comment"></i> <span data-i18n="modal.comment">Commentaire</span> (<span data-i18n="modal.optional">optionnel</span>)
+                    </label>
+                    <textarea id="reservationComment"
+                              rows="2"
+                              data-i18n-placeholder="modal.commentPlaceholder"
+                              placeholder="Motif de la réservation..."
+                              class="form-textarea"></textarea>
+                </div>
+
+                <div id="reservationError" class="error-message" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="reservationErrorText"></span>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="confirmAddReservationBtn" class="btn-primary">
+                        <i class="fas fa-check"></i> <span data-i18n="modal.addReservationBtn">Ajouter la réservation</span>
+                    </button>
+                    <button type="button" class="btn-secondary close-modal" data-i18n="modal.cancel">
+                        Annuler
+                    </button>
+                </div>
             </div>
         </div>
     </div>
+
 
     <!-- Modal libération stock -->
     <div id="releaseStockModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-unlock"></i> <span>Liberación del stock</span></h3>
+                <h3><i class="fas fa-unlock"></i> <span data-i18n="modal.releaseStock">Libération du stock</span></h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="warning-message">
                     <i class="fas fa-exclamation-triangle"></i>
                     <div class="warning-content">
-                        <h4>¡Atención!</h4>
-                        <p>Está a punto de liberar todo el stock asociado a este proyecto.</p>
-                        <p><strong id="releaseItemsCount">0</strong> <span>artículo(s) serán liberados.</span></p>
-                        <p>Esta acción es irreversible.</p>
+                        <h4 data-i18n="modal.warning">Attention !</h4>
+                        <p data-i18n="modal.releaseWarning1">Vous êtes sur le point de libérer tout le stock associé à ce projet.</p>
+                        <p><strong id="releaseItemsCount">0</strong> <span data-i18n="modal.releaseWarning2">article(s) seront libérés.</span></p>
+                        <p data-i18n="modal.irreversible">Cette action est irréversible.</p>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="releaseReason">
-                        <i class="fas fa-comment"></i> <span>Motivo de la liberación</span>
+                        <i class="fas fa-comment"></i> <span data-i18n="modal.releaseReason">Raison de la libération</span>
                     </label>
                     <select id="releaseReason" class="form-select">
-                        <option value="">Seleccione un motivo</option>
-                        <option value="project_completed">Proyecto completado</option>
-                        <option value="project_cancelled">Proyecto cancelado</option>
-                        <option value="stock_return">Devolución de stock</option>
-                        <option value="other">Otro</option>
+                        <option value="" data-i18n="modal.selectReason">Sélectionnez une raison</option>
+                        <option value="project_completed" data-i18n="modal.projectCompleted">Projet terminé</option>
+                        <option value="project_cancelled" data-i18n="modal.projectCancelled">Projet annulé</option>
+                        <option value="stock_return" data-i18n="modal.stockReturn">Retour de stock</option>
+                        <option value="other" data-i18n="modal.other">Autre</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="releaseComment">
-                        <i class="fas fa-comment-dots"></i> <span>Comentario</span>
+                        <i class="fas fa-comment-dots"></i> <span data-i18n="modal.comment">Commentaire</span>
                     </label>
                     <textarea id="releaseComment"
                               rows="3"
-                              placeholder="Detalles adicionales..."
+                              data-i18n-placeholder="modal.additionalDetails"
+                              placeholder="Détails supplémentaires..."
                               class="form-textarea"></textarea>
                 </div>
 
@@ -787,10 +642,10 @@
 
                 <div class="modal-actions">
                     <button id="confirmReleaseBtn" class="btn-primary">
-                        <i class="fas fa-check"></i> <span>Confirmar liberación</span>
+                        <i class="fas fa-check"></i> <span data-i18n="modal.confirmRelease">Confirmer la libération</span>
                     </button>
-                    <button type="button" class="btn-secondary close-modal">
-                        Cancelar
+                    <button type="button" class="btn-secondary close-modal" data-i18n="modal.cancel">
+                        Annuler
                     </button>
                 </div>
             </div>
