@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient.js';
-import { i18n } from './i18n.js'; // ← IMPORT DU SYSTÈME DE TRADUCTION
+howAlert(i18n.t('success.itemsMarkedAsUsed', { quantity: quantityToUse }), 'success');
 
 // Éléments DOM
 let currentUser = null;
