@@ -5706,110 +5706,160 @@ class VueStock {
 }
 
 // ===== INITIALISATION AU CHARGEMENT =====
-// ===== INITIALISATION AU CHARGEMENT =====
+// Robust navigation to a slot by articleId (or by rackCode/levelCode/slotCode)
+// Usage: ?articleId=... OR ?rackCode=...&levelCode=...&slotCode=...
 document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const articleId = urlParams.get('articleId');
+    const params = new URLSearchParams(window.location.search);
+    const articleIdParam = params.get('articleId');
+    const rackCodeParam = params.get('rackCode');
+    const levelCodeParam = params.get('levelCode');
+    const slotCodeParam = params.get('slotCode');
 
-    if (!articleId) {
-        alert("Paramètre manquant : articleId obligatoire dans l'URL.");
+    if (!articleIdParam && !(rackCodeParam && levelCodeParam && slotCodeParam)) {
+        console.warn('Aucun paramètre utile détecté dans l\'URL (articleId ou rackCode+levelCode+slotCode).');
         return;
     }
 
-    // crée l'instance si elle n'existe pas (comme avant)
     if (!window.vueStock) window.vueStock = new VueStock();
 
-    // utilitaires
-    const waitFor = (predicate, timeout = 5000, interval = 100) => {
+    const waitFor = (predicate, timeout = 10000, interval = 100) => {
         const start = Date.now();
         return new Promise((resolve, reject) => {
             (function poll() {
                 try {
                     if (predicate()) return resolve();
-                    if (Date.now() - start >= timeout) return reject(new Error('Timeout'));
+                    if (Date.now() - start >= timeout) return reject(new Error('Timeout waiting predicate'));
                     setTimeout(poll, interval);
                 } catch (e) { reject(e); }
             })();
         });
     };
 
-    // 1) Essayer l'API Netlify custom (remplace si nécessaire)
-    const netlifyUrl = `/.netlify/functions/vuestock-api?action=get-article&articleId=${encodeURIComponent(articleId)}`;
+    const debugLog = (...args) => {
+        console.log('[nav-slot]', ...args);
+    };
 
-    fetch(netlifyUrl)
-        .then(res => {
-            if (res.status === 404) throw new Error('API_NOT_FOUND');
-            if (!res.ok) throw new Error(`Erreur réseau ${res.status}`);
-            return res.json();
-        })
-        .then(json => {
-            // Suppose réponse { success: true, data: { rack_id, level_id, slot_id } } ou similaire
-            const data = json.data ?? json;
-            const rackId = data.rack_id ?? data.rackId;
-            const levelId = data.level_id ?? data.levelId;
-            const slotId = data.slot_id ?? data.slotId;
-            if (!rackId || !levelId || !slotId) throw new Error('INVALID_API_RESPONSE');
-            return { rackId, levelId, slotId };
-        })
-        .catch(err => {
-            if (err.message === 'API_NOT_FOUND' || err.message === 'INVALID_API_RESPONSE' || err.message.startsWith('Erreur réseau')) {
-                // Fallback: chercher dans window.vueStock.racks (si les slots contiennent articleId)
-                console.warn('API article introuvable ou invalide — utilisation du fallback local.', err);
-                // attendre que window.vueStock.racks soit prêt
-                return waitFor(() => Array.isArray(window.vueStock?.racks) && window.vueStock.racks.length > 0, 8000)
-                    .then(() => {
-                        // parcourir racks -> levels -> slots pour trouver l'articleId
-                        for (const r of window.vueStock.racks) {
-                            if (!r.levels) continue;
-                            for (const l of r.levels) {
-                                if (!l.slots) continue;
-                                for (const s of l.slots) {
-                                    // adapte la condition suivant où est stocké articleId dans ton modèle :
-                                    // s.articleId ou s.article_id ou s.content?.articleId, etc.
-                                    if (String(s.articleId ?? s.article_id ?? s.content?.articleId) === String(articleId)) {
-                                        return { rackId: r.id, levelId: l.id, slotId: s.id };
-                                    }
-                                }
-                            }
-                        }
-                        throw new Error('ARTICLE_NOT_FOUND_LOCAL');
-                    });
+    // Heuristiques de comparaison pour un articleId donné (essaye plusieurs chemins)
+    const articleMatchesSlot = (slotObj, articleId) => {
+        if (!slotObj) return false;
+        const candidates = [];
+        // direct fields
+        candidates.push(slotObj.articleId, slotObj.article_id, slotObj.article_uuid, slotObj.sku, slotObj.code, slotObj.id);
+        // embedded content
+        if (slotObj.content && typeof slotObj.content === 'object') {
+            candidates.push(slotObj.content.articleId, slotObj.content.article_id, slotObj.content.sku, slotObj.content.code);
+        }
+        // product array or items
+        if (Array.isArray(slotObj.items)) {
+            for (const it of slotObj.items) {
+                candidates.push(it.articleId, it.article_id, it.sku, it.code);
             }
-            throw err; // autre erreur => laisse remonter
-        })
-        .then(({ rackId, levelId, slotId }) => {
-            // navigation vers rack/level/slot — on attend l'initialisation des vues proprement
-            return waitFor(() => !!window.vueStock?.quadViewManager, 8000)
-                .then(() => {
-                    window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
-                    // chercher le rack
-                    const rack = window.vueStock.racks.find(r => String(r.id) === String(rackId));
-                    if (!rack) throw new Error('RACK_NOT_FOUND');
-                    window.vueStock.goToRackView(rack);
-                    // attendre que le niveau soit présent sur le rack (petit polling)
-                    return waitFor(() => rack.levels && rack.levels.find(l => String(l.id) === String(levelId)), 5000)
-                        .then(() => {
-                            const level = rack.levels.find(l => String(l.id) === String(levelId));
-                            window.vueStock.goToLevelView(level);
-                            return waitFor(() => level.slots && level.slots.find(s => String(s.id) === String(slotId)), 5000)
-                                .then(() => {
-                                    const slot = level.slots.find(s => String(s.id) === String(slotId));
-                                    // mettre en évidence l'élément DOM si présent
-                                    const slotEl = document.querySelector(`.slot-item[data-slot-id="${slot.id}"]`);
-                                    if (slotEl) {
-                                        slotEl.classList.add('pulse');
-                                        slotEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    } else {
-                                        console.warn('Élément DOM du slot introuvable pour id :', slot.id);
+        }
+        // stringify candidates and compare
+        return candidates.some(c => c != null && String(c) === String(articleId));
+    };
+
+    // Chercher par codes rack/level/slot si fournis (matching both id and code fields)
+    const findByCodes = (racks, rCode, lCode, sCode) => {
+        for (const r of racks) {
+            if (!r) continue;
+            const rMatches = [r.id, r.code, r.code?.toString(), r.name].some(v => v != null && String(v) === String(rCode));
+            if (!rMatches) continue;
+            if (!r.levels) continue;
+            for (const l of r.levels) {
+                const lMatches = [l.id, l.code, l.name].some(v => v != null && String(v) === String(lCode));
+                if (!lMatches) continue;
+                if (!l.slots) continue;
+                for (const s of l.slots) {
+                    const sMatches = [s.id, s.code, s.name].some(v => v != null && String(v) === String(sCode));
+                    if (sMatches) return { rack: r, level: l, slot: s };
+                }
+            }
+        }
+        return null;
+    };
+
+    // Fonction principale
+    (async () => {
+        try {
+            debugLog('Attente de window.vueStock.racks...');
+            await waitFor(() => Array.isArray(window.vueStock?.racks), 10000);
+            debugLog('window.vueStock.racks prêt, count =', window.vueStock.racks.length);
+
+            // Si rack/level/slot codes fournis : essayer ça en priorité
+            if (rackCodeParam && levelCodeParam && slotCodeParam) {
+                debugLog('Recherche par code fournie dans l\'URL:', rackCodeParam, levelCodeParam, slotCodeParam);
+                const res = findByCodes(window.vueStock.racks, rackCodeParam, levelCodeParam, slotCodeParam);
+                if (res) {
+                    debugLog('Correspondance par codes trouvée:', res);
+                    window.vueStock.goToRackView(res.rack);
+                    await waitFor(() => res.rack.levels && res.rack.levels.includes(res.level), 5000).catch(()=>{});
+                    window.vueStock.goToLevelView(res.level);
+                    // highlight
+                    const el = document.querySelector(`.slot-item[data-slot-id="${res.slot.id}"]`);
+                    if (el) { el.classList.add('pulse'); el.scrollIntoView({behavior:'smooth', block:'center'}); }
+                    return;
+                } else {
+                    debugLog('Aucune correspondance par codes.');
+                }
+            }
+
+            // Sinon, chercher par articleId param
+            if (articleIdParam) {
+                debugLog('Recherche articleId dans les slots :', articleIdParam);
+
+                // parcours complet + collecte d'exemples pour debug
+                let found = null;
+                const sampleHits = [];
+                for (const r of window.vueStock.racks) {
+                    if (!r.levels) continue;
+                    for (const l of r.levels) {
+                        if (!l.slots) continue;
+                        for (const s of l.slots) {
+                            if (articleMatchesSlot(s, articleIdParam)) {
+                                found = { rack: r, level: l, slot: s };
+                                break;
+                            }
+                            // collect some sample fields to print later (only a few)
+                            if (sampleHits.length < 6) {
+                                sampleHits.push({
+                                    rackId: r.id, levelId: l.id, slotId: s.id,
+                                    possible: {
+                                        articleId: s.articleId ?? s.article_id ?? s.article_uuid ?? null,
+                                        sku: s.sku ?? null,
+                                        content: s.content ? Object.keys(s.content).slice(0,3) : null
                                     }
                                 });
-                        });
-                });
-        })
-        .catch(err => {
-            console.error('Impossible de localiser l\'article/slot :', err);
-            alert('Erreur : l\'article/slot n\'a pas été trouvé. Voir console pour détails.');
-        });
+                            }
+                        }
+                        if (found) break;
+                    }
+                    if (found) break;
+                }
+
+                if (!found) {
+                    console.warn('[nav-slot] Article non trouvé localement. Exemples de slots (aide debug):', sampleHits);
+                    throw new Error('ARTICLE_NOT_FOUND_LOCAL');
+                }
+
+                debugLog('Article trouvé localement:', found);
+                const { rack, level, slot } = found;
+                window.vueStock.goToRackView(rack);
+                await waitFor(() => rack.levels && rack.levels.find(l => String(l.id) === String(level.id)), 5000).catch(()=>{});
+                window.vueStock.goToLevelView(level);
+                await waitFor(() => level.slots && level.slots.find(s => String(s.id) === String(slot.id)), 5000).catch(()=>{});
+                const slotEl = document.querySelector(`.slot-item[data-slot-id="${slot.id}"]`);
+                if (slotEl) { slotEl.classList.add('pulse'); slotEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                else console.warn('[nav-slot] DOM du slot introuvable (data-slot-id="' + slot.id + '")');
+                return;
+            }
+
+            debugLog('Fin du script : aucun param utilisable trouvé.');
+        } catch (err) {
+            console.error('[nav-slot] Erreur:', err);
+            alert('Erreur lors de la navigation vers le slot — voir console pour détails.');
+        }
+    })();
 });
 
 
