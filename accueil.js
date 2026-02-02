@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient.js';
 // Éléments DOM
 let currentUser = null;
 let currentModal = null;
+let selectedArticle = null;
 
 // Objet pour stocker les éléments DOM
 const elements = {};
@@ -2800,18 +2801,30 @@ function updateUserInterface() {
         inventoryLink.addEventListener('click', (e) => {
             e.preventDefault();
 
-            // Récupérer l'article sélectionné (via selectedRack/selectedLevel ou highlightArticleLocationFromArticle)
-            const article = window.accueilQuadManager?.getSelectedArticle();
+            // 1. D'abord essayer de récupérer depuis le QuadManager
+            let article = window.accueilQuadManager?.getSelectedArticle();
+
+            // 2. Si rien trouvé, essayer depuis la recherche (nouveau)
+            if (!article && window.selectedArticle) {
+                article = window.selectedArticle;
+            }
+
             if (!article) {
-                alert("Sélectionnez d'abord un article dans l'interface.");
+                alert("Sélectionnez d'abord un article dans l'interface ou via la recherche.");
                 return;
             }
 
-            // Construire l'URL avec les paramètres
+            // Construire l'URL (modifié pour gérer les deux sources)
             const url = new URL('vuestock.html', window.location.origin);
-            url.searchParams.set('rack', article.rack_code || article.rack_display_name || '');
-            url.searchParams.set('level', article.level_code || '');
-            url.searchParams.set('slot', article.slot_code || '');
+            url.searchParams.set('articleId', article.id); // Ajout de l'ID
+            url.searchParams.set('articleName', article.nom || '');
+
+            // Garder les infos d'emplacement si disponibles
+            if (article.rack_code || article.rack_display_name) {
+                url.searchParams.set('rack', article.rack_code || article.rack_display_name);
+                url.searchParams.set('level', article.level_code || '');
+                url.searchParams.set('slot', article.slot_code || '');
+            }
 
             window.location.href = url.toString();
         });
@@ -4060,12 +4073,22 @@ function openSearchPopup(results, searchType) {
             const index = this.dataset.index;
             const article = results[index];
 
+            // STOCKER L'ARTICLE SÉLECTIONNÉ (ajoute cette ligne)
+            window.selectedArticle = article;
+
             // Fermer le popup
             document.body.removeChild(popup);
 
-            // Mettre à jour la vue Quad (affichage UNIQUE)
+            // Mettre à jour la vue Quad
             if (window.accueilQuadManager && article) {
                 window.accueilQuadManager.showSingleArticleLocation(article);
+            }
+
+            // METTRE À JOUR LE BOUTON INVENTAIRE (ajoute cette partie)
+            const inventoryBtn = document.getElementById('inventoryBtn');
+            if (inventoryBtn) {
+                inventoryBtn.textContent = `Inventaire (${article.nom})`;
+                inventoryBtn.disabled = false;
             }
         });
     });
