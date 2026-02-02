@@ -5709,9 +5709,8 @@ class VueStock {
 document.addEventListener('DOMContentLoaded', () => {
     // Récupérer les paramètres URL
     const urlParams = new URLSearchParams(window.location.search);
-    const rackCode = urlParams.get('rack');
-    const levelCode = urlParams.get('level');
-    const slotCode = urlParams.get('slot');
+    const articleId = urlParams.get('articleId');
+    const articleName = urlParams.get('articleName');
 
     window.vueStock = new VueStock();
 
@@ -5720,33 +5719,64 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.vueStock.quadViewManager) {
             window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
 
-            // Si on a des paramètres de localisation, les utiliser
-            if (rackCode) {
-                const rack = window.vueStock.racks.find(r => r.code === rackCode);
-                if (rack) {
-                    window.vueStock.goToRackView(rack);
+            // Si on a un articleId dans l'URL, chercher et ouvrir son emplacement
+            if (articleId || articleName) {
+                console.log('🔍 Recherche article depuis URL:', { articleId, articleName });
 
-                    if (levelCode) {
+                // Chercher l'article dans tous les racks/levels/slots
+                let foundRack = null;
+                let foundLevel = null;
+                let foundSlot = null;
+
+                for (const rack of window.vueStock.racks) {
+                    if (!rack.levels) continue;
+
+                    for (const level of rack.levels) {
+                        if (!level.slots) continue;
+
+                        for (const slot of level.slots) {
+                            if (!slot.articles || slot.articles.length === 0) continue;
+
+                            // Chercher l'article dans ce slot
+                            const article = slot.articles.find(a =>
+                                (articleId && a.id === articleId) ||
+                                (articleName && a.name === articleName)
+                            );
+
+                            if (article) {
+                                foundRack = rack;
+                                foundLevel = level;
+                                foundSlot = slot;
+                                console.log('✅ Article trouvé:', { rack: rack.code, level: level.code, slot: slot.code });
+                                break;
+                            }
+                        }
+                        if (foundSlot) break;
+                    }
+                    if (foundSlot) break;
+                }
+
+                // Si trouvé, ouvrir rack → level → slot
+                if (foundRack && foundLevel && foundSlot) {
+                    // Étape 1: Ouvrir le rack
+                    window.vueStock.goToRackView(foundRack);
+
+                    // Étape 2: Ouvrir le level (après 500ms)
+                    setTimeout(() => {
+                        window.vueStock.goToLevelView(foundLevel);
+
+                        // Étape 3: Mettre en évidence le slot (après 500ms supplémentaires)
                         setTimeout(() => {
-                            const level = rack.levels?.find(l => l.code === levelCode);
-                            if (level) {
-                                window.vueStock.goToLevelView(level);
-
-                                if (slotCode) {
-                                    setTimeout(() => {
-                                        const slot = level.slots?.find(s => s.code === slotCode);
-                                        if (slot) {
-                                            const slotElement = document.querySelector(`.slot-item[data-slot-id="${slot.id}"]`);
-                                            if (slotElement) {
-                                                slotElement.classList.add('pulse');
-                                                slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                            }
-                                        }
-                                    }, 500);
-                                }
+                            const slotElement = document.querySelector(`.slot-item[data-slot-id="${foundSlot.id}"]`);
+                            if (slotElement) {
+                                slotElement.classList.add('pulse');
+                                slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                console.log('✅ Slot mis en évidence');
                             }
                         }, 500);
-                    }
+                    }, 500);
+                } else {
+                    console.warn('❌ Article non trouvé dans le stock');
                 }
             }
         }
