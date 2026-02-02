@@ -5705,162 +5705,138 @@ class VueStock {
     }
 }
 
-// ===== INITIALISATION AU CHARGEMENT =====
-// Robust navigation to a slot by articleId (or by rackCode/levelCode/slotCode)
-// Usage: ?articleId=... OR ?rackCode=...&levelCode=...&slotCode=...
+// Navigateur vers un slot contenant un article (articleId) ou via rack/level/slot codes.
+// Usage URL: ?articleId=UUID  (or ?rackCode=A&levelCode=20&slotCode=10)
 document.addEventListener('DOMContentLoaded', () => {
-    const params = new URLSearchParams(window.location.search);
-    const articleIdParam = params.get('articleId');
-    const rackCodeParam = params.get('rackCode');
-    const levelCodeParam = params.get('levelCode');
-    const slotCodeParam = params.get('slotCode');
+  const params = new URLSearchParams(window.location.search);
+  const articleIdParam = params.get('articleId');
+  const rackCodeParam = params.get('rackCode');
+  const levelCodeParam = params.get('levelCode');
+  const slotCodeParam = params.get('slotCode');
 
-    if (!articleIdParam && !(rackCodeParam && levelCodeParam && slotCodeParam)) {
-        console.warn('Aucun paramètre utile détecté dans l\'URL (articleId ou rackCode+levelCode+slotCode).');
-        return;
-    }
+  if (!articleIdParam && !(rackCodeParam && levelCodeParam && slotCodeParam)) {
+    console.warn('[nav-slot] Aucun paramètre utile détecté (articleId ou rackCode+levelCode+slotCode).');
+    return;
+  }
 
-    if (!window.vueStock) window.vueStock = new VueStock();
+  if (!window.vueStock) window.vueStock = new VueStock();
 
-    const waitFor = (predicate, timeout = 10000, interval = 100) => {
-        const start = Date.now();
-        return new Promise((resolve, reject) => {
-            (function poll() {
-                try {
-                    if (predicate()) return resolve();
-                    if (Date.now() - start >= timeout) return reject(new Error('Timeout waiting predicate'));
-                    setTimeout(poll, interval);
-                } catch (e) { reject(e); }
-            })();
-        });
-    };
-
-    const debugLog = (...args) => {
-        console.log('[nav-slot]', ...args);
-    };
-
-    // Heuristiques de comparaison pour un articleId donné (essaye plusieurs chemins)
-    const articleMatchesSlot = (slotObj, articleId) => {
-        if (!slotObj) return false;
-        const candidates = [];
-        // direct fields
-        candidates.push(slotObj.articleId, slotObj.article_id, slotObj.article_uuid, slotObj.sku, slotObj.code, slotObj.id);
-        // embedded content
-        if (slotObj.content && typeof slotObj.content === 'object') {
-            candidates.push(slotObj.content.articleId, slotObj.content.article_id, slotObj.content.sku, slotObj.content.code);
-        }
-        // product array or items
-        if (Array.isArray(slotObj.items)) {
-            for (const it of slotObj.items) {
-                candidates.push(it.articleId, it.article_id, it.sku, it.code);
-            }
-        }
-        // stringify candidates and compare
-        return candidates.some(c => c != null && String(c) === String(articleId));
-    };
-
-    // Chercher par codes rack/level/slot si fournis (matching both id and code fields)
-    const findByCodes = (racks, rCode, lCode, sCode) => {
-        for (const r of racks) {
-            if (!r) continue;
-            const rMatches = [r.id, r.code, r.code?.toString(), r.name].some(v => v != null && String(v) === String(rCode));
-            if (!rMatches) continue;
-            if (!r.levels) continue;
-            for (const l of r.levels) {
-                const lMatches = [l.id, l.code, l.name].some(v => v != null && String(v) === String(lCode));
-                if (!lMatches) continue;
-                if (!l.slots) continue;
-                for (const s of l.slots) {
-                    const sMatches = [s.id, s.code, s.name].some(v => v != null && String(v) === String(sCode));
-                    if (sMatches) return { rack: r, level: l, slot: s };
-                }
-            }
-        }
-        return null;
-    };
-
-    // Fonction principale
-    (async () => {
+  const waitFor = (predicate, timeout = 20000, interval = 100) =>
+    new Promise((resolve, reject) => {
+      const start = Date.now();
+      (function poll() {
         try {
-            debugLog('Attente de window.vueStock.racks...');
-            await waitFor(() => Array.isArray(window.vueStock?.racks), 10000);
-            debugLog('window.vueStock.racks prêt, count =', window.vueStock.racks.length);
+          if (predicate()) return resolve();
+          if (Date.now() - start >= timeout) return reject(new Error('Timeout'));
+          setTimeout(poll, interval);
+        } catch (e) { reject(e); }
+      })();
+  });
 
-            // Si rack/level/slot codes fournis : essayer ça en priorité
-            if (rackCodeParam && levelCodeParam && slotCodeParam) {
-                debugLog('Recherche par code fournie dans l\'URL:', rackCodeParam, levelCodeParam, slotCodeParam);
-                const res = findByCodes(window.vueStock.racks, rackCodeParam, levelCodeParam, slotCodeParam);
-                if (res) {
-                    debugLog('Correspondance par codes trouvée:', res);
-                    window.vueStock.goToRackView(res.rack);
-                    await waitFor(() => res.rack.levels && res.rack.levels.includes(res.level), 5000).catch(()=>{});
-                    window.vueStock.goToLevelView(res.level);
-                    // highlight
-                    const el = document.querySelector(`.slot-item[data-slot-id="${res.slot.id}"]`);
-                    if (el) { el.classList.add('pulse'); el.scrollIntoView({behavior:'smooth', block:'center'}); }
-                    return;
-                } else {
-                    debugLog('Aucune correspondance par codes.');
+  const debug = (...args) => console.log('[nav-slot]', ...args);
+
+  // Ajouter un style simple pour surligner le slot ciblé
+  (function addHighlightStyle() {
+    if (document.getElementById('vuestock-highlight-style')) return;
+    const s = document.createElement('style');
+    s.id = 'vuestock-highlight-style';
+    s.textContent = `
+      .vuestock-highlight { outline: 3px solid #ffcc00 !important; box-shadow: 0 0 8px #ffcc00; transition: box-shadow .3s; }
+      .vuestock-pulse { animation: vuestock-pulse 1s ease-in-out 3; }
+      @keyframes vuestock-pulse { 0% { transform: scale(1) } 50% { transform: scale(1.02) } 100% { transform: scale(1) } }
+    `;
+    document.head.appendChild(s);
+  })();
+
+  (async () => {
+    try {
+      debug('Attente que window.vueStock.racks soit initialisé et non vide...');
+      await waitFor(() => Array.isArray(window.vueStock?.racks) && window.vueStock.racks.length > 0, 20000);
+      debug('Racks disponibles, count =', window.vueStock.racks.length);
+
+      // Recherche par codes explicites (priorité si fournis)
+      if (rackCodeParam && levelCodeParam && slotCodeParam) {
+        debug('Recherche par codes:', rackCodeParam, levelCodeParam, slotCodeParam);
+        const rack = window.vueStock.racks.find(r => String(r.code) === String(rackCodeParam));
+        if (!rack) throw new Error('RACK_NOT_FOUND');
+        const level = (rack.levels || []).find(l => String(l.code) === String(levelCodeParam));
+        if (!level) throw new Error('LEVEL_NOT_FOUND');
+        const slot = (level.slots || []).find(s => String(s.code) === String(slotCodeParam));
+        if (!slot) throw new Error('SLOT_NOT_FOUND');
+        debug('Éléments trouvés par code', { rackId: rack.id, levelId: level.id, slotId: slot.id });
+        window.vueStock.goToRackView(rack);
+        await waitFor(() => rack.levels && rack.levels.includes(level), 5000).catch(()=>{});
+        window.vueStock.goToLevelView(level);
+        await waitFor(() => level.slots && level.slots.includes(slot), 5000).catch(()=>{});
+        const el = document.querySelector(`.slot-item[data-slot-id="${slot.id}"]`);
+        if (el) { el.classList.add('vuestock-highlight','vuestock-pulse'); el.scrollIntoView({behavior:'smooth', block:'center'}); }
+        else debug('DOM du slot introuvable pour id:', slot.id);
+        return;
+      }
+
+      // Recherche par articleId dans slots[*].articles[*].id
+      const articleId = articleIdParam;
+      debug('Recherche articleId dans les slots :', articleId);
+      let found = null;
+      const sampleSlots = [];
+
+      for (const r of window.vueStock.racks) {
+        if (!r.levels) continue;
+        for (const l of r.levels) {
+          if (!l.slots) continue;
+          for (const s of l.slots) {
+            // Collecte d'exemples pour debug si besoin
+            if (sampleSlots.length < 6) sampleSlots.push({
+              rack: r.code, level: l.code, slot: s.code, status: s.status, articlesCount: Array.isArray(s.articles) ? s.articles.length : null
+            });
+            if (Array.isArray(s.articles)) {
+              for (const a of s.articles) {
+                if (a && (String(a.id) === String(articleId))) {
+                  found = { rack: r, level: l, slot: s, article: a };
+                  break;
                 }
+              }
             }
-
-            // Sinon, chercher par articleId param
-            if (articleIdParam) {
-                debugLog('Recherche articleId dans les slots :', articleIdParam);
-
-                // parcours complet + collecte d'exemples pour debug
-                let found = null;
-                const sampleHits = [];
-                for (const r of window.vueStock.racks) {
-                    if (!r.levels) continue;
-                    for (const l of r.levels) {
-                        if (!l.slots) continue;
-                        for (const s of l.slots) {
-                            if (articleMatchesSlot(s, articleIdParam)) {
-                                found = { rack: r, level: l, slot: s };
-                                break;
-                            }
-                            // collect some sample fields to print later (only a few)
-                            if (sampleHits.length < 6) {
-                                sampleHits.push({
-                                    rackId: r.id, levelId: l.id, slotId: s.id,
-                                    possible: {
-                                        articleId: s.articleId ?? s.article_id ?? s.article_uuid ?? null,
-                                        sku: s.sku ?? null,
-                                        content: s.content ? Object.keys(s.content).slice(0,3) : null
-                                    }
-                                });
-                            }
-                        }
-                        if (found) break;
-                    }
-                    if (found) break;
-                }
-
-                if (!found) {
-                    console.warn('[nav-slot] Article non trouvé localement. Exemples de slots (aide debug):', sampleHits);
-                    throw new Error('ARTICLE_NOT_FOUND_LOCAL');
-                }
-
-                debugLog('Article trouvé localement:', found);
-                const { rack, level, slot } = found;
-                window.vueStock.goToRackView(rack);
-                await waitFor(() => rack.levels && rack.levels.find(l => String(l.id) === String(level.id)), 5000).catch(()=>{});
-                window.vueStock.goToLevelView(level);
-                await waitFor(() => level.slots && level.slots.find(s => String(s.id) === String(slot.id)), 5000).catch(()=>{});
-                const slotEl = document.querySelector(`.slot-item[data-slot-id="${slot.id}"]`);
-                if (slotEl) { slotEl.classList.add('pulse'); slotEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-                else console.warn('[nav-slot] DOM du slot introuvable (data-slot-id="' + slot.id + '")');
-                return;
-            }
-
-            debugLog('Fin du script : aucun param utilisable trouvé.');
-        } catch (err) {
-            console.error('[nav-slot] Erreur:', err);
-            alert('Erreur lors de la navigation vers le slot — voir console pour détails.');
+            if (found) break;
+          }
+          if (found) break;
         }
-    })();
+        if (found) break;
+      }
+
+      if (!found) {
+        debug('Article non trouvé localement. Exemples de slots (pour debug):', sampleSlots);
+        throw new Error('ARTICLE_NOT_FOUND_LOCAL');
+      }
+
+      debug('Article trouvé localement:', { rackCode: found.rack.code, levelCode: found.level.code, slotCode: found.slot.code, slotId: found.slot.id });
+      // Naviguer et surligner
+      window.vueStock.goToRackView(found.rack);
+      await waitFor(() => found.rack.levels && found.rack.levels.includes(found.level), 5000).catch(()=>{});
+      window.vueStock.goToLevelView(found.level);
+      await waitFor(() => found.level.slots && found.level.slots.includes(found.slot), 5000).catch(()=>{});
+      const slotEl = document.querySelector(`.slot-item[data-slot-id="${found.slot.id}"]`);
+      if (slotEl) {
+        slotEl.classList.add('vuestock-highlight','vuestock-pulse');
+        slotEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        debug('DOM du slot introuvable (data-slot-id="' + found.slot.id + '"). Vérifie le sélecteur .slot-item[data-slot-id="..."]');
+      }
+
+    } catch (err) {
+      console.error('[nav-slot] Erreur:', err);
+      // erreurs explicites utiles pour debug
+      if (err.message === 'ARTICLE_NOT_FOUND_LOCAL') {
+        console.warn('[nav-slot] L\'article n\'a pas été trouvé dans window.vueStock.racks. Vérifie que l\'articleId est correct et que les racks contiennent bien articles[].id.');
+      } else if (err.message === 'Timeout') {
+        console.warn('[nav-slot] Timeout : les données n\'ont pas été initialisées dans le délai.');
+      } else {
+        console.warn('[nav-slot] Détail erreur:', err.message);
+      }
+    }
+  })();
 });
+
 
 
 // Debug button pour tester QuadView
