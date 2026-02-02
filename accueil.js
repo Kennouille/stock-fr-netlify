@@ -1748,7 +1748,6 @@ async function unarchiveProjectAction(projectId) {
     }
 }
 
-
 async function exportProjectDetails() {
     if (!state.currentProject) return;
 
@@ -1767,7 +1766,7 @@ async function exportProjectDetails() {
 
     } catch (error) {
         console.error('Erreur export projet:', error);
-        showAlert('Erreur lors de l\'export du projet', 'error');
+        showAlert(i18n.t('errors.exportProjectFailed'), 'error');
     } finally {
         hideLoading();
     }
@@ -1794,33 +1793,34 @@ async function exportProjectReservations() {
         // ===== EN-TÊTE =====
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
-        doc.text('DÉTAILS DU PROJET', pageWidth / 2, yPos, { align: 'center' });
+        doc.text(i18n.t('pdf.projectDetails.title'), pageWidth / 2, yPos, { align: 'center' });
         yPos += 10;
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Exporté le: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - margin, yPos, { align: 'right' });
+        doc.text(`${i18n.t('pdf.exportedOn')}: ${new Date().toLocaleDateString(i18n.language)}`, pageWidth - margin, yPos, { align: 'right' });
         yPos += 15;
 
         // ===== INFORMATIONS PROJET =====
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text('INFORMATIONS DU PROJET', margin, yPos);
+        doc.text(i18n.t('pdf.projectDetails.projectInfo'), margin, yPos);
         yPos += 8;
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
 
         const projectInfo = [
-            ['Nom:', project.nom],
-            ['Numéro:', project.numero || 'Non défini'],
-            ['Description:', project.description || 'Aucune description'],
-            ['Responsable:', project.responsable || 'Non défini'],
-            ['Date création:', formatDate(project.created_at)],
-            ['Date fin prévue:', project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'Non définie'],
-            ['Budget:', project.budget ? `${project.budget} €` : 'Non défini'],
-            ['Statut:', project.archived ? 'Archivé' : getProjectStatus(project) === 'active' ? 'Actif' :
-                         getProjectStatus(project) === 'ending' ? 'Bientôt terminé' : 'En retard']
+            [i18n.t('pdf.projectDetails.name'), project.nom],
+            [i18n.t('pdf.projectDetails.number'), project.numero || i18n.t('common.notDefined')],
+            [i18n.t('pdf.projectDetails.description'), project.description || i18n.t('common.noDescription')],
+            [i18n.t('pdf.projectDetails.responsible'), project.responsable || i18n.t('common.notDefined')],
+            [i18n.t('pdf.projectDetails.creationDate'), formatDate(project.created_at)],
+            [i18n.t('pdf.projectDetails.expectedEndDate'), project.date_fin_prevue ? formatDate(project.date_fin_prevue) : i18n.t('common.notDefined')],
+            [i18n.t('pdf.projectDetails.budget'), project.budget ? `${project.budget} €` : i18n.t('common.notDefined')],
+            [i18n.t('pdf.projectDetails.status'), project.archived ? i18n.t('status.archived') :
+                getProjectStatus(project) === 'active' ? i18n.t('status.active') :
+                getProjectStatus(project) === 'ending' ? i18n.t('status.endingSoon') : i18n.t('status.overdue')]
         ];
 
         projectInfo.forEach(([label, value]) => {
@@ -1848,7 +1848,7 @@ async function exportProjectReservations() {
         if (sorties.length > 0 || reservations.length > 0) {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('STATISTIQUES', margin, yPos);
+            doc.text(i18n.t('pdf.projectDetails.statistics'), margin, yPos);
             yPos += 8;
 
             doc.setFontSize(11);
@@ -1868,9 +1868,9 @@ async function exportProjectReservations() {
             }, 0);
 
             const stats = [
-                ['Articles utilisés:', `${itemsSortis} unité(s)`, `${valeurSortis.toFixed(2)} €`],
-                ['Articles réservés:', `${itemsReserves} unité(s)`, `${valeurReserves.toFixed(2)} €`],
-                ['Total articles:', `${itemsSortis + itemsReserves} unité(s)`, `${(valeurSortis + valeurReserves).toFixed(2)} €`]
+                [i18n.t('pdf.projectDetails.stats.itemsUsed'), `${itemsSortis} ${i18n.t('common.units')}`, `${valeurSortis.toFixed(2)} €`],
+                [i18n.t('pdf.projectDetails.stats.itemsReserved'), `${itemsReserves} ${i18n.t('common.units')}`, `${valeurReserves.toFixed(2)} €`],
+                [i18n.t('pdf.projectDetails.stats.totalItems'), `${itemsSortis + itemsReserves} ${i18n.t('common.units')}`, `${(valeurSortis + valeurReserves).toFixed(2)} €`]
             ];
 
             stats.forEach(([label, qty, value]) => {
@@ -1889,17 +1889,17 @@ async function exportProjectReservations() {
         if (sorties.length > 0) {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('ARTICLES UTILISÉS', margin, yPos);
+            doc.text(i18n.t('pdf.projectDetails.itemsUsed'), margin, yPos);
             yPos += 8;
 
             // En-tête du tableau
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.text('Article', margin, yPos);
-            doc.text('Qté', margin + 80, yPos);
-            doc.text('Date', margin + 100, yPos);
-            doc.text('Prix unitaire', margin + 130, yPos);
-            doc.text('Total', margin + 170, yPos);
+            doc.text(i18n.t('pdf.table.article'), margin, yPos);
+            doc.text(i18n.t('pdf.table.qty'), margin + 80, yPos);
+            doc.text(i18n.t('pdf.table.date'), margin + 100, yPos);
+            doc.text(i18n.t('pdf.table.unitPrice'), margin + 130, yPos);
+            doc.text(i18n.t('pdf.table.total'), margin + 170, yPos);
 
             doc.line(margin, yPos + 1, pageWidth - margin, yPos + 1);
             yPos += 6;
@@ -1918,7 +1918,7 @@ async function exportProjectReservations() {
                     yPos = 20;
                 }
 
-                doc.text(article.nom?.substring(0, 30) || 'Article', margin, yPos);
+                doc.text(article.nom?.substring(0, 30) || i18n.t('common.article'), margin, yPos);
                 doc.text(item.quantite?.toString() || '0', margin + 80, yPos);
                 doc.text(formatDate(item.created_at), margin + 100, yPos);
                 doc.text(`${prixUnitaire.toFixed(2)} €`, margin + 130, yPos);
@@ -1934,17 +1934,17 @@ async function exportProjectReservations() {
         if (reservations.length > 0) {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('ARTICLES RÉSERVÉS', margin, yPos);
+            doc.text(i18n.t('pdf.projectDetails.itemsReserved'), margin, yPos);
             yPos += 8;
 
             // En-tête du tableau
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.text('Article', margin, yPos);
-            doc.text('Qté', margin + 80, yPos);
-            doc.text('Date fin', margin + 100, yPos);
-            doc.text('Utilisateur', margin + 130, yPos);
-            doc.text('Prix unitaire', margin + 170, yPos);
+            doc.text(i18n.t('pdf.table.article'), margin, yPos);
+            doc.text(i18n.t('pdf.table.qty'), margin + 80, yPos);
+            doc.text(i18n.t('pdf.table.endDate'), margin + 100, yPos);
+            doc.text(i18n.t('pdf.table.user'), margin + 130, yPos);
+            doc.text(i18n.t('pdf.table.unitPrice'), margin + 170, yPos);
 
             doc.line(margin, yPos + 1, pageWidth - margin, yPos + 1);
             yPos += 6;
@@ -1962,10 +1962,10 @@ async function exportProjectReservations() {
                     yPos = 20;
                 }
 
-                doc.text(article.nom?.substring(0, 30) || 'Article', margin, yPos);
+                doc.text(article.nom?.substring(0, 30) || i18n.t('common.article'), margin, yPos);
                 doc.text(res.quantite?.toString() || '0', margin + 80, yPos);
                 doc.text(formatDate(res.date_fin), margin + 100, yPos);
-                doc.text(res.w_users?.username?.substring(0, 15) || 'Utilisateur', margin + 130, yPos);
+                doc.text(res.w_users?.username?.substring(0, 15) || i18n.t('common.user'), margin + 130, yPos);
                 doc.text(`${prixUnitaire.toFixed(2)} €`, margin + 170, yPos);
 
                 yPos += 6;
@@ -1975,12 +1975,12 @@ async function exportProjectReservations() {
         // Pied de page
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
-        doc.text('Document généré automatiquement - Système de gestion de stock',
+        doc.text(i18n.t('pdf.footer'),
                 pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
 
         // Télécharger
-        doc.save(`projet_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
-        showAlert('PDF exporté avec succès', 'success');
+        doc.save(`${i18n.t('pdf.projectDetails.filename')}_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showAlert(i18n.t('success.pdfExported'), 'success');
 
     } catch (error) {
         console.error('Erreur export PDF:', error);
@@ -2007,19 +2007,22 @@ async function exportProjectHistory() {
         // ===== EN-TÊTE =====
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
-        doc.text('HISTORIQUE DU PROJET', pageWidth / 2, yPos, { align: 'center' });
+        doc.text(i18n.t('pdf.projectHistory.title'), pageWidth / 2, yPos, { align: 'center' });
         yPos += 10;
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Projet: ${project.nom} (${project.numero || 'Sans numéro'})`, margin, yPos);
+        doc.text(i18n.t('pdf.projectHistory.project', {
+            name: project.nom,
+            number: project.numero || i18n.t('common.noNumber')
+        }), margin, yPos);
         yPos += 5;
-        doc.text(`Exporté le: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - margin, yPos, { align: 'right' });
+        doc.text(`${i18n.t('pdf.exportedOn')}: ${new Date().toLocaleDateString(i18n.language)}`, pageWidth - margin, yPos, { align: 'right' });
         yPos += 10;
 
         if (history.length === 0) {
             doc.setFontSize(12);
-            doc.text('Aucun historique disponible', pageWidth / 2, yPos, { align: 'center' });
+            doc.text(i18n.t('pdf.projectHistory.noHistory'), pageWidth / 2, yPos, { align: 'center' });
         } else {
             // ===== LISTE HISTORIQUE =====
             doc.setFontSize(10);
@@ -2036,19 +2039,19 @@ async function exportProjectHistory() {
 
                 switch(item.type) {
                     case 'sortie':
-                        actionType = 'Sortie de stock';
+                        actionType = i18n.t('pdf.projectHistory.actions.stockOut');
                         color = [220, 53, 69]; // Rouge
                         break;
                     case 'retour_projet':
-                        actionType = 'Retour au stock';
+                        actionType = i18n.t('pdf.projectHistory.actions.stockReturn');
                         color = [40, 167, 69]; // Vert
                         break;
                     case 'entree':
-                        actionType = 'Entrée de stock';
+                        actionType = i18n.t('pdf.projectHistory.actions.stockIn');
                         color = [0, 123, 255]; // Bleu
                         break;
                     default:
-                        actionType = item.type || 'Action';
+                        actionType = item.type || i18n.t('pdf.projectHistory.actions.action');
                 }
 
                 // Date et heure
@@ -2068,16 +2071,16 @@ async function exportProjectHistory() {
 
                 const details = [];
                 if (item.article?.nom) {
-                    details.push(`Article: ${item.article.nom}${item.article.numero ? ` (${item.article.numero})` : ''}`);
+                    details.push(`${i18n.t('common.article')}: ${item.article.nom}${item.article.numero ? ` (${item.article.numero})` : ''}`);
                 }
                 if (item.quantite) {
-                    details.push(`Quantité: ${item.quantite}`);
+                    details.push(`${i18n.t('common.quantity')}: ${item.quantite}`);
                 }
                 if (item.projet) {
-                    details.push(`Projet: ${item.projet}`);
+                    details.push(`${i18n.t('common.project')}: ${item.projet}`);
                 }
                 if (item.utilisateur) {
-                    details.push(`Utilisateur: ${item.utilisateur}`);
+                    details.push(`${i18n.t('common.user')}: ${item.utilisateur}`);
                 }
 
                 details.forEach(detail => {
@@ -2111,12 +2114,12 @@ async function exportProjectHistory() {
         // Pied de page
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
-        doc.text('Document de projet - Système de gestion de stock',
+        doc.text(i18n.t('pdf.projectHistory.footer'),
                 pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
 
         // Télécharger
-        doc.save(`historique_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
-        showAlert('Historique exporté en PDF', 'success');
+        doc.save(`${i18n.t('pdf.projectHistory.filename')}_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showAlert(i18n.t('success.historyExported'), 'success');
 
     } catch (error) {
         console.error('Erreur export historique:', error);
@@ -2143,8 +2146,8 @@ async function editProject() {
         const header = modal.querySelector('.modal-header h3');
         const submitBtn = modal.querySelector('.btn-primary');
 
-        header.innerHTML = '<i class="fas fa-edit"></i> Modifier le projet';
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> Enregistrer les modifications';
+        header.innerHTML = `<i class="fas fa-edit"></i> ${i18n.t('modal.editProject.title')}`;
+        submitBtn.innerHTML = `<i class="fas fa-save"></i> ${i18n.t('modal.editProject.saveChanges')}`;
 
         // Changer l'événement
         modal.querySelector('form').onsubmit = async function(e) {
@@ -2152,7 +2155,6 @@ async function editProject() {
             await updateProjectAction();
         };
 
-        // ← AJOUTEZ CETTE LIGNE IMPORTANTE AVEC DEBUG
         console.log('editProject - Setting previousModal:', {
             before: state.previousModal?.id,
             currentModal: state.currentModal?.id,
@@ -2162,7 +2164,7 @@ async function editProject() {
         showModal(modal);
     } catch (error) {
         console.error('Erreur préparation édition:', error);
-        showAlert('Erreur lors de la préparation de l\'édition', 'error');
+        showAlert(i18n.t('errors.editPreparationFailed'), 'error');
     }
 }
 
@@ -2179,7 +2181,7 @@ async function updateProjectAction() {
 
         // Validation
         if (!projectData.nom || !projectData.numero || !projectData.responsable) {
-            elements.projectErrorText.textContent = 'Veuillez remplir tous les champs obligatoires';
+            elements.projectErrorText.textContent = i18n.t('errors.fillRequiredFields');
             elements.projectError.style.display = 'flex';
             return;
         }
@@ -2189,7 +2191,7 @@ async function updateProjectAction() {
             p.numero === projectData.numero && p.id !== state.currentProject.id
         );
         if (existingProject) {
-            elements.projectErrorText.textContent = 'Ce numéro de projet existe déjà';
+            elements.projectErrorText.textContent = i18n.t('errors.projectNumberExists');
             elements.projectError.style.display = 'flex';
             return;
         }
@@ -2234,8 +2236,8 @@ async function updateProjectAction() {
         const header = modal.querySelector('.modal-header h3');
         const submitBtn = modal.querySelector('.btn-primary');
 
-        header.innerHTML = '<i class="fas fa-plus-circle"></i> Nouveau projet';
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> Créer le projet';
+        header.innerHTML = `<i class="fas fa-plus-circle"></i> ${i18n.t('modal.newProject.title')}`;
+        submitBtn.innerHTML = `<i class="fas fa-save"></i> ${i18n.t('modal.newProject.create')}`;
 
         // Restaurer l'événement original
         modal.querySelector('form').onsubmit = function(e) {
@@ -2243,11 +2245,11 @@ async function updateProjectAction() {
             createProjectAction();
         };
 
-        showAlert('Projet modifié avec succès', 'success');
+        showAlert(i18n.t('success.projectUpdated'), 'success');
 
     } catch (error) {
         console.error('Erreur modification projet:', error);
-        elements.projectErrorText.textContent = error.message || 'Erreur lors de la modification du projet';
+        elements.projectErrorText.textContent = error.message || i18n.t('errors.updateProjectFailed');
         elements.projectError.style.display = 'flex';
     } finally {
         hideLoading();
@@ -2265,19 +2267,19 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, pr
 
         // Validation
         if (!returnQuantity || returnQuantity < 0 || returnQuantity > originalQuantity) {
-            modal.querySelector('#returnErrorText').textContent = 'La quantité retournée est invalide';
+            modal.querySelector('#returnErrorText').textContent = i18n.t('errors.invalidReturnQuantity');
             modal.querySelector('#returnError').style.display = 'flex';
             return;
         }
 
         if (missingQuantity > 0 && !missingReason) {
-            modal.querySelector('#returnErrorText').textContent = 'Veuillez indiquer la raison de la quantité manquante';
+            modal.querySelector('#returnErrorText').textContent = i18n.t('errors.missingReasonRequired');
             modal.querySelector('#returnError').style.display = 'flex';
             return;
         }
 
         // Demander confirmation
-        if (!confirm(`Confirmer le retour de ${returnQuantity} unité(s) au stock ?`)) {
+        if (!confirm(i18n.t('confirm.returnToStock', { quantity: returnQuantity }))) {
             return;
         }
 
@@ -2305,10 +2307,10 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, pr
             utilisateur: currentUser.username,
             stock_avant: currentArticle.stock_actuel,
             stock_apres: currentArticle.stock_actuel + returnQuantity,
-            motif: `Retour projet - État: ${itemCondition}`,
-            notes: `État: ${itemCondition}`,
+            motif: i18n.t('movements.projectReturn.motive', { condition: itemCondition }),
+            notes: i18n.t('movements.projectReturn.condition', { condition: itemCondition }),
             date_mouvement: now.toISOString().split('T')[0],
-            heure_mouvement: now.toLocaleTimeString('fr-FR', { hour12: false }),
+            heure_mouvement: now.toLocaleTimeString(i18n.language, { hour12: false }),
             created_at: now.toISOString()
         };
 
@@ -2335,7 +2337,7 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, pr
 
         // 4. Fermer le modal et afficher succès
         modal.remove();
-        showTemporarySuccess(`${returnQuantity} unité(s) retournée(s) au stock avec succès`);
+        showTemporarySuccess(i18n.t('success.returnedToStock', { quantity: returnQuantity }));
 
         // 5. Recharger les détails du projet
         const projectDetailsModal = document.getElementById('projectDetailsModal');
@@ -2345,7 +2347,7 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, pr
 
     } catch (error) {
         console.error('Erreur retour au stock:', error);
-        modalElement.querySelector('#returnErrorText').textContent = error.message || 'Erreur lors du retour au stock';
+        modalElement.querySelector('#returnErrorText').textContent = error.message || i18n.t('errors.returnToStockFailed');
         modalElement.querySelector('#returnError').style.display = 'flex';
     } finally {
         hideLoading();
@@ -2403,11 +2405,11 @@ async function releaseReservation(reservationId, comment = '') {
                 type: 'annulation_reservation',
                 quantite: reservation.quantite,
                 projet_id: reservation.projet_id,
-                commentaire: comment || 'Réservation libérée',
+                commentaire: comment || i18n.t('movements.reservationReleased'),
                 utilisateur_id: currentUser.id,
                 utilisateur: currentUser.username,
                 date_mouvement: new Date().toISOString().split('T')[0],
-                heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
+                heure_mouvement: new Date().toLocaleTimeString(i18n.language, { hour12: false }),
                 created_at: new Date().toISOString()
             }]);
 
@@ -2457,7 +2459,7 @@ async function getProjectHistory(projectId) {
 async function handleArchiveProject() {
     if (!state.currentProject) return;
 
-    const confirmArchive = confirm(`Voulez-vous vraiment archiver le projet "${state.currentProject.nom}" ?`);
+    const confirmArchive = confirm(i18n.t('confirm.archiveProject', { name: state.currentProject.nom }));
     if (!confirmArchive) return;
 
     try {
@@ -2466,10 +2468,10 @@ async function handleArchiveProject() {
         if (projectDetailsModal) {
             projectDetailsModal.style.display = 'none';
         }
-        showAlert('Projet archivé avec succès', 'success');
+        showAlert(i18n.t('success.projectArchived'), 'success');
     } catch (error) {
         console.error('Erreur archivage:', error);
-        showAlert('Erreur lors de l\'archivage du projet', 'error');
+        showAlert(i18n.t('errors.archiveProjectFailed'), 'error');
     } finally {
         hideLoading();
     }
@@ -2498,7 +2500,7 @@ function updateProjectHistory(historyItems) {
         container.innerHTML = `
             <div class="empty-history">
                 <i class="fas fa-history"></i>
-                <p>Aucun historique disponible</p>
+                <p>${i18n.t('projectDetails.noHistory')}</p>
             </div>
         `;
         return;
@@ -2507,30 +2509,44 @@ function updateProjectHistory(historyItems) {
     let html = '';
     historyItems.forEach(item => {
         let icon = 'history';
-        let actionType = 'Action';
+        let actionType = i18n.t('common.action');
         let details = '';
-        const articleName = item.article?.nom || 'Article';
+        const articleName = item.article?.nom || i18n.t('common.article');
         const articleNum = item.article?.numero ? ` (${item.article.numero})` : '';
 
         if (item.type === 'sortie') {
             icon = 'arrow-up';
-            actionType = 'Sortie de stock';
-            details = `${item.quantite} × ${articleName}${articleNum} | Projet: ${item.projet || 'N/A'}`;
+            actionType = i18n.t('movements.stockOut');
+            details = i18n.t('projectDetails.history.stockOutDetails', {
+                quantity: item.quantite,
+                article: articleName + articleNum,
+                project: item.projet || 'N/A'
+            });
         } else if (item.type === 'retour_projet') {
             icon = 'arrow-left';
-            actionType = 'Retour au stock';
-            details = `${item.quantite} × ${articleName}${articleNum} retourné(s)`;
+            actionType = i18n.t('movements.stockReturn');
+            details = i18n.t('projectDetails.history.returnDetails', {
+                quantity: item.quantite,
+                article: articleName + articleNum
+            });
             if (item.raison) {
                 details += ` | ${item.raison}`;
             }
         } else if (item.type === 'entree') {
             icon = 'arrow-down';
-            actionType = 'Entrée de stock';
-            details = `${item.quantite} × ${articleName}${articleNum} | ${item.fournisseur || 'Stock initial'}`;
+            actionType = i18n.t('movements.stockIn');
+            details = i18n.t('projectDetails.history.entryDetails', {
+                quantity: item.quantite,
+                article: articleName + articleNum,
+                supplier: item.fournisseur || i18n.t('common.initialStock')
+            });
         } else if (item.type === 'reservation') {
             icon = 'clock';
-            actionType = 'Réservation';
-            details = `${item.quantite} × ${articleName}${articleNum} réservé(s)`;
+            actionType = i18n.t('movements.reservation');
+            details = i18n.t('projectDetails.history.reservationDetails', {
+                quantity: item.quantite,
+                article: articleName + articleNum
+            });
         }
 
         html += `
@@ -2548,7 +2564,7 @@ function updateProjectHistory(historyItems) {
                         ${item.commentaire ? `<div class="history-comment"><i class="fas fa-comment"></i> ${item.commentaire}</div>` : ''}
                     </div>
                     <div class="history-footer">
-                        <span class="history-user"><i class="fas fa-user"></i> ${item.utilisateur || 'Système'}</span>
+                        <span class="history-user"><i class="fas fa-user"></i> ${item.utilisateur || i18n.t('common.system')}</span>
                     </div>
                 </div>
             </div>
@@ -2594,10 +2610,10 @@ async function openProjectDetailsModal(projectId) {
     try {
         // 1. Récupérer les données du projet (avec retours maintenant)
         const projectData = await getProjectReservations(projectId);
-        const { project, sorties, retours, reservations } = projectData; // ← Ajout de retours
+        const { project, sorties, retours, reservations } = projectData;
 
         if (!project) {
-            alert('Projet non trouvé');
+            alert(i18n.t('errors.projectNotFound'));
             return;
         }
 
@@ -2607,7 +2623,7 @@ async function openProjectDetailsModal(projectId) {
         // 2. Récupérer l'historique
         const history = await getProjectHistory(projectId);
 
-        // 3. Calculer les statistiques (corrigé pour inclure les retours)
+        // 3. Calculer les statistiques
         const itemsSortis = sorties.reduce((sum, s) => sum + s.quantite, 0);
         const itemsRetournes = retours.reduce((sum, r) => sum + r.quantite, 0);
         const itemsReserves = reservations.reduce((sum, r) => sum + r.quantite, 0);
@@ -2616,29 +2632,39 @@ async function openProjectDetailsModal(projectId) {
 
         // 4. Remplir les informations de base
         document.getElementById('projectDetailsName').textContent = project.nom;
-        document.getElementById('projectDetailsNumber').textContent = project.numero || 'Sans numéro';
-        document.getElementById('projectDetailsStatus').textContent =
-            status === 'active' ? 'Actif' :
-            status === 'ending' ? 'Bientôt terminé' :
-            status === 'overdue' ? 'En retard' : 'Archivé';
+        document.getElementById('projectDetailsNumber').textContent = project.numero || i18n.t('common.noNumber');
+
+        const statusText =
+            status === 'active' ? i18n.t('status.active') :
+            status === 'ending' ? i18n.t('status.endingSoon') :
+            status === 'overdue' ? i18n.t('status.overdue') :
+            i18n.t('status.archived');
+        document.getElementById('projectDetailsStatus').textContent = statusText;
 
         // 6. Remplir les informations détaillées
-        document.getElementById('projectDetailsDescription').textContent = project.description || 'Pas de description';
+        document.getElementById('projectDetailsDescription').textContent =
+            project.description || i18n.t('common.noDescription');
         document.getElementById('projectDetailsCreatedAt').textContent = formatDateTime(project.created_at);
-        document.getElementById('projectDetailsEndDate').textContent = project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'Non définie';
-        document.getElementById('projectDetailsUpdatedAt').textContent = project.updated_at ? formatDateTime(project.updated_at) : 'Jamais';
-        document.getElementById('projectDetailsManager').textContent = project.responsable || 'Non défini';
-        document.getElementById('projectDetailsBudget').textContent = project.budget ? `${project.budget} €` : 'Non défini';
+        document.getElementById('projectDetailsEndDate').textContent =
+            project.date_fin_prevue ? formatDate(project.date_fin_prevue) : i18n.t('common.notDefined');
+        document.getElementById('projectDetailsUpdatedAt').textContent =
+            project.updated_at ? formatDateTime(project.updated_at) : i18n.t('common.never');
+        document.getElementById('projectDetailsManager').textContent =
+            project.responsable || i18n.t('common.notDefined');
+        document.getElementById('projectDetailsBudget').textContent =
+            project.budget ? `${project.budget} €` : i18n.t('common.notDefined');
 
         // 7. Afficher les réservations, retours et l'historique
-        updateProjectReservations(sorties, retours, reservations); // ← CORRIGÉ : 3 paramètres
+        updateProjectReservations(sorties, retours, reservations);
         updateProjectHistory(history);
 
         // 8. Configurer les boutons
         const archiveBtn = document.getElementById('archiveProjectBtn');
         if (archiveBtn) {
             archiveBtn.style.display = project.archived ? 'none' : 'block';
-            archiveBtn.textContent = project.archived ? 'Désarchiver' : 'Archiver';
+            archiveBtn.textContent = project.archived ?
+                i18n.t('actions.unarchive') :
+                i18n.t('actions.archive');
         }
 
         // 9. Afficher le modal
@@ -2647,7 +2673,7 @@ async function openProjectDetailsModal(projectId) {
 
     } catch (error) {
         console.error('Erreur ouverture détails projet:', error);
-        alert('Erreur lors du chargement du projet');
+        alert(i18n.t('errors.loadProjectFailed'));
     }
 }
 
@@ -2658,7 +2684,7 @@ async function openProjectSelectionModal() {
         const { data: projects, error } = await supabase
             .from('w_projets')
             .select('id, nom, numero, responsable, date_fin_prevue')
-            .eq('actif', true)  // ← IMPORTANT : filtrer sur actif=true
+            .eq('actif', true)
             .order('nom');
 
         if (error) {
@@ -2667,7 +2693,7 @@ async function openProjectSelectionModal() {
         }
 
         if (!projects || projects.length === 0) {
-            alert('Aucun projet disponible');
+            alert(i18n.t('errors.noProjectsAvailable'));
             return;
         }
 
@@ -2676,7 +2702,7 @@ async function openProjectSelectionModal() {
             <div class="modal-overlay" id="projectSelectionModal">
                 <div class="modal" style="max-width: 600px;">
                     <div class="modal-header">
-                        <h3><i class="fas fa-project-diagram"></i> Choisir un projet</h3>
+                        <h3><i class="fas fa-project-diagram"></i> ${i18n.t('modal.selectProject.title')}</h3>
                         <button class="close-modal">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -2685,15 +2711,15 @@ async function openProjectSelectionModal() {
                                 <div class="project-item" data-id="${project.id}">
                                     <div class="project-item-header">
                                         <h4>${project.nom}</h4>
-                                        <span class="project-number">${project.numero || 'Sans numéro'}</span>
+                                        <span class="project-number">${project.numero || i18n.t('common.noNumber')}</span>
                                     </div>
                                     <div class="project-item-details">
-                                        <span><i class="fas fa-user-tie"></i> ${project.responsable || 'Non défini'}</span>
+                                        <span><i class="fas fa-user-tie"></i> ${project.responsable || i18n.t('common.notDefined')}</span>
                                         ${project.date_fin_prevue ?
-                                            `<span><i class="fas fa-calendar"></i> Fin: ${formatDate(project.date_fin_prevue)}</span>` : ''}
+                                            `<span><i class="fas fa-calendar"></i> ${i18n.t('common.end')}: ${formatDate(project.date_fin_prevue)}</span>` : ''}
                                     </div>
                                     <button class="btn-primary select-project-btn" data-id="${project.id}">
-                                        <i class="fas fa-eye"></i> Voir détails
+                                        <i class="fas fa-eye"></i> ${i18n.t('actions.viewDetails')}
                                     </button>
                                 </div>
                             `).join('')}
@@ -2745,7 +2771,7 @@ async function openProjectSelectionModal() {
 
     } catch (error) {
         console.error('Erreur chargement projets:', error);
-        alert('Erreur lors du chargement des projets');
+        alert(i18n.t('errors.loadProjectsFailed'));
     }
 }
 
@@ -2851,9 +2877,7 @@ function updateUserInterface() {
             }
 
             if (!article) {
-                // Traduire aussi les alertes
-                const message = translations['alert.selectArticle'] || "Sélectionnez d'abord un article dans l'interface ou via la recherche.";
-                alert(message);
+                alert(i18n.t('alert.selectArticle'));
                 return;
             }
 
@@ -2875,7 +2899,6 @@ function updateUserInterface() {
         });
     }
 }
-
 
 function toggleAdminSection() {
     const adminSection = document.getElementById('adminSection');
@@ -2920,7 +2943,7 @@ async function handleSearchArticleForReturn() {
     const searchTerm = searchInput.value.trim();
 
     if (!searchTerm) {
-        showNotification('Veuillez entrer un terme de recherche', 'warning');
+        showNotification(i18n.t('search.enterSearchTerm'), 'warning');
         return;
     }
 
@@ -2935,7 +2958,7 @@ async function handleSearchArticleForReturn() {
         const articleIdsDuProjet = [...new Set(sorties.map(s => s.article_id))];
 
         if (articleIdsDuProjet.length === 0) {
-            afficherMessageResultats('info', 'Ce projet n\'a aucun article utilisé');
+            afficherMessageResultats('info', i18n.t('search.projectHasNoArticles'));
             return;
         }
 
@@ -2943,14 +2966,14 @@ async function handleSearchArticleForReturn() {
         const { data: articles, error } = await supabase
             .from('w_articles')
             .select('*')
-            .in('id', articleIdsDuProjet) // <-- IMPORTANT: seulement les articles du projet
+            .in('id', articleIdsDuProjet)
             .or(`nom.ilike.%${searchTerm}%,numero.ilike.%${searchTerm}%,code_barre.ilike.%${searchTerm}%`)
             .limit(10);
 
         if (error) throw error;
 
         if (!articles || articles.length === 0) {
-            afficherMessageResultats('warning', `Aucun article de ce projet ne correspond à "${searchTerm}"`);
+            afficherMessageResultats('warning', i18n.t('search.noMatchingArticles', { term: searchTerm }));
             return;
         }
 
@@ -2984,19 +3007,16 @@ async function handleSearchArticleForReturn() {
 
         // 5. Afficher selon le résultat
         if (articlesAvecFleche.length > 0) {
-            // Afficher les articles avec flèche
             displayArticlesAvecFleche(articlesAvecFleche);
         } else if (articlesDejaRetournes.length > 0) {
-            // Afficher directement les articles déjà retournés
             displayArticlesDejaRetournes(articlesDejaRetournes);
         } else {
-            // Cas improbable : article du projet mais ni flèche ni retourné
-            afficherMessageResultats('info', `"${articles[0].nom}" est dans le projet mais n'a pas de sortie enregistrée`);
+            afficherMessageResultats('info', i18n.t('search.articleInProjectNoMovement', { name: articles[0].nom }));
         }
 
     } catch (error) {
         console.error('Erreur recherche article:', error);
-        showNotification('Erreur lors de la recherche', 'error');
+        showNotification(i18n.t('errors.searchFailed'), 'error');
     } finally {
         hideLoading();
     }
@@ -3017,7 +3037,7 @@ function afficherMessageResultats(type, message) {
             <p>${message}</p>
         </div>
     `;
-    resultsCount.textContent = '0 résultat(s)';
+    resultsCount.textContent = i18n.t('search.resultsCount', { count: 0 });
     resultsContainer.style.display = 'block';
 }
 
@@ -3060,12 +3080,12 @@ function displayArticlesAvecFleche(articlesAvecFleche) {
                 <div class="article-result-info">
                     <h6>${article.nom}</h6>
                     <div class="article-result-details">
-                        <span>${article.numero || 'Sans numéro'}</span>
-                        <span class="status-arrow">À retourner: ${quantiteRestante}</span>
+                        <span>${article.numero || i18n.t('common.noNumber')}</span>
+                        <span class="status-arrow">${i18n.t('search.toReturn')}: ${quantiteRestante}</span>
                         ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
                     </div>
                     <div class="article-date-info">
-                        <small><i class="far fa-calendar"></i> Dernière sortie: ${formatDate(derniereSortie?.created_at)}</small>
+                        <small><i class="far fa-calendar"></i> ${i18n.t('search.lastStockOut')}: ${formatDate(derniereSortie?.created_at)}</small>
                     </div>
                 </div>
                 <div class="article-result-actions">
@@ -3073,7 +3093,7 @@ function displayArticlesAvecFleche(articlesAvecFleche) {
                             data-mouvement-id="${derniereSortie?.id}"
                             data-article-id="${article.id}"
                             data-quantity="${quantiteRestante}">
-                        <i class="fas fa-arrow-left"></i> Retourner
+                        <i class="fas fa-arrow-left"></i> ${i18n.t('actions.return')}
                     </button>
                 </div>
             </div>
@@ -3081,7 +3101,7 @@ function displayArticlesAvecFleche(articlesAvecFleche) {
     });
 
     resultsList.innerHTML = html;
-    resultsCount.textContent = `${articlesAvecFleche.length} article(s) à retourner`;
+    resultsCount.textContent = i18n.t('search.articlesToReturn', { count: articlesAvecFleche.length });
     resultsContainer.style.display = 'block';
 
     // Ajouter les événements
@@ -3115,13 +3135,13 @@ function displayArticlesDejaRetournes(articlesDejaRetournes) {
                 <div class="article-result-info">
                     <h6>${article.nom}</h6>
                     <div class="article-result-details">
-                        <span>${article.numero || 'Sans numéro'}</span>
-                        <span class="status-none">Déjà retourné: ${totalRetourne}/${totalSorti}</span>
+                        <span>${article.numero || i18n.t('common.noNumber')}</span>
+                        <span class="status-none">${i18n.t('search.alreadyReturned')}: ${totalRetourne}/${totalSorti}</span>
                         ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
                     </div>
                     <div class="article-date-info">
                         ${derniereSortie ?
-                            `<small><i class="far fa-calendar"></i> Dernière sortie: ${formatDate(derniereSortie.created_at)}</small>` :
+                            `<small><i class="far fa-calendar"></i> ${i18n.t('search.lastStockOut')}: ${formatDate(derniereSortie.created_at)}</small>` :
                             ''
                         }
                     </div>
@@ -3129,7 +3149,7 @@ function displayArticlesDejaRetournes(articlesDejaRetournes) {
                 <div class="article-result-actions">
                     <button class="btn-secondary add-article-btn"
                             data-article-id="${article.id}">
-                        <i class="fas fa-plus"></i> Retour
+                        <i class="fas fa-plus"></i> ${i18n.t('actions.return')}
                     </button>
                 </div>
             </div>
@@ -3137,7 +3157,7 @@ function displayArticlesDejaRetournes(articlesDejaRetournes) {
     });
 
     resultsList.innerHTML = html;
-    resultsCount.textContent = `${articlesDejaRetournes.length} article(s) déjà retourné(s)`;
+    resultsCount.textContent = i18n.t('search.articlesAlreadyReturned', { count: articlesDejaRetournes.length });
     resultsContainer.style.display = 'block';
 
     // Ajouter les événements
@@ -3151,8 +3171,7 @@ function displayArticlesDejaRetournes(articlesDejaRetournes) {
 
             if (article) {
                 const confirmer = confirm(
-                    `Toutes les pièces de "${article.nom}" ont déjà été retournées au stock \n\n` +
-                    `Retourner d'autres pièces`
+                    i18n.t('confirm.allItemsAlreadyReturned', { name: article.nom })
                 );
 
                 if (confirmer) {
@@ -3197,17 +3216,17 @@ async function creerSortieEtRetour(article) {
         <div class="modal-overlay simple-return-modal">
             <div class="modal" style="max-width: 400px;">
                 <div class="modal-header">
-                    <h3><i class="fas fa-plus-circle"></i> Retourner au stock</h3>
+                    <h3><i class="fas fa-plus-circle"></i> ${i18n.t('modal.returnToStock.title')}</h3>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="article-info-simple">
                         <h4>${article.nom}</h4>
-                        <p>Stock actuel: ${article.stock_actuel || 0}</p>
+                        <p>${i18n.t('stock.current')}: ${article.stock_actuel || 0}</p>
                     </div>
 
                     <div class="form-group">
-                        <label><i class="fas fa-boxes"></i> Quantité à retourner *</label>
+                        <label><i class="fas fa-boxes"></i> ${i18n.t('modal.returnToStock.quantityToReturn')} *</label>
                         <input type="number"
                                id="simpleQuantity"
                                value="1"
@@ -3216,30 +3235,30 @@ async function creerSortieEtRetour(article) {
                     </div>
 
                     <div class="form-group">
-                        <label><i class="fas fa-clipboard-list"></i> Motif *</label>
+                        <label><i class="fas fa-clipboard-list"></i> ${i18n.t('modal.returnToStock.reason')} *</label>
                         <select id="simpleReason" class="form-select">
-                            <option value="perdu_retrouve">Perdu → Retrouvé</option>
-                            <option value="casse_repare">Cassé → Réparé</option>
-                            <option value="vole_remplace">Volé → Remplacé</option>
-                            <option value="fin_vie_remplace">Fin de vie → Remplacé</option>
-                            <option value="autre">Autre</option>
+                            <option value="perdu_retrouve">${i18n.t('returnReasons.lostFound')}</option>
+                            <option value="casse_repare">${i18n.t('returnReasons.brokenRepaired')}</option>
+                            <option value="vole_remplace">${i18n.t('returnReasons.stolenReplaced')}</option>
+                            <option value="fin_vie_remplace">${i18n.t('returnReasons.endOfLifeReplaced')}</option>
+                            <option value="autre">${i18n.t('returnReasons.other')}</option>
                         </select>
                     </div>
 
                     <div class="form-group" id="simpleCommentGroup" style="display: none;">
-                        <label><i class="fas fa-comment"></i> Commentaire</label>
+                        <label><i class="fas fa-comment"></i> ${i18n.t('common.comment')}</label>
                         <textarea id="simpleComment"
                                   rows="2"
-                                  placeholder="Précisions..."
+                                  placeholder="${i18n.t('common.details')}"
                                   class="form-textarea"></textarea>
                     </div>
 
                     <div class="modal-actions">
                         <button type="button" class="btn-secondary close-modal">
-                            Annuler
+                            ${i18n.t('actions.cancel')}
                         </button>
                         <button id="confirmSimpleAdd" class="btn-primary">
-                            <i class="fas fa-check"></i> Confirmer
+                            <i class="fas fa-check"></i> ${i18n.t('actions.confirm')}
                         </button>
                     </div>
                 </div>
@@ -3283,7 +3302,7 @@ async function creerSortieEtRetour(article) {
         const comment = modal.querySelector('#simpleComment').value;
 
         if (!quantity || quantity < 1) {
-            alert('Quantité invalide');
+            alert(i18n.t('errors.invalidQuantity'));
             return;
         }
 
@@ -3310,20 +3329,20 @@ async function enregistrerAjoutSimple(article, quantity, reason, comment, closeM
 
         // 2. Créer un mouvement simple
         const motifMapping = {
-            'perdu_retrouve': 'Perdu → Retrouvé',
-            'casse_repare': 'Cassé → Réparé',
-            'vole_remplace': 'Volé → Remplacé',
-            'fin_vie_remplace': 'Fin de vie → Remplacé',
-            'autre': 'Autre: ' + (comment || '')
+            'perdu_retrouve': i18n.t('returnReasons.lostFound'),
+            'casse_repare': i18n.t('returnReasons.brokenRepaired'),
+            'vole_remplace': i18n.t('returnReasons.stolenReplaced'),
+            'fin_vie_remplace': i18n.t('returnReasons.endOfLifeReplaced'),
+            'autre': i18n.t('returnReasons.other') + ': ' + (comment || '')
         };
 
         const mouvementData = {
             article_id: article.id,
             type: 'ajustement',
             quantite: quantity,
-            projet: state.currentProject?.nom || 'Ajustement',
+            projet: state.currentProject?.nom || i18n.t('movements.adjustment'),
             projet_id: state.currentProject?.id || null,
-            commentaire: `Ajustement stock: ${motifMapping[reason] || reason} | ${comment || ''}`.trim(),
+            commentaire: `${i18n.t('movements.stockAdjustment')}: ${motifMapping[reason] || reason} | ${comment || ''}`.trim(),
             utilisateur_id: currentUser.id,
             utilisateur: currentUser.username,
             stock_avant: article.stock_actuel || 0,
@@ -3341,11 +3360,11 @@ async function enregistrerAjoutSimple(article, quantity, reason, comment, closeM
 
         // 3. Succès
         closeModal();
-        showAlert(`${quantity} "${article.nom}" ajouté(s) au stock`, 'success');
+        showAlert(i18n.t('success.addedToStock', { quantity, name: article.nom }), 'success');
 
     } catch (error) {
         console.error('Erreur ajout stock:', error);
-        alert('Erreur lors de l\'ajout au stock');
+        alert(i18n.t('errors.addToStockFailed'));
     } finally {
         hideLoading();
     }
@@ -3376,14 +3395,15 @@ function displayArticleSearchResults(articles, sorties, retours) {
     });
 
     if (articlesAvecFleche.length === 0) {
+        const searchTerm = document.getElementById('manualArticleSearchInput').value;
         resultsList.innerHTML = `
             <div class="no-results">
                 <i class="fas fa-search"></i>
-                <p>Aucun article avec flèche trouvé pour "${document.getElementById('manualArticleSearchInput').value}"</p>
-                <p class="small-text">Ces articles n'ont pas de sortie non retournée dans ce projet</p>
+                <p>${i18n.t('search.noArticlesWithArrow', { term: searchTerm })}</p>
+                <p class="small-text">${i18n.t('search.noUnreturnedStockOut')}</p>
             </div>
         `;
-        resultsCount.textContent = '0 résultat(s)';
+        resultsCount.textContent = i18n.t('search.resultsCount', { count: 0 });
         resultsContainer.style.display = 'block';
         return;
     }
@@ -3428,12 +3448,12 @@ function displayArticleSearchResults(articles, sorties, retours) {
                 <div class="article-result-info">
                     <h6>${article.nom}</h6>
                     <div class="article-result-details">
-                        <span>${article.numero || 'Sans numéro'}</span>
-                        <span>À retourner: ${quantiteRestante}</span>
+                        <span>${article.numero || i18n.t('common.noNumber')}</span>
+                        <span>${i18n.t('search.toReturn')}: ${quantiteRestante}</span>
                         ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
                     </div>
                     <div class="article-date-info">
-                        <small><i class="far fa-calendar"></i> Sorti le: ${formatDate(sortieArticle?.created_at)}</small>
+                        <small><i class="far fa-calendar"></i> ${i18n.t('movements.stockOutOn')}: ${formatDate(sortieArticle?.created_at)}</small>
                     </div>
                 </div>
                 <div class="article-result-actions">
@@ -3441,7 +3461,7 @@ function displayArticleSearchResults(articles, sorties, retours) {
                             data-mouvement-id="${sortieArticle?.id}"
                             data-article-id="${article.id}"
                             data-quantity="${quantiteRestante}">
-                        <i class="fas fa-arrow-left"></i> Retourner
+                        <i class="fas fa-arrow-left"></i> ${i18n.t('actions.return')}
                     </button>
                 </div>
             </div>
@@ -3449,7 +3469,7 @@ function displayArticleSearchResults(articles, sorties, retours) {
     });
 
     resultsList.innerHTML = html;
-    resultsCount.textContent = `${articlesAvecFleche.length} résultat(s)`;
+    resultsCount.textContent = i18n.t('search.resultsCount', { count: articlesAvecFleche.length });
     resultsContainer.style.display = 'block';
 
     // Ajouter les événements aux images
@@ -3488,10 +3508,10 @@ function displayAllSearchResults(articles, sorties, retours) {
         resultsList.innerHTML = `
             <div class="no-results">
                 <i class="fas fa-search"></i>
-                <p>Aucun article trouvé</p>
+                <p>${i18n.t('noArticlesFound')}</p>
             </div>
         `;
-        resultsCount.textContent = '0 résultat(s)';
+        resultsCount.textContent = `0 ${i18n.t('results')}`;
         resultsContainer.style.display = 'block';
         return;
     }
@@ -3540,18 +3560,18 @@ function displayAllSearchResults(articles, sorties, retours) {
                 <div class="article-result-info">
                     <h6>${article.nom}</h6>
                     <div class="article-result-details">
-                        <span>${article.numero || 'Sans numéro'}</span>
+                        <span>${article.numero || i18n.t('noNumber')}</span>
                         ${stats ? `
                             <span class="${aUneFleche ? 'status-arrow' : 'status-none'}">
-                                ${aUneFleche ? `À retourner: ${stats.quantiteRestante}` : 'Tout retourné'}
+                                ${aUneFleche ? `${i18n.t('toReturn')} ${stats.quantiteRestante}` : i18n.t('allReturned')}
                             </span>
-                        ` : '<span class="status-none">Non utilisé</span>'}
+                        ` : `<span class="status-none">${i18n.t('notUsed')}</span>`}
                         ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
                     </div>
                     <div class="article-date-info">
                         ${stats?.derniereSortie ?
-                            `<small><i class="far fa-calendar"></i> Dernière sortie: ${formatDate(stats.derniereSortie.created_at)}</small>` :
-                            `<small><i class="fas fa-info-circle"></i> Non utilisé dans ce projet</small>`
+                            `<small><i class="far fa-calendar"></i> ${i18n.t('lastExit')} ${formatDate(stats.derniereSortie.created_at)}</small>` :
+                            `<small><i class="fas fa-info-circle"></i> ${i18n.t('notUsedInProject')}</small>`
                         }
                     </div>
                 </div>
@@ -3561,12 +3581,12 @@ function displayAllSearchResults(articles, sorties, retours) {
                                 data-mouvement-id="${stats.derniereSortie?.id}"
                                 data-article-id="${article.id}"
                                 data-quantity="${stats.quantiteRestante}">
-                            <i class="fas fa-arrow-left"></i> Retourner
+                            <i class="fas fa-arrow-left"></i> ${i18n.t('return')}
                         </button>
                     ` : `
                         <button class="btn-secondary add-article-btn"
                                 data-article-id="${article.id}">
-                            <i class="fas fa-plus"></i> Ajouter
+                            <i class="fas fa-plus"></i> ${i18n.t('add')}
                         </button>
                     `}
                 </div>
@@ -3575,7 +3595,7 @@ function displayAllSearchResults(articles, sorties, retours) {
     });
 
     resultsList.innerHTML = html;
-    resultsCount.textContent = `${articles.length} résultat(s)`;
+    resultsCount.textContent = `${articles.length} ${i18n.t('results')}`;
     resultsContainer.style.display = 'block';
 
     // Ajouter les événements aux images
@@ -3610,10 +3630,7 @@ function displayAllSearchResults(articles, sorties, retours) {
             const article = articles.find(a => a.id === articleId);
 
             if (article) {
-                const confirmer = confirm(
-                    `Ajouter "${article.nom}" au projet ?\n\n` +
-                    `Cela créera une sortie puis ouvrira le formulaire de retour.`
-                );
+                const confirmer = confirm(i18n.t('confirmAddArticle', { articleName: article.nom }));
 
                 if (confirmer) {
                     creerSortieEtRetour(article);
@@ -3638,7 +3655,7 @@ async function handleScanForReturn(barcode) {
         if (error) throw error;
 
         if (!articles || articles.length === 0) {
-            alert(`Code-barre ${barcode} non trouvé`);
+            alert(i18n.t('barcodeNotFound', { barcode }));
             return;
         }
 
@@ -3651,7 +3668,7 @@ async function handleScanForReturn(barcode) {
         const articleSortie = sorties.find(s => s.article_id === article.id);
 
         if (!articleSortie) {
-            alert(`Cet article n'a pas été utilisé dans le projet "${state.currentProject.nom}"`);
+            alert(i18n.t('articleNotUsedInProject', { projectName: state.currentProject.nom }));
             return;
         }
 
@@ -3660,7 +3677,7 @@ async function handleScanForReturn(barcode) {
 
     } catch (error) {
         console.error('Erreur scan retour:', error);
-        alert('Erreur lors du scan');
+        alert(i18n.t('scanError'));
     }
 }
 
@@ -3760,7 +3777,7 @@ async function loadStockBas() {
 
             row.innerHTML = `
                 <td>${article.nom}</td>
-                <td>${disponible} (Stock: ${article.stock_actuel}, Réservé: ${article.stock_reserve})</td>
+                <td>${disponible} (${i18n.t('stock')}: ${article.stock_actuel}, ${i18n.t('reserved')}: ${article.stock_reserve})</td>
                 <td>${article.stock_minimum}</td>
                 <td class="${diff < 0 ? 'text-danger' : diff === 0 ? 'text-warning' : ''}">
                     ${diff}
@@ -3822,8 +3839,8 @@ async function loadRuptures() {
 
             row.innerHTML = `
                 <td>${article.nom}</td>
-                <td>Stock: ${article.stock_actuel}, Réservé: ${article.stock_reserve}</td>
-                <td class="text-danger">${disponible} unité(s) disponible(s)</td>
+                <td>${i18n.t('stock')}: ${article.stock_actuel}, ${i18n.t('reserved')}: ${article.stock_reserve}</td>
+                <td class="text-danger">${disponible} ${i18n.t('unitsAvailable')}</td>
             `;
 
             tbody.appendChild(row);
@@ -3841,15 +3858,15 @@ function setupAdminButtons() {
 
     // Boutons avec leurs permissions correspondantes
     const buttons = [
-        { id: 'statistiques', icon: 'fas fa-chart-bar', text: 'Statistiques', perm: 'stats' },
-        { id: 'creation', icon: 'fas fa-plus-circle', text: 'Créer article', perm: 'creation' },
-        { id: 'historique', icon: 'fas fa-history', text: 'Historique', perm: 'historique' },
-        { id: 'impression', icon: 'fas fa-print', text: 'Impression', perm: 'impression' },
-        { id: 'configuration', icon: 'fas fa-cog', text: 'Configuration', perm: 'config' },
-        { id: 'gestion', icon: 'fas fa-box-open', text: 'Gestion articles', perm: 'gestion' },
-        { id: 'projet', icon: 'fas fa-project-diagram', text: 'Gestion projets', perm: 'projets' },
-        { id: 'reservations', icon: 'fas fa-clipboard-list', text: 'Réservations', perm: 'reservations' },
-        { id: 'vuestock', icon: 'fas fa-boxes', text: 'Vue stock 3D', perm: 'vuestock' }
+        { id: 'statistiques', icon: 'fas fa-chart-bar', text: i18n.t('statistics'), perm: 'stats' },
+        { id: 'creation', icon: 'fas fa-plus-circle', text: i18n.t('createArticle'), perm: 'creation' },
+        { id: 'historique', icon: 'fas fa-history', text: i18n.t('history'), perm: 'historique' },
+        { id: 'impression', icon: 'fas fa-print', text: i18n.t('printing'), perm: 'impression' },
+        { id: 'configuration', icon: 'fas fa-cog', text: i18n.t('configuration'), perm: 'config' },
+        { id: 'gestion', icon: 'fas fa-box-open', text: i18n.t('articleManagement'), perm: 'gestion' },
+        { id: 'projet', icon: 'fas fa-project-diagram', text: i18n.t('projectManagement'), perm: 'projets' },
+        { id: 'reservations', icon: 'fas fa-clipboard-list', text: i18n.t('reservations'), perm: 'reservations' },
+        { id: 'vuestock', icon: 'fas fa-boxes', text: i18n.t('stock3DView'), perm: 'vuestock' }
     ];
 
     // Filtrer les boutons selon les permissions
@@ -3857,7 +3874,7 @@ function setupAdminButtons() {
 
     // Mettre à jour le compteur de permissions
     document.getElementById('permissionsCount').textContent =
-        `${allowedButtons.length} permissions`;
+        `${allowedButtons.length} ${i18n.t('permissions')}`;
 
     // Créer les boutons
     adminButtons.innerHTML = '';
@@ -3883,7 +3900,7 @@ function setupAdminButtons() {
         adminButtons.innerHTML = `
             <div class="alert-empty">
                 <i class="fas fa-info-circle"></i>
-                <p>Aucune permission d'administration</p>
+                <p>${i18n.t('noAdminPermissions')}</p>
             </div>
         `;
     }
@@ -4016,7 +4033,7 @@ function openSearchPopup(results, searchType) {
     popup.innerHTML = `
         <div class="search-popup">
             <div class="popup-header">
-                <h3>Résultats de recherche (${results.length})</h3>
+                <h3>${i18n.t('searchResults')} (${results.length})</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
@@ -4027,21 +4044,21 @@ function openSearchPopup(results, searchType) {
                                 <h4>${article.nom}</h4>
                                 <div class="result-details">
                                     <span>${article.numero}</span>
-                                    <span>${article.code_barre || 'Pas de code-barre'}</span>
-                                    <span>Stock: ${article.stock_actuel || 0}</span>
+                                    <span>${article.code_barre || i18n.t('noBarcode')}</span>
+                                    <span>${i18n.t('stock')}: ${article.stock_actuel || 0}</span>
                                     <span>${article.prix_unitaire ? article.prix_unitaire + '€' : ''}</span>
                                     ${article.emplacement ? `<span class="article-location">📍 ${article.emplacement}</span>` : ''}
                                 </div>
                             </div>
                             <div class="result-actions">
                                 <button class="btn-action view-details" data-index="${index}">
-                                    <i class="fas fa-eye"></i> Détails
+                                    <i class="fas fa-eye"></i> ${i18n.t('details')}
                                 </button>
                                 <button class="btn-action print-label" data-id="${article.id}">
-                                    <i class="fas fa-print"></i> Étiquette
+                                    <i class="fas fa-print"></i> ${i18n.t('label')}
                                 </button>
                                 <button class="btn-action show-location" data-index="${index}">
-                                    <i class="fas fa-map-marker-alt"></i> Localiser
+                                    <i class="fas fa-map-marker-alt"></i> ${i18n.t('locate')}
                                 </button>
                             </div>
                         </div>
@@ -4049,7 +4066,7 @@ function openSearchPopup(results, searchType) {
                 </div>
             </div>
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">Fermer</button>
+                <button class="btn btn-secondary close-popup-btn">${i18n.t('close')}</button>
             </div>
         </div>
     `;
@@ -4133,7 +4150,7 @@ function openSearchPopup(results, searchType) {
             // METTRE À JOUR LE BOUTON INVENTAIRE (ajoute cette partie)
             const inventoryBtn = document.getElementById('inventoryBtn');
             if (inventoryBtn) {
-                inventoryBtn.textContent = `Inventaire (${article.nom})`;
+                inventoryBtn.textContent = `${i18n.t('inventory')} (${article.nom})`;
                 inventoryBtn.disabled = false;
             }
         });
@@ -4153,47 +4170,47 @@ function openArticleDetailsPopup(article) {
             <div class="popup-content">
                 <div class="article-details-grid">
                     <div class="detail-item">
-                        <label>Numéro:</label>
-                        <span>${article.numero || 'Non renseigné'}</span>
+                        <label>${i18n.t('number')}:</label>
+                        <span>${article.numero || i18n.t('notSpecified')}</span>
                     </div>
                     <div class="detail-item">
-                        <label>Code-barre:</label>
-                        <span>${article.code_barre || 'Non renseigné'}</span>
+                        <label>${i18n.t('barcode')}:</label>
+                        <span>${article.code_barre || i18n.t('notSpecified')}</span>
                     </div>
                     <div class="detail-item">
-                        <label>Stock actuel:</label>
+                        <label>${i18n.t('currentStock')}:</label>
                         <span class="${article.stock_actuel <= (article.stock_minimum || 0) ? 'text-danger' : ''}">
                             ${article.stock_actuel || 0}
                         </span>
                     </div>
                     <div class="detail-item">
-                        <label>Stock minimum:</label>
+                        <label>${i18n.t('minimumStock')}:</label>
                         <span>${article.stock_minimum || 0}</span>
                     </div>
                     <div class="detail-item">
-                        <label>Stock réservé:</label>
+                        <label>${i18n.t('reservedStock')}:</label>
                         <span>${article.stock_reserve || 0}</span>
                     </div>
                     <div class="detail-item">
-                        <label>Prix unitaire:</label>
-                        <span>${article.prix_unitaire ? article.prix_unitaire + '€' : 'Non renseigné'}</span>
+                        <label>${i18n.t('unitPrice')}:</label>
+                        <span>${article.prix_unitaire ? article.prix_unitaire + '€' : i18n.t('notSpecified')}</span>
                     </div>
                     <div class="detail-item full-width">
-                        <label>Description:</label>
-                        <p>${article.description || 'Aucune description'}</p>
+                        <label>${i18n.t('description')}:</label>
+                        <p>${article.description || i18n.t('noDescription')}</p>
                     </div>
                     <div class="detail-item full-width">
-                        <label>Emplacement:</label>
-                        <span>${article.emplacement || 'Non renseigné'}</span>
+                        <label>${i18n.t('location')}:</label>
+                        <span>${article.emplacement || i18n.t('notSpecified')}</span>
                     </div>
                 </div>
 
                 <div class="action-buttons">
                     <button class="btn btn-primary edit-article-btn" data-id="${article.id}">
-                        <i class="fas fa-edit"></i> Modifier
+                        <i class="fas fa-edit"></i> ${i18n.t('modify')}
                     </button>
                     <button class="btn btn-secondary print-single-btn" data-id="${article.id}">
-                        <i class="fas fa-print"></i> Imprimer une étiquette
+                        <i class="fas fa-print"></i> ${i18n.t('printLabel')}
                     </button>
                 </div>
             </div>
@@ -4241,54 +4258,54 @@ async function openEditArticlePopup(articleId) {
         popup.innerHTML = `
             <div class="edit-popup">
                 <div class="popup-header">
-                    <h3>Modifier: ${article.nom}</h3>
+                    <h3>${i18n.t('modify')}: ${article.nom}</h3>
                     <button class="close-popup">&times;</button>
                 </div>
                 <div class="popup-content">
                     <form id="editArticleForm">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="editNom">Nom *</label>
+                                <label for="editNom">${i18n.t('name')} *</label>
                                 <input type="text" id="editNom" value="${article.nom || ''}" required>
                             </div>
                             <div class="form-group">
-                                <label for="editNumero">Numéro *</label>
+                                <label for="editNumero">${i18n.t('number')} *</label>
                                 <input type="text" id="editNumero" value="${article.numero || ''}" required>
                             </div>
                             <div class="form-group">
-                                <label for="editCodeBarre">Code-barre</label>
+                                <label for="editCodeBarre">${i18n.t('barcode')}</label>
                                 <input type="text" id="editCodeBarre" value="${article.code_barre || ''}">
                             </div>
                             <div class="form-group">
-                                <label for="editStockActuel">Stock actuel</label>
+                                <label for="editStockActuel">${i18n.t('currentStock')}</label>
                                 <input type="number" id="editStockActuel" value="${article.stock_actuel || 0}" min="0">
                             </div>
                             <div class="form-group">
-                                <label for="editStockMinimum">Stock minimum</label>
+                                <label for="editStockMinimum">${i18n.t('minimumStock')}</label>
                                 <input type="number" id="editStockMinimum" value="${article.stock_minimum || 0}" min="0">
                             </div>
                             <div class="form-group">
-                                <label for="editPrix">Prix unitaire (€)</label>
+                                <label for="editPrix">${i18n.t('unitPrice')} (€)</label>
                                 <input type="number" id="editPrix" step="0.01" value="${article.prix_unitaire || ''}">
                             </div>
                             <div class="form-group full-width">
-                                <label for="editDescription">Description</label>
+                                <label for="editDescription">${i18n.t('description')}</label>
                                 <textarea id="editDescription" rows="3">${article.description || ''}</textarea>
                             </div>
                             <div class="form-group">
-                                <label for="editEmplacement">Emplacement</label>
+                                <label for="editEmplacement">${i18n.t('location')}</label>
                                 <input type="text" id="editEmplacement" value="${article.emplacement || ''}">
                             </div>
                             <div class="form-group">
-                                <label for="editCategorie">Catégorie</label>
+                                <label for="editCategorie">${i18n.t('category')}</label>
                                 <input type="text" id="editCategorie" value="${article.categorie || ''}">
                             </div>
                         </div>
 
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary close-popup-btn">Annuler</button>
+                            <button type="button" class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Enregistrer
+                                <i class="fas fa-save"></i> ${i18n.t('save')}
                             </button>
                         </div>
                     </form>
@@ -4338,7 +4355,7 @@ async function openEditArticlePopup(articleId) {
 
                 if (error) throw error;
 
-                alert('Article modifié avec succès !');
+                alert(i18n.t('articleModifiedSuccess'));
                 document.body.removeChild(popup);
 
                 // Recharger les données
@@ -4346,13 +4363,13 @@ async function openEditArticlePopup(articleId) {
 
             } catch (error) {
                 console.error('Erreur modification article:', error);
-                alert('Erreur lors de la modification');
+                alert(i18n.t('modificationError'));
             }
         });
 
     } catch (error) {
         console.error('Erreur chargement article:', error);
-        alert('Erreur lors du chargement de l\'article');
+        alert(i18n.t('articleLoadError'));
     }
 }
 
@@ -4363,7 +4380,7 @@ function openPrintLabelPopup(article) {
     popup.innerHTML = `
         <div class="print-popup">
             <div class="popup-header">
-                <h3>Imprimer une étiquette</h3>
+                <h3>${i18n.t('printLabel')}</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
@@ -4372,7 +4389,7 @@ function openPrintLabelPopup(article) {
                         <div class="label-title">${article.nom}</div>
                         <div class="label-details">
                             <div>${article.numero}</div>
-                            <div>Stock: ${article.stock_actuel || 0}</div>
+                            <div>${i18n.t('stock')}: ${article.stock_actuel || 0}</div>
                             ${article.prix_unitaire ? `<div>${article.prix_unitaire}€</div>` : ''}
                         </div>
                         <div class="label-barcode">
@@ -4383,39 +4400,39 @@ function openPrintLabelPopup(article) {
 
                 <div class="print-options">
                     <div class="form-group">
-                        <label for="printCopies">Nombre de copies</label>
+                        <label for="printCopies">${i18n.t('numberOfCopies')}</label>
                         <input type="number" id="printCopies" value="1" min="1" max="100">
                     </div>
 
                     <div class="form-group">
-                        <label for="printFormat">Format</label>
+                        <label for="printFormat">${i18n.t('format')}</label>
                         <select id="printFormat">
-                            <option value="small">Petite (40x20mm)</option>
-                            <option value="medium" selected>Moyenne (60x40mm)</option>
-                            <option value="large">Grande (100x70mm)</option>
+                            <option value="small">${i18n.t('small')} (40x20mm)</option>
+                            <option value="medium" selected>${i18n.t('medium')} (60x40mm)</option>
+                            <option value="large">${i18n.t('large')} (100x70mm)</option>
                         </select>
                     </div>
 
                     <div class="checkbox-group">
                         <label>
-                            <input type="checkbox" id="showPrice" checked> Afficher le prix
+                            <input type="checkbox" id="showPrice" checked> ${i18n.t('showPrice')}
                         </label>
                         <label>
-                            <input type="checkbox" id="showStock" checked> Afficher le stock
+                            <input type="checkbox" id="showStock" checked> ${i18n.t('showStock')}
                         </label>
                         <label>
-                            <input type="checkbox" id="showDate"> Afficher la date
+                            <input type="checkbox" id="showDate"> ${i18n.t('showDate')}
                         </label>
                     </div>
                 </div>
 
                 <div class="print-actions">
-                    <button type="button" class="btn btn-secondary close-popup-btn">Annuler</button>
+                    <button type="button" class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
                     <button type="button" class="btn btn-primary" id="printLabelBtn">
-                        <i class="fas fa-print"></i> Imprimer
+                        <i class="fas fa-print"></i> ${i18n.t('print')}
                     </button>
                     <button type="button" class="btn btn-info" id="addToPrintQueueBtn">
-                        <i class="fas fa-list"></i> Ajouter à la file
+                        <i class="fas fa-list"></i> ${i18n.t('addToQueue')}
                     </button>
                 </div>
             </div>
@@ -4442,14 +4459,14 @@ function openPrintLabelPopup(article) {
     // Bouton imprimer
     popup.querySelector('#printLabelBtn').addEventListener('click', () => {
         const copies = parseInt(popup.querySelector('#printCopies').value) || 1;
-        alert(`Impression de ${copies} étiquette(s) pour: ${article.nom}\n(À intégrer avec le module d'impression)`);
+        alert(i18n.t('printingLabels', { copies, articleName: article.nom }));
         document.body.removeChild(popup);
     });
 
     // Bouton ajouter à la file
     popup.querySelector('#addToPrintQueueBtn').addEventListener('click', () => {
         const copies = parseInt(popup.querySelector('#printCopies').value) || 1;
-        alert(`${copies} étiquette(s) ajoutée(s) à la file d'impression pour: ${article.nom}`);
+        alert(i18n.t('labelsAddedToQueue', { copies, articleName: article.nom }));
         document.body.removeChild(popup);
     });
 }
@@ -4480,14 +4497,14 @@ async function openHistoryPopup(articleId) {
                     <table class="history-table">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Quantité</th>
-                                <th>Stock avant</th>
-                                <th>Stock après</th>
-                                <th>Projet</th>
-                                <th>Utilisateur</th>
-                                <th>Raison/Commentaire</th>
+                                <th>${i18n.t('date')}</th>
+                                <th>${i18n.t('type')}</th>
+                                <th>${i18n.t('quantity')}</th>
+                                <th>${i18n.t('stockBefore')}</th>
+                                <th>${i18n.t('stockAfter')}</th>
+                                <th>${i18n.t('project')}</th>
+                                <th>${i18n.t('user')}</th>
+                                <th>${i18n.t('reasonComment')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -4503,22 +4520,22 @@ async function openHistoryPopup(articleId) {
                                 switch(mvt.type) {
                                     case 'entree':
                                         typeIcon = 'fa-plus-circle';
-                                        typeText = 'Entrée';
+                                        typeText = i18n.t('entry');
                                         typeClass = 'success';
                                         break;
                                     case 'sortie':
                                         typeIcon = 'fa-minus-circle';
-                                        typeText = 'Sortie';
+                                        typeText = i18n.t('exit');
                                         typeClass = 'danger';
                                         break;
                                     case 'reservation':
                                         typeIcon = 'fa-calendar-check';
-                                        typeText = 'Réservation';
+                                        typeText = i18n.t('reservation');
                                         typeClass = 'warning';
                                         break;
                                     default:
                                         typeIcon = 'fa-exchange-alt';
-                                        typeText = 'Ajustement';
+                                        typeText = i18n.t('adjustment');
                                         typeClass = 'info';
                                 }
 
@@ -4545,13 +4562,13 @@ async function openHistoryPopup(articleId) {
                                 // Raison/Commentaire
                                 let raisonComment = '';
                                 if (mvt.raison) {
-                                    raisonComment += `<div><strong>Raison:</strong> ${mvt.raison}</div>`;
+                                    raisonComment += `<div><strong>${i18n.t('reason')}:</strong> ${mvt.raison}</div>`;
                                 }
                                 if (mvt.commentaire) {
-                                    raisonComment += `<div><strong>Commentaire:</strong> ${mvt.commentaire}</div>`;
+                                    raisonComment += `<div><strong>${i18n.t('comment')}:</strong> ${mvt.commentaire}</div>`;
                                 }
                                 if (mvt.motif) {
-                                    raisonComment += `<div><strong>Motif:</strong> ${mvt.motif}</div>`;
+                                    raisonComment += `<div><strong>${i18n.t('motive')}:</strong> ${mvt.motif}</div>`;
                                 }
 
                                 return `
@@ -4573,7 +4590,7 @@ async function openHistoryPopup(articleId) {
                                         <td>${projetInfo || '-'}</td>
                                         <td>
                                             <div>${mvt.utilisateur || '-'}</div>
-                                            ${mvt.responsable ? `<small>Resp: ${mvt.responsable}</small>` : ''}
+                                            ${mvt.responsable ? `<small>${i18n.t('responsible')}: ${mvt.responsable}</small>` : ''}
                                         </td>
                                         <td class="text-left">${raisonComment || '-'}</td>
                                     </tr>
@@ -4587,7 +4604,7 @@ async function openHistoryPopup(articleId) {
             tableHTML = `
                 <div class="empty-history">
                     <i class="fas fa-history"></i>
-                    <p>Aucun mouvement enregistré pour cet article</p>
+                    <p>${i18n.t('noMovementRecorded')}</p>
                 </div>
             `;
         }
@@ -4595,14 +4612,14 @@ async function openHistoryPopup(articleId) {
         popup.innerHTML = `
             <div class="history-popup">
                 <div class="popup-header">
-                    <h3><i class="fas fa-history"></i> Historique des mouvements</h3>
+                    <h3><i class="fas fa-history"></i> ${i18n.t('movementHistory')}</h3>
                     <button class="close-popup">&times;</button>
                 </div>
                 <div class="popup-content">
                     ${tableHTML}
                 </div>
                 <div class="popup-footer">
-                    <button class="btn btn-secondary close-popup-btn">Fermer</button>
+                    <button class="btn btn-secondary close-popup-btn">${i18n.t('close')}</button>
                 </div>
             </div>
         `;
@@ -4626,7 +4643,7 @@ async function openHistoryPopup(articleId) {
 
     } catch (error) {
         console.error('Erreur chargement historique:', error);
-        alert('Erreur lors du chargement de l\'historique');
+        alert(i18n.t('historyLoadError'));
     }
 }
 
@@ -4658,7 +4675,7 @@ async function searchByName() {
     const searchTerm = document.getElementById('searchNomInput').value.trim();
 
     if (!searchTerm) {
-        alert('Veuillez entrer un terme de recherche');
+        alert(i18n.t('enterSearchTerm'));
         return;
     }
 
@@ -4672,7 +4689,7 @@ async function searchByName() {
         if (error) throw error;
 
         if (!articles || articles.length === 0) {
-            alert('Aucun article trouvé');
+            alert(i18n.t('noArticlesFound'));
             return;
         }
 
@@ -4683,7 +4700,7 @@ async function searchByName() {
 
     } catch (error) {
         console.error('Erreur de recherche:', error);
-        alert('Erreur lors de la recherche');
+        alert(i18n.t('searchError'));
     }
 }
 
@@ -4691,7 +4708,7 @@ async function searchByCodebarre() {
     const codebarre = document.getElementById('searchCodebarreInput').value.trim();
 
     if (!codebarre) {
-        alert('Veuillez entrer ou scanner un code-barre');
+        alert(i18n.t('enterOrScanBarcode'));
         return;
     }
 
@@ -4705,7 +4722,7 @@ async function searchByCodebarre() {
         if (error) throw error;
 
         if (!articles || articles.length === 0) {
-            alert('Code-barre non trouvé');
+            alert(i18n.t('barcodeNotFoundSimple'));
             return;
         }
 
@@ -4713,7 +4730,7 @@ async function searchByCodebarre() {
 
     } catch (error) {
         console.error('Erreur de recherche par code-barre:', error);
-        alert('Erreur lors de la recherche');
+        alert(i18n.t('searchError'));
     }
 }
 
@@ -4729,19 +4746,19 @@ async function openStockOutPopup(article = null, scanMode = false) {
         currentStock: article.stock_actuel || 0,
         barcode: article.code_barre,
         unitPrice: article.prix_unitaire || 0,
-        locationRack: article.rack_display_name || article.rack_code || '',    // Modifié
-        locationLevel: article.level_code || '',                               // Modifié
-        locationSlot: article.slot_code || '',                                 // Modifié
+        locationRack: article.rack_display_name || article.rack_code || '',
+        locationLevel: article.level_code || '',
+        locationSlot: article.slot_code || '',
     } : null;
 
     const buildLocationString = (article) => {
         const parts = [];
         if (article.rack_display_name || article.rack_code) {
-            parts.push(`Emplacement: ${article.rack_display_name || article.rack_code}`);
+            parts.push(`${i18n.t('location')}: ${article.rack_display_name || article.rack_code}`);
         }
-        if (article.level_code) parts.push(`Étage: ${article.level_code}`);
-        if (article.slot_code) parts.push(`Position: ${article.slot_code}`);
-        return parts.join(' - ') || 'Non spécifié';
+        if (article.level_code) parts.push(`${i18n.t('floor')}: ${article.level_code}`);
+        if (article.slot_code) parts.push(`${i18n.t('position')}: ${article.slot_code}`);
+        return parts.join(' - ') || i18n.t('notSpecified');
     };
 
     const locationString = initialData ? buildLocationString(article) : '';
@@ -4749,24 +4766,24 @@ async function openStockOutPopup(article = null, scanMode = false) {
     popup.innerHTML = `
         <div class="stock-popup">
             <div class="popup-header">
-                <h3><i class="fas fa-arrow-up"></i> Sortie de stock</h3>
+                <h3><i class="fas fa-arrow-up"></i> ${i18n.t('stockOut')}</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
                 <div class="popup-section">
-                    <h4><i class="fas fa-search"></i> Sélection de l'article</h4>
+                    <h4><i class="fas fa-search"></i> ${i18n.t('articleSelection')}</h4>
                     <div class="form-group">
-                        <label>Recherche rapide</label>
+                        <label>${i18n.t('quickSearch')}</label>
                         <div class="search-combo">
                             <input type="text"
                                    id="outSearchInput"
-                                   placeholder="Nom, numéro ou code-barre"
+                                   placeholder="${i18n.t('nameNumberOrBarcode')}"
                                    class="search-input">
                             <button id="outSearchBtn" class="search-btn-sm">
                                 <i class="fas fa-search"></i>
                             </button>
                             <button id="outScanBtn" class="scan-btn-sm">
-                                <i class="fas fa-camera"></i> Scanner
+                                <i class="fas fa-camera"></i> ${i18n.t('scan')}
                             </button>
                         </div>
                     </div>
@@ -4777,10 +4794,10 @@ async function openStockOutPopup(article = null, scanMode = false) {
                                 <strong>${initialData.articleName}</strong>
                                 <div class="article-details">
                                     <span>${initialData.articleNumber}</span>
-                                    <span>Stock: ${initialData.currentStock}</span>
-                                    ${initialData.barcode ? `<span>CB: ${initialData.barcode}</span>` : ''}
+                                    <span>${i18n.t('stock')}: ${initialData.currentStock}</span>
+                                    ${initialData.barcode ? `<span>${i18n.t('barcodeShort')}: ${initialData.barcode}</span>` : ''}
                                 </div>
-                                ${initialData.unitPrice > 0 ? `<div class="article-price">Prix: ${initialData.unitPrice} €</div>` : ''}
+                                ${initialData.unitPrice > 0 ? `<div class="article-price">${i18n.t('price')}: ${initialData.unitPrice} €</div>` : ''}
                                 ${locationString ? `<div class="article-location"><i class="fas fa-map-marker-alt"></i> ${locationString}</div>` : ''}
                             </div>
                         </div>
@@ -4792,91 +4809,91 @@ async function openStockOutPopup(article = null, scanMode = false) {
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-edit"></i> Détails de la sortie</h4>
+                    <h4><i class="fas fa-edit"></i> ${i18n.t('outDetails')}</h4>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="outQuantity">Quantité *</label>
+                            <label for="outQuantity">${i18n.t('quantity')} *</label>
                             <input type="number"
                                    id="outQuantity"
                                    value="1"
                                    min="1"
                                    ${initialData ? `max="${initialData.currentStock}"` : ''}
                                    required>
-                            <small id="outStockInfo">${initialData ? `Stock disponible: ${initialData.currentStock}` : ''}</small>
+                            <small id="outStockInfo">${initialData ? `${i18n.t('availableStock')}: ${initialData.currentStock}` : ''}</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="outProject">Projet / Destination *</label>
+                            <label for="outProject">${i18n.t('projectDestination')} *</label>
                             <select id="outProject" required>
-                                <option value="">Sélectionner...</option>
+                                <option value="">${i18n.t('select')}</option>
                                 <!-- Les options seront chargées dynamiquement -->
-                                <option value="vente_simple">Vente simple</option>
+                                <option value="vente_simple">${i18n.t('simpleSale')}</option>
                             </select>
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="outReason">Raison de la sortie *</label>
+                            <label for="outReason">${i18n.t('outReason')} *</label>
                             <select id="outReason" required>
-                                <option value="">Sélectionner une raison</option>
-                                <option value="utilisation_projet">Utilisation pour projet</option>
-                                <option value="vente_simple">Vente simple</option>
-                                <option value="retour_fournisseur">Retour fournisseur</option>
-                                <option value="don">Don</option>
-                                <option value="perte">Perte/détérioration</option>
-                                <option value="autre">Autre</option>
+                                <option value="">${i18n.t('selectReason')}</option>
+                                <option value="utilisation_projet">${i18n.t('projectUse')}</option>
+                                <option value="vente_simple">${i18n.t('simpleSale')}</option>
+                                <option value="retour_fournisseur">${i18n.t('supplierReturn')}</option>
+                                <option value="don">${i18n.t('donation')}</option>
+                                <option value="perte">${i18n.t('lossDamage')}</option>
+                                <option value="autre">${i18n.t('other')}</option>
                             </select>
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="outNotes">Notes supplémentaires</label>
+                            <label for="outNotes">${i18n.t('additionalNotes')}</label>
                             <textarea id="outNotes"
                                       rows="3"
-                                      placeholder="Détails complémentaires..."></textarea>
+                                      placeholder="${i18n.t('additionalDetails')}"></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-info-circle"></i> Informations de localisation</h4>
+                    <h4><i class="fas fa-info-circle"></i> ${i18n.t('locationInfo')}</h4>
                     <div class="location-display">
                         <div class="location-header">
                             <i class="fas fa-map-marker-alt"></i>
-                            <span>Emplacement de l'article</span>
+                            <span>${i18n.t('articleLocation')}</span>
                         </div>
                         <div class="location-details" id="outLocationDetails">
-                            ${locationString || 'Non spécifié'}
+                            ${locationString || i18n.t('notSpecified')}
                         </div>
                         <div class="location-note">
-                            <small><i class="fas fa-lightbulb"></i> Consultez cette localisation pour retrouver l'article en stock</small>
+                            <small><i class="fas fa-lightbulb"></i> ${i18n.t('checkLocationNote')}</small>
                         </div>
                     </div>
 
                     <div class="form-group" style="margin-top: 15px;">
-                        <label for="outUnitPrice">Prix unitaire de sortie (€)</label>
+                        <label for="outUnitPrice">${i18n.t('outUnitPrice')} (€)</label>
                         <input type="number"
                                id="outUnitPrice"
                                step="0.01"
                                placeholder="0.00"
                                value="${initialData ? initialData.unitPrice : ''}">
-                        <small>Prix de vente ou de sortie</small>
+                        <small>${i18n.t('saleOrOutPrice')}</small>
                     </div>
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-user"></i> Responsable</h4>
+                    <h4><i class="fas fa-user"></i> ${i18n.t('responsible')}</h4>
                     <div class="form-group">
                         <div class="user-badge current-user">
                             <i class="fas fa-user"></i>
-                            <span>${currentUser.username} (${currentUser.isAdmin ? 'Administrateur' : 'Utilisateur'})</span>
+                            <span>${currentUser.username} (${currentUser.isAdmin ? i18n.t('administrator') : i18n.t('user')})</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">Annuler</button>
+                <button class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
                 <button class="btn btn-danger" id="confirmStockOutBtn">
-                    <i class="fas fa-check-circle"></i> Confirmer la sortie
+                    <i class="fas fa-check-circle"></i> ${i18n.t('confirmOut')}
                 </button>
             </div>
         </div>
@@ -4893,10 +4910,10 @@ async function openStockOutPopup(article = null, scanMode = false) {
 
             if (quantity > stock) {
                 stockInfo.style.color = 'var(--danger-color)';
-                stockInfo.textContent = `⚠️ Dépasse le stock disponible (${stock})`;
+                stockInfo.textContent = `⚠️ ${i18n.t('exceedsAvailableStock', { stock })}`;
             } else {
                 stockInfo.style.color = '';
-                stockInfo.textContent = `Stock disponible: ${stock}`;
+                stockInfo.textContent = `${i18n.t('availableStock')}: ${stock}`;
             }
         });
 
@@ -4935,20 +4952,20 @@ async function openStockInPopup(article = null, scanMode = false) {
         articleNumber: article.numero,
         barcode: article.code_barre,
         unitPrice: article.prix_unitaire || 0,
-        locationRack: article.rack_display_name || article.rack_code || '',    // Modifié
-        locationLevel: article.level_code || '',                               // Modifié
-        locationSlot: article.slot_code || '',                                 // Modifié
+        locationRack: article.rack_display_name || article.rack_code || '',
+        locationLevel: article.level_code || '',
+        locationSlot: article.slot_code || '',
         currentStock: article.stock_actuel || 0
     } : null;
 
     const buildLocationString = (article) => {
         const parts = [];
         if (article.rack_display_name || article.rack_code) {
-            parts.push(`Emplacement: ${article.rack_display_name || article.rack_code}`);
+            parts.push(`${i18n.t('location')}: ${article.rack_display_name || article.rack_code}`);
         }
-        if (article.level_code) parts.push(`Étage: ${article.level_code}`);
-        if (article.slot_code) parts.push(`Position: ${article.slot_code}`);
-        return parts.join(' - ') || 'Non spécifié';
+        if (article.level_code) parts.push(`${i18n.t('floor')}: ${article.level_code}`);
+        if (article.slot_code) parts.push(`${i18n.t('position')}: ${article.slot_code}`);
+        return parts.join(' - ') || i18n.t('notSpecified');
     };
 
     const locationString = initialData ? buildLocationString(article) : '';
@@ -4956,24 +4973,24 @@ async function openStockInPopup(article = null, scanMode = false) {
     popup.innerHTML = `
         <div class="stock-popup">
             <div class="popup-header">
-                <h3><i class="fas fa-arrow-down"></i> Entrée de stock</h3>
+                <h3><i class="fas fa-arrow-down"></i> ${i18n.t('stockIn')}</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
                 <div class="popup-section">
-                    <h4><i class="fas fa-search"></i> Sélection de l'article</h4>
+                    <h4><i class="fas fa-search"></i> ${i18n.t('articleSelection')}</h4>
                     <div class="form-group">
-                        <label>Recherche rapide</label>
+                        <label>${i18n.t('quickSearch')}</label>
                         <div class="search-combo">
                             <input type="text"
                                    id="inSearchInput"
-                                   placeholder="Nom, numéro ou code-barre"
+                                   placeholder="${i18n.t('nameNumberOrBarcode')}"
                                    class="search-input">
                             <button id="inSearchBtn" class="search-btn-sm">
                                 <i class="fas fa-search"></i>
                             </button>
                             <button id="inScanBtn" class="scan-btn-sm">
-                                <i class="fas fa-camera"></i> Scanner
+                                <i class="fas fa-camera"></i> ${i18n.t('scan')}
                             </button>
                         </div>
                     </div>
@@ -4984,10 +5001,10 @@ async function openStockInPopup(article = null, scanMode = false) {
                                 <strong>${initialData.articleName}</strong>
                                 <div class="article-details">
                                     <span>${initialData.articleNumber}</span>
-                                    ${initialData.barcode ? `<span>CB: ${initialData.barcode}</span>` : ''}
-                                    <span>Stock actuel: ${initialData.currentStock}</span>
+                                    ${initialData.barcode ? `<span>${i18n.t('barcodeShort')}: ${initialData.barcode}</span>` : ''}
+                                    <span>${i18n.t('currentStock')}: ${initialData.currentStock}</span>
                                 </div>
-                                ${initialData.unitPrice > 0 ? `<div class="article-price">Prix unitaire: ${initialData.unitPrice} €</div>` : ''}
+                                ${initialData.unitPrice > 0 ? `<div class="article-price">${i18n.t('unitPrice')}: ${initialData.unitPrice} €</div>` : ''}
                                 ${locationString ? `<div class="article-location"><i class="fas fa-map-marker-alt"></i> ${locationString}</div>` : ''}
                             </div>
                         </div>
@@ -4999,10 +5016,10 @@ async function openStockInPopup(article = null, scanMode = false) {
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-plus-circle"></i> Détails de l'entrée</h4>
+                    <h4><i class="fas fa-plus-circle"></i> ${i18n.t('inDetails')}</h4>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="inQuantity">Quantité *</label>
+                            <label for="inQuantity">${i18n.t('quantity')} *</label>
                             <input type="number"
                                    id="inQuantity"
                                    value="1"
@@ -5012,68 +5029,68 @@ async function openStockInPopup(article = null, scanMode = false) {
                         </div>
 
                         <div class="form-group">
-                            <label for="inSupplier">Fournisseur</label>
+                            <label for="inSupplier">${i18n.t('supplier')}</label>
                             <input type="text"
                                    id="inSupplier"
-                                   placeholder="Nom du fournisseur">
+                                   placeholder="${i18n.t('supplierName')}">
                         </div>
 
                         <div class="form-group">
-                            <label for="inPurchaseOrder">Bon de commande</label>
+                            <label for="inPurchaseOrder">${i18n.t('purchaseOrder')}</label>
                             <input type="text"
                                    id="inPurchaseOrder"
-                                   placeholder="N° commande">
+                                   placeholder="${i18n.t('orderNumber')}">
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="inReason">Type d'entrée *</label>
+                            <label for="inReason">${i18n.t('inType')} *</label>
                             <select id="inReason" required>
-                                <option value="">Sélectionner un type</option>
-                                <option value="achat">Achat nouveau</option>
-                                <option value="reappro">Réapprovisionnement</option>
-                                <option value="retour_projet">Retour de projet</option>
-                                <option value="inventaire">Correction inventaire</option>
-                                <option value="don">Don</option>
-                                <option value="vente_simple">Retour vente simple</option>
-                                <option value="autre">Autre</option>
+                                <option value="">${i18n.t('selectType')}</option>
+                                <option value="achat">${i18n.t('newPurchase')}</option>
+                                <option value="reappro">${i18n.t('restocking')}</option>
+                                <option value="retour_projet">${i18n.t('projectReturn')}</option>
+                                <option value="inventaire">${i18n.t('inventoryCorrection')}</option>
+                                <option value="don">${i18n.t('donation')}</option>
+                                <option value="vente_simple">${i18n.t('simpleSaleReturn')}</option>
+                                <option value="autre">${i18n.t('other')}</option>
                             </select>
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="inNotes">Notes</label>
+                            <label for="inNotes">${i18n.t('notes')}</label>
                             <textarea id="inNotes"
                                       rows="3"
-                                      placeholder="Détails complémentaires..."></textarea>
+                                      placeholder="${i18n.t('additionalDetails')}"></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-tags"></i> Informations de l'article</h4>
+                    <h4><i class="fas fa-tags"></i> ${i18n.t('articleInfo')}</h4>
                     <div class="info-grid">
                         <div class="info-item">
-                            <label>Prix unitaire actuel:</label>
+                            <label>${i18n.t('currentUnitPrice')}:</label>
                             <div class="info-value" id="inCurrentPrice">
-                                ${initialData ? `${initialData.unitPrice} €` : 'Non défini'}
+                                ${initialData ? `${initialData.unitPrice} €` : i18n.t('notDefined')}
                             </div>
                         </div>
                         <div class="info-item">
-                            <label>Emplacement habituel:</label>
+                            <label>${i18n.t('usualLocation')}:</label>
                             <div class="info-value" id="inCurrentLocation">
-                                ${locationString || 'Non spécifié'}
+                                ${locationString || i18n.t('notSpecified')}
                             </div>
                         </div>
                     </div>
 
                     <div class="form-grid" style="margin-top: 15px;">
                         <div class="form-group">
-                            <label for="inUnitPrice">Nouveau prix unitaire (€)</label>
+                            <label for="inUnitPrice">${i18n.t('newUnitPrice')} (€)</label>
                             <input type="number"
                                    id="inUnitPrice"
                                    step="0.01"
                                    placeholder="0.00"
                                    value="${initialData ? initialData.unitPrice : ''}">
-                            <small>Laissez vide pour conserver le prix actuel</small>
+                            <small>${i18n.t('leaveEmptyToKeepCurrent')}</small>
                         </div>
 
                     </div>
@@ -5081,9 +5098,9 @@ async function openStockInPopup(article = null, scanMode = false) {
             </div>
 
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">Annuler</button>
+                <button class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
                 <button class="btn btn-success" id="confirmStockInBtn">
-                    <i class="fas fa-check-circle"></i> Confirmer l'entrée
+                    <i class="fas fa-check-circle"></i> ${i18n.t('confirmIn')}
                 </button>
             </div>
         </div>
@@ -5108,19 +5125,19 @@ async function openProjectReservationPopup(article = null) {
         reservedStock: article.stock_reserve || 0,
         barcode: article.code_barre,
         unitPrice: article.prix_unitaire || 0,
-        locationRack: article.rack_display_name || article.rack_code || '',    // Modifié
-        locationLevel: article.level_code || '',                               // Modifié
-        locationSlot: article.slot_code || '',                                 // Modifié
+        locationRack: article.rack_display_name || article.rack_code || '',
+        locationLevel: article.level_code || '',
+        locationSlot: article.slot_code || '',
     } : null;
 
     const buildLocationString = (article) => {
         const parts = [];
         if (article.rack_display_name || article.rack_code) {
-            parts.push(`Rayon: ${article.rack_display_name || article.rack_code}`);
+            parts.push(`${i18n.t('aisle')}: ${article.rack_display_name || article.rack_code}`);
         }
-        if (article.level_code) parts.push(`Étagère: ${article.level_code}`);
-        if (article.slot_code) parts.push(`Position: ${article.slot_code}`);
-        return parts.join(' - ') || 'Non spécifié';
+        if (article.level_code) parts.push(`${i18n.t('shelf')}: ${article.level_code}`);
+        if (article.slot_code) parts.push(`${i18n.t('position')}: ${article.slot_code}`);
+        return parts.join(' - ') || i18n.t('notSpecified');
     };
 
     const locationString = initialData ? buildLocationString(article) : '';
@@ -5128,24 +5145,24 @@ async function openProjectReservationPopup(article = null) {
     popup.innerHTML = `
         <div class="stock-popup">
             <div class="popup-header">
-                <h3><i class="fas fa-calendar-check"></i> Réservation pour projet</h3>
+                <h3><i class="fas fa-calendar-check"></i> ${i18n.t('projectReservation')}</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
                 <div class="popup-section">
-                    <h4><i class="fas fa-search"></i> Article à réserver</h4>
+                    <h4><i class="fas fa-search"></i> ${i18n.t('articleToReserve')}</h4>
                     <div class="form-group">
-                        <label>Recherche rapide</label>
+                        <label>${i18n.t('quickSearch')}</label>
                         <div class="search-combo">
                             <input type="text"
                                    id="resSearchInput"
-                                   placeholder="Nom, numéro ou code-barre"
+                                   placeholder="${i18n.t('nameNumberOrBarcode')}"
                                    class="search-input">
                             <button id="resSearchBtn" class="search-btn-sm">
                                 <i class="fas fa-search"></i>
                             </button>
                             <button id="resScanBtn" class="scan-btn-sm">
-                                <i class="fas fa-camera"></i> Scanner
+                                <i class="fas fa-camera"></i> ${i18n.t('scan')}
                             </button>
                         </div>
                     </div>
@@ -5156,10 +5173,10 @@ async function openProjectReservationPopup(article = null) {
                                 <strong>${initialData.articleName}</strong>
                                 <div class="article-details">
                                     <span>${initialData.articleNumber}</span>
-                                    <span>Stock disponible: ${initialData.currentStock - initialData.reservedStock}</span>
-                                    ${initialData.barcode ? `<span>CB: ${initialData.barcode}</span>` : ''}
+                                    <span>${i18n.t('availableStock')}: ${initialData.currentStock - initialData.reservedStock}</span>
+                                    ${initialData.barcode ? `<span>${i18n.t('barcodeShort')}: ${initialData.barcode}</span>` : ''}
                                 </div>
-                                ${initialData.unitPrice > 0 ? `<div class="article-price">Prix: ${initialData.unitPrice} €</div>` : ''}
+                                ${initialData.unitPrice > 0 ? `<div class="article-price">${i18n.t('price')}: ${initialData.unitPrice} €</div>` : ''}
                                 ${locationString ? `<div class="article-location"><i class="fas fa-map-marker-alt"></i> ${locationString}</div>` : ''}
                             </div>
                         </div>
@@ -5171,10 +5188,10 @@ async function openProjectReservationPopup(article = null) {
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-project-diagram"></i> Détails de la réservation</h4>
+                    <h4><i class="fas fa-project-diagram"></i> ${i18n.t('reservationDetails')}</h4>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="resQuantity">Quantité à réserver *</label>
+                            <label for="resQuantity">${i18n.t('quantityToReserve')} *</label>
                             <input type="number"
                                    id="resQuantity"
                                    value="1"
@@ -5183,94 +5200,94 @@ async function openProjectReservationPopup(article = null) {
                                    required>
                             <small id="resStockInfo">
                                 ${initialData ?
-                                    `Disponible: ${initialData.currentStock - initialData.reservedStock}
-                                     (Stock: ${initialData.currentStock}, Déjà réservé: ${initialData.reservedStock})`
+                                    `${i18n.t('available')}: ${initialData.currentStock - initialData.reservedStock}
+                                     (${i18n.t('stock')}: ${initialData.currentStock}, ${i18n.t('alreadyReserved')}: ${initialData.reservedStock})`
                                     : ''}
                             </small>
                         </div>
 
                         <div class="form-group">
-                            <label for="resProject">Projet *</label>
+                            <label for="resProject">${i18n.t('project')} *</label>
                             <select id="resProject" required>
-                                <option value="">Sélectionner un projet</option>
+                                <option value="">${i18n.t('selectProject')}</option>
                                 <!-- Les options seront chargées dynamiquement -->
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label for="resStartDate">Date de début</label>
+                            <label for="resStartDate">${i18n.t('startDate')}</label>
                             <input type="date"
                                    id="resStartDate"
                                    value="${new Date().toISOString().split('T')[0]}">
                         </div>
 
                         <div class="form-group">
-                            <label for="resEndDate">Date de fin prévue</label>
+                            <label for="resEndDate">${i18n.t('expectedEndDate')}</label>
                             <input type="date"
                                    id="resEndDate"
                                    value="${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}">
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="resPurpose">Motif de la réservation *</label>
+                            <label for="resPurpose">${i18n.t('reservationPurpose')} *</label>
                             <select id="resPurpose" required>
-                                <option value="" disabled selected>Pourquoi réserver cet article?</option>
-                                <option value="utilisation_projet">Utilisation pour projet</option>
-                                <option value="mise_de_cote">Mise de côté temporaire</option>
-                                <option value="demonstration">Démonstration</option>
-                                <option value="exposition">Exposition</option>
-                                <option value="autre">Autre</option>
+                                <option value="" disabled selected>${i18n.t('whyReserveArticle')}</option>
+                                <option value="utilisation_projet">${i18n.t('projectUse')}</option>
+                                <option value="mise_de_cote">${i18n.t('temporaryAside')}</option>
+                                <option value="demonstration">${i18n.t('demonstration')}</option>
+                                <option value="exposition">${i18n.t('exhibition')}</option>
+                                <option value="autre">${i18n.t('other')}</option>
                             </select>
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="resNotes">Notes</label>
+                            <label for="resNotes">${i18n.t('notes')}</label>
                             <textarea id="resNotes"
                                       rows="2"
-                                      placeholder="Détails complémentaires..."></textarea>
+                                      placeholder="${i18n.t('additionalDetails')}"></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-map-marker-alt"></i> Localisation de l'article</h4>
+                    <h4><i class="fas fa-map-marker-alt"></i> ${i18n.t('articleLocalization')}</h4>
                     <div class="location-info">
                         <div class="location-display">
-                            <strong>Emplacement actuel:</strong>
+                            <strong>${i18n.t('currentLocation')}:</strong>
                             <div class="location-details">
-                                ${locationString || 'Non spécifié'}
+                                ${locationString || i18n.t('notSpecified')}
                             </div>
                         </div>
                         <div class="location-note">
-                            <small><i class="fas fa-info-circle"></i> Cet article se trouve actuellement à cet emplacement dans le stock</small>
+                            <small><i class="fas fa-info-circle"></i> ${i18n.t('articleCurrentlyLocatedAt')}</small>
                         </div>
                     </div>
 
                     <div class="form-group" style="margin-top: 15px;">
-                        <label for="resUnitPrice">Prix unitaire (€)</label>
+                        <label for="resUnitPrice">${i18n.t('unitPrice')} (€)</label>
                         <input type="text"
                                id="resUnitPrice"
                                value="${initialData ? initialData.unitPrice : ''}"
                                readonly
                                class="readonly-input">
-                        <small>Prix unitaire de référence</small>
+                        <small>${i18n.t('referenceUnitPrice')}</small>
                     </div>
                 </div>
 
                 <div class="popup-section">
-                    <h4><i class="fas fa-user-check"></i> Informations du responsable</h4>
+                    <h4><i class="fas fa-user-check"></i> ${i18n.t('responsibleInfo')}</h4>
                     <div class="form-group">
                         <div class="user-badge current-user">
                             <i class="fas fa-user"></i>
                             <span>${currentUser.username}</span>
-                            <small>Effectue la réservation</small>
+                            <small>${i18n.t('performingReservation')}</small>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="resResponsible">Responsable projet *</label>
+                        <label for="resResponsible">${i18n.t('projectResponsible')} *</label>
                         <select id="resResponsible" required>
-                            <option value="">Sélectionner un responsable...</option>
+                            <option value="">${i18n.t('selectResponsible')}</option>
                             <!-- Les options seront chargées dynamiquement -->
                         </select>
                     </div>
@@ -5278,9 +5295,9 @@ async function openProjectReservationPopup(article = null) {
             </div>
 
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">Annuler</button>
+                <button class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
                     <button class="btn btn-warning" id="confirmStockReservationBtn">
-                    <i class="fas fa-calendar-plus"></i> Créer la réservation
+                    <i class="fas fa-calendar-plus"></i> ${i18n.t('createReservation')}
                 </button>
             </div>
         </div>
@@ -5297,10 +5314,10 @@ async function openProjectReservationPopup(article = null) {
 
             if (quantity > available) {
                 stockInfo.style.color = 'var(--danger-color)';
-                stockInfo.textContent = `⚠️ Dépasse le stock disponible (${available})`;
+                stockInfo.textContent = `⚠️ ${i18n.t('exceedsAvailableStock', { stock: available })}`;
             } else {
                 stockInfo.style.color = '';
-                stockInfo.textContent = `Disponible: ${available} (Stock: ${initialData.currentStock}, Déjà réservé: ${initialData.reservedStock})`;
+                stockInfo.textContent = `${i18n.t('available')}: ${available} (${i18n.t('stock')}: ${initialData.currentStock}, ${i18n.t('alreadyReserved')}: ${initialData.reservedStock})`;
             }
         });
     }
@@ -5319,47 +5336,47 @@ async function openScanPopup(actionType, scanType) {
     popup.className = 'scan-popup-overlay';
 
     const actionNames = {
-        'sortie': 'Sortie de stock',
-        'entree': 'Entrée de stock',
-        'reservation': 'Réservation projet'
+        'sortie': i18n.t('stockOut'),
+        'entree': i18n.t('stockIn'),
+        'reservation': i18n.t('projectReservation')
     };
 
     popup.innerHTML = `
         <div class="scan-popup">
             <div class="popup-header">
-                <h3><i class="fas fa-camera"></i> Scanner pour ${actionNames[actionType]}</h3>
+                <h3><i class="fas fa-camera"></i> ${i18n.t('scanFor')} ${actionNames[actionType]}</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
                 <div class="scan-section">
                     <div class="camera-placeholder" id="cameraPlaceholder">
                         <i class="fas fa-camera"></i>
-                        <p>Caméra non activée</p>
+                        <p>${i18n.t('cameraNotActivated')}</p>
                     </div>
                     <video id="cameraPreview" autoplay playsinline style="display: none;"></video>
 
                     <div class="scan-controls">
                         <button id="startCameraBtn" class="btn btn-primary">
-                            <i class="fas fa-video"></i> Activer la caméra
+                            <i class="fas fa-video"></i> ${i18n.t('activateCamera')}
                         </button>
                         <button id="stopCameraBtn" class="btn btn-secondary" style="display: none;">
-                            <i class="fas fa-stop"></i> Arrêter
+                            <i class="fas fa-stop"></i> ${i18n.t('stop')}
                         </button>
                         <button id="toggleFlashBtn" class="btn btn-info" style="display: none;">
-                            <i class="fas fa-lightbulb"></i> Flash
+                            <i class="fas fa-lightbulb"></i> ${i18n.t('flash')}
                         </button>
                     </div>
                 </div>
 
                 <div class="manual-section">
-                    <h4><i class="fas fa-keyboard"></i> Saisie manuelle</h4>
+                    <h4><i class="fas fa-keyboard"></i> ${i18n.t('manualInput')}</h4>
                     <div class="form-group">
                         <input type="text"
                                id="manualBarcodeInput"
-                               placeholder="Saisir le code-barre manuellement"
+                               placeholder="${i18n.t('enterBarcodeManually')}"
                                class="scan-input">
                         <button id="confirmManualBtn" class="btn">
-                            <i class="fas fa-check"></i> Valider
+                            <i class="fas fa-check"></i> ${i18n.t('validate')}
                         </button>
                     </div>
                 </div>
@@ -5367,19 +5384,19 @@ async function openScanPopup(actionType, scanType) {
                 <div class="scan-instructions">
                     <div class="instruction">
                         <i class="fas fa-lightbulb"></i>
-                        <p>Placez le code-barre dans le cadre. Le scan est automatique.</p>
+                        <p>${i18n.t('placeBarcodeInFrame')}</p>
                     </div>
                     <div class="instruction">
                         <i class="fas fa-bolt"></i>
-                        <p>Assurez-vous d'avoir une bonne luminosité.</p>
+                        <p>${i18n.t('ensureGoodLighting')}</p>
                     </div>
                 </div>
             </div>
 
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">Annuler</button>
+                <button class="btn btn-secondary close-popup-btn">${i18n.t('cancel')}</button>
                 <div class="scan-stats">
-                    <span id="scanStatus">En attente de scan...</span>
+                    <span id="scanStatus">${i18n.t('waitingForScan')}</span>
                 </div>
             </div>
         </div>
@@ -5449,7 +5466,7 @@ async function openScanPopup(actionType, scanType) {
 
             // 2. UTILISER QUAGGA UNIQUEMENT (plus fiable)
             if (typeof Quagga === 'undefined') {
-                throw new Error('Bibliothèque scanner non chargée');
+                throw new Error(i18n.t('scannerLibraryNotLoaded'));
             }
 
             Quagga.init({
@@ -5473,8 +5490,8 @@ async function openScanPopup(actionType, scanType) {
                     popup.querySelector('#scanStatus').innerHTML = `
                         <div style="background: #f44336; color: white; padding: 10px; border-radius: 5px;">
                             <i class="fas fa-exclamation-triangle"></i>
-                            Scanner incompatible<br>
-                            <small>Utilisez la saisie manuelle</small>
+                            ${i18n.t('scannerIncompatible')}<br>
+                            <small>${i18n.t('useManualInput')}</small>
                         </div>
                     `;
                     popup.querySelector('#manualBarcodeInput').focus();
@@ -5487,8 +5504,8 @@ async function openScanPopup(actionType, scanType) {
                 popup.querySelector('#scanStatus').innerHTML = `
                     <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
                         <i class="fas fa-check-circle"></i>
-                        Scanner prêt<br>
-                        <small>Centrez le code-barre</small>
+                        ${i18n.t('scannerReady')}<br>
+                        <small>${i18n.t('centerBarcode')}</small>
                     </div>
                 `;
             });
@@ -5508,8 +5525,8 @@ async function openScanPopup(actionType, scanType) {
                 popup.querySelector('#scanStatus').innerHTML = `
                     <div style="background: #2196F3; color: white; padding: 10px; border-radius: 5px;">
                         <i class="fas fa-barcode"></i>
-                        Code détecté: <strong>${code}</strong><br>
-                        <small>Recherche en cours...</small>
+                        ${i18n.t('codeDetected')}: <strong>${code}</strong><br>
+                        <small>${i18n.t('searchingInProgress')}</small>
                     </div>
                 `;
 
@@ -5528,8 +5545,8 @@ async function openScanPopup(actionType, scanType) {
             popup.querySelector('#scanStatus').innerHTML = `
                 <div style="background: #FF9800; color: white; padding: 10px; border-radius: 5px;">
                     <i class="fas fa-video-slash"></i>
-                    Caméra inaccessible<br>
-                    <small>${error.message || 'Permission refusée'}</small>
+                    ${i18n.t('cameraInaccessible')}<br>
+                    <small>${error.message || i18n.t('permissionDenied')}</small>
                 </div>
             `;
             popup.querySelector('#manualBarcodeInput').focus();
@@ -5564,8 +5581,8 @@ async function openScanPopup(actionType, scanType) {
                 popup.querySelector('#scanStatus').innerHTML = `
                     <div style="background: #f44336; color: white; padding: 10px; border-radius: 5px;">
                         <i class="fas fa-times-circle"></i>
-                        Code-barre non trouvé: <strong>${barcode}</strong><br>
-                        <small>Vérifiez dans la base de données</small>
+                        ${i18n.t('barcodeNotFoundFull')}: <strong>${barcode}</strong><br>
+                        <small>${i18n.t('checkDatabase')}</small>
                     </div>
                 `;
 
@@ -5574,8 +5591,8 @@ async function openScanPopup(actionType, scanType) {
                     popup.querySelector('#scanStatus').innerHTML = `
                         <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
                             <i class="fas fa-redo"></i>
-                            Scanner réactivé<br>
-                            <small>Scannez à nouveau</small>
+                            ${i18n.t('scannerReactivated')}<br>
+                            <small>${i18n.t('scanAgain')}</small>
                         </div>
                     `;
                     if (scanStream) {
@@ -5620,8 +5637,8 @@ async function openScanPopup(actionType, scanType) {
             popup.querySelector('#scanStatus').innerHTML = `
                 <div style="background: #9C27B0; color: white; padding: 10px; border-radius: 5px;">
                     <i class="fas fa-exclamation-circle"></i>
-                    Erreur de connexion<br>
-                    <small>${error.message || 'Vérifiez votre connexion'}</small>
+                    ${i18n.t('connectionError')}<br>
+                    <small>${error.message || i18n.t('checkConnection')}</small>
                 </div>
             `;
         }
@@ -5726,7 +5743,7 @@ async function setupStockPopupEvents(popup, type, initialData) {
 
 async function searchArticleInPopup(searchTerm, type) {
     if (!searchTerm.trim()) {
-        alert('Veuillez saisir un terme de recherche');
+        alert(i18n.t('enterSearchTermPlease'));
         return;
     }
 
@@ -5757,7 +5774,7 @@ async function searchArticleInPopup(searchTerm, type) {
         const container = document.getElementById(`${type}SearchResults`);
 
         if (!transformedArticles || transformedArticles.length === 0) {
-            resultsDiv.innerHTML = '<div class="no-results">Aucun article trouvé</div>';
+            resultsDiv.innerHTML = `<div class="no-results">${i18n.t('noArticlesFound')}</div>`;
             container.style.display = 'block';
             return;
         }
@@ -5768,12 +5785,12 @@ async function searchArticleInPopup(searchTerm, type) {
                     <h5>${article.nom}</h5>
                     <div class="result-details">
                         <span>${article.numero}</span>
-                        <span>Stock: ${article.stock_actuel || 0}</span>
+                        <span>${i18n.t('stock')}: ${article.stock_actuel || 0}</span>
                         ${article.code_barre ? `<span>${article.code_barre}</span>` : ''}
                     </div>
                 </div>
                 <button class="btn-select-article" data-id="${article.id}">
-                    <i class="fas fa-check"></i> Sélectionner
+                    <i class="fas fa-check"></i> ${i18n.t('selectAction')}
                 </button>
             </div>
         `).join('');
@@ -5808,7 +5825,7 @@ async function searchArticleInPopup(searchTerm, type) {
 
     } catch (error) {
         console.error('Erreur recherche:', error);
-        alert('Erreur lors de la recherche');
+        alert(i18n.t('searchError'));
     }
 }
 
@@ -5827,7 +5844,7 @@ async function loadProjectsForSelect(selectId) {
 
         const select = document.getElementById(selectId);
         if (select) {
-            select.innerHTML = '<option value="">Sélectionner un projet</option>';
+            select.innerHTML = `<option value="">${i18n.t('selectProject')}</option>`;
 
             if (projets && projets.length > 0) {
                 projets.forEach(projet => {
@@ -5839,7 +5856,7 @@ async function loadProjectsForSelect(selectId) {
                     if (projet.date_fin_prevue) {
                         const daysLeft = calculateDaysLeft(projet.date_fin_prevue);
                         if (daysLeft <= 7) {
-                            statusInfo = ` (${daysLeft}j restants)`;
+                            statusInfo = ` (${daysLeft}${i18n.t('daysRemaining')})`;
                         }
                     }
 
@@ -5849,7 +5866,7 @@ async function loadProjectsForSelect(selectId) {
             } else {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = 'Aucun projet actif disponible';
+                option.textContent = i18n.t('noActiveProjectAvailable');
                 option.disabled = true;
                 select.appendChild(option);
             }
@@ -5861,7 +5878,7 @@ async function loadProjectsForSelect(selectId) {
         if (select) {
             const option = document.createElement('option');
             option.value = '';
-            option.textContent = 'Erreur lors du chargement des projets';
+            option.textContent = i18n.t('projectLoadError');
             option.disabled = true;
             select.innerHTML = '';
             select.appendChild(option);
@@ -5886,14 +5903,14 @@ async function loadEmployeesForSelect(selectId, defaultValue = null) {
             console.error('Erreur chargement employés:', error);
             // Option de secours : met l'utilisateur courant
             select.innerHTML = `
-                <option value="">Sélectionner un responsable...</option>
-                <option value="${currentUser.username}" selected>${currentUser.username} (actuel)</option>
+                <option value="">${i18n.t('selectResponsible')}</option>
+                <option value="${currentUser.username}" selected>${currentUser.username} (${i18n.t('current')})</option>
             `;
             return;
         }
 
         // CONSTRUIRE LE SELECT
-        select.innerHTML = '<option value="">Sélectionner un responsable...</option>';
+        select.innerHTML = `<option value="">${i18n.t('selectResponsible')}</option>`;
 
         if (users && users.length > 0) {
             users.forEach(user => {
@@ -5938,12 +5955,12 @@ async function handleStockAction(type, popup, initialData) {
         const quantity = parseInt(document.getElementById(`${type}Quantity`).value) || 0;
 
         if (!articleId) {
-            alert('Veuillez sélectionner un article');
+            alert(i18n.t('selectArticlePlease'));
             return;
         }
 
         if (quantity <= 0) {
-            alert('La quantité doit être positive');
+            alert(i18n.t('quantityMustBePositive'));
             return;
         }
 
@@ -6057,7 +6074,7 @@ async function handleStockAction(type, popup, initialData) {
 
         // 5. VALIDATIONS SUPPLÉMENTAIRES
         if (type === 'out' && quantity > stockAvant) {
-            alert(`Stock insuffisant ! Stock disponible: ${stockAvant}`);
+            alert(i18n.t('insufficientStock', { stock: stockAvant }));
             return;
         }
 
@@ -6068,7 +6085,7 @@ async function handleStockAction(type, popup, initialData) {
 
         if (mouvementError) {
             console.error('Erreur insertion mouvement:', mouvementError);
-            throw new Error(`Erreur enregistrement: ${mouvementError.message}`);
+            throw new Error(`${i18n.t('recordingError')}: ${mouvementError.message}`);
         }
 
         // 7. SI C'EST UNE RÉSERVATION, FAIRE UN UPSERT DANS w_reservations_actives
@@ -6106,11 +6123,11 @@ async function handleStockAction(type, popup, initialData) {
                 const heureAjout = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
                 if (existingReservation.notes && notes) {
-                    nouvellesNotes = `${existingReservation.notes}\n\n--- Ajout le ${dateAjout} à ${heureAjout} ---\n${notes}`;
+                    nouvellesNotes = `${existingReservation.notes}\n\n--- ${i18n.t('addedOn')} ${dateAjout} ${i18n.t('at')} ${heureAjout} ---\n${notes}`;
                 } else if (existingReservation.notes) {
                     nouvellesNotes = existingReservation.notes;
                 } else if (notes) {
-                    nouvellesNotes = `--- Créé le ${dateAjout} à ${heureAjout} ---\n${notes}`;
+                    nouvellesNotes = `--- ${i18n.t('createdOn')} ${dateAjout} ${i18n.t('at')} ${heureAjout} ---\n${notes}`;
                 }
 
                 // Garder les valeurs existantes si les nouvelles sont vides
@@ -6181,17 +6198,17 @@ async function handleStockAction(type, popup, initialData) {
                                 .eq('id', existing.id);
 
                             if (updateError) {
-                                throw new Error(`Erreur mise à jour réservation: ${updateError.message}`);
+                                throw new Error(`${i18n.t('reservationUpdateError')}: ${updateError.message}`);
                             }
                         } else {
-                            throw new Error(`Erreur récupération réservation: ${fetchError?.message || 'Inconnue'}`);
+                            throw new Error(`${i18n.t('reservationFetchError')}: ${fetchError?.message || i18n.t('unknown')}`);
                         }
                     } catch (fallbackError) {
                         console.error('Erreur fallback:', fallbackError);
-                        throw new Error(`Erreur création réservation: ${reservationError.message}`);
+                        throw new Error(`${i18n.t('reservationCreationError')}: ${reservationError.message}`);
                     }
                 } else {
-                    throw new Error(`Erreur création réservation: ${reservationError.message}`);
+                    throw new Error(`${i18n.t('reservationCreationError')}: ${reservationError.message}`);
                 }
             }
 
@@ -6226,7 +6243,9 @@ async function handleStockAction(type, popup, initialData) {
         if (updateError) throw updateError;
 
         // 9. SUCCÈS
-        showTemporarySuccess(`${type === 'out' ? 'Sortie' : type === 'in' ? 'Entrée' : 'Réservation'} enregistrée avec succès !`);
+        showTemporarySuccess(i18n.t('actionRecordedSuccess', {
+            action: type === 'out' ? i18n.t('out') : type === 'in' ? i18n.t('in') : i18n.t('reservation')
+        }));
         document.body.removeChild(popup);
 
         // 10. RE-RAFRACHIR LES DONNÉES
@@ -6234,7 +6253,7 @@ async function handleStockAction(type, popup, initialData) {
 
     } catch (error) {
         console.error(`Erreur ${type} stock:`, error);
-        alert(`Erreur lors de l'enregistrement: ${error.message || 'Erreur inconnue'}`);
+        alert(i18n.t('recordingErrorGeneral', { message: error.message || i18n.t('unknownError') }));
     }
 }
 
@@ -6305,7 +6324,7 @@ async function exportStockBasPDF() {
         // Vérification jsPDF - NOTE: c'est window.jspdf (minuscule)
         if (!window.jspdf || typeof window.jspdf.jsPDF === 'undefined') {
             console.error('jsPDF non trouvé:', window.jspdf);
-            alert('Erreur : Bibliothèque PDF non chargée. Veuillez rafraîchir la page et vérifier la connexion.');
+            alert(i18n.t('pdfLibraryError'));
             return;
         }
 
@@ -6330,7 +6349,7 @@ async function exportStockBasPDF() {
         console.log(`${stockBas.length} articles en stock bas`);
 
         if (stockBas.length === 0) {
-            alert('Aucun article en stock bas à exporter');
+            alert(i18n.t('noLowStockToExport'));
             return;
         }
 
@@ -6352,18 +6371,19 @@ async function exportStockBasPDF() {
         // En-tête
         doc.setFontSize(20);
         doc.setTextColor(230, 126, 34);
-        doc.text('Rapport Stock Bas', pageWidth / 2, yPosition, { align: 'center' });
+        doc.text(i18n.t('lowStockReportTitle'), pageWidth / 2, yPosition, { align: 'center' });
 
         doc.setFontSize(11);
         doc.setTextColor(100, 100, 100);
         yPosition += 10;
-        doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, pageWidth / 2, yPosition, { align: 'center' });
+        const generatedDate = i18n.t('generatedOn') + ' ' + new Date().toLocaleDateString(i18n.locale);
+        doc.text(generatedDate, pageWidth / 2, yPosition, { align: 'center' });
 
         doc.setTextColor(0, 0, 0);
         yPosition += 15;
 
         // Tableau
-        const headers = [['Article', 'N°', 'Disponible', 'Minimum', 'Différence']];
+        const headers = [[i18n.t('article'), i18n.t('number'), i18n.t('available'), i18n.t('minimum'), i18n.t('difference')]];
         const data = stockBas.map(article => {
             const disponible = article.stock_actuel - article.stock_reserve;
             const diff = disponible - article.stock_minimum;
@@ -6371,7 +6391,7 @@ async function exportStockBasPDF() {
             return [
                 article.nom,
                 article.numero || '-',
-                `${disponible} (Stock: ${article.stock_actuel}, Réservé: ${article.stock_reserve})`,
+                `${disponible} (${i18n.t('stock')}: ${article.stock_actuel}, ${i18n.t('reserved')}: ${article.stock_reserve})`,
                 article.stock_minimum,
                 diff
             ];
@@ -6393,7 +6413,7 @@ async function exportStockBasPDF() {
         const finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(10);
         doc.setTextColor(150, 150, 150);
-        doc.text(`Total: ${stockBas.length} article(s) en stock bas`, margin, finalY);
+        doc.text(`${i18n.t('total')}: ${stockBas.length} ${i18n.t('lowStockItems')}`, margin, finalY);
 
         // Sauvegarder le PDF
         console.log('Sauvegarde du PDF...');
@@ -6404,7 +6424,7 @@ async function exportStockBasPDF() {
 
     } catch (error) {
         console.error('Erreur export PDF stock bas:', error);
-        alert(`Erreur lors de l'export PDF: ${error.message || 'Erreur inconnue'}`);
+        alert(`${i18n.t('pdfExportError')}: ${error.message || i18n.t('unknownError')}`);
     }
 }
 
@@ -6415,7 +6435,7 @@ async function exportRupturePDF() {
         // Vérification jsPDF - NOTE: c'est window.jspdf (minuscule)
         if (!window.jspdf || typeof window.jspdf.jsPDF === 'undefined') {
             console.error('jsPDF non trouvé:', window.jspdf);
-            alert('Erreur : Bibliothèque PDF non chargée. Veuillez rafraîchir la page et vérifier la connexion.');
+            alert(i18n.t('pdfLibraryError'));
             return;
         }
 
@@ -6439,7 +6459,7 @@ async function exportRupturePDF() {
         console.log(`${ruptures.length} articles en rupture`);
 
         if (ruptures.length === 0) {
-            alert('Aucune rupture de stock à exporter');
+            alert(i18n.t('noStockOutageToExport'));
             return;
         }
 
@@ -6460,29 +6480,30 @@ async function exportRupturePDF() {
         // En-tête
         doc.setFontSize(20);
         doc.setTextColor(231, 76, 60); // Rouge
-        doc.text('Rapport Ruptures de Stock', pageWidth / 2, yPosition, { align: 'center' });
+        doc.text(i18n.t('stockOutageReportTitle'), pageWidth / 2, yPosition, { align: 'center' });
 
         doc.setFontSize(11);
         doc.setTextColor(100, 100, 100);
         yPosition += 10;
-        doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, pageWidth / 2, yPosition, { align: 'center' });
+        const generatedDate = i18n.t('generatedOn') + ' ' + new Date().toLocaleDateString(i18n.locale);
+        doc.text(generatedDate, pageWidth / 2, yPosition, { align: 'center' });
 
         doc.setTextColor(0, 0, 0);
         yPosition += 15;
 
         // Tableau
-        const headers = [['Article', 'N°', 'Stock', 'Réservé', 'Disponible']];
+        const headers = [[i18n.t('article'), i18n.t('number'), i18n.t('stock'), i18n.t('reserved'), i18n.t('available')]];
         const data = ruptures.map(article => {
             const disponible = article.stock_actuel - article.stock_reserve;
             const lastUpdate = article.updated_at ?
-                new Date(article.updated_at).toLocaleDateString('fr-FR') : '-';
+                new Date(article.updated_at).toLocaleDateString(i18n.locale) : '-';
 
             return [
                 article.nom,
                 article.numero || '-',
                 article.stock_actuel,
                 article.stock_reserve,
-                `${disponible} (${disponible < 0 ? 'Déficit' : 'Rupture'})`
+                `${disponible} (${disponible < 0 ? i18n.t('deficit') : i18n.t('outage')})`
             ];
         });
 
@@ -6502,12 +6523,12 @@ async function exportRupturePDF() {
         const finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(10);
         doc.setTextColor(150, 150, 150);
-        doc.text(`Total: ${ruptures.length} article(s) en rupture`, margin, finalY);
+        doc.text(`${i18n.t('total')}: ${ruptures.length} ${i18n.t('outageItems')}`, margin, finalY);
 
         // Message d'urgence
         doc.setFontSize(12);
         doc.setTextColor(231, 76, 60);
-        doc.text('⚠️ COMMANDE URGENTE REQUISE ⚠️', pageWidth / 2, finalY + 15, { align: 'center' });
+        doc.text(`⚠️ ${i18n.t('urgentOrderRequired')} ⚠️`, pageWidth / 2, finalY + 15, { align: 'center' });
 
         // Sauvegarder le PDF
         console.log('Sauvegarde du PDF...');
@@ -6520,11 +6541,11 @@ async function exportRupturePDF() {
         console.error('Erreur export PDF ruptures:', error);
 
         // Messages d'erreur plus clairs
-        let message = 'Erreur lors de l\'export PDF';
+        let message = i18n.t('pdfExportError');
         if (error.message.includes('jsPDF') || error.message.includes('Bibliothèque')) {
-            message = 'Erreur : Bibliothèque PDF non chargée. Veuillez rafraîchir la page.';
+            message = i18n.t('pdfLibraryErrorRefresh');
         } else if (error.message.includes('Supabase') || error.code) {
-            message = `Erreur de connexion : ${error.message || 'Impossible de récupérer les données'}`;
+            message = `${i18n.t('connectionError')}: ${error.message || i18n.t('cannotRetrieveData')}`;
         }
 
         alert(message);
@@ -6544,13 +6565,13 @@ function updateLastSync() {
         year: 'numeric'
     };
 
-    const formattedDate = now.toLocaleDateString('fr-FR', options);
-    document.getElementById('lastSync').textContent = `Dernière synchro: ${formattedDate}`;
+    const formattedDate = now.toLocaleDateString(i18n.locale, options);
+    document.getElementById('lastSync').textContent = `${i18n.t('lastSync')}: ${formattedDate}`;
 }
 
 function logout() {
     // Demander confirmation
-    if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    if (!confirm(i18n.t('logoutConfirmation'))) {
         return;
     }
 
@@ -6723,7 +6744,7 @@ class AccueilQuadManager {
             this.ctxTop.fillStyle = '#6c757d';
             this.ctxTop.font = '14px Arial';
             this.ctxTop.textAlign = 'center';
-            this.ctxTop.fillText('Effectuez une recherche pour localiser un article',
+            this.ctxTop.fillText(i18n.t('searchToLocateArticle'),
                                this.canvasTop.width/2, this.canvasTop.height/2);
         }
 
@@ -6735,7 +6756,7 @@ class AccueilQuadManager {
             this.ctxFront.fillStyle = '#6c757d';
             this.ctxFront.font = '14px Arial';
             this.ctxFront.textAlign = 'center';
-            this.ctxFront.fillText('Sélectionnez un article dans les résultats',
+            this.ctxFront.fillText(i18n.t('selectArticleInResults'),
                                  this.canvasFront.width/2, this.canvasFront.height/2);
         }
 
@@ -6745,7 +6766,7 @@ class AccueilQuadManager {
                 <div class="empty-drawer-state">
                     <div class="drawer-front-placeholder">
                         <i class="fas fa-search fa-3x"></i>
-                        <p>Recherchez un article pour voir son emplacement</p>
+                        <p>${i18n.t('searchArticleToSeeLocation')}</p>
                     </div>
                 </div>
             `;
@@ -6754,8 +6775,8 @@ class AccueilQuadManager {
         // 4. Réinitialiser les sélections
         this.selectedRack = null;
         this.selectedLevel = null;
-        document.getElementById('accueilSelectedRack').textContent = 'Aucun rack sélectionné';
-        document.getElementById('accueilLevelInfo').textContent = 'Aucun étage';
+        document.getElementById('accueilSelectedRack').textContent = i18n.t('noRackSelected');
+        document.getElementById('accueilLevelInfo').textContent = i18n.t('noLevel');
     }
 
     normalizeRackData() {
@@ -6841,7 +6862,7 @@ class AccueilQuadManager {
                 .single();
 
             if (articlesError) throw articlesError;
-            if (!articles) throw new Error("Article non trouvé");
+            if (!articles) throw new Error(i18n.t('articleNotFound'));
 
             // 2. Stocker l'article et sa localisation
             this.currentArticle = articles;
@@ -6886,7 +6907,7 @@ class AccueilQuadManager {
         const rack = this.racks.find(r => r.code === rackCode);
         if (!rack) {
             console.error(`Rack ${rackCode} non trouvé`);
-            this.showNotification(`Rack ${rackCode} non trouvé`, 'error');
+            this.showNotification(`${i18n.t('rackNotFound')}: ${rackCode}`, 'error');
             return;
         }
 
@@ -6897,7 +6918,7 @@ class AccueilQuadManager {
         const level = rack.levels?.find(l => l.code === levelCode);
         if (!level) {
             console.error(`Étage ${levelCode} non trouvé dans rack ${rackCode}`);
-            this.showNotification(`Étage ${levelCode} non trouvé`, 'error');
+            this.showNotification(`${i18n.t('levelNotFound')}: ${levelCode}`, 'error');
             return;
         }
 
@@ -6916,7 +6937,7 @@ class AccueilQuadManager {
         this.selectedLevel = null;
 
         document.getElementById('accueilSelectedRack').textContent =
-            `Rack ${rack.code}`;
+            `${i18n.t('rack')} ${rack.code}`;
 
         // Dessiner avec surbrillance
         this.drawTopView();
@@ -6927,7 +6948,7 @@ class AccueilQuadManager {
         this.selectedLevel = level;
 
         document.getElementById('accueilLevelInfo').textContent =
-            `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
+            `${i18n.t('level')} ${level.code} - ${level.slots?.length || 0} ${i18n.t('slots')}`;
 
         // Mettre à jour le tiroir
         this.updateDrawer(level); // <-- IMPORTANT
@@ -7087,7 +7108,7 @@ class AccueilQuadManager {
             html = `
                 <div class="empty-drawer-message">
                     <i class="fas fa-box-open"></i>
-                    <p>Aucun emplacement dans cet étage</p>
+                    <p>${i18n.t('noSlotsInLevel')}</p>
                 </div>
             `;
         } else {
@@ -7134,11 +7155,11 @@ class AccueilQuadManager {
         let html = `
             <div class="single-slot-view">
                 <div class="slot-header">
-                    <h4>Emplacement ${slot.full_code || `${level.code}-${slot.code}`}</h4>
+                    <h4>${i18n.t('slot')} ${slot.full_code || `${level.code}-${slot.code}`}</h4>
                     <div class="slot-location">
-                        <span class="rack-badge">Rack ${this.selectedRack.code}</span>
-                        <span class="level-badge">Étage ${level.code}</span>
-                        <span class="slot-badge">Slot ${slot.code}</span>
+                        <span class="rack-badge">${i18n.t('rack')} ${this.selectedRack.code}</span>
+                        <span class="level-badge">${i18n.t('level')} ${level.code}</span>
+                        <span class="slot-badge">${i18n.t('slot')} ${slot.code}</span>
                     </div>
                 </div>
 
@@ -7151,7 +7172,7 @@ class AccueilQuadManager {
         if (articleInSlot) {
             const imageUrl = articleInSlot.photo_url || articleInSlot.photo ||
                 'https://via.placeholder.com/150x150/cccccc/666666?text=📦';
-            const articleName = articleInSlot.nom || articleInSlot.name || 'Article';
+            const articleName = articleInSlot.nom || articleInSlot.name || i18n.t('article');
             const stock = articleInSlot.stock_actuel || articleInSlot.quantity || 0;
 
             html += `
@@ -7164,22 +7185,22 @@ class AccueilQuadManager {
                         <h5>${articleName}</h5>
                         <div class="article-details">
                             <div class="detail-item">
-                                <span class="detail-label">Numéro:</span>
-                                <span class="detail-value">${articleInSlot.numero || 'N/A'}</span>
+                                <span class="detail-label">${i18n.t('number')}:</span>
+                                <span class="detail-value">${articleInSlot.numero || i18n.t('na')}</span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">Stock:</span>
+                                <span class="detail-label">${i18n.t('stock')}:</span>
                                 <span class="detail-value ${stock === 0 ? 'stock-zero' : (stock <= (articleInSlot.stock_minimum || 3) ? 'stock-low' : 'stock-good')}">
-                                    ${stock} unités
+                                    ${stock} ${i18n.t('units')}
                                 </span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">Code-barres:</span>
-                                <span class="detail-value">${articleInSlot.code_barre || 'N/A'}</span>
+                                <span class="detail-label">${i18n.t('barcode')}:</span>
+                                <span class="detail-value">${articleInSlot.code_barre || i18n.t('na')}</span>
                             </div>
                             ${articleInSlot.prix_unitaire ? `
                             <div class="detail-item">
-                                <span class="detail-label">Prix:</span>
+                                <span class="detail-label">${i18n.t('price')}:</span>
                                 <span class="detail-value">${articleInSlot.prix_unitaire}€</span>
                             </div>` : ''}
                         </div>
@@ -7190,7 +7211,7 @@ class AccueilQuadManager {
             html += `
                 <div class="empty-slot-large">
                     <i class="fas fa-box-open fa-4x"></i>
-                    <p>Emplacement vide</p>
+                    <p>${i18n.t('emptySlot')}</p>
                 </div>
             `;
         }
@@ -7199,7 +7220,7 @@ class AccueilQuadManager {
                 </div>
                 <div class="slot-footer">
                     <button class="btn btn-sm btn-secondary" onclick="window.accueilQuadManager.showAllSlotsForLevel(${JSON.stringify(level)})">
-                        <i class="fas fa-th-large"></i> Voir tous les emplacements
+                        <i class="fas fa-th-large"></i> ${i18n.t('viewAllSlots')}
                     </button>
                 </div>
             </div>
@@ -7220,34 +7241,34 @@ class AccueilQuadManager {
     }
 
     generateSlotTooltip(slot, article) {
-        const baseText = `Emplacement ${slot.code}`;
+        const baseText = `${i18n.t('slot')} ${slot.code}`;
 
-        if (!article) return `${baseText} - Libre`;
+        if (!article) return `${baseText} - ${i18n.t('free')}`;
 
         const stockActuel = article.stock_actuel || article.quantity || 0;
         const stockMinimum = article.stock_minimum || 3;
-        const articleName = article.nom || article.name || 'Article';
+        const articleName = article.nom || article.name || i18n.t('article');
 
         let status = '';
-        if (stockActuel === 0) status = 'Stock épuisé';
-        else if (stockActuel <= stockMinimum) status = `Stock faible (min: ${stockMinimum})`;
-        else status = `Stock OK (min: ${stockMinimum})`;
+        if (stockActuel === 0) status = i18n.t('stockDepleted');
+        else if (stockActuel <= stockMinimum) status = `${i18n.t('lowStock')} (${i18n.t('min')}: ${stockMinimum})`;
+        else status = `${i18n.t('stockOk')} (${i18n.t('min')}: ${stockMinimum})`;
 
-        return `${baseText} - ${articleName}\n${stockActuel} unités - ${status}`;
+        return `${baseText} - ${articleName}\n${stockActuel} ${i18n.t('units')} - ${status}`;
     }
 
     generateSlotContent(slot, article, zoomClass) {
         if (!article) {
             return `
                 <div class="quad-slot-code">${slot.code}</div>
-                <div class="quad-slot-status">Libre</div>
+                <div class="quad-slot-status">${i18n.t('free')}</div>
             `;
         }
 
         const imageUrl = article.photo || article.photo_url ||
             'https://via.placeholder.com/40x40/cccccc/666666?text=📦';
         const stock = article.quantity || article.stock_actuel || 0;
-        const articleName = article.name || article.nom || 'Article';
+        const articleName = article.name || article.nom || i18n.t('article');
 
         return `
             <div class="slot-content">
@@ -7275,7 +7296,7 @@ class AccueilQuadManager {
             this.drawFrontView(); // Redessiner avec mise en évidence
         }
 
-        console.log(`🎯 Emplacement ${slotCode} mis en évidence`);
+        console.log(`🎯 ${i18n.t('slot')} ${slotCode} ${i18n.t('highlighted')}`);
     }
 
     drawGrid(ctx, width, height, size) {
@@ -7320,7 +7341,7 @@ class AccueilQuadManager {
     updateRackCount() {
         const countElement = document.getElementById('accueilRackCount');
         if (countElement) {
-            countElement.textContent = `${this.racks.length} racks`;
+            countElement.textContent = `${this.racks.length} ${i18n.t('racks')}`;
         }
     }
 
@@ -7370,12 +7391,12 @@ class AccueilQuadManager {
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`RACK ${rack.code}`, x + w/2, y + h/2);
+        ctx.fillText(`${i18n.t('rack').toUpperCase()} ${rack.code}`, x + w/2, y + h/2);
 
         // Légende
         ctx.fillStyle = '#333';
         ctx.font = '12px Arial';
-        ctx.fillText(`Article localisé ici`, width/2, y + h + 20);
+        ctx.fillText(`${i18n.t('articleLocatedHere')}`, width/2, y + h + 20);
     }
 
     enlargePhoto(imageUrl, title) {
@@ -7464,12 +7485,12 @@ class AccueilQuadManager {
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`ÉTAGE ${level.code}`, x + levelWidth/2, y + levelHeight/2);
+        ctx.fillText(`${i18n.t('level').toUpperCase()} ${level.code}`, x + levelWidth/2, y + levelHeight/2);
 
         // Info rack
         ctx.fillStyle = '#666';
         ctx.font = '11px Arial';
-        ctx.fillText(`Rack: ${rack.code}`, width/2, y + levelHeight + 15);
+        ctx.fillText(`${i18n.t('rack')}: ${rack.code}`, width/2, y + levelHeight + 15);
     }
 
     // Affiche UN SEUL slot avec la photo
@@ -7484,21 +7505,21 @@ class AccueilQuadManager {
         this.drawerContainer.innerHTML = `
             <div class="single-slot-view">
                 <div class="slot-header">
-                    <h3>📍 Emplacement ${slot.full_code || `${level.code}-${slot.code}`}</h3>
+                    <h3>📍 ${i18n.t('slot')} ${slot.full_code || `${level.code}-${slot.code}`}</h3>
                     <div class="location-badges">
-                        <span class="badge">Rack ${rack.code}</span>
-                        <span class="badge">Étage ${level.code}</span>
-                        <span class="badge">Slot ${slot.code}</span>
+                        <span class="badge">${i18n.t('rack')} ${rack.code}</span>
+                        <span class="badge">${i18n.t('level')} ${level.code}</span>
+                        <span class="badge">${i18n.t('slot')} ${slot.code}</span>
                     </div>
                 </div>
 
                 <div class="slot-main">
                     <div class="article-photo-container">
                         <img src="${imageUrl}"
-                         alt="${articleInSlot?.nom || 'Article'}"
+                         alt="${articleInSlot?.nom || i18n.t('article')}"
                          class="article-photo"
                          style="width: 120px; height: 120px; object-fit: contain;"
-                         onclick="window.accueilQuadManager.enlargePhoto('${imageUrl}', '${articleInSlot?.nom || 'Article'}')"
+                         onclick="window.accueilQuadManager.enlargePhoto('${imageUrl}', '${articleInSlot?.nom || i18n.t('article')}')"
                          onerror="this.src='https://via.placeholder.com/120x120/cccccc/666666?text=📦'">
                     </div>
 
@@ -7506,15 +7527,15 @@ class AccueilQuadManager {
                     <div class="article-info">
                         <h4>${articleInSlot.nom}</h4>
                         <div class="article-details">
-                            <div><strong>Numéro:</strong> ${articleInSlot.numero || 'N/A'}</div>
-                            <div><strong>Stock:</strong> ${articleInSlot.stock_actuel || 0} unités</div>
-                            ${articleInSlot.code_barre ? `<div><strong>Code-barres:</strong> ${articleInSlot.code_barre}</div>` : ''}
+                            <div><strong>${i18n.t('number')}:</strong> ${articleInSlot.numero || i18n.t('na')}</div>
+                            <div><strong>${i18n.t('stock')}:</strong> ${articleInSlot.stock_actuel || 0} ${i18n.t('units')}</div>
+                            ${articleInSlot.code_barre ? `<div><strong>${i18n.t('barcode')}:</strong> ${articleInSlot.code_barre}</div>` : ''}
                         </div>
                     </div>
                     ` : `
                     <div class="empty-slot-info">
                         <i class="fas fa-box-open fa-2x"></i>
-                        <p>Emplacement vide</p>
+                        <p>${i18n.t('emptySlot')}</p>
                     </div>
                     `}
                 </div>
@@ -7535,7 +7556,7 @@ class AccueilQuadManager {
         // Si pas d'IDs, on ne peut pas localiser
         if (!article.rack_id || !article.level_id || !article.slot_id) {
             console.warn('Article sans IDs de localisation');
-            this.showNotification('Article non localisé dans le stock', 'warning');
+            this.showNotification(i18n.t('articleNotLocated'), 'warning');
             return false;
         }
 
