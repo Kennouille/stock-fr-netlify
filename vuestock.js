@@ -5102,86 +5102,6 @@ class VueStock {
             }
         }
 
-        searchArticleFromURL() {
-            // Récupérer les paramètres URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const articleId = urlParams.get('articleId');
-            const articleName = urlParams.get('articleName');
-
-            // Si pas de paramètres, ne rien faire
-            if (!articleId && !articleName) {
-                console.log('Pas de paramètres article dans l\'URL');
-                return;
-            }
-
-            console.log('🔍 Recherche article depuis URL:', { articleId, articleName });
-
-            // Chercher l'article dans tous les racks/levels/slots
-            let foundRack = null;
-            let foundLevel = null;
-            let foundSlot = null;
-
-            for (const rack of this.racks) {
-                if (!rack.levels) continue;
-
-                for (const level of rack.levels) {
-                    if (!level.slots) continue;
-
-                    for (const slot of level.slots) {
-                        if (!slot.articles || slot.articles.length === 0) continue;
-
-                        const article = slot.articles.find(a =>
-                            (articleId && a.id === articleId) ||
-                            (articleName && a.name === articleName)
-                        );
-
-                        if (article) {
-                            foundRack = rack;
-                            foundLevel = level;
-                            foundSlot = slot;
-                            console.log('✅ Article trouvé:', {
-                                rack: rack.code,
-                                level: level.code,
-                                slot: slot.code,
-                                article: article.name
-                            });
-                            break;
-                        }
-                    }
-                    if (foundSlot) break;
-                }
-                if (foundSlot) break;
-            }
-
-            // Si trouvé, ouvrir rack → level → slot
-            if (foundRack && foundLevel && foundSlot) {
-                setTimeout(() => {
-                    this.goToRackView(foundRack);
-                    console.log('➡️ Ouverture du rack:', foundRack.code);
-
-                    setTimeout(() => {
-                        this.goToLevelView(foundLevel);
-                        console.log('➡️ Ouverture du niveau:', foundLevel.code);
-
-                        setTimeout(() => {
-                            const slotElement = document.querySelector(`.slot-item[data-slot-id="${foundSlot.id}"]`);
-                            if (slotElement) {
-                                slotElement.classList.add('pulse');
-                                slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                console.log('✅ Slot mis en évidence');
-                            } else {
-                                console.warn('⚠️ Élément slot non trouvé dans le DOM');
-                            }
-                        }, 500);
-                    }, 500);
-                }, 500);
-            } else {
-                console.warn('❌ Article non trouvé dans le stock');
-                this.showNotification('Article non trouvé', 'warning');
-            }
-        }
-
-
         // Gestion de la cible traditionnelle (si elle existe)
         if (window.vuestockTarget) {
             const { rack, level, slot } = window.vuestockTarget;
@@ -5220,6 +5140,86 @@ class VueStock {
             }
         }
     }
+
+    searchArticleFromURL() {
+        // Récupérer les paramètres URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const articleId = urlParams.get('articleId');
+        const articleName = urlParams.get('articleName');
+
+        // Si pas de paramètres, ne rien faire
+        if (!articleId && !articleName) {
+            console.log('Pas de paramètres article dans l\'URL');
+            return;
+        }
+
+        console.log('🔍 Recherche article depuis URL:', { articleId, articleName });
+
+        // Chercher l'article dans tous les racks/levels/slots
+        let foundRack = null;
+        let foundLevel = null;
+        let foundSlot = null;
+
+        for (const rack of this.racks) {
+            if (!rack.levels) continue;
+
+            for (const level of rack.levels) {
+                if (!level.slots) continue;
+
+                for (const slot of level.slots) {
+                    if (!slot.articles || slot.articles.length === 0) continue;
+
+                    const article = slot.articles.find(a =>
+                        (articleId && a.id === articleId) ||
+                        (articleName && a.name === articleName)
+                    );
+
+                    if (article) {
+                        foundRack = rack;
+                        foundLevel = level;
+                        foundSlot = slot;
+                        console.log('✅ Article trouvé:', {
+                            rack: rack.code,
+                            level: level.code,
+                            slot: slot.code,
+                            article: article.name
+                        });
+                        break;
+                    }
+                }
+                if (foundSlot) break;
+            }
+            if (foundSlot) break;
+        }
+
+        // Si trouvé, ouvrir rack → level → slot
+        if (foundRack && foundLevel && foundSlot) {
+            setTimeout(() => {
+                this.goToRackView(foundRack);
+                console.log('➡️ Ouverture du rack:', foundRack.code);
+
+                setTimeout(() => {
+                    this.goToLevelView(foundLevel);
+                    console.log('➡️ Ouverture du niveau:', foundLevel.code);
+
+                    setTimeout(() => {
+                        const slotElement = document.querySelector(`.slot-item[data-slot-id="${foundSlot.id}"]`);
+                        if (slotElement) {
+                            slotElement.classList.add('pulse');
+                            slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            console.log('✅ Slot mis en évidence');
+                        } else {
+                            console.warn('⚠️ Élément slot non trouvé dans le DOM');
+                        }
+                    }, 500);
+                }, 500);
+            }, 500);
+        } else {
+            console.warn('❌ Article non trouvé dans le stock');
+            this.showNotification('Article non trouvé', 'warning');
+        }
+    }
+
 
 
     displayRacksFromAPI() {
