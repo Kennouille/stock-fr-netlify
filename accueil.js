@@ -6537,6 +6537,11 @@ class AccueilQuadManager {
         this.canvasTop = document.getElementById('accueilCanvasTop');
         this.canvasFront = document.getElementById('accueilCanvasFront');
         this.drawerContainer = document.getElementById('accueilDrawer');
+        this.currentArticle = null;
+        this.currentRack = null;
+        this.currentLevel = null;
+        this.currentSlot = null;
+
 
         if (!this.canvasTop || !this.canvasFront || !this.drawerContainer) {
             console.error('❌ Éléments QuadView non trouvés dans accueil.html');
@@ -6736,38 +6741,90 @@ class AccueilQuadManager {
     connectToRealSearchSystem() {
         console.log('🔗 Connexion au système de recherche...');
 
-        // 1. Recherche par nom (votre système existant)
+        // 1. Recherche par nom
         const searchNomBtn = document.getElementById('searchNomBtn');
         const searchNomInput = document.getElementById('searchNomInput');
 
         if (searchNomBtn && searchNomInput) {
             searchNomBtn.addEventListener('click', async () => {
-                await this.handleRealSearch(searchNomInput.value, 'nom');
+                await this.performSearch(searchNomInput.value, 'nom');
             });
 
             searchNomInput.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter') {
-                    await this.handleRealSearch(searchNomInput.value, 'nom');
+                    await this.performSearch(searchNomInput.value, 'nom');
                 }
             });
         }
 
-        // 2. Recherche par code-barre (votre système existant)
+        // 2. Recherche par code-barre
         const searchCodebarreBtn = document.getElementById('searchCodebarreBtn');
         const searchCodebarreInput = document.getElementById('searchCodebarreInput');
 
         if (searchCodebarreBtn && searchCodebarreInput) {
             searchCodebarreBtn.addEventListener('click', async () => {
-                await this.handleRealSearch(searchCodebarreInput.value, 'codebarre');
+                await this.performSearch(searchCodebarreInput.value, 'codebarre');
             });
 
             searchCodebarreInput.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter') {
-                    await this.handleRealSearch(searchCodebarreInput.value, 'codebarre');
+                    await this.performSearch(searchCodebarreInput.value, 'codebarre');
                 }
             });
         }
     }
+
+    async performSearch(searchTerm, searchType) {
+        try {
+            console.log(`🔍 Recherche de "${searchTerm}" (type: ${searchType})...`);
+
+            // 1. Rechercher l'article dans Supabase
+            const { data: articles, error: articlesError } = await supabase
+                .from('w_articles')
+                .select(`
+                    *,
+                    w_vuestock_slots (
+                        *,
+                        w_vuestock_levels (
+                            *,
+                            w_vuestock_racks (*)
+                        )
+                    )
+                `)
+                .eq(searchType === 'nom' ? 'nom' : 'code_barre', searchTerm)
+                .single();
+
+            if (articlesError) throw articlesError;
+            if (!articles) throw new Error("Article non trouvé");
+
+            // 2. Stocker l'article et sa localisation
+            this.currentArticle = articles;
+            this.currentRack = articles.w_vuestock_slots.w_vuestock_levels.w_vuestock_racks;
+            this.currentLevel = articles.w_vuestock_slots.w_vuestock_levels;
+            this.currentSlot = articles.w_vuestock_slots;
+
+            // 3. Afficher la localisation
+            const fullCode = `${this.currentRack.code}-${this.currentLevel.code}-${this.currentSlot.code}`;
+            this.highlightArticleLocation(fullCode);
+
+            // 4. Afficher les résultats de recherche
+            this.displaySearchResults([articles]);
+
+        } catch (error) {
+            console.error('❌ Erreur de recherche:', error);
+            this.showNotification(error.message, 'error');
+        }
+    }
+
+    getCurrentLocation() {
+        return {
+            article: this.currentArticle,
+            rack: this.currentRack,
+            level: this.currentLevel,
+            slot: this.currentSlot
+        };
+    }
+
 
     highlightArticleLocation(fullCode) {
         // Parser le code complet: A-10-20
