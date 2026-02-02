@@ -983,11 +983,10 @@ class CanvasManager {
 
 class QuadViewManager {
     constructor() {
-        if (window.quadViewInitialized) {
-            console.log('⚠️ QuadViewManager déjà initialisé');
-            return;
+        if (window.quadViewManagerInstance) {
+            return window.quadViewManagerInstance; // Retourne l'instance existante
         }
-        window.quadViewInitialized = true;
+        window.quadViewManagerInstance = this;
 
         this.currentView = 'quad'; // 'quad' ou 'single'
         this.selectedRack = null;
@@ -1043,7 +1042,7 @@ class QuadViewManager {
         this.rackHeightPerLevel = 40; // px par niveau
         this.slotSize = 60; // px par emplacement
 
-        this.init();
+        this.init3DStuff();
     }
 
     init() {
@@ -4267,19 +4266,18 @@ class VueStock {
     init() {
     // Protection anti-double init
         if (this.initialized) {
-            console.warn("Déjà initialisé - ignoré");
-            return;
+            console.warn("⚠️ VueStock déjà initialisé, retour de l'instance existante");
+            return this; // <-- Retourne l'instance EXISTANTE au lieu de relancer l'init
         }
         this.initialized = true;
 
         console.log('VueStock initialisé (1ère fois)');
 
         this.initEvents();
-        this.loadData().then(() => {  // Attend la fin du chargement
-            this.autoSelectTarget();
-            this.showView('plan');
-            this.updateStats();
-        });
+        this.loadData();
+        this.autoSelectTarget();
+        this.showView('plan');
+        this.updateStats();
     }
 
 
