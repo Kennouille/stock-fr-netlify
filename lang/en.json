@@ -367,7 +367,28 @@
         "viewDetails": "View details",
         "return": "Return",
         "cancel": "Cancel",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "title": "Quick Actions",
+        "subtitle": "Daily stock management operations",
+        "sortie": {
+            "title": "Stock Out",
+            "description": "Remove items from stock for a project"
+        },
+        "entree": {
+            "title": "Stock In",
+            "description": "Add new items or restock"
+        },
+        "reservation": {
+            "title": "Project Reservation",
+            "description": "Reserve items for a future project"
+        },
+        "retour": {
+            "title": "Project Return to Stock",
+            "description": "Return items from a project back to stock",
+            "button": "Choose Project"
+        },
+        "scan": "Scan",
+        "input": "Input"
     },
     "alert": {
         "selectArticle": "Please select an article from the interface or via search first."
@@ -650,7 +671,7 @@
       "highlighted": "highlighted",
       "racks": "racks",
       "articleLocatedHere": "Article located here",
-      "articleNotLocated": "Article not located in stock"
+      "articleNotLocated": "Article not located in stock",
 
 
 

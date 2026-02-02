@@ -367,7 +367,28 @@
         "viewDetails": "Ver detalles",
         "return": "Devolver",
         "cancel": "Cancelar",
-        "confirm": "Confirmar"
+        "confirm": "Confirmar",
+        "title": "Acciones Rápidas",
+        "subtitle": "Operaciones diarias de gestión de inventario",
+        "sortie": {
+            "title": "Salida de Stock",
+            "description": "Retirar artículos del stock para un proyecto"
+        },
+        "entree": {
+            "title": "Entrada de Stock",
+            "description": "Agregar nuevos artículos o reabastecer"
+        },
+        "reservation": {
+            "title": "Reserva de Proyecto",
+            "description": "Reservar artículos para un proyecto futuro"
+        },
+        "retour": {
+            "title": "Retorno de Proyecto al Stock",
+            "description": "Devolver artículos de un proyecto al stock",
+            "button": "Elegir Proyecto"
+        },
+        "scan": "Escanear",
+        "input": "Introducir"
     },
     "alert": {
         "selectArticle": "Por favor seleccione primero un artículo de la interfaz o mediante búsqueda."
