@@ -1042,7 +1042,7 @@ class QuadViewManager {
         this.rackHeightPerLevel = 40; // px par niveau
         this.slotSize = 60; // px par emplacement
 
-        this.init3DStuff();
+        this.init();
     }
 
     init() {
