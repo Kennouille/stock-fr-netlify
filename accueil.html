@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accueil - Gestion Stock</title>
+    <title data-i18n="page.title">Accueil - Gestion Stock</title>
     <link rel="stylesheet" href="accueil.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -15,7 +15,7 @@
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
-            <p>Chargement...</p>
+            <p data-i18n="loading">Chargement...</p>
         </div>
     </div>
 
@@ -25,7 +25,7 @@
             <div class="header-left">
                 <h1><i class="fas fa-boxes"></i> NeXeN Store Manager</h1>
                 <div class="user-role-badge" id="userRoleBadge">
-                    <span id="roleText">Chargement...</span>
+                    <span id="roleText" data-i18n="loading">Chargement...</span>
                 </div>
             </div>
             <div class="header-right">
@@ -33,8 +33,19 @@
                     <i class="fas fa-user"></i>
                     <span id="usernameDisplay">...</span>
                 </span>
+                <div class="language-selector">
+                    <button class="lang-btn active" data-lang="fr">
+                        <img src="images/fr.png" alt="FR">
+                    </button>
+                    <button class="lang-btn" data-lang="en">
+                        <img src="images/en.png" alt="EN">
+                    </button>
+                    <button class="lang-btn" data-lang="es">
+                        <img src="images/mx.png" alt="ES">
+                    </button>
+                </div>
                 <button id="logoutBtn" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    <i class="fas fa-sign-out-alt"></i> <span data-i18n="logout">Déconnexion</span>
                 </button>
             </div>
         </header>
@@ -43,8 +54,8 @@
         <main class="main-content">
             <!-- Section Actions rapides (tous les users) -->
             <section class="actions-section">
-                <h2><i class="fas fa-bolt"></i> Actions rapides</h2>
-                <p class="section-subtitle">Opérations quotidiennes de gestion de stock</p>
+                <h2><i class="fas fa-bolt"></i> <span data-i18n="actions.title">Actions rapides</span></h2>
+                <p class="section-subtitle" data-i18n="actions.subtitle">Opérations quotidiennes de gestion de stock</p>
 
                 <div class="actions-grid">
                     <!-- Sortie de stock -->
@@ -52,14 +63,14 @@
                         <div class="action-icon red">
                             <i class="fas fa-arrow-up"></i>
                         </div>
-                        <h3>Sortie de stock</h3>
-                        <p>Retirer des articles du stock pour un projet</p>
+                        <h3 data-i18n="actions.sortie.title">Sortie de stock</h3>
+                        <p data-i18n="actions.sortie.description">Retirer des articles du stock pour un projet</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="sortie" data-type="scan">
-                                <i class="fas fa-camera"></i> Scanner
+                                <i class="fas fa-camera"></i> <span data-i18n="actions.scan">Scanner</span>
                             </button>
                             <button class="option-btn" data-action="sortie" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> Saisir
+                                <i class="fas fa-keyboard"></i> <span data-i18n="actions.input">Saisir</span>
                             </button>
                         </div>
                     </div>
@@ -69,14 +80,14 @@
                         <div class="action-icon green">
                             <i class="fas fa-arrow-down"></i>
                         </div>
-                        <h3>Entrée de stock</h3>
-                        <p>Ajouter de nouveaux articles ou réapprovisionner</p>
+                        <h3 data-i18n="actions.entree.title">Entrée de stock</h3>
+                        <p data-i18n="actions.entree.description">Ajouter de nouveaux articles ou réapprovisionner</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="entree" data-type="scan">
-                                <i class="fas fa-camera"></i> Scanner
+                                <i class="fas fa-camera"></i> <span data-i18n="actions.scan">Scanner</span>
                             </button>
                             <button class="option-btn" data-action="entree" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> Saisir
+                                <i class="fas fa-keyboard"></i> <span data-i18n="actions.input">Saisir</span>
                             </button>
                         </div>
                     </div>
@@ -86,14 +97,14 @@
                         <div class="action-icon orange">
                             <i class="fas fa-calendar-check"></i>
                         </div>
-                        <h3>Réservation projet</h3>
-                        <p>Réserver des articles pour un futur projet</p>
+                        <h3 data-i18n="actions.reservation.title">Réservation projet</h3>
+                        <p data-i18n="actions.reservation.description">Réserver des articles pour un futur projet</p>
                         <div class="action-options">
                             <button class="option-btn" data-action="reservation" data-type="scan">
-                                <i class="fas fa-camera"></i> Scanner
+                                <i class="fas fa-camera"></i> <span data-i18n="actions.scan">Scanner</span>
                             </button>
                             <button class="option-btn" data-action="reservation" data-type="saisie">
-                                <i class="fas fa-keyboard"></i> Saisir
+                                <i class="fas fa-keyboard"></i> <span data-i18n="actions.input">Saisir</span>
                             </button>
                         </div>
                     </div>
@@ -103,11 +114,11 @@
                         <div class="action-icon blue">
                             <i class="fas fa-undo-alt"></i>
                         </div>
-                        <h3>Retour projet en stock</h3>
-                        <p>Retourner des articles d'un projet vers le stock</p>
+                        <h3 data-i18n="actions.retour.title">Retour projet en stock</h3>
+                        <p data-i18n="actions.retour.description">Retourner des articles d'un projet vers le stock</p>
                         <div class="action-options">
                             <button class="option-btn" id="selectProjetBtn" data-action="retour_projet">
-                                <i class="fas fa-project-diagram"></i> Choisir projet
+                                <i class="fas fa-project-diagram"></i> <span data-i18n="actions.retour.button">Choisir projet</span>
                             </button>
                         </div>
                     </div>
