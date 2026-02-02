@@ -4273,6 +4273,8 @@ class VueStock {
         // Chargement initial des données
         this.loadData();
 
+        this.autoSelectTarget();
+
         // Afficher la vue par défaut
         this.showView('plan');
 
@@ -5003,6 +5005,45 @@ class VueStock {
             this.updateStats();
         } finally {
             this.showLoader(false);
+        }
+    }
+
+    autoSelectTarget() {
+        if (!window.vuestockTarget) return;
+
+        const { rack, level, slot } = window.vuestockTarget;
+        console.log('🎯 Cible détectée:', { rack, level, slot });
+
+        // 1. Sélectionner le rack
+        if (rack) {
+            const targetRack = this.racks.find(r => r.code === rack);
+            if (targetRack) {
+                this.goToRackView(targetRack);
+                console.log('✅ Rack sélectionné:', targetRack.code);
+
+                // 2. Sélectionner le niveau (après un délai pour laisser le temps au rendu)
+                if (level) {
+                    setTimeout(() => {
+                        const targetLevel = targetRack.levels?.find(l => l.code === level);
+                        if (targetLevel) {
+                            this.goToLevelView(targetLevel);
+                            console.log('✅ Niveau sélectionné:', targetLevel.code);
+
+                            // 3. Mettre en évidence l'emplacement (après un délai)
+                            if (slot) {
+                                setTimeout(() => {
+                                    const slotElement = document.querySelector(`.slot-item[data-slot-code="${slot}"]`);
+                                    if (slotElement) {
+                                        slotElement.classList.add('pulse');
+                                        slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        console.log('✅ Emplacement mis en évidence:', slot);
+                                    }
+                                }, 500);
+                            }
+                        }
+                    }, 500);
+                }
+            }
         }
     }
 

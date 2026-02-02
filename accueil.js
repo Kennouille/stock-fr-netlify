@@ -2792,10 +2792,29 @@ function updateUserInterface() {
         roleText.textContent = 'Utilisateur';
     }
 
-    // AJOUTER CE CODE : Vérifier la permission vuestock pour le bouton Inventaire
+    // Gestion du bouton Inventaire
     const inventoryLink = document.getElementById('inventoryLink');
-    if (inventoryLink && currentUser.permissions && currentUser.permissions.vuestock) {
+    if (inventoryLink && currentUser.permissions?.vuestock) {
         inventoryLink.style.display = 'inline-block';
+
+        inventoryLink.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            // Récupérer l'article sélectionné (via selectedRack/selectedLevel ou highlightArticleLocationFromArticle)
+            const article = window.accueilQuadManager?.getSelectedArticle();
+            if (!article) {
+                alert("Sélectionnez d'abord un article dans l'interface.");
+                return;
+            }
+
+            // Construire l'URL avec les paramètres
+            const url = new URL('vuestock.html', window.location.origin);
+            url.searchParams.set('rack', article.rack_code || article.rack_display_name || '');
+            url.searchParams.set('level', article.level_code || '');
+            url.searchParams.set('slot', article.slot_code || '');
+
+            window.location.href = url.toString();
+        });
     }
 }
 
@@ -7426,6 +7445,28 @@ class AccueilQuadManager {
 
         console.log(`✅ Article localisé: ${rack.code}-${level.code}-${slot.code}`);
         return true;
+    }
+
+    // Méthode pour récupérer l'article sélectionné
+    getSelectedArticle() {
+        if (!this.selectedRack || !this.selectedLevel) return null;
+
+        // Trouver le slot sélectionné (si un slot est mis en évidence)
+        const highlightedSlot = this.selectedLevel.slots?.find(slot =>
+            slot.articles?.length > 0
+        );
+
+        if (highlightedSlot?.articles?.[0]) {
+            return {
+                ...highlightedSlot.articles[0],
+                rack_code: this.selectedRack.code,
+                rack_display_name: this.selectedRack.name,
+                level_code: this.selectedLevel.code,
+                slot_code: highlightedSlot.code
+            };
+        }
+
+        return null;
     }
 }
 

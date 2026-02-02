@@ -415,7 +415,18 @@
     <!-- Scripts -->
     <script src="vuestock.js"></script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetRack = urlParams.get('rack');
+            const targetLevel = urlParams.get('level');
+            const targetSlot = urlParams.get('slot');
 
+            if (targetRack || targetLevel || targetSlot) {
+                window.vuestockTarget = { rack: targetRack, level: targetLevel, slot: targetSlot };
+            }
+        });
+    </script>
 
 </body>
 </html>
