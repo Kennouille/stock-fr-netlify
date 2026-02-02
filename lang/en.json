@@ -13,6 +13,9 @@
     "returnProjectDesc": "Return items from a project to stock",
     "scan": "Scan",
     "input": "Enter",
-    "chooseProject": "Choose Project"
+    "chooseProject": "Choose Project",
+    "role.admin": "Administrator",
+  "role.user": "User",
+  "alert.selectArticle": "Please select an article from the interface or search first."
 
 }

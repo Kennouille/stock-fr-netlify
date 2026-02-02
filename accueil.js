@@ -2790,10 +2790,15 @@ function updateUserInterface() {
 
     if (currentUser.isAdmin) {
         roleBadge.classList.add('admin');
-        roleText.textContent = 'Administrateur';
+        roleText.setAttribute('data-i18n', 'role.admin');
     } else {
         roleBadge.classList.add('user');
-        roleText.textContent = 'Utilisateur';
+        roleText.setAttribute('data-i18n', 'role.user');
+    }
+
+    // Réappliquer les traductions
+    if (typeof translatePage === 'function') {
+        translatePage();
     }
 
     // Gestion du bouton Inventaire
@@ -2804,44 +2809,38 @@ function updateUserInterface() {
         inventoryLink.addEventListener('click', (e) => {
             e.preventDefault();
 
-            // 1. D'abord essayer de récupérer depuis le QuadManager
             let article = window.accueilQuadManager?.getSelectedArticle();
 
-            // 2. Si rien trouvé, essayer depuis la recherche (nouveau)
             if (!article && window.selectedArticle) {
                 article = window.selectedArticle;
             }
 
             if (!article) {
-                alert("Sélectionnez d'abord un article dans l'interface ou via la recherche.");
+                // Traduire aussi les alertes
+                const message = translations['alert.selectArticle'] || "Sélectionnez d'abord un article dans l'interface ou via la recherche.";
+                alert(message);
                 return;
             }
 
-            // Construire l'URL
             const url = new URL('vuestock.html', window.location.origin);
-
-            // Paramètres obligatoires
             url.searchParams.set('articleId', article.id);
             url.searchParams.set('articleName', article.nom || '');
 
-            // Paramètres de localisation (à vérifier dans les logs)
-            console.log("Article sélectionné:", article); // Ajoute ce log pour vérifier les propriétés
+            console.log("Article sélectionné:", article);
 
-            // Si tu as accès à ces propriétés dans l'objet article
             if (article.rack_code) url.searchParams.set('rack', article.rack_code);
             if (article.level_code) url.searchParams.set('level', article.level_code);
             if (article.slot_code) url.searchParams.set('slot', article.slot_code);
 
-            // Alternative si les propriétés sont stockées différemment
             if (article.w_vuestock_racks?.code) url.searchParams.set('rack', article.w_vuestock_racks.code);
             if (article.w_vuestock_levels?.code) url.searchParams.set('level', article.w_vuestock_levels.code);
             if (article.w_vuestock_slots?.code) url.searchParams.set('slot', article.w_vuestock_slots.code);
 
             window.location.href = url.toString();
         });
-
     }
 }
+
 
 function toggleAdminSection() {
     const adminSection = document.getElementById('adminSection');
