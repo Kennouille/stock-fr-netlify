@@ -3006,9 +3006,15 @@ class QuadViewManager {
             this.slotAnimationTimeout = null;
         }
 
-        // Réinitialiser la sélection dans QuadView
+        // ✅ NOUVEAU : Réinitialiser l'ancienne sélection
         this.selectedSlot = null;
         this.selectedLevel = null;
+        this.isSlotAnimating = false;
+
+        // ✅ NOUVEAU : Redessiner la vue Front pour enlever le cadre jaune
+        if (this.selectedRack) {
+            this.drawFrontView(this.selectedRack);
+        }
 
         const slotId = slotElement.dataset.slotId;
         const slotCode = slotElement.dataset.slotCode;
