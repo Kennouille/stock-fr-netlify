@@ -2814,20 +2814,29 @@ function updateUserInterface() {
                 return;
             }
 
-            // Construire l'URL (modifié pour gérer les deux sources)
+            // Construire l'URL
             const url = new URL('vuestock.html', window.location.origin);
-            url.searchParams.set('articleId', article.id); // Ajout de l'ID
+
+            // Paramètres obligatoires
+            url.searchParams.set('articleId', article.id);
             url.searchParams.set('articleName', article.nom || '');
 
-            // Garder les infos d'emplacement si disponibles
-            if (article.rack_code || article.rack_display_name) {
-                url.searchParams.set('rack', article.rack_code || article.rack_display_name);
-                url.searchParams.set('level', article.level_code || '');
-                url.searchParams.set('slot', article.slot_code || '');
-            }
+            // Paramètres de localisation (à vérifier dans les logs)
+            console.log("Article sélectionné:", article); // Ajoute ce log pour vérifier les propriétés
+
+            // Si tu as accès à ces propriétés dans l'objet article
+            if (article.rack_code) url.searchParams.set('rack', article.rack_code);
+            if (article.level_code) url.searchParams.set('level', article.level_code);
+            if (article.slot_code) url.searchParams.set('slot', article.slot_code);
+
+            // Alternative si les propriétés sont stockées différemment
+            if (article.w_vuestock_racks?.code) url.searchParams.set('rack', article.w_vuestock_racks.code);
+            if (article.w_vuestock_levels?.code) url.searchParams.set('level', article.w_vuestock_levels.code);
+            if (article.w_vuestock_slots?.code) url.searchParams.set('slot', article.w_vuestock_slots.code);
 
             window.location.href = url.toString();
         });
+
     }
 }
 

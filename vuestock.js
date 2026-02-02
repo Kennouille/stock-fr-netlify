@@ -4264,14 +4264,20 @@ class VueStock {
     }
 
     init() {
-    // Protection anti-double init
+        // Protection anti-double init
         if (this.initialized) {
             console.warn("⚠️ VueStock déjà initialisé, retour de l'instance existante");
-            return this; // <-- Retourne l'instance EXISTANTE au lieu de relancer l'init
+            return this;
         }
         this.initialized = true;
 
         console.log('VueStock initialisé (1ère fois)');
+
+        // Récupérer les paramètres URL
+        const urlParams = new URLSearchParams(window.location.search);
+        this.rackCode = urlParams.get('rack');
+        this.levelCode = urlParams.get('level');
+        this.slotCode = urlParams.get('slot');
 
         this.initEvents();
         this.loadData();
@@ -4295,15 +4301,50 @@ class VueStock {
                 console.log('Initialisation de QuadViewManager...');
                 this.quadViewManager = new QuadViewManager();
 
-                // Passer les racks chargés
-                if (this.racks && this.racks.length > 0) {
-                    debugLog('quadView', 'Passage de', this.racks.length, 'racks');
-                    this.quadViewManager.updateAllViews(this.racks);
-                }
+                // Récupérer les paramètres de l'URL
+                const params = new URLSearchParams(window.location.search);
+                const rackCode = params.get('rack');
+                const levelCode = params.get('level');
+                const slotCode = params.get('slot');
 
+                // Si des paramètres sont présents dans l'URL, les utiliser
+                if (rackCode || levelCode || slotCode) {
+                    // Trouver le rack correspondant dans this.racks
+                    const selectedRack = this.racks.find(rack => rack.code === rackCode);
+
+                    if (selectedRack) {
+                        // Mettre à jour la vue avec le rack sélectionné
+                        this.quadViewManager.updateAllViews([selectedRack]);
+
+                        // Si un level est spécifié
+                        if (levelCode) {
+                            const selectedLevel = selectedRack.levels.find(level => level.code === levelCode);
+                            if (selectedLevel) {
+                                // Mettre à jour la vue avec le level sélectionné
+                                this.quadViewManager.updateLevelView(selectedLevel);
+                            }
+                        }
+
+                        // Si un slot est spécifié
+                        if (slotCode) {
+                            const selectedSlot = selectedRack.slots.find(slot => slot.code === slotCode);
+                            if (selectedSlot) {
+                                // Mettre à jour la vue avec le slot sélectionné
+                                this.quadViewManager.updateSlotView(selectedSlot);
+                            }
+                        }
+                    }
+                } else {
+                    // Si aucun paramètre n'est présent dans l'URL, passer tous les racks
+                    if (this.racks && this.racks.length > 0) {
+                        debugLog('quadView', 'Passage de', this.racks.length, 'racks');
+                        this.quadViewManager.updateAllViews(this.racks);
+                    }
+                }
             }, 1500);
         }
     }
+
 
     // ===== GESTION DES VUES =====
     showView(viewName) {
@@ -4482,7 +4523,24 @@ class VueStock {
 
         // Afficher la vue
         this.showView('level');
+
+        // Mettre à jour l'URL avec le niveau sélectionné
+        const url = new URL(window.location);
+        url.searchParams.set('level', level.code);
+        window.history.pushState({}, '', url);
     }
+
+    goToSlotView(slot) {
+        this.selectedSlot = slot;
+        document.getElementById('slotTitle').textContent = slot.code;
+        document.getElementById('slotLevelTitle').textContent = this.selectedLevel.code;
+        document.getElementById('slotCodeInput').value = slot.code;
+        this.showView('slot');
+        const url = new URL(window.location);
+        url.searchParams.set('slot', slot.code);
+        window.history.pushState({}, '', url);
+    }
+
 
     // ===== GESTION DES ÉTAGÈRES =====
     async addRack(rackData) {
@@ -5008,34 +5066,29 @@ class VueStock {
     }
 
     autoSelectTarget() {
-        if (!window.vuestockTarget) return;
-
-        const { rack, level, slot } = window.vuestockTarget;
-        console.log('🎯 Cible détectée:', { rack, level, slot });
-
-        // 1. Sélectionner le rack
-        if (rack) {
-            const targetRack = this.racks.find(r => r.code === rack);
+        // Gestion des paramètres URL
+        if (this.rackCode) {
+            const targetRack = this.racks.find(r => r.code === this.rackCode);
             if (targetRack) {
                 this.goToRackView(targetRack);
-                console.log('✅ Rack sélectionné:', targetRack.code);
+                console.log('✅ Rack sélectionné depuis URL:', targetRack.code);
 
-                // 2. Sélectionner le niveau (après un délai pour laisser le temps au rendu)
-                if (level) {
+                // Gestion du niveau depuis URL
+                if (this.levelCode) {
                     setTimeout(() => {
-                        const targetLevel = targetRack.levels?.find(l => l.code === level);
+                        const targetLevel = targetRack.levels?.find(l => l.code === this.levelCode);
                         if (targetLevel) {
                             this.goToLevelView(targetLevel);
-                            console.log('✅ Niveau sélectionné:', targetLevel.code);
+                            console.log('✅ Niveau sélectionné depuis URL:', targetLevel.code);
 
-                            // 3. Mettre en évidence l'emplacement (après un délai)
-                            if (slot) {
+                            // Gestion du slot depuis URL
+                            if (this.slotCode) {
                                 setTimeout(() => {
-                                    const slotElement = document.querySelector(`.slot-item[data-slot-code="${slot}"]`);
+                                    const slotElement = document.querySelector(`.slot-item[data-slot-code="${this.slotCode}"]`);
                                     if (slotElement) {
                                         slotElement.classList.add('pulse');
                                         slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                        console.log('✅ Emplacement mis en évidence:', slot);
+                                        console.log('✅ Emplacement mis en évidence depuis URL:', this.slotCode);
                                     }
                                 }, 500);
                             }
@@ -5044,7 +5097,46 @@ class VueStock {
                 }
             }
         }
+
+        // Gestion de la cible traditionnelle (si elle existe)
+        if (window.vuestockTarget) {
+            const { rack, level, slot } = window.vuestockTarget;
+            console.log('🎯 Cible traditionnelle détectée:', { rack, level, slot });
+
+            // 1. Sélectionner le rack
+            if (rack) {
+                const targetRack = this.racks.find(r => r.code === rack);
+                if (targetRack) {
+                    this.goToRackView(targetRack);
+                    console.log('✅ Rack sélectionné (traditionnel):', targetRack.code);
+
+                    // 2. Sélectionner le niveau (après un délai pour laisser le temps au rendu)
+                    if (level) {
+                        setTimeout(() => {
+                            const targetLevel = targetRack.levels?.find(l => l.code === level);
+                            if (targetLevel) {
+                                this.goToLevelView(targetLevel);
+                                console.log('✅ Niveau sélectionné (traditionnel):', targetLevel.code);
+
+                                // 3. Mettre en évidence l'emplacement (après un délai)
+                                if (slot) {
+                                    setTimeout(() => {
+                                        const slotElement = document.querySelector(`.slot-item[data-slot-code="${slot}"]`);
+                                        if (slotElement) {
+                                            slotElement.classList.add('pulse');
+                                            slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            console.log('✅ Emplacement mis en évidence (traditionnel):', slot);
+                                        }
+                                    }, 500);
+                                }
+                            }
+                        }, 500);
+                    }
+                }
+            }
+        }
     }
+
 
     displayRacksFromAPI() {
         // Nettoyer le canvas
@@ -5615,19 +5707,52 @@ class VueStock {
 
 // ===== INITIALISATION AU CHARGEMENT =====
 document.addEventListener('DOMContentLoaded', () => {
-    window.vueStock = new VueStock();
-});
+    // Récupérer les paramètres URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const rackCode = urlParams.get('rack');
+    const levelCode = urlParams.get('level');
+    const slotCode = urlParams.get('slot');
 
-document.addEventListener('DOMContentLoaded', () => {
     window.vueStock = new VueStock();
 
     // Initialiser la vue quad après un délai
     setTimeout(() => {
         if (window.vueStock.quadViewManager) {
             window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
+
+            // Si on a des paramètres de localisation, les utiliser
+            if (rackCode) {
+                const rack = window.vueStock.racks.find(r => r.code === rackCode);
+                if (rack) {
+                    window.vueStock.goToRackView(rack);
+
+                    if (levelCode) {
+                        setTimeout(() => {
+                            const level = rack.levels?.find(l => l.code === levelCode);
+                            if (level) {
+                                window.vueStock.goToLevelView(level);
+
+                                if (slotCode) {
+                                    setTimeout(() => {
+                                        const slot = level.slots?.find(s => s.code === slotCode);
+                                        if (slot) {
+                                            const slotElement = document.querySelector(`.slot-item[data-slot-id="${slot.id}"]`);
+                                            if (slotElement) {
+                                                slotElement.classList.add('pulse');
+                                                slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            }
+                                        }
+                                    }, 500);
+                                }
+                            }
+                        }, 500);
+                    }
+                }
+            }
         }
     }, 1000);
 });
+
 
 // Debug button pour tester QuadView
 document.addEventListener('DOMContentLoaded', () => {
