@@ -2187,22 +2187,35 @@ function getStockLevel(stock) {
     color: #e74c3c !important; /* Rouge pour forte occupation */
 }
 
-/* Animation battement pour slot sélectionné */
+/* Cadre jaune STATIQUE (permanent) */
 .quad-slot.selected-slot {
     border: 3px solid #ffd700 !important;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
-    animation: pulse-slot 1.5s ease-in-out infinite;
-    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    transform: scale(1.02);
     z-index: 100;
+    transition: all 0.3s ease;
+}
+
+/* Animation BATTEMENT (3 secondes seulement) */
+.quad-slot.selected-slot.animating {
+    animation: pulse-slot 0.8s ease-in-out 4; /* 4 fois = ~3.2 secondes */
+    transform: scale(1.05);
 }
 
 @keyframes pulse-slot {
     0%, 100% {
         box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
         border-color: #ffd700;
+        transform: scale(1.05);
     }
     50% {
-        box-shadow: 0 0 35px rgba(255, 215, 0, 1);
+        box-shadow: 0 0 40px rgba(255, 215, 0, 1);
         border-color: #ffed4e;
+        transform: scale(1.08);
     }
+}
+
+/* Cadre jaune pour le LEVEL dans Front View */
+.quad-level-highlight {
+    /* Appliqué via canvas, pas CSS */
 }

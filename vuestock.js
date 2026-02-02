@@ -991,6 +991,8 @@ class QuadViewManager {
         this.currentView = 'quad'; // 'quad' ou 'single'
         this.selectedRack = null;
         this.selectedLevel = null;
+        this.slotAnimationTimeout = null;
+        this.isSlotAnimating = false;
 
         // Propriétés pour la vue 3D isométrique rotative
         this.rotation3D = 0; // Angle de rotation actuel (0-360°)
@@ -2233,12 +2235,15 @@ class QuadViewManager {
                     ctx.lineWidth = 4;
                     ctx.strokeRect(startX - 2, levelTop - 2, rackWidth + 4, levelHeight + 4);
 
-                    // Effet glow
-                    ctx.shadowColor = '#ffd700';
-                    ctx.shadowBlur = 10;
-                    ctx.strokeRect(startX - 2, levelTop - 2, rackWidth + 4, levelHeight + 4);
-                    ctx.shadowBlur = 0;
+                    // Effet glow (seulement si en animation)
+                    if (this.isSlotAnimating) {
+                        ctx.shadowColor = '#ffd700';
+                        ctx.shadowBlur = 15;
+                        ctx.strokeRect(startX - 2, levelTop - 2, rackWidth + 4, levelHeight + 4);
+                        ctx.shadowBlur = 0;
+                    }
                 }
+
 
                 // Séparateur
                 ctx.strokeStyle = '#495057';
@@ -2956,7 +2961,7 @@ class QuadViewManager {
             const stockLevel = article ? this.getStockLevel(article) : '';
 
             html += `
-                <div class="quad-slot ${zoomClass} ${article ? 'occupied ' + stockLevel : ''} ${this.selectedSlot && this.selectedSlot.id === slot.id ? 'selected-slot' : ''}"
+                <div class="quad-slot ${zoomClass} ${article ? 'occupied ' + stockLevel : ''} ${this.selectedSlot && this.selectedSlot.id === slot.id ? 'selected-slot animating' : ''}"
                      data-slot-id="${slot.id}"
                      data-slot-code="${slot.code}"
                      data-full-code="${slot.full_code}"
@@ -2989,6 +2994,22 @@ class QuadViewManager {
 
     // NOUVELLE MÉTHODE - Ouvrir le modal
     openStockModal(slotElement) {
+        // ✅ NOUVEAU : Retirer la sélection précédente
+        const previousSelected = document.querySelectorAll('.quad-slot.selected-slot');
+        previousSelected.forEach(slot => {
+            slot.classList.remove('selected-slot', 'animating');
+        });
+
+        // Nettoyer le timeout d'animation
+        if (this.slotAnimationTimeout) {
+            clearTimeout(this.slotAnimationTimeout);
+            this.slotAnimationTimeout = null;
+        }
+
+        // Réinitialiser la sélection dans QuadView
+        this.selectedSlot = null;
+        this.selectedLevel = null;
+
         const slotId = slotElement.dataset.slotId;
         const slotCode = slotElement.dataset.slotCode;
         const fullCode = slotElement.dataset.fullCode;
@@ -5227,6 +5248,30 @@ class VueStock {
 
                         // ✅ Recréer le tiroir pour montrer le slot sélectionné
                         this.quadViewManager.updateLevelView(foundLevel);
+
+                        // ✅ Retirer l'animation après 3 secondes (garde le cadre jaune)
+                        if (this.quadViewManager.slotAnimationTimeout) {
+                            clearTimeout(this.quadViewManager.slotAnimationTimeout);
+                        }
+
+                        this.quadViewManager.isSlotAnimating = true;
+
+                        this.quadViewManager.slotAnimationTimeout = setTimeout(() => {
+                            // Retirer la classe "animating" mais garder "selected-slot"
+                            const animatingSlots = document.querySelectorAll('.quad-slot.animating');
+                            animatingSlots.forEach(slot => {
+                                slot.classList.remove('animating');
+                            });
+
+                            this.quadViewManager.isSlotAnimating = false;
+
+                            // ✅ NOUVEAU : Redessiner le front view sans le glow
+                            this.quadViewManager.drawFrontView(foundRack);
+
+                            console.log('✅ Animation terminée, cadre jaune conservé');
+                        }, 3200);
+
+
 
                         // ✅ Redessiner toutes les vues avec les sélections
                         this.quadViewManager.updateAllViews(this.racks);
