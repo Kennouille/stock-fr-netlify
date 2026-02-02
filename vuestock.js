@@ -4265,25 +4265,22 @@ class VueStock {
     }
 
     init() {
-        // Empêcher la double initialisation
-        if (window.vuestockInstance) {
-            console.warn("Instance VueStock déjà existante - annulation");
-            return window.vuestockInstance;
+    // Protection anti-double init
+        if (this.initialized) {
+            console.warn("Déjà initialisé - ignoré");
+            return;
         }
-        window.vuestockInstance = this;
+        this.initialized = true;
 
-        console.log('VueStock initialisé (instance unique)');
+        console.log('VueStock initialisé (1ère fois)');
 
-        // Le reste de ton code existant...
         this.initEvents();
-        this.loadData().then(() => {
-            // [Ton code existant pour la sélection depuis l'URL]
+        this.loadData().then(() => {  // Attend la fin du chargement
             this.autoSelectTarget();
             this.showView('plan');
             this.updateStats();
         });
     }
-
 
 
     // AJOUTER CETTE MÉTHODE APRÈS init()
