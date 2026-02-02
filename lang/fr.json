@@ -1,0 +1,18 @@
+{
+    "loading": "Chargement...",
+    "logout": "Déconnexion",
+    "quickActions": "Actions rapides",
+    "dailyOperations": "Opérations quotidiennes de gestion de stock",
+    "stockOut": "Sortie de stock",
+    "stockOutDesc": "Retirer des articles du stock pour un projet",
+    "stockIn": "Entrée de stock",
+    "stockInDesc": "Ajouter de nouveaux articles ou réapprovisionner",
+    "reservation": "Réservation projet",
+    "reservationDesc": "Réserver des articles pour un futur projet",
+    "returnProject": "Retour projet en stock",
+    "returnProjectDesc": "Retourner des articles d'un projet vers le stock",
+    "scan": "Scanner",
+    "input": "Saisir",
+    "chooseProject": "Choisir projet"
+
+}

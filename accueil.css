@@ -3322,3 +3322,27 @@ button.close-modal:hover {
     border-radius: 10px;
     font-weight: bold;
 }
+
+.lang-btn {
+    background: none;
+    border: 2px solid transparent;
+    padding: 3px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.lang-btn img {
+    width: 24px;
+    height: 16px;
+    display: block;
+}
+
+.lang-btn:hover {
+    border-color: var(--primary-color);
+}
+
+.lang-btn.active {
+    border-color: var(--primary-color);
+    background: rgba(74, 144, 226, 0.1);
+}
