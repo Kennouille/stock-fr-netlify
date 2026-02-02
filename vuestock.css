@@ -2186,3 +2186,23 @@ function getStockLevel(stock) {
 .occupation-high {
     color: #e74c3c !important; /* Rouge pour forte occupation */
 }
+
+/* Animation battement pour slot sélectionné */
+.quad-slot.selected-slot {
+    border: 3px solid #ffd700 !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    animation: pulse-slot 1.5s ease-in-out infinite;
+    transform: scale(1.05);
+    z-index: 100;
+}
+
+@keyframes pulse-slot {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        border-color: #ffd700;
+    }
+    50% {
+        box-shadow: 0 0 35px rgba(255, 215, 0, 1);
+        border-color: #ffed4e;
+    }
+}

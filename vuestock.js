@@ -2205,12 +2205,12 @@ class QuadViewManager {
         ctx.clearRect(0, 0, width, height);
 
         // Dessiner le rack en élévation
-        const rackWidth = rack.width * 30; // 30px par case en largeur
+        const rackWidth = rack.width * 30;
         const startX = (width - rackWidth) / 2;
-        const startY = height - 20; // Bas du canvas
+        const startY = height - 20;
 
         // Base du rack
-        ctx.fillStyle = rack.color || '#4a90e2';  // ← Couleur du rack
+        ctx.fillStyle = rack.color || '#4a90e2';
         ctx.fillRect(startX, startY - 10, rackWidth, 10);
 
         // Niveaux (du bas vers le haut)
@@ -2218,27 +2218,41 @@ class QuadViewManager {
             const levels = [...rack.levels].sort((a, b) => a.display_order - b.display_order);
 
             let currentY = startY - 10;
+            const levelHeight = 40;
 
             levels.forEach(level => {
+                const levelTop = currentY - levelHeight;
+
                 // Étage
                 ctx.fillStyle = level.code % 20 === 0 ? '#6c757d' : '#adb5bd';
-                const levelHeight = 40; // Hauteur fixe par niveau
+                ctx.fillRect(startX, levelTop, rackWidth, levelHeight);
 
-                ctx.fillRect(startX, currentY - levelHeight, rackWidth, levelHeight);
+                // ✅ NOUVEAU : Cadre jaune si level sélectionné
+                if (this.selectedLevel && this.selectedLevel.id === level.id) {
+                    ctx.strokeStyle = '#ffd700';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(startX - 2, levelTop - 2, rackWidth + 4, levelHeight + 4);
+
+                    // Effet glow
+                    ctx.shadowColor = '#ffd700';
+                    ctx.shadowBlur = 10;
+                    ctx.strokeRect(startX - 2, levelTop - 2, rackWidth + 4, levelHeight + 4);
+                    ctx.shadowBlur = 0;
+                }
 
                 // Séparateur
                 ctx.strokeStyle = '#495057';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(startX, currentY - levelHeight);
-                ctx.lineTo(startX + rackWidth, currentY - levelHeight);
+                ctx.moveTo(startX, levelTop);
+                ctx.lineTo(startX + rackWidth, levelTop);
                 ctx.stroke();
 
                 // Code de l'étage
                 ctx.fillStyle = '#fff';
                 ctx.font = 'bold 12px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText(level.code, startX + rackWidth/2, currentY - levelHeight/2);
+                ctx.fillText(level.code, startX + rackWidth/2, levelTop + levelHeight/2);
 
                 currentY -= levelHeight;
             });
@@ -2248,7 +2262,6 @@ class QuadViewManager {
             ctx.fillStyle = 'rgba(0,0,0,0.1)';
             ctx.fillRect(startX - 30, currentY, 25, totalHeight);
 
-            // Étiquette de hauteur
             ctx.fillStyle = '#333';
             ctx.font = '10px Arial';
             ctx.textAlign = 'right';
@@ -2262,9 +2275,9 @@ class QuadViewManager {
         ctx.textAlign = 'center';
         ctx.fillText(`Rack ${rack.code}`, width/2, height - 5);
 
-        // Mettre à jour l'info
         document.getElementById('quadSelectedRack').textContent = `Rack ${rack.code} - ${rack.levels?.length || 0} étages`;
     }
+
 
     handleFrontViewClick(e) {
         if (!this.selectedRack || !this.selectedRack.levels?.length) return;
@@ -2943,7 +2956,7 @@ class QuadViewManager {
             const stockLevel = article ? this.getStockLevel(article) : '';
 
             html += `
-                <div class="quad-slot ${zoomClass} ${article ? 'occupied ' + stockLevel : ''}"
+                <div class="quad-slot ${zoomClass} ${article ? 'occupied ' + stockLevel : ''} ${this.selectedSlot && this.selectedSlot.id === slot.id ? 'selected-slot' : ''}"
                      data-slot-id="${slot.id}"
                      data-slot-code="${slot.code}"
                      data-full-code="${slot.full_code}"
@@ -5208,6 +5221,12 @@ class VueStock {
                         // ✅ Sélectionner le slot dans QuadView
                         this.quadViewManager.selectedSlot = foundSlot;
                         console.log('➡️ Slot sélectionné dans QuadView:', foundSlot.code);
+
+                        // ✅ Redessiner la vue Front pour montrer le level sélectionné
+                        this.quadViewManager.drawFrontView(foundRack);
+
+                        // ✅ Recréer le tiroir pour montrer le slot sélectionné
+                        this.quadViewManager.updateLevelView(foundLevel);
 
                         // ✅ Redessiner toutes les vues avec les sélections
                         this.quadViewManager.updateAllViews(this.racks);
