@@ -14,6 +14,18 @@ async function loadTranslations(lang) {
     }
 }
 
+// Fonction de traduction avec paramètres
+function t(key, params = {}) {
+    let text = translations[key] || key;
+
+    // Remplacer les paramètres {{variable}}
+    Object.keys(params).forEach(param => {
+        text = text.replace(`{{${param}}}`, params[param]);
+    });
+
+    return text;
+}
+
 // Traduire la page
 function translatePage() {
     // Textes normaux
@@ -32,7 +44,6 @@ function translatePage() {
         }
     });
 }
-
 
 // Changer de langue
 async function changeLanguage(lang) {
@@ -64,3 +75,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 });
+
+// 🔥 EXPORT : Ajoute cette ligne à la fin
+export const i18n = {
+    t,
+    changeLanguage,
+    translatePage,
+    getCurrentLanguage: () => currentLanguage
+};
