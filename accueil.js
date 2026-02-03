@@ -7317,7 +7317,7 @@ class AccueilQuadManager {
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`RACK ${rack.code}`, x + w/2, y + h/2);
+        ctx.fillText(`RACK ${display_name}`, x + w/2, y + h/2);
 
         // Légende
         ctx.fillStyle = '#333';
