@@ -1,6 +1,28 @@
 // Importar Supabase desde tu archivo
 import { supabase } from './supabaseClient.js';
 
+// ===== NUEVA FUNCIÓN: Actualizar último login =====
+async function updateLastLogin(userId) {
+    try {
+        const now = new Date().toISOString();
+        const { error } = await supabase
+            .from('w_users')
+            .update({
+                last_login: now
+            })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Error al actualizar last_login:', error);
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error('Error:', error);
+        return false;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     const splash = document.getElementById('splashScreen');
     const loginContainer = document.querySelector('.login-container');
@@ -71,6 +93,9 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
         // Verificar la contraseña
         if (password === userData.password) {
+            // ACTUALIZAR EL ÚLTIMO LOGIN EN LA BASE DE DATOS
+            await updateLastLogin(userData.id);
+
             // Conexión exitosa - almacenar la información del usuario
             sessionStorage.setItem('current_user', JSON.stringify({
                 id: userData.id,
