@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient.js';
 
-// Éléments DOM et variables
+// Elementos DOM y variables
 let currentUser = null;
 let printQueue = [];
 let currentPreviewIndex = 0;
@@ -18,9 +18,9 @@ let printSettings = {
 };
 let scanStream = null;
 
-// ===== NOTIFICATIONS =====
+// ===== NOTIFICACIONES =====
 function showNotification(message, type = 'info') {
-    // Supprimer les notifications existantes
+    // Eliminar las notificaciones existentes
     const existingNotifications = document.querySelectorAll('.custom-notification');
     existingNotifications.forEach(notif => {
         if (notif.parentNode) {
@@ -68,9 +68,9 @@ function showNotification(message, type = 'info') {
         <i class="fas fa-${icons[type]}" style="font-size: 1.2rem;"></i>
         <div style="flex: 1;">
             <div style="font-weight: bold; margin-bottom: 4px;">
-                ${type === 'info' ? 'Information' :
-                  type === 'success' ? 'Succès' :
-                  type === 'error' ? 'Erreur' : 'Attention'}
+                ${type === 'info' ? 'Información' :
+                  type === 'success' ? 'Éxito' :
+                  type === 'error' ? 'Error' : 'Atención'}
             </div>
             <div style="font-size: 0.9rem; color: #333;">${message}</div>
         </div>
@@ -81,14 +81,14 @@ function showNotification(message, type = 'info') {
 
     document.body.appendChild(notification);
 
-    // Fermer au clic
+    // Cerrar al hacer clic
     notification.querySelector('.close-notification').addEventListener('click', () => {
         if (notification.parentNode) {
             document.body.removeChild(notification);
         }
     });
 
-    // Fermer automatiquement après 5 secondes
+    // Cerrar automáticamente después de 5 segundos
     setTimeout(() => {
         if (notification.parentNode) {
             document.body.removeChild(notification);
@@ -96,7 +96,7 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Ajouter l'animation CSS pour les notifications
+// Añadir la animación CSS para las notificaciones
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideIn {
@@ -113,20 +113,20 @@ style.textContent = `
 document.head.appendChild(style);
 
 document.addEventListener('DOMContentLoaded', async function() {
-    // Vérifier l'authentification
+    // Verificar la autenticación
     await checkAuth();
 
-    // Initialiser les événements
+    // Inicializar los eventos
     setupEventListeners();
 
-    // Initialiser les paramètres
+    // Inicializar los ajustes
     initializeSettings();
 
-    // Cacher le loading
+    // Ocultar la carga
     document.getElementById('loadingOverlay').style.display = 'none';
 });
 
-// ===== AUTHENTIFICATION =====
+// ===== AUTENTICACIÓN =====
 async function checkAuth() {
     try {
         const userJson = sessionStorage.getItem('current_user');
@@ -138,57 +138,57 @@ async function checkAuth() {
 
         currentUser = JSON.parse(userJson);
 
-        // Vérifier les permissions
+        // Verificar los permisos
         if (!currentUser.permissions?.impression) {
-            alert('Vous n\'avez pas la permission d\'imprimer des étiquettes');
+            alert('No tiene permiso para imprimir etiquetas');
             window.location.href = 'accueil.html';
             return;
         }
 
-        // Mettre à jour l'interface
+        // Actualizar la interfaz
         document.getElementById('usernameDisplay').textContent = currentUser.username;
 
     } catch (error) {
-        console.error('Erreur d\'authentification:', error);
+        console.error('Error de autenticación:', error);
         sessionStorage.removeItem('current_user');
         window.location.href = 'connexion.html';
     }
 }
 
-// ===== INITIALISATION =====
+// ===== INICIALIZACIÓN =====
 function initializeSettings() {
-    // Charger les paramètres sauvegardés
+    // Cargar los ajustes guardados
     const savedSettings = localStorage.getItem('labelSettings');
     if (savedSettings) {
         printSettings = { ...printSettings, ...JSON.parse(savedSettings) };
         applySavedSettings();
     }
 
-    // Mettre à jour les sliders
+    // Actualizar los sliders
     updateSliderValues();
 }
 
 function applySavedSettings() {
-    // Format
+    // Formato
     document.querySelector(`input[name="labelFormat"][value="${printSettings.format}"]`).checked = true;
 
-    // Options
+    // Opciones
     document.getElementById('optionShowPrice').checked = printSettings.showPrice;
     document.getElementById('optionShowStock').checked = printSettings.showStock;
     document.getElementById('optionShowDate').checked = printSettings.showDate;
     document.getElementById('optionShowLocation').checked = printSettings.showLocation;
 
-    // Copies
+    // Copias
     document.getElementById('copiesPerLabel').value = printSettings.copiesPerLabel;
 
-    // Orientation
+    // Orientación
     document.getElementById('labelOrientation').value = printSettings.orientation;
 
     // Sliders
     document.getElementById('barcodeHeight').value = printSettings.barcodeHeight;
     document.getElementById('marginSize').value = printSettings.margin;
 
-    // Taille police
+    // Tamaño de fuente
     document.getElementById('fontSize').value = printSettings.fontSize;
 }
 
@@ -200,12 +200,12 @@ function updateSliderValues() {
         `${document.getElementById('marginSize').value} mm`;
 }
 
-// ===== GESTION DES ÉVÉNEMENTS =====
+// ===== GESTIÓN DE EVENTOS =====
 function setupEventListeners() {
-    // Déconnexion
+    // Cerrar sesión
     document.getElementById('logoutBtn').addEventListener('click', logout);
 
-    // Onglets
+    // Pestañas
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const tab = this.dataset.tab;
@@ -213,7 +213,7 @@ function setupEventListeners() {
         });
     });
 
-    // Recherche unique
+    // Búsqueda única
     document.getElementById('searchNumberBtn').addEventListener('click', () => {
         searchByNumber('single');
     });
@@ -226,7 +226,7 @@ function setupEventListeners() {
         if (e.key === 'Enter') searchByBarcode('single');
     });
 
-    // Recherche multiple
+    // Búsqueda múltiple
     document.getElementById('multipleSearch').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') searchForMultiple();
     });
@@ -235,10 +235,10 @@ function setupEventListeners() {
         searchForMultiple();
     });
 
-    // Actions liste
+    // Acciones de la lista
     document.getElementById('clearListBtn').addEventListener('click', clearPrintList);
 
-    // Paramètres
+    // Ajustes
     document.querySelectorAll('input[name="labelFormat"]').forEach(radio => {
         radio.addEventListener('change', updatePrintFormat);
     });
@@ -255,20 +255,20 @@ function setupEventListeners() {
     document.getElementById('marginSize').addEventListener('input', updateMargin);
     document.getElementById('resetSettingsBtn').addEventListener('click', resetSettings);
 
-    // Aperçu
+    // Vista previa
     document.getElementById('togglePreviewBtn').addEventListener('click', togglePreview);
     document.getElementById('previousLabelBtn').addEventListener('click', showPreviousLabel);
     document.getElementById('nextLabelBtn').addEventListener('click', showNextLabel);
 
-    // Actions d'impression
+    // Acciones de impresión
     document.getElementById('generatePdfBtn').addEventListener('click', generatePDF);
 
-    // Scan modal
+    // Escanear modal
     document.getElementById('scanBarcodeBtn').addEventListener('click', () => {
         openScanModal('single');
     });
 
-    // Modal scan
+    // Modal de escaneo
     document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', function() {
             closeScanModal();
@@ -280,13 +280,13 @@ function setupEventListeners() {
     document.getElementById('toggleFlashBtn').addEventListener('click', toggleFlash);
     document.getElementById('confirmManualBarcodeBtn').addEventListener('click', confirmManualBarcode);
 
-    // Impression multiple
+    // Impresión múltiple
     document.getElementById('printListBtn').addEventListener('click', printMultipleList);
 }
 
-// ===== GESTION DES ONGLETS =====
+// ===== GESTIÓN DE PESTAÑAS =====
 function switchTab(tab) {
-    // Désactiver tous les onglets
+    // Desactivar todas las pestañas
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
@@ -295,22 +295,22 @@ function switchTab(tab) {
         content.classList.remove('active');
     });
 
-    // Activer l'onglet sélectionné
+    // Activar la pestaña seleccionada
     document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
     document.getElementById(`${tab}Tab`).classList.add('active');
 
-    // Réinitialiser si on change d'onglet
+    // Reiniciar si se cambia de pestaña
     if (tab === 'multiple' || tab === 'mass') {
         document.getElementById('searchResults').style.display = 'none';
     }
 }
 
-// ===== RECHERCHE D'ARTICLES =====
+// ===== BÚSQUEDA DE ARTÍCULOS =====
 async function searchByNumber(context) {
     const number = document.getElementById('articleNumberSearch').value.trim();
 
     if (!number) {
-        alert('Veuillez saisir un numéro d\'article');
+        alert('Por favor, ingrese un número de artículo');
         return;
     }
 
@@ -326,8 +326,8 @@ async function searchByNumber(context) {
         displaySearchResults(articles, context);
 
     } catch (error) {
-        console.error('Erreur recherche par numéro:', error);
-        alert('Erreur lors de la recherche');
+        console.error('Error en la búsqueda por número:', error);
+        alert('Error durante la búsqueda');
     }
 }
 
@@ -335,7 +335,7 @@ async function searchByName(context) {
     const name = document.getElementById('articleNameSearch').value.trim();
 
     if (!name) {
-        alert('Veuillez saisir un nom d\'article');
+        alert('Por favor, ingrese un nombre de artículo');
         return;
     }
 
@@ -351,8 +351,8 @@ async function searchByName(context) {
         displaySearchResults(articles, context);
 
     } catch (error) {
-        console.error('Erreur recherche par nom:', error);
-        alert('Erreur lors de la recherche');
+        console.error('Error en la búsqueda por nombre:', error);
+        alert('Error durante la búsqueda');
     }
 }
 
@@ -360,7 +360,7 @@ async function searchByBarcode(context) {
     const barcode = document.getElementById('barcodeSearch').value.trim();
 
     if (!barcode) {
-        alert('Veuillez saisir ou scanner un code-barre');
+        alert('Por favor, ingrese o escanee un código de barras');
         return;
     }
 
@@ -376,8 +376,8 @@ async function searchByBarcode(context) {
         displaySearchResults(articles, context);
 
     } catch (error) {
-        console.error('Erreur recherche par code-barre:', error);
-        alert('Erreur lors de la recherche');
+        console.error('Error en la búsqueda por código de barras:', error);
+        alert('Error durante la búsqueda');
     }
 }
 
@@ -385,7 +385,7 @@ async function searchForMultiple() {
     const searchTerm = document.getElementById('multipleSearch').value.trim();
 
     if (!searchTerm) {
-        alert('Veuillez saisir un terme de recherche');
+        alert('Por favor, ingrese un término de búsqueda');
         return;
     }
 
@@ -401,12 +401,12 @@ async function searchForMultiple() {
         displayMultipleResults(articles);
 
     } catch (error) {
-        console.error('Erreur recherche multiple:', error);
-        alert('Erreur lors de la recherche');
+        console.error('Error en la búsqueda múltiple:', error);
+        alert('Error durante la búsqueda');
     }
 }
 
-// ===== AFFICHAGE DES RÉSULTATS =====
+// ===== VISUALIZACIÓN DE RESULTADOS =====
 function displaySearchResults(articles, context) {
     const resultsContainer = document.getElementById('resultsContainer');
     const searchResults = document.getElementById('searchResults');
@@ -415,7 +415,7 @@ function displaySearchResults(articles, context) {
         resultsContainer.innerHTML = `
             <div class="no-results">
                 <i class="fas fa-search"></i>
-                <p>Aucun article trouvé</p>
+                <p>No se encontró ningún artículo</p>
             </div>
         `;
         searchResults.style.display = 'block';
@@ -433,13 +433,13 @@ function displaySearchResults(articles, context) {
                 <h4>${article.nom}</h4>
                 <div class="result-details">
                     <span>${article.numero}</span>
-                    <span>${article.code_barre || 'Pas de code-barre'}</span>
+                    <span>${article.code_barre || 'Sin código de barras'}</span>
                     <span>Stock: ${article.stock_actuel || 0}</span>
                 </div>
             </div>
             <div class="result-actions">
                 <button class="btn-action add-to-print" data-id="${article.id}" data-name="${article.nom}" data-number="${article.numero}" data-barcode="${article.code_barre}" data-stock="${article.stock_actuel}" data-price="${article.prix_unitaire}">
-                    <i class="fas fa-plus"></i> Ajouter
+                    <i class="fas fa-plus"></i> Añadir
                 </button>
             </div>
         `;
@@ -447,7 +447,7 @@ function displaySearchResults(articles, context) {
         resultsContainer.appendChild(resultItem);
     });
 
-    // Ajouter les événements aux boutons
+    // Añadir eventos a los botones
     document.querySelectorAll('.add-to-print').forEach(btn => {
         btn.addEventListener('click', function() {
             const articleData = {
@@ -474,8 +474,8 @@ function displaySearchResults(articles, context) {
 }
 
 function displayMultipleResults(articles) {
-    // Créer un modal ou overlay pour sélection multiple
-    // Pour l'instant, on ajoute directement à la liste
+    // Crear un modal o superposición para selección múltiple
+    // Por ahora, se añade directamente a la lista
     if (articles && articles.length > 0) {
         articles.forEach(article => {
             const articleData = {
@@ -500,12 +500,12 @@ function displayMassArticle(article) {
 
     document.getElementById('massArticleName').textContent = article.nom;
     document.getElementById('massArticleNumber').textContent = article.numero;
-    document.getElementById('massArticleBarcode').textContent = article.code_barre || 'Pas de code-barre';
+    document.getElementById('massArticleBarcode').textContent = article.code_barre || 'Sin código de barras';
 
     detailsDiv.style.display = 'block';
 }
 
-// ===== GESTION DE LA LISTE D'IMPRESSION =====
+// ===== GESTIÓN DE LA LISTA DE IMPRESIÓN =====
 function addToPrintList(articleData) {
     const printList = document.getElementById('printList');
     const emptyList = printList.querySelector('.empty-list');
@@ -514,7 +514,7 @@ function addToPrintList(articleData) {
         printList.removeChild(emptyList);
     }
 
-    // Vérifier si l'article est déjà dans la liste
+    // Verificar si el artículo ya está en la lista
     const existingItem = printList.querySelector(`[data-id="${articleData.id}"]`);
     if (existingItem) {
         const quantityInput = existingItem.querySelector('.quantity-input');
@@ -531,7 +531,7 @@ function addToPrintList(articleData) {
         <div class="list-item-info">
             <div class="list-item-name">${articleData.name}</div>
             <div class="list-item-details">
-                ${articleData.number} • ${articleData.barcode || 'Pas de code-barre'}
+                ${articleData.number} • ${articleData.barcode || 'Sin código de barras'}
             </div>
         </div>
         <div class="list-item-quantity">
@@ -549,7 +549,7 @@ function addToPrintList(articleData) {
             </button>
         </div>
         <div class="list-item-actions">
-            <button class="btn-remove" data-id="${articleData.id}" title="Supprimer">
+            <button class="btn-remove" data-id="${articleData.id}" title="Eliminar">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -557,7 +557,7 @@ function addToPrintList(articleData) {
 
     printList.appendChild(listItem);
 
-    // Ajouter les événements
+    // Añadir los eventos
     listItem.querySelector('.minus').addEventListener('click', function() {
         const input = listItem.querySelector('.quantity-input');
         if (input.value > 1) {
@@ -586,8 +586,8 @@ function addToPrintList(articleData) {
             printList.innerHTML = `
                 <div class="empty-list">
                     <i class="fas fa-tags"></i>
-                    <p>Aucun article sélectionné</p>
-                    <small>Ajoutez des articles à partir des résultats de recherche</small>
+                    <p>Ningún artículo seleccionado</p>
+                    <small>Añada artículos desde los resultados de búsqueda</small>
                 </div>
             `;
         }
@@ -597,8 +597,8 @@ function addToPrintList(articleData) {
 }
 
 function updateListItemQuantity(listItem, quantity) {
-    // Mettre à jour la quantité dans l'objet articleData si stocké
-    // Pour l'instant, on met juste à jour l'affichage
+    // Actualizar la cantidad en el objeto articleData si está almacenado
+    // Por ahora, solo se actualiza la visualización
     updateListCount();
 }
 
@@ -611,7 +611,7 @@ function updateListCount() {
         totalItems += quantity;
     });
 
-    document.getElementById('listCount').textContent = `${items.length} articles (${totalItems} étiquettes)`;
+    document.getElementById('listCount').textContent = `${items.length} artículos (${totalItems} etiquetas)`;
 }
 
 function clearPrintList() {
@@ -619,8 +619,8 @@ function clearPrintList() {
     printList.innerHTML = `
         <div class="empty-list">
             <i class="fas fa-tags"></i>
-            <p>Aucun article sélectionné</p>
-            <small>Ajoutez des articles à partir des résultats de recherche</small>
+            <p>Ningún artículo seleccionado</p>
+            <small>Añada artículos desde los resultados de búsqueda</small>
         </div>
     `;
 
@@ -634,18 +634,18 @@ function addMassToPrint() {
     const startNumber = parseInt(document.getElementById('massStartNumber').value) || 1;
 
     if (!articleName || articleName === '') {
-        alert('Veuillez d\'abord sélectionner un article');
+        alert('Por favor, seleccione primero un artículo');
         return;
     }
 
-    // Pour l'instant, on ajoute simplement l'article avec la quantité
-    // Dans une version complète, on pourrait gérer la numérotation séquentielle
+    // Por ahora, simplemente añadimos el artículo con la cantidad
+    // En una versión completa, se podría gestionar la numeración secuencial
     for (let i = 0; i < quantity; i++) {
         const articleData = {
             id: `mass-${Date.now()}-${i}`,
             name: `${articleName} ${startNumber + i > startNumber ? `#${startNumber + i}` : ''}`,
             number: articleNumber,
-            barcode: '', // Générer ou utiliser un code-barre séquentiel
+            barcode: '', // Generar o usar un código de barras secuencial
             stock: 0,
             price: 0,
             quantity: 1,
@@ -655,16 +655,16 @@ function addMassToPrint() {
         addToPrintList(articleData);
     }
 
-    // Réinitialiser le formulaire
+    // Reiniciar el formulario
     document.getElementById('massQuantity').value = 1;
     document.getElementById('massStartNumber').value = 1;
     document.getElementById('massArticleDetails').style.display = 'none';
 }
 
-// ===== FILE D'ATTENTE D'IMPRESSION =====
+// ===== COLA DE IMPRESIÓN =====
 function addToPrintQueue(articles) {
     articles.forEach(article => {
-        // Ajouter le nombre de copies spécifié
+        // Añadir el número de copias especificado
         for (let i = 0; i < printSettings.copiesPerLabel; i++) {
             printQueue.push({ ...article });
         }
@@ -675,25 +675,25 @@ function addToPrintQueue(articles) {
 }
 
 function updatePrintQueue() {
-    // Mettre à jour le récapitulatif
+    // Actualizar el resumen
     const uniqueArticles = [...new Set(printQueue.map(item => item.id))];
 
     document.getElementById('summaryCount').textContent = printQueue.length;
     document.getElementById('summaryArticles').textContent = uniqueArticles.length;
 
-    // Calculer les feuilles estimées (basé sur le format)
+    // Calcular las hojas estimadas (basado en el formato)
     const labelsPerSheet = calculateLabelsPerSheet();
     const estimatedSheets = Math.ceil(printQueue.length / labelsPerSheet);
     document.getElementById('summarySheets').textContent = estimatedSheets;
 
-    // Coût estimé (exemple: 0.05€ par feuille)
+    // Coste estimado (ejemplo: 0.05€ por hoja)
     const estimatedCost = (estimatedSheets * 0.05).toFixed(2);
     document.getElementById('summaryCost').textContent = `${estimatedCost} €`;
 
-    // Afficher le récapitulatif
+    // Mostrar el resumen
     document.getElementById('printSummary').style.display = 'block';
 
-    // Mettre à jour l'aperçu
+    // Actualizar la vista previa
     if (printQueue.length > 0) {
         currentPreviewIndex = 0;
         updatePreview();
@@ -702,7 +702,7 @@ function updatePrintQueue() {
 }
 
 function calculateLabelsPerSheet() {
-    // Selon le format d'étiquette
+    // Según el formato de etiqueta
     switch(printSettings.format) {
         case 'small':
             return printSettings.orientation === 'portrait' ? 63 : 88; // A4
@@ -720,22 +720,22 @@ function updatePrintButtons() {
     document.getElementById('generatePdfBtn').disabled = !hasItems;
 }
 
-// ===== APERÇU =====
+// ===== VISTA PREVIA =====
 function togglePreview() {
     const previewSection = document.getElementById('previewSection');
 
     if (printQueue.length === 0) {
-        alert('Veuillez d\'abord ajouter des articles à imprimer');
+        alert('Por favor, añada primero artículos para imprimir');
         return;
     }
 
     if (previewSection.style.display === 'none') {
         previewSection.style.display = 'block';
         updatePreview();
-        document.getElementById('togglePreviewBtn').innerHTML = '<i class="fas fa-eye-slash"></i> Masquer';
+        document.getElementById('togglePreviewBtn').innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar';
     } else {
         previewSection.style.display = 'none';
-        document.getElementById('togglePreviewBtn').innerHTML = '<i class="fas fa-eye"></i> Aperçu';
+        document.getElementById('togglePreviewBtn').innerHTML = '<i class="fas fa-eye"></i> Vista previa';
     }
 }
 
@@ -744,18 +744,18 @@ function updatePreview() {
 
     const currentItem = printQueue[currentPreviewIndex];
 
-    // Mettre à jour le compteur
+    // Actualizar el contador
     document.getElementById('currentPreview').textContent = currentPreviewIndex + 1;
     document.getElementById('totalPreviews').textContent = printQueue.length;
 
-    // Activer/désactiver les boutons de navigation
+    // Activar/desactivar los botones de navegación
     document.getElementById('previousLabelBtn').disabled = currentPreviewIndex === 0;
     document.getElementById('nextLabelBtn').disabled = currentPreviewIndex === printQueue.length - 1;
 
-    // Mettre à jour l'étiquette
+    // Actualizar la etiqueta
     updateLabelPreview(currentItem);
 
-    // Mettre à jour les infos
+    // Actualizar la info
     updatePreviewInfo();
 }
 
@@ -763,20 +763,20 @@ function updateLabelPreview(item) {
     const label = document.getElementById('previewLabel');
     const barcodeContainer = document.getElementById('previewBarcode');
 
-    // Appliquer le format
+    // Aplicar el formato
     applyLabelFormat(label);
 
-    // Vérifier si c'est une étiquette d'inventaire
+    // Verificar si es una etiqueta de inventario
     const isInventory = item.inventoryData !== undefined;
 
-    // Mettre à jour le texte
+    // Actualizar el texto
     document.getElementById('previewTitle').textContent = item.name;
     document.getElementById('previewNumber').textContent = item.number;
 
-    // Gérer l'affichage du stock selon le type
+    // Gestionar la visualización del stock según el tipo
     const stockElement = document.getElementById('previewStock');
     if (isInventory) {
-        stockElement.textContent = `Avant: ${item.inventoryData.stock_avant} | Après: ${item.inventoryData.stock_inventaire}`;
+        stockElement.textContent = `Antes: ${item.inventoryData.stock_avant} | Después: ${item.inventoryData.stock_inventaire}`;
         stockElement.style.fontWeight = 'bold';
     } else {
         stockElement.textContent = `Stock: ${item.stock}`;
@@ -785,58 +785,58 @@ function updateLabelPreview(item) {
 
     document.getElementById('previewPrice').textContent = `${item.price.toFixed(2)}€`;
 
-    // Date actuelle ou date d'inventaire
+    // Fecha actual o fecha de inventario
     const dateElement = document.getElementById('previewDate');
     if (isInventory) {
         dateElement.textContent = item.inventoryData.date_inventaire;
     } else {
-        dateElement.textContent = new Date().toLocaleDateString('fr-FR');
+        dateElement.textContent = new Date().toLocaleDateString('es-ES');
     }
 
-    // Générer le code-barre
+    // Generar el código de barras
     generateBarcodePreview(item.barcode || item.number, barcodeContainer);
 
-    // Afficher/masquer les éléments selon les options
+    // Mostrar/ocultar los elementos según las opciones
     togglePreviewElements();
 
-    // Ajouter un indicateur pour l'inventaire
+    // Añadir un indicador para el inventario
     const locationElement = document.getElementById('previewLocation');
     if (isInventory) {
-        locationElement.textContent = 'INVENTAIRE';
+        locationElement.textContent = 'INVENTARIO';
         locationElement.style.color = '#4CAF50';
         locationElement.style.fontWeight = 'bold';
     } else {
-        locationElement.textContent = 'Zone A';
+        locationElement.textContent = 'Zona A';
         locationElement.style.color = '';
         locationElement.style.fontWeight = 'normal';
     }
 }
 
 function applyLabelFormat(label) {
-    // Réinitialiser les styles
+    // Reiniciar los estilos
     label.style.width = '';
     label.style.height = '';
     label.style.padding = '';
 
     switch(printSettings.format) {
         case 'small':
-            label.style.width = '120px'; // 40mm à 96dpi
-            label.style.height = '60px'; // 20mm à 96dpi
+            label.style.width = '120px'; // 40mm a 96dpi
+            label.style.height = '60px'; // 20mm a 96dpi
             label.style.padding = '4px';
             break;
         case 'medium':
-            label.style.width = '180px'; // 60mm à 96dpi
-            label.style.height = '120px'; // 40mm à 96dpi
+            label.style.width = '180px'; // 60mm a 96dpi
+            label.style.height = '120px'; // 40mm a 96dpi
             label.style.padding = '8px';
             break;
         case 'large':
-            label.style.width = '300px'; // 100mm à 96dpi
-            label.style.height = '210px'; // 70mm à 96dpi
+            label.style.width = '300px'; // 100mm a 96dpi
+            label.style.height = '210px'; // 70mm a 96dpi
             label.style.padding = '12px';
             break;
     }
 
-    // Appliquer l'orientation
+    // Aplicar la orientación
     if (printSettings.orientation === 'landscape') {
         const temp = label.style.width;
         label.style.width = label.style.height;
@@ -848,30 +848,30 @@ function generateBarcodePreview(code, container) {
     container.innerHTML = '';
 
     if (!code) {
-        container.innerHTML = '<div class="no-barcode">Pas de code-barre</div>';
+        container.innerHTML = '<div class="no-barcode">Sin código de barras</div>';
         return;
     }
 
     try {
-        // Créer un conteneur pour le code-barre
+        // Crear un contenedor para el código de barras
         const barcodeWrapper = document.createElement('div');
         barcodeWrapper.className = 'barcode-preview-wrapper';
 
-        // Créer le SVG pour le code-barre
+        // Crear el SVG para el código de barras
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.id = 'preview-barcode-svg';
 
-        // Créer un div pour le numéro sous le code-barre
+        // Crear un div para el número debajo del código de barras
         const numberDiv = document.createElement('div');
         numberDiv.className = 'barcode-preview-number';
         numberDiv.textContent = code;
 
-        // Ajouter au conteneur
+        // Añadir al contenedor
         barcodeWrapper.appendChild(svg);
         barcodeWrapper.appendChild(numberDiv);
         container.appendChild(barcodeWrapper);
 
-        // Générer le code-barre avec JsBarcode
+        // Generar el código de barras con JsBarcode
         JsBarcode(svg, code, {
             format: "CODE128",
             width: 2,
@@ -880,19 +880,19 @@ function generateBarcodePreview(code, container) {
             margin: 0
         });
 
-        // Ajuster la taille du SVG
+        // Ajustar el tamaño del SVG
         svg.style.width = '100%';
         svg.style.height = 'auto';
         svg.style.maxHeight = '40px';
 
     } catch (error) {
-        console.error('Erreur génération code-barre:', error);
-        container.innerHTML = '<div class="no-barcode">Erreur code-barre</div>';
+        console.error('Error en la generación del código de barras:', error);
+        container.innerHTML = '<div class="no-barcode">Error en código de barras</div>';
     }
 }
 
 function togglePreviewElements() {
-    // Prix
+    // Precio
     document.getElementById('previewPrice').style.display =
         printSettings.showPrice ? 'inline' : 'none';
 
@@ -900,15 +900,15 @@ function togglePreviewElements() {
     document.getElementById('previewStock').style.display =
         printSettings.showStock ? 'inline' : 'none';
 
-    // Date
+    // Fecha
     document.getElementById('previewDate').style.display =
         printSettings.showDate ? 'inline' : 'none';
 
-    // Emplacement
+    // Ubicación
     document.getElementById('previewLocation').style.display =
         printSettings.showLocation ? 'inline' : 'none';
 
-    // Ajuster la taille de police
+    // Ajustar el tamaño de fuente
     const labelText = document.querySelector('.label-text');
     labelText.style.fontSize = printSettings.fontSize === 'small' ? '10px' :
                               printSettings.fontSize === 'large' ? '14px' : '12px';
@@ -916,16 +916,16 @@ function togglePreviewElements() {
 
 function updatePreviewInfo() {
     document.getElementById('previewFormat').textContent =
-        `${printSettings.format === 'small' ? 'Petite' :
-          printSettings.format === 'medium' ? 'Moyenne' : 'Grande'}`;
+        `${printSettings.format === 'small' ? 'Pequeña' :
+          printSettings.format === 'medium' ? 'Mediana' : 'Grande'}`;
 
     document.getElementById('previewOrientation').textContent =
-        printSettings.orientation === 'portrait' ? 'Portrait' : 'Paysage';
+        printSettings.orientation === 'portrait' ? 'Vertical' : 'Horizontal';
 
     const labelsPerSheet = calculateLabelsPerSheet();
     const sheets = Math.ceil(printQueue.length / labelsPerSheet);
     document.getElementById('previewPaper').textContent =
-        `${sheets} feuille${sheets > 1 ? 's' : ''} A4`;
+        `${sheets} hoja${sheets > 1 ? 's' : ''} A4`;
 }
 
 function showPreviousLabel() {
@@ -942,7 +942,7 @@ function showNextLabel() {
     }
 }
 
-// ===== GESTION DES PARAMÈTRES =====
+// ===== GESTIÓN DE PARÁMETROS =====
 function updatePrintFormat() {
     const selectedFormat = document.querySelector('input[name="labelFormat"]:checked').value;
     printSettings.format = selectedFormat;
@@ -1033,50 +1033,50 @@ function saveSettings() {
     localStorage.setItem('labelSettings', JSON.stringify(printSettings));
 }
 
-// ===== POPUP SCAN POUR IMPRESSION =====
+// ===== POPUP DE ESCANEO PARA IMPRESIÓN =====
 async function openScanModal(context) {
     const popup = document.createElement('div');
     popup.className = 'scan-popup-overlay';
 
     const actionNames = {
-        'single': 'Recherche',
-        'etiquette': 'Étiquettes',
-        'inventaire': 'Inventaire'
+        'single': 'Búsqueda',
+        'etiquette': 'Etiquetas',
+        'inventaire': 'Inventario'
     };
 
     popup.innerHTML = `
         <div class="scan-popup">
             <div class="popup-header">
-                <h3><i class="fas fa-camera"></i> Scanner pour ${actionNames[context] || 'Impression'}</h3>
+                <h3><i class="fas fa-camera"></i> Escanear para ${actionNames[context] || 'Impresión'}</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
                 <div class="scan-section">
                     <div class="camera-placeholder" id="cameraPlaceholder">
                         <i class="fas fa-camera"></i>
-                        <p>Caméra non activée</p>
+                        <p>Cámara no activada</p>
                     </div>
                     <video id="cameraPreview" autoplay playsinline style="display: none;"></video>
 
                     <div class="scan-controls">
                         <button id="startCameraBtn" class="btn btn-primary">
-                            <i class="fas fa-video"></i> Activer la caméra
+                            <i class="fas fa-video"></i> Activar cámara
                         </button>
                         <button id="stopCameraBtn" class="btn btn-secondary" style="display: none;">
-                            <i class="fas fa-stop"></i> Arrêter
+                            <i class="fas fa-stop"></i> Detener
                         </button>
                     </div>
                 </div>
 
                 <div class="manual-section">
-                    <h4><i class="fas fa-keyboard"></i> Saisie manuelle</h4>
+                    <h4><i class="fas fa-keyboard"></i> Entrada manual</h4>
                     <div class="form-group">
                         <input type="text"
                                id="manualBarcodeInput"
-                               placeholder="Saisir le code-barre manuellement"
+                               placeholder="Ingrese el código de barras manualmente"
                                class="scan-input">
                         <button id="confirmManualBtn" class="btn btn-success">
-                            <i class="fas fa-check"></i> Valider
+                            <i class="fas fa-check"></i> Validar
                         </button>
                     </div>
                 </div>
@@ -1084,21 +1084,21 @@ async function openScanModal(context) {
                 <div class="scan-instructions">
                     <div class="instruction">
                         <i class="fas fa-lightbulb"></i>
-                        <p>Placez le code-barre dans le cadre. Le scan est automatique.</p>
+                        <p>Coloque el código de barras en el marco. El escaneo es automático.</p>
                     </div>
                     <div class="instruction">
                         <i class="fas fa-bolt"></i>
-                        <p>Assurez-vous d'avoir une bonne luminosité.</p>
+                        <p>Asegúrese de tener una buena iluminación.</p>
                     </div>
                 </div>
 
                 <div id="scanStatus" class="scan-status">
-                    <p><i class="fas fa-info-circle"></i> En attente de scan...</p>
+                    <p><i class="fas fa-info-circle"></i> Esperando escaneo...</p>
                 </div>
             </div>
 
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">Annuler</button>
+                <button class="btn btn-secondary close-popup-btn">Cancelar</button>
                 <div class="scan-stats">
                     <span id="scanResult"></span>
                 </div>
@@ -1108,11 +1108,11 @@ async function openScanModal(context) {
 
     document.body.appendChild(popup);
 
-    // Variables pour le scan
+    // Variables para el escaneo
     let scanStream = null;
     let currentContext = context;
 
-    // Événements généraux du popup
+    // Eventos generales del popup
     popup.querySelector('.close-popup').addEventListener('click', () => {
         stopScan();
         document.body.removeChild(popup);
@@ -1130,7 +1130,7 @@ async function openScanModal(context) {
         }
     });
 
-    // Événements spécifiques au scan
+    // Eventos específicos del escaneo
     popup.querySelector('#startCameraBtn').addEventListener('click', startCameraScan);
     popup.querySelector('#stopCameraBtn').addEventListener('click', stopCameraScan);
     popup.querySelector('#confirmManualBtn').addEventListener('click', () => processManualBarcode(currentContext));
@@ -1139,14 +1139,14 @@ async function openScanModal(context) {
         if (e.key === 'Enter') processManualBarcode(currentContext);
     });
 
-    // Démarrer automatiquement la caméra
+    // Iniciar automáticamente la cámara
     setTimeout(() => {
         startCameraScan();
     }, 500);
 
     async function startCameraScan() {
         try {
-            // Démarrer la caméra
+            // Iniciar la cámara
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: 'environment',
@@ -1167,7 +1167,7 @@ async function openScanModal(context) {
 
             scanStream = stream;
 
-            // Démarrer Quagga pour la détection
+            // Iniciar Quagga para la detección
             Quagga.init({
                 inputStream: {
                     name: "Live",
@@ -1184,32 +1184,32 @@ async function openScanModal(context) {
                 frequency: 10
             }, function(err) {
                 if (err) {
-                    console.error('Erreur Quagga:', err);
-                    updateScanStatus('Scanner incompatible. Utilisez la saisie manuelle.', 'error');
+                    console.error('Error Quagga:', err);
+                    updateScanStatus('Escáner incompatible. Use la entrada manual.', 'error');
                     return;
                 }
 
                 Quagga.start();
-                updateScanStatus('Scanner prêt. Centrez le code-barre.', 'success');
+                updateScanStatus('Escáner listo. Centre el código de barras.', 'success');
             });
 
-            // Quand un code est détecté
+            // Cuando se detecta un código
             Quagga.onDetected(function(result) {
                 const code = result.codeResult.code;
 
-                // Arrêter Quagga et la caméra
+                // Detener Quagga y la cámara
                 Quagga.stop();
                 stream.getTracks().forEach(track => track.stop());
 
-                updateScanStatus(`Code détecté: ${code}. Traitement...`, 'info');
+                updateScanStatus(`Código detectado: ${code}. Procesando...`, 'info');
 
-                // Traiter selon le contexte
+                // Procesar según el contexto
                 handleScannedBarcode(code, currentContext);
             });
 
         } catch (error) {
-            console.error('Erreur caméra:', error);
-            updateScanStatus('Caméra inaccessible. Utilisez la saisie manuelle.', 'error');
+            console.error('Error de cámara:', error);
+            updateScanStatus('Cámara inaccesible. Use la entrada manual.', 'error');
             popup.querySelector('#manualBarcodeInput').focus();
         }
     }
@@ -1219,31 +1219,31 @@ async function openScanModal(context) {
         const barcode = input.value.trim();
 
         if (!barcode) {
-            updateScanStatus('Veuillez entrer un code-barre', 'warning');
+            updateScanStatus('Por favor, ingrese un código de barras', 'warning');
             return;
         }
 
-        updateScanStatus(`Code saisi: ${barcode}. Traitement...`, 'info');
+        updateScanStatus(`Código ingresado: ${barcode}. Procesando...`, 'info');
         handleScannedBarcode(barcode, context);
     }
 
     function stopCameraScan() {
-        // Arrêter Quagga
+        // Detener Quagga
         try {
             if (typeof Quagga !== 'undefined' && Quagga.stop) {
                 Quagga.stop();
             }
         } catch (e) {
-            console.warn('Erreur arrêt Quagga:', e);
+            console.warn('Error al detener Quagga:', e);
         }
 
-        // Arrêter la caméra
+        // Detener la cámara
         if (scanStream) {
             scanStream.getTracks().forEach(track => track.stop());
             scanStream = null;
         }
 
-        // Réinitialiser l'interface
+        // Reiniciar la interfaz
         const video = popup.querySelector('#cameraPreview');
         const placeholder = popup.querySelector('#cameraPlaceholder');
 
@@ -1288,45 +1288,45 @@ async function openScanModal(context) {
 }
 
 async function handleScannedBarcode(barcode, context) {
-    console.log(`Traitement du code ${barcode} pour contexte: ${context}`);
+    console.log(`Procesando el código ${barcode} para el contexto: ${context}`);
 
-    // Fermer tous les popups de scan
+    // Cerrar todos los popups de escaneo
     const popup = document.querySelector('.scan-popup-overlay');
     if (popup) {
         document.body.removeChild(popup);
     }
 
-    // Selon le contexte, faire différentes actions
+    // Según el contexto, realizar diferentes acciones
     switch(context) {
         case 'etiquette':
-            // Recherche pour impression d'étiquette
+            // Búsqueda para impresión de etiquetas
             await searchArticleForPrint(barcode, 'etiquette');
             break;
 
         case 'inventaire':
-            // Recherche pour inventaire
+            // Búsqueda para inventario
             await searchArticleForInventory(barcode);
             break;
 
         case 'single':
         default:
-            // Recherche pour étiquette unique
+            // Búsqueda para etiqueta única
             await searchArticleForPrint(barcode, 'single');
             break;
     }
 
-    // Afficher notification
+    // Mostrar notificación
     showScanSuccess(barcode, context);
 }
 
 function addToInventoryList(barcode) {
-    console.log('Ajout à l\'inventaire:', barcode);
-    // Logique d'inventaire
+    console.log('Añadido al inventario:', barcode);
+    // Lógica de inventario
 }
 
 function handleBarcodeForPrint(barcode) {
-    console.log('Traitement pour impression:', barcode);
-    // Action par défaut
+    console.log('Procesando para impresión:', barcode);
+    // Acción por defecto
     searchArticleForPrint(barcode);
 }
 
@@ -1342,9 +1342,9 @@ async function searchArticleForPrint(barcode, context = 'single') {
 
         if (articles && articles.length > 0) {
             const article = articles[0];
-            console.log('Article trouvé pour impression:', article.nom);
+            console.log('Artículo encontrado para impresión:', article.nom);
 
-            // Créer l'objet article pour la liste d'impression
+            // Crear el objeto de artículo para la lista de impresión
             const articleData = {
                 id: article.id,
                 name: article.nom,
@@ -1355,30 +1355,30 @@ async function searchArticleForPrint(barcode, context = 'single') {
                 quantity: 1
             };
 
-            // Ajouter à la file d'attente d'impression
+            // Añadir a la cola de impresión
             addToPrintQueue([articleData]);
 
-            // Si c'était dans le contexte "single", passer à l'onglet paramètres
+            // Si era en el contexto "single", pasar a la pestaña de parámetros
             if (context === 'single') {
                 switchTab('single');
                 document.getElementById('searchResults').style.display = 'none';
                 document.getElementById('barcodeSearch').value = barcode;
             }
 
-            // Afficher notification
-            showNotification(`"${article.nom}" ajouté à l'impression`, 'success');
+            // Mostrar notificación
+            showNotification(`"${article.nom}" añadido a la impresión`, 'success');
 
             return articleData;
 
         } else {
-            // Si aucun article n'est trouvé, demander si on veut créer une étiquette manuelle
-            const createManual = confirm(`Aucun article trouvé avec le code-barre ${barcode}. Voulez-vous créer une étiquette manuelle ?`);
+            // Si no se encuentra ningún artículo, preguntar si se desea crear una etiqueta manual
+            const createManual = confirm(`No se encontró ningún artículo con el código de barras ${barcode}. ¿Desea crear una etiqueta manual?`);
 
             if (createManual) {
-                // Créer un article temporaire
+                // Crear un artículo temporal
                 const manualArticle = {
                     id: `manual-${Date.now()}`,
-                    name: `Article scanné (${barcode})`,
+                    name: `Artículo escaneado (${barcode})`,
                     number: `SCAN-${barcode.substring(0, 8)}`,
                     barcode: barcode,
                     stock: 0,
@@ -1387,17 +1387,17 @@ async function searchArticleForPrint(barcode, context = 'single') {
                 };
 
                 addToPrintQueue([manualArticle]);
-                showNotification('Étiquette créée manuellement', 'info');
+                showNotification('Etiqueta creada manualmente', 'info');
             } else {
-                showNotification('Aucun article trouvé', 'warning');
+                showNotification('Ningún artículo encontrado', 'warning');
             }
 
             return null;
         }
 
     } catch (error) {
-        console.error('Erreur recherche article:', error);
-        showNotification('Erreur lors de la recherche de l\'article', 'error');
+        console.error('Error en la búsqueda del artículo:', error);
+        showNotification('Error durante la búsqueda del artículo', 'error');
         return null;
     }
 }
@@ -1415,19 +1415,19 @@ async function searchArticleForInventory(barcode) {
         if (articles && articles.length > 0) {
             const article = articles[0];
 
-            // Ouvrir un popup pour saisir l'inventaire
+            // Abrir un popup para ingresar el inventario
             openInventoryPopup(article);
 
         } else {
-            showNotification(`Aucun article trouvé avec le code-barre ${barcode}`, 'warning');
+            showNotification(`No se encontró ningún artículo con el código de barras ${barcode}`, 'warning');
 
-            // Demander si on veut créer un article temporaire pour l'inventaire
-            const createTemp = confirm(`Aucun article trouvé. Voulez-vous créer un enregistrement temporaire pour l'inventaire ?`);
+            // Preguntar si se desea crear un artículo temporal para el inventario
+            const createTemp = confirm(`No se encontró ningún artículo. ¿Desea crear un registro temporal para el inventario?`);
 
             if (createTemp) {
                 const tempArticle = {
                     id: `temp-${Date.now()}`,
-                    nom: `Article inconnu (${barcode})`,
+                    nom: `Artículo desconocido (${barcode})`,
                     numero: `TEMP-${barcode.substring(0, 8)}`,
                     code_barre: barcode,
                     stock_actuel: 0,
@@ -1439,8 +1439,8 @@ async function searchArticleForInventory(barcode) {
         }
 
     } catch (error) {
-        console.error('Erreur recherche inventaire:', error);
-        showNotification('Erreur lors de la recherche pour l\'inventaire', 'error');
+        console.error('Error en búsqueda de inventario:', error);
+        showNotification('Error durante la búsqueda para el inventario', 'error');
     }
 }
 
@@ -1451,38 +1451,38 @@ function openInventoryPopup(article, isTemporary = false) {
     popup.innerHTML = `
         <div class="inventory-popup">
             <div class="popup-header">
-                <h3><i class="fas fa-clipboard-check"></i> Saisie d'inventaire</h3>
+                <h3><i class="fas fa-clipboard-check"></i> Registro de Inventario</h3>
                 <button class="close-inventory-popup">&times;</button>
             </div>
 
             <div class="popup-content">
                 <div class="inventory-article-info">
-                    <h4>Article</h4>
+                    <h4>Artículo</h4>
                     <div class="article-details">
                         <div class="detail-row">
-                            <span class="detail-label">Nom :</span>
+                            <span class="detail-label">Nombre:</span>
                             <span class="detail-value">${article.nom}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">Numéro :</span>
+                            <span class="detail-label">Número:</span>
                             <span class="detail-value">${article.numero}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">Code-barre :</span>
-                            <span class="detail-value">${article.code_barre || 'N/A'}</span>
+                            <span class="detail-label">Código de barras:</span>
+                            <span class="detail-value">${article.code_barre || 'N/D'}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">Stock actuel :</span>
+                            <span class="detail-label">Stock actual:</span>
                             <span class="detail-value" id="currentStockValue">${article.stock_actuel || 0}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="inventory-form">
-                    <h4>Quantités</h4>
+                    <h4>Cantidades</h4>
                     <div class="form-group">
                         <label for="inventoryQuantity">
-                            <i class="fas fa-calculator"></i> Quantité réelle (inventaire)
+                            <i class="fas fa-calculator"></i> Cantidad real (inventario)
                         </label>
                         <input type="number"
                                id="inventoryQuantity"
@@ -1493,25 +1493,25 @@ function openInventoryPopup(article, isTemporary = false) {
 
                     <div class="quantity-comparison">
                         <div class="comparison-item">
-                            <span class="comparison-label">Avant inventaire :</span>
+                            <span class="comparison-label">Antes del inventario:</span>
                             <span class="comparison-value stock-before">${article.stock_actuel || 0}</span>
                         </div>
                         <div class="comparison-item">
-                            <span class="comparison-label">Après inventaire :</span>
+                            <span class="comparison-label">Después del inventario:</span>
                             <span class="comparison-value stock-after" id="stockAfterValue">${article.stock_actuel || 0}</span>
                         </div>
                         <div class="comparison-item">
-                            <span class="comparison-label">Différence :</span>
+                            <span class="comparison-label">Diferencia:</span>
                             <span class="comparison-value stock-diff" id="stockDiffValue">0</span>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="inventoryNotes">
-                            <i class="fas fa-sticky-note"></i> Remarques (optionnel)
+                            <i class="fas fa-sticky-note"></i> Observaciones (opcional)
                         </label>
                         <textarea id="inventoryNotes"
-                                  placeholder="Notes sur l'inventaire..."
+                                  placeholder="Notas sobre el inventario..."
                                   class="form-textarea"
                                   rows="3"></textarea>
                     </div>
@@ -1520,19 +1520,19 @@ function openInventoryPopup(article, isTemporary = false) {
                 ${isTemporary ? `
                     <div class="temporary-warning">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <p>Cet article n'existe pas dans la base de données. L'enregistrement sera temporaire.</p>
+                        <p>Este artículo no existe en la base de datos. El registro será temporal.</p>
                     </div>
                 ` : ''}
             </div>
 
             <div class="popup-footer">
-                <button class="btn btn-secondary close-inventory-popup-btn">Annuler</button>
+                <button class="btn btn-secondary close-inventory-popup-btn">Cancelar</button>
                 <div class="footer-actions">
                     <button class="btn btn-primary save-inventory-btn">
-                        <i class="fas fa-save"></i> Enregistrer
+                        <i class="fas fa-save"></i> Guardar
                     </button>
                     <button class="btn btn-success add-to-print-btn">
-                        <i class="fas fa-print"></i> Ajouter à l'impression
+                        <i class="fas fa-print"></i> Añadir a impresión
                     </button>
                 </div>
             </div>
@@ -1541,27 +1541,27 @@ function openInventoryPopup(article, isTemporary = false) {
 
     document.body.appendChild(popup);
 
-    // Événements
+    // Eventos
     const quantityInput = popup.querySelector('#inventoryQuantity');
     const saveBtn = popup.querySelector('.save-inventory-btn');
     const printBtn = popup.querySelector('.add-to-print-btn');
 
-    // Calculer la différence en temps réel
+    // Calcular la diferencia en tiempo real
     quantityInput.addEventListener('input', updateInventoryCalculations);
 
-    // Bouton enregistrer
+    // Botón guardar
     saveBtn.addEventListener('click', () => {
         const notes = popup.querySelector('#inventoryNotes')?.value || '';
         saveInventory(article, quantityInput.value, isTemporary, notes);
     });
 
-    // Bouton ajouter à l'impression
+    // Botón añadir a la impresión
     printBtn.addEventListener('click', () => {
         addInventoryToPrint(article, quantityInput.value);
         document.body.removeChild(popup);
     });
 
-    // Fermer le popup
+    // Cerrar el popup
     popup.querySelector('.close-inventory-popup').addEventListener('click', () => {
         document.body.removeChild(popup);
     });
@@ -1576,21 +1576,21 @@ function openInventoryPopup(article, isTemporary = false) {
         }
     });
 
-    // Initialiser les calculs
+    // Inicializar los cálculos
     updateInventoryCalculations();
 
     function updateInventoryCalculations() {
         const currentStock = parseInt(article.stock_actuel) || 0;
         const inventoryQty = parseInt(quantityInput.value) || 0;
 
-        // Mettre à jour les valeurs
+        // Actualizar los valores
         popup.querySelector('#stockAfterValue').textContent = inventoryQty;
 
         const diff = inventoryQty - currentStock;
         const diffElement = popup.querySelector('#stockDiffValue');
         diffElement.textContent = diff;
 
-        // Colorer la différence
+        // Colorear la diferencia
         if (diff > 0) {
             diffElement.style.color = '#4CAF50';
         } else if (diff < 0) {
@@ -1605,8 +1605,8 @@ async function saveInventory(article, inventoryQuantity, isTemporary = false, no
     const currentStock = article.stock_actuel || 0;
     const newStock = parseInt(inventoryQuantity) || 0;
 
-    console.log('=== DÉBUT saveInventory ===');
-    console.log('Article:', {
+    console.log('=== INICIO saveInventory ===');
+    console.log('Artículo:', {
         id: article.id,
         idType: typeof article.id,
         nom: article.nom,
@@ -1614,11 +1614,11 @@ async function saveInventory(article, inventoryQuantity, isTemporary = false, no
         currentStock: currentStock,
         newStock: newStock
     });
-    console.log('Paramètres:', { isTemporary, notes });
+    console.log('Parámetros:', { isTemporary, notes });
 
     try {
         if (isTemporary) {
-            console.log('Sauvegarde temporaire dans w_inventaire_temporaire');
+            console.log('Guardado temporal en w_inventaire_temporaire');
 
             const { data, error } = await supabase
                 .from('w_inventaire_temporaire')
@@ -1635,21 +1635,21 @@ async function saveInventory(article, inventoryQuantity, isTemporary = false, no
                 })
                 .select();
 
-            console.log('Résultat temporaire:', { data, error });
+            console.log('Resultado temporal:', { data, error });
 
             if (error) {
-                console.error('ERREUR temporaire:', error);
+                console.error('ERROR temporal:', error);
                 throw error;
             }
 
-            showNotification(`Inventaire temporaire enregistré pour ${article.nom}`, 'info');
+            showNotification(`Inventario temporal registrado para ${article.nom}`, 'info');
 
-        } else {
-            console.log('Mise à jour de w_articles');
+                } else {
+            console.log('Actualización de w_articles');
 
-            // Vérifier que l'ID est valide
+            // Verificar que el ID sea válido
             if (!article.id || article.id === 'undefined') {
-                throw new Error('ID article invalide: ' + article.id);
+                throw new Error('ID de artículo no válido: ' + article.id);
             }
 
             const updateData = {
@@ -1657,8 +1657,8 @@ async function saveInventory(article, inventoryQuantity, isTemporary = false, no
                 date_maj_stock: new Date().toISOString()
             };
 
-            console.log('Données de mise à jour:', updateData);
-            console.log('Condition WHERE id =', article.id);
+            console.log('Datos de actualización:', updateData);
+            console.log('Condición WHERE id =', article.id);
 
             const { data, error } = await supabase
                 .from('w_articles')
@@ -1666,10 +1666,10 @@ async function saveInventory(article, inventoryQuantity, isTemporary = false, no
                 .eq('id', article.id)
                 .select('id, nom, stock_actuel, date_maj_stock');
 
-            console.log('Résultat mise à jour w_articles:', { data, error });
+            console.log('Resultado de actualización w_articles:', { data, error });
 
             if (error) {
-                console.error('ERREUR mise à jour w_articles:', {
+                console.error('ERROR en actualización w_articles:', {
                     message: error.message,
                     details: error.details,
                     hint: error.hint,
@@ -1679,10 +1679,10 @@ async function saveInventory(article, inventoryQuantity, isTemporary = false, no
                 throw error;
             }
 
-            console.log('Mise à jour réussie, données retournées:', data);
+            console.log('Actualización exitosa, datos devueltos:', data);
 
-            // Historique
-            console.log('Ajout historique dans w_historique_inventaire');
+            // Historial
+            console.log('Añadiendo historial en w_historique_inventaire');
 
             const { data: histData, error: histError } = await supabase
                 .from('w_historique_inventaire')
@@ -1700,29 +1700,29 @@ async function saveInventory(article, inventoryQuantity, isTemporary = false, no
                 })
                 .select();
 
-            console.log('Résultat historique:', { histData, histError });
+            console.log('Resultado historial:', { histData, histError });
 
             if (histError) {
-                console.error('ERREUR historique:', histError);
-                // On ne throw pas ici pour ne pas bloquer la mise à jour du stock
-                showNotification('Stock mis à jour mais erreur historique', 'warning');
+                console.error('ERROR historial:', histError);
+                // No lanzamos error aquí para no bloquear la actualización del stock
+                showNotification('Stock actualizado pero hubo un error en el historial', 'warning');
             } else {
-                showNotification(`Stock mis à jour pour ${article.nom} (${currentStock} → ${newStock})`, 'success');
+                showNotification(`Stock actualizado para ${article.nom} (${currentStock} → ${newStock})`, 'success');
             }
         }
 
-        // Fermer le popup
+        // Cerrar el popup
         const popup = document.querySelector('.inventory-popup-overlay');
         if (popup) {
-            console.log('Fermeture du popup');
+            console.log('Cierre del popup');
             document.body.removeChild(popup);
         }
 
-        console.log('=== FIN saveInventory réussie ===');
+        console.log('=== FIN de saveInventory exitoso ===');
 
     } catch (error) {
-        console.error('=== ERREUR GLOBALE saveInventory ===', error);
-        showNotification('Erreur lors de l\'enregistrement: ' + (error.message || 'Erreur inconnue'), 'error');
+        console.error('=== ERROR GLOBAL saveInventory ===', error);
+        showNotification('Error al guardar: ' + (error.message || 'Error desconocido'), 'error');
     }
 }
 
@@ -1731,7 +1731,7 @@ async function addInventoryToPrint(article, inventoryQuantity) {
     const newStock = parseInt(inventoryQuantity) || 0;
     const difference = newStock - currentStock;
 
-    console.log('addInventoryToPrint appelée:', {
+    console.log('addInventoryToPrint llamada:', {
         articleNom: article.nom,
         currentStock,
         newStock,
@@ -1739,9 +1739,9 @@ async function addInventoryToPrint(article, inventoryQuantity) {
     });
 
     try {
-        // 1. SAUVEGARDER la nouvelle quantité si c'est un article existant
+        // 1. GUARDAR la nueva cantidad si es un artículo existente
         if (!article.id.toString().includes('temp-') && !article.id.toString().includes('manual-')) {
-            console.log('Sauvegarde du stock avant impression');
+            console.log('Guardando el stock antes de la impresión');
 
             const { error: updateError } = await supabase
                 .from('w_articles')
@@ -1752,13 +1752,13 @@ async function addInventoryToPrint(article, inventoryQuantity) {
                 .eq('id', article.id);
 
             if (updateError) {
-                console.error('Erreur mise à jour stock:', updateError);
-                // On continue quand même pour l'impression
-                showNotification('Impression OK mais erreur mise à jour stock', 'warning');
+                console.error('Error al actualizar stock:', updateError);
+                // Continuamos de todos modos para la impresión
+                showNotification('Impresión OK pero error al actualizar stock', 'warning');
             } else {
-                console.log('Stock mis à jour avec succès');
+                console.log('Stock actualizado con éxito');
 
-                // 2. Ajouter à l'historique
+                // 2. Añadir al historial
                 const notes = document.querySelector('#inventoryNotes')?.value || '';
                 const { error: histError } = await supabase
                     .from('w_historique_inventaire')
@@ -1776,65 +1776,65 @@ async function addInventoryToPrint(article, inventoryQuantity) {
                     });
 
                 if (histError) {
-                    console.error('Erreur historique:', histError);
+                    console.error('Error en historial:', histError);
                 }
             }
         }
 
-        // 3. Créer l'article spécial pour l'impression d'inventaire
+        // 3. Crear el artículo especial para la impresión de inventario
         const inventoryArticle = {
             id: article.id || `inventory-${Date.now()}`,
             name: article.nom,
             number: article.numero,
             barcode: article.code_barre,
-            stock: currentStock, // Stock avant inventaire
+            stock: currentStock, // Stock antes del inventario
             price: article.prix_unitaire || 0,
             quantity: 1,
             inventoryData: {
                 stock_avant: currentStock,
                 stock_inventaire: newStock,
                 difference: difference,
-                date_inventaire: new Date().toLocaleDateString('fr-FR')
+                date_inventaire: new Date().toLocaleDateString('es-ES')
             }
         };
 
-        // 4. Ajouter à la file d'attente d'impression
+        // 4. Añadir a la cola de impresión
         addToPrintQueue([inventoryArticle]);
 
-        showNotification(`"${article.nom}" ajouté à l'impression (stock: ${currentStock} → ${newStock})`, 'success');
+        showNotification(`"${article.nom}" añadido a la impresión (stock: ${currentStock} → ${newStock})`, 'success');
 
-        // 5. Passer à l'onglet paramètres d'impression
+        // 5. Pasar a la pestaña de parámetros de impresión
         switchTab('single');
 
-        // 6. Fermer le popup
+        // 6. Cerrar el popup
         const popup = document.querySelector('.inventory-popup-overlay');
         if (popup) {
             document.body.removeChild(popup);
         }
 
     } catch (error) {
-        console.error('Erreur dans addInventoryToPrint:', error);
-        showNotification('Erreur lors de l\'ajout à l\'impression: ' + error.message, 'error');
+        console.error('Error en addInventoryToPrint:', error);
+        showNotification('Error al añadir a la impresión: ' + error.message, 'error');
     }
 }
 
 function addArticleToPrintQueue(article) {
-    // Vérifier si une liste d'impression existe
+    // Verificar si existe una cola de impresión
     if (!window.printQueue) {
         window.printQueue = [];
     }
 
-    // Ajouter l'article à la queue
+    // Añadir el artículo a la cola
     window.printQueue.push(article);
 
-    // Mettre à jour l'affichage
+    // Actualizar la vista
     updatePrintQueueDisplay();
 
-    console.log('Article ajouté à la queue:', article.nom);
+    console.log('Artículo añadido a la cola:', article.nom);
 }
 
 function updatePrintQueueDisplay() {
-    // Mettez à jour l'UI avec la liste d'articles à imprimer
+    // Actualizar la UI con la lista de artículos a imprimir
     const queueContainer = document.getElementById('printQueue');
     if (queueContainer) {
         const items = window.printQueue || [];
@@ -1866,8 +1866,8 @@ function showScanSuccess(barcode, context) {
     successDiv.innerHTML = `
         <i class="fas fa-check-circle" style="font-size: 1.2rem;"></i>
         <div>
-            <div style="font-weight: bold; margin-bottom: 4px;">Scan réussi</div>
-            <div style="font-size: 0.9rem; opacity: 0.9;">Code: ${barcode}</div>
+            <div style="font-weight: bold; margin-bottom: 4px;">Escaneo exitoso</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Código: ${barcode}</div>
         </div>
     `;
 
@@ -1905,12 +1905,12 @@ async function startCamera() {
 
         scanStream = stream;
 
-        // Démarrer la détection de code-barre
+        // Iniciar la detección de código de barras
         startBarcodeDetection(video);
 
     } catch (error) {
-        console.error('Erreur caméra:', error);
-        alert('Impossible d\'accéder à la caméra. Vérifiez les permissions.');
+        console.error('Error de cámara:', error);
+        alert('No se pudo acceder a la cámara. Verifique los permisos.');
     }
 }
 
@@ -1930,24 +1930,24 @@ function stopCamera() {
 }
 
 function toggleFlash() {
-    // Pour l'instant, simulation
-    // Dans la vraie version, on utiliserait les contraintes de la caméra
-    alert('Fonctionnalité flash à implémenter');
+    // Por ahora, simulación
+    // En la versión real, se utilizarían los constraints de la cámara
+    alert('Funcionalidad de flash por implementar');
 }
 
 function startBarcodeDetection(video) {
-    // Dans une version complète, on intégrerait une librairie de scan
-    // Pour l'instant, simulation
-    console.log('Détection de code-barre activée');
+    // En una versión completa, integraríamos una librería de escaneo (como Quagga o ZXing)
+    // Por ahora, simulación
+    console.log('Detección de código de barras activada');
 
-    // Simuler un scan après 3 secondes
+    // Simular un escaneo después de 3 segundos
     setTimeout(() => {
         simulateBarcodeScan();
     }, 3000);
 }
 
 function simulateBarcodeScan() {
-    // Code-barre de test
+    // Código de barras de prueba
     const testBarcode = '1234567890123';
 
     if (currentScanContext === 'single') {
@@ -1956,14 +1956,14 @@ function simulateBarcodeScan() {
     }
 
     closeScanModal();
-    alert(`Code-barre scanné: ${testBarcode}\n(Simulation - dans la vraie version, cela détecterait automatiquement)`);
+    alert(`Código de barras escaneado: ${testBarcode}\n(Simulación - en la versión real, esto se detectaría automáticamente)`);
 }
 
 function confirmManualBarcode() {
     const barcode = document.getElementById('manualBarcodeInput').value.trim();
 
     if (!barcode) {
-        alert('Veuillez saisir un code-barre');
+        alert('Por favor, introduzca un código de barras');
         return;
     }
 
@@ -1975,20 +1975,20 @@ function confirmManualBarcode() {
     closeScanModal();
 }
 
-// ===== IMPRESSION =====
+// ===== IMPRESIÓN =====
 function printNow() {
     if (printQueue.length === 0) {
-        alert('Aucune étiquette à imprimer');
+        alert('No hay etiquetas para imprimir');
         return;
     }
 
-    // Créer une page d'impression
+    // Crear una página de impresión
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Impression étiquettes</title>
+            <title>Impresión de etiquetas</title>
             <style>
                 @media print {
                     @page {
@@ -2072,14 +2072,14 @@ function generatePrintLabelsHTML() {
     let html = '';
 
     printQueue.forEach((item, index) => {
-        // Vérifier si c'est une étiquette d'inventaire
+        // Verificar si es una etiqueta de inventario
         const isInventory = item.inventoryData !== undefined;
         const barcodeText = item.barcode || item.number;
 
         html += `
             <div class="label">
                 <div class="barcode">
-                    <!-- Le code-barre sera généré par JsBarcode -->
+                    <!-- El código de barras será generado por JsBarcode -->
                     <svg id="barcode-${index}" class="barcode-svg"></svg>
                     <div class="barcode-number">${barcodeText}</div>
                 </div>
@@ -2090,30 +2090,30 @@ function generatePrintLabelsHTML() {
                         ${printSettings.showStock ? `
                             <div>
                                 ${isInventory ?
-                                    `Stock avant: ${item.inventoryData.stock_avant}` :
+                                    `Stock anterior: ${item.inventoryData.stock_avant}` :
                                     `Stock: ${item.stock}`
                                 }
                             </div>
                         ` : ''}
                         ${isInventory ? `
-                            <div>Stock inventaire: ${item.inventoryData.stock_inventaire}</div>
-                            <div>Différence: ${item.inventoryData.difference > 0 ? '+' : ''}${item.inventoryData.difference}</div>
+                            <div>Stock inventario: ${item.inventoryData.stock_inventaire}</div>
+                            <div>Diferencia: ${item.inventoryData.difference > 0 ? '+' : ''}${item.inventoryData.difference}</div>
                         ` : ''}
                         ${printSettings.showPrice ? `<div>${item.price.toFixed(2)}€</div>` : ''}
                     </div>
                     <div class="label-footer">
                         ${printSettings.showDate ? `
-                            <span>${isInventory ? item.inventoryData.date_inventaire : new Date().toLocaleDateString('fr-FR')}</span>
+                            <span>${isInventory ? item.inventoryData.date_inventaire : new Date().toLocaleDateString('es-ES')}</span>
                         ` : ''}
-                        ${isInventory ? '<span>INVENTAIRE</span>' : ''}
-                        ${printSettings.showLocation ? '<span>Zone</span>' : ''}
+                        ${isInventory ? '<span>INVENTARIO</span>' : ''}
+                        ${printSettings.showLocation ? '<span>Zona</span>' : ''}
                     </div>
                 </div>
             </div>
         `;
     });
 
-    // Ajouter le script pour générer les codes-barres après le chargement
+    // Añadir el script para generar los códigos de barras después de la carga
     html += `
         <script>
             window.onload = function() {
@@ -2142,16 +2142,16 @@ function generatePrintLabelsHTML() {
 
 async function generatePDF() {
     if (printQueue.length === 0) {
-        showNotification('Aucune étiquette à exporter', 'warning');
+        showNotification('No hay etiquetas para exportar', 'warning');
         return;
     }
 
-    showNotification('Génération du PDF en cours... Cela peut prendre quelques secondes.', 'info');
+    showNotification('Generando PDF... Esto puede tardar unos segundos.', 'info');
 
     try {
         const { jsPDF } = window.jspdf;
 
-        // Créer un conteneur temporaire pour capturer les codes-barres
+        // Crear un contenedor temporal para capturar los códigos de barras
         const tempContainer = document.createElement('div');
         tempContainer.style.cssText = `
             position: fixed;
@@ -2164,7 +2164,7 @@ async function generatePDF() {
         `;
         document.body.appendChild(tempContainer);
 
-        // Générer tous les codes-barres d'abord
+        // Generar todos los códigos de barras primero
         const barcodeImages = [];
 
         for (let i = 0; i < printQueue.length; i++) {
@@ -2172,11 +2172,11 @@ async function generatePDF() {
             const barcodeText = item.barcode || item.number;
 
             if (barcodeText) {
-                // Créer un canvas pour le code-barre
+                // Crear un canvas para el código de barras
                 const canvas = document.createElement('canvas');
                 tempContainer.appendChild(canvas);
 
-                // Générer le code-barre
+                // Generar el código de barras
                 JsBarcode(canvas, barcodeText, {
                     format: "CODE128",
                     width: 2,
@@ -2185,10 +2185,10 @@ async function generatePDF() {
                     margin: 0
                 });
 
-                // Attendre que le code-barre soit généré
+                // Esperar a que se genere el código de barras
                 await new Promise(resolve => setTimeout(resolve, 50));
 
-                // Capturer l'image
+                // Capturar la imagen
                 const barcodeDataUrl = canvas.toDataURL('image/png');
                 barcodeImages.push({
                     dataUrl: barcodeDataUrl,
@@ -2198,22 +2198,22 @@ async function generatePDF() {
             }
         }
 
-        // Nettoyer le conteneur temporaire
+                // Limpiar el contenedor temporal
         document.body.removeChild(tempContainer);
 
-        // Créer le PDF
+        // Crear el PDF
         const doc = new jsPDF({
             orientation: printSettings.orientation,
             unit: 'mm',
             format: 'a4'
         });
 
-        // Paramètres de page
+        // Parámetros de página
         const pageWidth = doc.internal.pageSize.width;
         const pageHeight = doc.internal.pageSize.height;
         const margin = printSettings.margin;
 
-        // Calculer la disposition
+        // Calcular la disposición
         const labelWidth = printSettings.format === 'small' ? 40 :
                           printSettings.format === 'medium' ? 60 : 100;
         const labelHeight = printSettings.format === 'small' ? 20 :
@@ -2226,34 +2226,34 @@ async function generatePDF() {
         let currentPage = 0;
         let currentLabel = 0;
 
-        // Pour chaque étiquette
+        // Para cada etiqueta
         for (let i = 0; i < printQueue.length; i++) {
             const item = printQueue[i];
             const isInventory = item.inventoryData !== undefined;
             const barcodeText = item.barcode || item.number;
             const barcodeImage = barcodeImages.find(img => img.text === barcodeText);
 
-            // Nouvelle page si nécessaire
+            // Nueva página si es necesario
             if (currentLabel >= labelsPerPage) {
                 doc.addPage();
                 currentPage++;
                 currentLabel = 0;
             }
 
-            // Position
+            // Posición
             const col = currentLabel % cols;
             const row = Math.floor(currentLabel / cols);
             const x = margin + col * labelWidth;
             const y = margin + row * labelHeight;
 
-            // Cadre
+            // Marco
             if (printSettings.margin > 0) {
                 doc.setDrawColor(200, 200, 200);
                 doc.setLineWidth(0.1);
                 doc.rect(x, y, labelWidth, labelHeight);
             }
 
-            // Code-barre (si disponible)
+            // Código de barras (si está disponible)
             const barcodeY = y + 5;
             let textY;
 
@@ -2272,15 +2272,15 @@ async function generatePDF() {
                         barcodeHeight
                     );
 
-                    // Numéro sous le code-barre
+                    // Número bajo el código de barras
                     doc.setFontSize(6);
                     doc.setTextColor(100, 100, 100);
                     doc.text(barcodeText, x + labelWidth / 2, barcodeY + barcodeHeight + 2, { align: 'center' });
 
                     textY = barcodeY + barcodeHeight + 6;
                 } catch (e) {
-                    // Si l'image échoue, utiliser du texte
-                    console.warn('Erreur image code-barre, utilisation texte', e);
+                    // Si la imagen falla, usar texto
+                    console.warn('Error en la imagen del código de barras, usando texto alternativo', e);
                     doc.setFontSize(8);
                     doc.setTextColor(0, 0, 0);
                     doc.text("┌" + "─".repeat(barcodeText.length + 2) + "┐", x + labelWidth / 2, barcodeY, { align: 'center' });
@@ -2292,21 +2292,21 @@ async function generatePDF() {
                     textY = barcodeY + 14;
                 }
             } else {
-                // Pas de code-barre
+                // Sin código de barras
                 doc.setFontSize(6);
                 doc.setTextColor(150, 150, 150);
-                doc.text("Pas de code-barre", x + labelWidth / 2, barcodeY + 5, { align: 'center' });
+                doc.text("Sin código de barras", x + labelWidth / 2, barcodeY + 5, { align: 'center' });
                 textY = barcodeY + 10;
             }
 
-            // Nom de l'article
+            // Nombre del artículo
             doc.setFontSize(printSettings.fontSize === 'small' ? 8 :
                            printSettings.fontSize === 'large' ? 12 : 10);
             doc.setTextColor(0, 0, 0);
             doc.text(item.name, x + labelWidth / 2, textY, { align: 'center', maxWidth: labelWidth - 4 });
             textY += 5;
 
-            // Numéro d'article
+            // Número de artículo
             doc.setFontSize(printSettings.fontSize === 'small' ? 6 :
                            printSettings.fontSize === 'large' ? 9 : 7);
             doc.setTextColor(100, 100, 100);
@@ -2316,14 +2316,14 @@ async function generatePDF() {
             // Stock
             if (printSettings.showStock) {
                 if (isInventory) {
-                    doc.text(`Avant: ${item.inventoryData.stock_avant}`, x + labelWidth / 2, textY, { align: 'center' });
+                    doc.text(`Antes: ${item.inventoryData.stock_avant}`, x + labelWidth / 2, textY, { align: 'center' });
                     textY += 4;
-                    doc.text(`Après: ${item.inventoryData.stock_inventaire}`, x + labelWidth / 2, textY, { align: 'center' });
+                    doc.text(`Después: ${item.inventoryData.stock_inventaire}`, x + labelWidth / 2, textY, { align: 'center' });
                     textY += 4;
                     const diffColor = item.inventoryData.difference > 0 ? [76, 175, 80] :
                                      item.inventoryData.difference < 0 ? [244, 67, 54] : [100, 100, 100];
                     doc.setTextColor(...diffColor);
-                    doc.text(`Diff: ${item.inventoryData.difference > 0 ? '+' : ''}${item.inventoryData.difference}`,
+                    doc.text(`Dif: ${item.inventoryData.difference > 0 ? '+' : ''}${item.inventoryData.difference}`,
                             x + labelWidth / 2, textY, { align: 'center' });
                     doc.setTextColor(100, 100, 100);
                     textY += 4;
@@ -2333,13 +2333,13 @@ async function generatePDF() {
                 }
             }
 
-            // Prix
+            // Precio
             if (printSettings.showPrice && !isInventory) {
                 doc.text(`${item.price.toFixed(2)}€`, x + labelWidth / 2, textY, { align: 'center' });
                 textY += 4;
             }
 
-            // Footer
+            // Pie de página (Footer)
             doc.setFontSize(5);
             doc.setTextColor(150, 150, 150);
 
@@ -2347,17 +2347,17 @@ async function generatePDF() {
             let footerText = '';
 
             if (printSettings.showDate) {
-                footerText += isInventory ? item.inventoryData.date_inventaire : new Date().toLocaleDateString('fr-FR');
+                footerText += isInventory ? item.inventoryData.date_inventaire : new Date().toLocaleDateString('es-ES');
             }
 
             if (isInventory) {
                 if (footerText) footerText += ' | ';
-                footerText += 'INVENTAIRE';
+                footerText += 'INVENTARIO';
             }
 
             if (printSettings.showLocation && !isInventory) {
                 if (footerText) footerText += ' | ';
-                footerText += 'Zone A';
+                footerText += 'Zona A';
             }
 
             if (footerText) {
@@ -2367,31 +2367,31 @@ async function generatePDF() {
             currentLabel++;
         }
 
-        // Télécharger
-        const fileName = `etiquettes-${new Date().toISOString().split('T')[0]}-${Date.now()}.pdf`;
+        // Descargar
+        const fileName = `etiquetas-${new Date().toISOString().split('T')[0]}-${Date.now()}.pdf`;
         doc.save(fileName);
 
-        showNotification('PDF généré avec succès !', 'success');
+        showNotification('¡PDF generado con éxito!', 'success');
 
     } catch (error) {
-        console.error('Erreur génération PDF:', error);
-        showNotification('Erreur lors de la génération du PDF : ' + error.message, 'error');
+        console.error('Error al generar el PDF:', error);
+        showNotification('Error durante la generación del PDF: ' + error.message, 'error');
     }
 }
 
-// ===== GESTION DES MODÈLES =====
+// ===== GESTIÓN DE PLANTILLAS (MODÈLES) =====
 function saveTemplate() {
-    const templateName = prompt('Nom du modèle :');
+    const templateName = prompt('Nombre de la plantilla:');
 
     if (!templateName) {
         return;
     }
 
     try {
-        // Récupérer les modèles existants
+        // Recuperar las plantillas existentes
         const existingTemplates = JSON.parse(localStorage.getItem('labelTemplates') || '{}');
 
-        // Sauvegarder le modèle actuel
+        // Guardar la plantilla actual
         existingTemplates[templateName] = {
             name: templateName,
             settings: { ...printSettings },
@@ -2400,43 +2400,43 @@ function saveTemplate() {
 
         localStorage.setItem('labelTemplates', JSON.stringify(existingTemplates));
 
-        alert(`Modèle "${templateName}" sauvegardé avec succès !`);
+        alert(`¡Plantilla "${templateName}" guardada con éxito!`);
 
     } catch (error) {
-        console.error('Erreur sauvegarde modèle:', error);
-        alert('Erreur lors de la sauvegarde du modèle');
+        console.error('Error al guardar la plantilla:', error);
+        alert('Error durante el guardado de la plantilla');
     }
 }
 
 function loadTemplate() {
     try {
-        // Récupérer les modèles existants
+        // Recuperar las plantillas existentes
         const existingTemplates = JSON.parse(localStorage.getItem('labelTemplates') || '{}');
 
         if (Object.keys(existingTemplates).length === 0) {
-            alert('Aucun modèle sauvegardé');
+            alert('No hay plantillas guardadas');
             return;
         }
 
-        // Créer une liste de modèles
+        // Crear una lista de plantillas
         const templateNames = Object.keys(existingTemplates);
         const templateList = templateNames.map(name =>
-            `${name} (${new Date(existingTemplates[name].date).toLocaleDateString('fr-FR')})`
+            `${name} (${new Date(existingTemplates[name].date).toLocaleDateString('es-ES')})`
         ).join('\n');
 
         const selectedName = prompt(
-            `Modèles disponibles :\n\n${templateList}\n\nEntrez le nom exact du modèle à charger :`
+            `Plantillas disponibles:\n\n${templateList}\n\nIntroduzca el nombre exacto de la plantilla a cargar:`
         );
 
         if (!selectedName || !existingTemplates[selectedName]) {
             return;
         }
 
-        // Charger les paramètres
+        // Cargar los parámetros
         const template = existingTemplates[selectedName];
         printSettings = { ...printSettings, ...template.settings };
 
-        // Appliquer les paramètres
+        // Aplicar los parámetros
         applySavedSettings();
         updateSliderValues();
         saveSettings();
@@ -2445,11 +2445,11 @@ function loadTemplate() {
             updatePreview();
         }
 
-        alert(`Modèle "${selectedName}" chargé avec succès !`);
+        alert(`¡Plantilla "${selectedName}" cargada con éxito!`);
 
     } catch (error) {
-        console.error('Erreur chargement modèle:', error);
-        alert('Erreur lors du chargement du modèle');
+        console.error('Error al cargar la plantilla:', error);
+        alert('Error durante la carga de la plantilla');
     }
 }
 
@@ -2458,23 +2458,23 @@ async function printMultipleList() {
     const items = printList.querySelectorAll('.list-item');
 
     if (items.length === 0) {
-        showNotification('La liste d\'impression est vide', 'warning');
+        showNotification('La lista de impresión está vacía', 'warning');
         return;
     }
 
-    showNotification(`Préparation de ${items.length} articles pour l'impression...`, 'info');
+    showNotification(`Preparando ${items.length} artículos para la impresión...`, 'info');
 
     const articlesToPrint = [];
 
-    // Parcourir tous les articles de la liste
+    // Recorrer todos los artículos de la lista
     for (const item of items) {
         const articleId = item.dataset.id;
         const quantity = parseInt(item.querySelector('.quantity-input').value) || 1;
 
-        // Si c'est un ID valide (pas un ID temporaire)
+        // Si es un ID válido (no un ID temporal)
         if (articleId && !articleId.includes('temp-') && !articleId.includes('manual-')) {
             try {
-                // Récupérer l'article depuis la base de données
+                // Recuperar el artículo de la base de datos
                 const { data: article, error } = await supabase
                     .from('w_articles')
                     .select('*')
@@ -2483,7 +2483,7 @@ async function printMultipleList() {
 
                 if (error) throw error;
 
-                // Ajouter le nombre d'exemplaires spécifié
+                // Añadir el número de ejemplares especificado
                 for (let i = 0; i < quantity; i++) {
                     articlesToPrint.push({
                         id: article.id,
@@ -2497,8 +2497,8 @@ async function printMultipleList() {
                 }
 
             } catch (error) {
-                console.error('Erreur récupération article:', error);
-                // Pour les articles temporaires, utiliser les données affichées
+                console.error('Error al recuperar el artículo:', error);
+                // Para artículos temporales, usar los datos mostrados
                 const name = item.querySelector('.list-item-name').textContent;
                 const details = item.querySelector('.list-item-details').textContent;
 
@@ -2506,7 +2506,7 @@ async function printMultipleList() {
                     articlesToPrint.push({
                         id: articleId,
                         name: name,
-                        number: details.split(' • ')[0] || 'N/A',
+                        number: details.split(' • ')[0] || 'N/D',
                         barcode: details.split(' • ')[1] || '',
                         stock: 0,
                         price: 0,
@@ -2515,7 +2515,7 @@ async function printMultipleList() {
                 }
             }
         } else {
-            // Article temporaire
+            // Artículo temporal
             const name = item.querySelector('.list-item-name').textContent;
             const details = item.querySelector('.list-item-details').textContent;
 
@@ -2523,7 +2523,7 @@ async function printMultipleList() {
                 articlesToPrint.push({
                     id: articleId,
                     name: name,
-                    number: details.split(' • ')[0] || 'N/A',
+                    number: details.split(' • ')[0] || 'N/D',
                     barcode: details.split(' • ')[1] || '',
                     stock: 0,
                     price: 0,
@@ -2533,29 +2533,29 @@ async function printMultipleList() {
         }
     }
 
-    // Ajouter à la file d'attente
+    // Añadir a la cola de impresión
     addToPrintQueue(articlesToPrint);
 
-    // Passer à l'onglet paramètres et afficher l'aperçu
+    // Cambiar a la pestaña de parámetros y mostrar la vista previa
     switchTab('single');
 
-    // Afficher l'aperçu
+    // Mostrar la vista previa
     if (printQueue.length > 0) {
         document.getElementById('previewSection').style.display = 'block';
         updatePreview();
     }
 
-    showNotification(`${articlesToPrint.length} étiquettes ajoutées à l'impression`, 'success');
+    showNotification(`${articlesToPrint.length} etiquetas añadidas a la impresión`, 'success');
 
-    // Optionnel: Vider la liste après impression
-    if (confirm('Voulez-vous vider la liste après l\'ajout à l\'impression ?')) {
+    // Opcional: Vaciar la lista después de añadir a impresión
+    if (confirm('¿Desea vaciar la lista después de añadirla a la impresión?')) {
         clearPrintList();
     }
 }
 
-// ===== UTILITAIRES =====
+// ===== UTILIDADES =====
 function logout() {
-    if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    if (!confirm('¿Está seguro de que desea cerrar sesión?')) {
         return;
     }
 
@@ -2564,14 +2564,14 @@ function logout() {
     window.location.href = 'connexion.html';
 }
 
-// ===== FONCTION DE RÉINITIALISATION =====
+// ===== FUNCIÓN DE RESTABLECIMIENTO =====
 function resetApplication() {
-    if (confirm('Voulez-vous vraiment tout réinitialiser ? Cela supprimera la liste d\'impression et réinitialisera les paramètres.')) {
-        // Réinitialiser la file d'attente
+    if (confirm('¿Realmente desea restablecer todo? Esto eliminará la lista de impresión y restablecerá los parámetros.')) {
+        // Restablecer la cola de impresión
         printQueue = [];
         currentPreviewIndex = 0;
 
-        // Réinitialiser les paramètres par défaut
+        // Restablecer los parámetros por defecto
         printSettings = {
             format: 'medium',
             showPrice: true,
@@ -2585,41 +2585,41 @@ function resetApplication() {
             margin: 2
         };
 
-        // Réinitialiser l'interface
+        // Restablecer la interfaz
         document.getElementById('printList').innerHTML = `
             <div class="empty-list">
                 <i class="fas fa-tags"></i>
-                <p>Aucun article sélectionné</p>
-                <small>Ajoutez des articles à partir des résultats de recherche</small>
+                <p>Ningún artículo seleccionado</p>
+                <small>Añada artículos desde los resultados de búsqueda</small>
             </div>
         `;
 
-        // Réinitialiser les champs de recherche
+        // Restablecer los campos de búsqueda
         document.getElementById('articleNumberSearch').value = '';
         document.getElementById('articleNameSearch').value = '';
         document.getElementById('barcodeSearch').value = '';
         document.getElementById('multipleSearch').value = '';
 
 
-        // Cacher les sections
+        // Ocultar las secciones
         document.getElementById('searchResults').style.display = 'none';
         document.getElementById('previewSection').style.display = 'none';
         document.getElementById('printSummary').style.display = 'none';
 
 
-        // Réappliquer les paramètres
+        // Volver a aplicar los parámetros
         applySavedSettings();
         updateSliderValues();
         updateListCount();
         updatePrintButtons();
 
-        // Afficher notification
-        showNotification('Application réinitialisée avec succès', 'success');
+        // Mostrar notificación
+        showNotification('Aplicación restablecida con éxito', 'success');
     }
 }
 
-// Ajouter un bouton de réinitialisation dans l'interface
-// Dans la fonction setupEventListeners, ajoute cet écouteur :
+// Añadir un botón de restablecimiento en la interfaz
+// En la función setupEventListeners, añade este escuchador:
 document.getElementById('resetAppBtn')?.addEventListener('click', resetApplication);
 
 window.openScanModal = openScanModal;

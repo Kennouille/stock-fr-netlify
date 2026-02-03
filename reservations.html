@@ -1,30 +1,30 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des réservations - Gestion Stock</title>
+    <title>Gestión de Reservas - Gestión de Stock</title>
     <link rel="stylesheet" href="reservations.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Overlay de chargement -->
+    <!-- Superposición de carga -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
-            <p>Chargement des réservations...</p>
+            <p>Cargando reservas...</p>
         </div>
     </div>
 
     <div class="container">
-        <!-- Header -->
+        <!-- Encabezado -->
         <header class="header">
             <div class="header-left">
-                <h1><i class="fas fa-clipboard-list"></i> Gestion des réservations</h1>
+                <h1><i class="fas fa-clipboard-list"></i> Gestión de Reservas</h1>
                 <div class="header-info">
                     <span class="back-link">
                         <a href="accueil.html">
-                            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                            <i class="fas fa-arrow-left"></i> Volver al inicio
                         </a>
                     </span>
                 </div>
@@ -35,14 +35,14 @@
                     <span id="usernameDisplay">...</span>
                 </span>
                 <button id="logoutBtn" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    <i class="fas fa-sign-out-alt"></i> Cerrar sesión
                 </button>
             </div>
         </header>
 
-        <!-- Contenu principal -->
+        <!-- Contenido principal -->
         <main class="main-content">
-            <!-- Section en-tête -->
+            <!-- Sección encabezado -->
             <section class="header-section">
                 <div class="header-stats">
                     <div class="stat-card">
@@ -50,7 +50,7 @@
                             <i class="fas fa-clock"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Réservations actives</h3>
+                            <h3>Reservas activas</h3>
                             <p class="stat-value" id="activeReservations">0</p>
                         </div>
                     </div>
@@ -60,7 +60,7 @@
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>À libérer</h3>
+                            <h3>Para liberar</h3>
                             <p class="stat-value" id="expiredReservations">0</p>
                         </div>
                     </div>
@@ -70,7 +70,7 @@
                             <i class="fas fa-boxes"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Articles réservés</h3>
+                            <h3>Artículos reservados</h3>
                             <p class="stat-value" id="totalReservedItems">0</p>
                         </div>
                     </div>
@@ -80,7 +80,7 @@
                             <i class="fas fa-euro-sign"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Valeur réservée</h3>
+                            <h3>Valor reservado</h3>
                             <p class="stat-value" id="reservedValue">0 €</p>
                         </div>
                     </div>
@@ -88,107 +88,107 @@
 
                 <div class="header-actions">
                     <button id="newReservationBtn" class="btn-primary">
-                        <i class="fas fa-plus-circle"></i> Nouvelle réservation
+                        <i class="fas fa-plus-circle"></i> Nueva reserva
                     </button>
                     <button id="exportReservationsBtn" class="btn-export">
-                        <i class="fas fa-file-export"></i> Exporter
+                        <i class="fas fa-file-export"></i> Exportar
                     </button>
                 </div>
             </section>
 
-            <!-- Section filtres -->
+            <!-- Sección filtros -->
             <section class="filters-section">
                 <div class="filters-header">
-                    <h2><i class="fas fa-filter"></i> Filtres</h2>
+                    <h2><i class="fas fa-filter"></i> Filtros</h2>
                     <div class="filter-toggle">
                         <button id="toggleFiltersBtn" class="btn-toggle">
-                            <i class="fas fa-sliders-h"></i> Afficher les filtres
+                            <i class="fas fa-sliders-h"></i> Mostrar filtros
                         </button>
                     </div>
                 </div>
 
                 <div class="filters-container" id="filtersContainer" style="display: none;">
                     <div class="filters-grid">
-                        <!-- Filtre projet -->
+                        <!-- Filtro proyecto -->
                         <div class="filter-group">
                             <label for="filterProject">
-                                <i class="fas fa-project-diagram"></i> Projet
+                                <i class="fas fa-project-diagram"></i> Proyecto
                             </label>
                             <select id="filterProject" class="filter-select">
-                                <option value="">Tous les projets</option>
-                                <!-- Rempli dynamiquement -->
+                                <option value="">Todos los proyectos</option>
+                                <!-- Se rellena dinámicamente -->
                             </select>
                         </div>
 
-                        <!-- Filtre article -->
+                        <!-- Filtro artículo -->
                         <div class="filter-group">
                             <label for="filterArticle">
-                                <i class="fas fa-box"></i> Article
+                                <i class="fas fa-box"></i> Artículo
                             </label>
                             <select id="filterArticle" class="filter-select">
-                                <option value="">Tous les articles</option>
-                                <!-- Rempli dynamiquement -->
+                                <option value="">Todos los artículos</option>
+                                <!-- Se rellena dinámicamente -->
                             </select>
                         </div>
 
-                        <!-- Filtre statut -->
+                        <!-- Filtro estado -->
                         <div class="filter-group">
                             <label for="filterStatus">
-                                <i class="fas fa-info-circle"></i> Statut
+                                <i class="fas fa-info-circle"></i> Estado
                             </label>
                             <select id="filterStatus" class="filter-select">
-                                <option value="">Tous les statuts</option>
-                                <option value="active">Actives</option>
-                                <option value="expired">À libérer</option>
-                                <option value="recent">Récentes (7j)</option>
-                                <option value="old">Anciennes (>30j)</option>
+                                <option value="">Todos los estados</option>
+                                <option value="active">Activas</option>
+                                <option value="expired">Para liberar</option>
+                                <option value="recent">Recientes (7d)</option>
+                                <option value="old">Antiguas (>30d)</option>
                             </select>
                         </div>
 
-                        <!-- Filtre utilisateur -->
+                        <!-- Filtro usuario -->
                         <div class="filter-group">
                             <label for="filterUser">
-                                <i class="fas fa-user"></i> Utilisateur
+                                <i class="fas fa-user"></i> Usuario
                             </label>
                             <select id="filterUser" class="filter-select">
-                                <option value="">Tous les utilisateurs</option>
-                                <!-- Rempli dynamiquement -->
+                                <option value="">Todos los usuarios</option>
+                                <!-- Se rellena dinámicamente -->
                             </select>
                         </div>
                     </div>
 
                     <div class="filter-actions">
                         <button id="applyFiltersBtn" class="btn-primary">
-                            <i class="fas fa-filter"></i> Appliquer les filtres
+                            <i class="fas fa-filter"></i> Aplicar filtros
                         </button>
                         <button id="resetFiltersBtn" class="btn-secondary">
-                            <i class="fas fa-redo"></i> Réinitialiser
+                            <i class="fas fa-redo"></i> Reiniciar
                         </button>
                         <button id="saveFilterBtn" class="btn-secondary">
-                            <i class="fas fa-save"></i> Sauvegarder ce filtre
+                            <i class="fas fa-save"></i> Guardar este filtro
                         </button>
                     </div>
                 </div>
             </section>
 
-            <!-- Section onglets -->
+            <!-- Sección pestañas -->
             <section class="tabs-section">
                 <div class="tabs-header">
                     <div class="tabs">
                         <button class="tab-btn active" data-tab="active">
-                            <i class="fas fa-clock"></i> Réservations actives
+                            <i class="fas fa-clock"></i> Reservas activas
                             <span class="tab-badge" id="activeTabCount">0</span>
                         </button>
                         <button class="tab-btn" data-tab="expired">
-                            <i class="fas fa-exclamation-triangle"></i> À libérer
+                            <i class="fas fa-exclamation-triangle"></i> Para liberar
                             <span class="tab-badge" id="expiredTabCount">0</span>
                         </button>
                         <button class="tab-btn" data-tab="history">
-                            <i class="fas fa-history"></i> Historique
+                            <i class="fas fa-history"></i> Historial
                             <span class="tab-badge" id="historyTabCount">0</span>
                         </button>
                         <button class="tab-btn" data-tab="projects">
-                            <i class="fas fa-project-diagram"></i> Projets
+                            <i class="fas fa-project-diagram"></i> Proyectos
                             <span class="tab-badge" id="projectsTabCount">0</span>
                         </button>
                     </div>
@@ -196,7 +196,7 @@
                     <div class="search-box">
                         <input type="text"
                                id="searchReservations"
-                               placeholder="Rechercher une réservation..."
+                               placeholder="Buscar una reserva..."
                                class="search-input">
                         <button id="searchBtn" class="btn-search">
                             <i class="fas fa-search"></i>
@@ -204,7 +204,7 @@
                     </div>
                 </div>
 
-                <!-- Onglet Réservations actives -->
+                <!-- Pestaña Reservas activas -->
                 <div id="activeTab" class="tab-content active">
                     <div class="table-container">
                         <table class="reservations-table">
@@ -213,20 +213,20 @@
                                     <th class="select-col">
                                         <input type="checkbox" id="selectAllActive">
                                     </th>
-                                    <th>Article</th>
-                                    <th>Projet</th>
-                                    <th>Quantité</th>
-                                    <th>Réservé le</th>
-                                    <th>Durée</th>
-                                    <th>Utilisateur</th>
-                                    <th>Actions</th>
+                                    <th>Artículo</th>
+                                    <th>Proyecto</th>
+                                    <th>Cantidad</th>
+                                    <th>Reservado el</th>
+                                    <th>Duración</th>
+                                    <th>Usuario</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="activeReservationsBody">
-                                <!-- Rempli dynamiquement -->
+                                <!-- Se rellena dinámicamente -->
                                 <tr>
                                     <td colspan="8" class="loading-row">
-                                        <i class="fas fa-spinner fa-spin"></i> Chargement des réservations actives...
+                                        <i class="fas fa-spinner fa-spin"></i> Cargando reservas activas...
                                     </td>
                                 </tr>
                             </tbody>
@@ -235,29 +235,29 @@
 
                     <div class="table-footer">
                         <div class="selection-info" id="activeSelectionInfo" style="display: none;">
-                            <span id="activeSelectedCount">0</span> réservation(s) sélectionnée(s)
+                            <span id="activeSelectedCount">0</span> reserva(s) seleccionada(s)
                         </div>
                         <div class="table-actions">
                             <button id="releaseSelectedBtn" class="btn-action" disabled>
-                                <i class="fas fa-unlock"></i> Libérer la sélection
+                                <i class="fas fa-unlock"></i> Liberar selección
                             </button>
                             <button id="extendSelectedBtn" class="btn-action" disabled>
-                                <i class="fas fa-calendar-plus"></i> Prolonger
+                                <i class="fas fa-calendar-plus"></i> Prolongar
                             </button>
                             <button id="exportSelectedBtn" class="btn-action" disabled>
-                                <i class="fas fa-file-export"></i> Exporter
+                                <i class="fas fa-file-export"></i> Exportar
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Onglet À libérer -->
+                <!-- Pestaña Para liberar -->
                 <div id="expiredTab" class="tab-content">
                     <div class="expired-warning">
                         <i class="fas fa-exclamation-circle"></i>
                         <div class="warning-content">
-                            <h3>Réservations à libérer</h3>
-                            <p>Ces réservations sont actives depuis plus de 30 jours. Il est recommandé de les libérer ou de les prolonger.</p>
+                            <h3>Reservas para liberar</h3>
+                            <p>Estas reservas llevan activas más de 30 días. Se recomienda liberarlas o prolongarlas.</p>
                         </div>
                     </div>
 
@@ -268,20 +268,20 @@
                                     <th class="select-col">
                                         <input type="checkbox" id="selectAllExpired">
                                     </th>
-                                    <th>Article</th>
-                                    <th>Projet</th>
-                                    <th>Quantité</th>
-                                    <th>Réservé le</th>
-                                    <th>Jours écoulés</th>
-                                    <th>Utilisateur</th>
-                                    <th>Actions</th>
+                                    <th>Artículo</th>
+                                    <th>Proyecto</th>
+                                    <th>Cantidad</th>
+                                    <th>Reservado el</th>
+                                    <th>Días transcurridos</th>
+                                    <th>Usuario</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="expiredReservationsBody">
-                                <!-- Rempli dynamiquement -->
+                                <!-- Se rellena dinámicamente -->
                                 <tr>
                                     <td colspan="8" class="loading-row">
-                                        <i class="fas fa-spinner fa-spin"></i> Chargement des réservations à libérer...
+                                        <i class="fas fa-spinner fa-spin"></i> Cargando reservas para liberar...
                                     </td>
                                 </tr>
                             </tbody>
@@ -290,44 +290,44 @@
 
                     <div class="table-footer">
                         <div class="selection-info" id="expiredSelectionInfo" style="display: none;">
-                            <span id="expiredSelectedCount">0</span> réservation(s) sélectionnée(s)
+                            <span id="expiredSelectedCount">0</span> reserva(s) seleccionada(s)
                         </div>
                         <div class="table-actions">
                             <button id="releaseExpiredSelectedBtn" class="btn-action" disabled>
-                                <i class="fas fa-unlock"></i> Libérer la sélection
+                                <i class="fas fa-unlock"></i> Liberar selección
                             </button>
                             <button id="extendExpiredSelectedBtn" class="btn-action" disabled>
-                                <i class="fas fa-calendar-plus"></i> Prolonger de 7 jours
+                                <i class="fas fa-calendar-plus"></i> Prolongar 7 días
                             </button>
                             <button id="notifyExpiredBtn" class="btn-action">
-                                <i class="fas fa-bell"></i> Notifier les responsables
+                                <i class="fas fa-bell"></i> Notificar a los responsables
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Onglet Historique -->
+                <!-- Pestaña Historial -->
                 <div id="historyTab" class="tab-content">
                     <div class="history-filters">
                         <div class="filter-row">
                             <div class="filter-group">
-                                <label for="historyDateFrom">Du :</label>
+                                <label for="historyDateFrom">Desde:</label>
                                 <input type="date" id="historyDateFrom" class="date-input">
                             </div>
                             <div class="filter-group">
-                                <label for="historyDateTo">Au :</label>
+                                <label for="historyDateTo">Hasta:</label>
                                 <input type="date" id="historyDateTo" class="date-input">
                             </div>
                             <div class="filter-group">
-                                <label for="historyType">Type :</label>
+                                <label for="historyType">Tipo:</label>
                                 <select id="historyType" class="filter-select">
-                                    <option value="">Tous les types</option>
-                                    <option value="reservation">Réservations</option>
-                                    <option value="liberation">Libérations</option>
+                                    <option value="">Todos los tipos</option>
+                                    <option value="reservation">Reservas</option>
+                                    <option value="liberation">Liberaciones</option>
                                 </select>
                             </div>
                             <button id="applyHistoryFiltersBtn" class="btn-primary">
-                                <i class="fas fa-filter"></i> Appliquer
+                                <i class="fas fa-filter"></i> Aplicar
                             </button>
                         </div>
                     </div>
@@ -336,20 +336,20 @@
                         <table class="history-table">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Type</th>
-                                    <th>Article</th>
-                                    <th>Projet</th>
-                                    <th>Quantité</th>
-                                    <th>Utilisateur</th>
-                                    <th>Commentaire</th>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Artículo</th>
+                                    <th>Proyecto</th>
+                                    <th>Cantidad</th>
+                                    <th>Usuario</th>
+                                    <th>Comentario</th>
                                 </tr>
                             </thead>
                             <tbody id="historyTableBody">
-                                <!-- Rempli dynamiquement -->
+                                <!-- Se rellena dinámicamente -->
                                 <tr>
                                     <td colspan="7" class="loading-row">
-                                        <i class="fas fa-spinner fa-spin"></i> Chargement de l'historique...
+                                        <i class="fas fa-spinner fa-spin"></i> Cargando historial...
                                     </td>
                                 </tr>
                             </tbody>
@@ -358,7 +358,7 @@
 
                     <div class="table-footer">
                         <div class="pagination-info">
-                            <span id="historyPaginationInfo">Affichage 0-0 sur 0</span>
+                            <span id="historyPaginationInfo">Mostrando 0-0 de 0</span>
                         </div>
                         <div class="pagination-controls">
                             <button id="historyFirstPageBtn" class="btn-pagination" disabled>
@@ -368,7 +368,7 @@
                                 <i class="fas fa-angle-left"></i>
                             </button>
                             <span class="page-info">
-                                Page <span id="historyCurrentPage">1</span> sur <span id="historyTotalPages">1</span>
+                                Página <span id="historyCurrentPage">1</span> de <span id="historyTotalPages">1</span>
                             </span>
                             <button id="historyNextPageBtn" class="btn-pagination" disabled>
                                 <i class="fas fa-angle-right"></i>
@@ -380,36 +380,36 @@
                     </div>
                 </div>
 
-                <!-- Onglet Projets -->
+                <!-- Pestaña Proyectos -->
                 <div id="projectsTab" class="tab-content">
                     <div class="projects-header">
-                        <h3><i class="fas fa-project-diagram"></i> Gestion des projets</h3>
+                        <h3><i class="fas fa-project-diagram"></i> Gestión de Proyectos</h3>
                         <button id="newProjectBtn" class="btn-primary">
-                            <i class="fas fa-plus"></i> Nouveau projet
+                            <i class="fas fa-plus"></i> Nuevo proyecto
                         </button>
                     </div>
 
                     <div class="projects-grid" id="projectsGrid">
-                        <!-- Rempli dynamiquement -->
+                        <!-- Se rellena dinámicamente -->
                         <div class="loading-projects">
-                            <i class="fas fa-spinner fa-spin"></i> Chargement des projets...
+                            <i class="fas fa-spinner fa-spin"></i> Cargando proyectos...
                         </div>
                     </div>
                 </div>
             </section>
         </main>
 
-        <!-- Footer -->
+        <!-- Pie de página -->
         <footer class="footer">
-            <p>Système de gestion de stock • Gestion des réservations</p>
+            <p>Sistema de gestión de stock • Gestión de reservas</p>
         </footer>
     </div>
 
-    <!-- Modal nouvelle réservation -->
+    <!-- Modal nueva reserva -->
     <div id="newReservationModal" class="modal-overlay" style="display: none;">
         <div class="modal modal-large">
             <div class="modal-header">
-                <h3><i class="fas fa-plus-circle"></i> Nouvelle réservation</h3>
+                <h3><i class="fas fa-plus-circle"></i> Nueva reserva</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
@@ -417,32 +417,32 @@
                     <div class="steps">
                         <div class="step active" data-step="1">
                             <span class="step-number">1</span>
-                            <span class="step-label">Sélection article</span>
+                            <span class="step-label">Selección de artículo</span>
                         </div>
                         <div class="step" data-step="2">
                             <span class="step-number">2</span>
-                            <span class="step-label">Détails réservation</span>
+                            <span class="step-label">Detalles de la reserva</span>
                         </div>
                         <div class="step" data-step="3">
                             <span class="step-number">3</span>
-                            <span class="step-label">Confirmation</span>
+                            <span class="step-label">Confirmación</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Étape 1 : Sélection article -->
+                <!-- Paso 1: Selección de artículo -->
                 <div id="step1" class="step-content active">
                     <div class="search-article-section">
-                        <h4><i class="fas fa-search"></i> Rechercher un article</h4>
+                        <h4><i class="fas fa-search"></i> Buscar un artículo</h4>
                         <div class="search-methods">
                             <div class="search-method">
                                 <label for="reservationBarcode">
-                                    <i class="fas fa-barcode"></i> Par code-barre
+                                    <i class="fas fa-barcode"></i> Por código de barras
                                 </label>
                                 <div class="input-with-button">
                                     <input type="text"
                                            id="reservationBarcode"
-                                           placeholder="Scanner ou saisir le code-barre"
+                                           placeholder="Escanear o introducir código de barras"
                                            class="search-input">
                                     <button id="scanReservationBtn" class="btn-action">
                                         <i class="fas fa-camera"></i>
@@ -452,12 +452,12 @@
 
                             <div class="search-method">
                                 <label for="reservationArticleSearch">
-                                    <i class="fas fa-box"></i> Par nom ou numéro
+                                    <i class="fas fa-box"></i> Por nombre o número
                                 </label>
                                 <div class="input-with-button">
                                     <input type="text"
                                            id="reservationArticleSearch"
-                                           placeholder="Nom ou numéro d'article"
+                                           placeholder="Nombre o número de artículo"
                                            class="search-input">
                                     <button id="searchReservationArticleBtn" class="btn-action">
                                         <i class="fas fa-search"></i>
@@ -467,38 +467,38 @@
                         </div>
 
                         <div class="search-results-container" id="reservationSearchResults" style="display: none;">
-                            <h5>Résultats</h5>
+                            <h5>Resultados</h5>
                             <div class="results-list" id="reservationResultsList">
-                                <!-- Rempli dynamiquement -->
+                                <!-- Se rellena dinámicamente -->
                             </div>
                         </div>
 
                         <div class="selected-article" id="selectedArticlePreview" style="display: none;">
-                            <h5><i class="fas fa-check-circle"></i> Article sélectionné</h5>
+                            <h5><i class="fas fa-check-circle"></i> Artículo seleccionado</h5>
                             <div class="article-preview" id="articlePreview">
-                                <!-- Rempli dynamiquement -->
+                                <!-- Se rellena dinámicamente -->
                             </div>
                             <button id="changeArticleBtn" class="btn-secondary btn-small">
-                                <i class="fas fa-exchange-alt"></i> Changer d'article
+                                <i class="fas fa-exchange-alt"></i> Cambiar artículo
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Étape 2 : Détails réservation -->
+                <!-- Paso 2: Detalles de la reserva -->
                 <div id="step2" class="step-content">
                     <div class="reservation-details-section">
-                        <h4><i class="fas fa-edit"></i> Détails de la réservation</h4>
+                        <h4><i class="fas fa-edit"></i> Detalles de la reserva</h4>
 
                         <div class="article-info-summary" id="articleInfoSummary">
-                            <!-- Rempli dynamiquement -->
+                            <!-- Se rellena dinámicamente -->
                         </div>
 
                         <div class="reservation-form">
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label for="reservationQuantity">
-                                        <i class="fas fa-boxes"></i> Quantité à réserver *
+                                        <i class="fas fa-boxes"></i> Cantidad a reservar *
                                     </label>
                                     <div class="quantity-input-group">
                                         <button type="button" class="quantity-btn minus" id="quantityMinusBtn">
@@ -514,41 +514,41 @@
                                         </button>
                                     </div>
                                     <div class="quantity-info">
-                                        <span>Stock disponible : <strong id="availableStock">0</strong></span>
-                                        <span>Déjà réservé : <strong id="alreadyReserved">0</strong></span>
+                                        <span>Stock disponible: <strong id="availableStock">0</strong></span>
+                                        <span>Ya reservado: <strong id="alreadyReserved">0</strong></span>
                                     </div>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="reservationProject">
-                                        <i class="fas fa-project-diagram"></i> Projet *
+                                        <i class="fas fa-project-diagram"></i> Proyecto *
                                     </label>
                                     <div class="project-select-group">
                                         <select id="reservationProject" class="form-select">
-                                            <option value="">Sélectionnez un projet</option>
-                                            <!-- Rempli dynamiquement -->
+                                            <option value="">Seleccionar proyecto</option>
+                                            <!-- Se rellena dinámicamente -->
                                         </select>
                                         <button type="button" id="newProjectFromReservationBtn" class="btn-secondary btn-small">
-                                            <i class="fas fa-plus"></i> Nouveau
+                                            <i class="fas fa-plus"></i> Nuevo
                                         </button>
                                     </div>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="reservationDuration">
-                                        <i class="fas fa-calendar-alt"></i> Durée de réservation
+                                        <i class="fas fa-calendar-alt"></i> Duración de la reserva
                                     </label>
                                     <select id="reservationDuration" class="form-select">
-                                        <option value="7">7 jours</option>
-                                        <option value="14" selected>14 jours</option>
-                                        <option value="30">30 jours</option>
-                                        <option value="custom">Personnalisée</option>
+                                        <option value="7">7 días</option>
+                                        <option value="14" selected>14 días</option>
+                                        <option value="30">30 días</option>
+                                        <option value="custom">Personalizada</option>
                                     </select>
                                 </div>
 
                                 <div class="form-group" id="customDateGroup" style="display: none;">
                                     <label for="reservationEndDate">
-                                        <i class="fas fa-calendar-day"></i> Date de fin
+                                        <i class="fas fa-calendar-day"></i> Fecha de fin
                                     </label>
                                     <input type="date"
                                            id="reservationEndDate"
@@ -558,32 +558,32 @@
 
                             <div class="form-group">
                                 <label for="reservationComment">
-                                    <i class="fas fa-comment"></i> Commentaire (optionnel)
+                                    <i class="fas fa-comment"></i> Comentario (opcional)
                                 </label>
                                 <textarea id="reservationComment"
                                           rows="3"
-                                          placeholder="Motif de la réservation, informations supplémentaires..."
+                                          placeholder="Motivo de la reserva, información adicional..."
                                           class="form-textarea"></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Étape 3 : Confirmation -->
+                <!-- Paso 3: Confirmación -->
                 <div id="step3" class="step-content">
                     <div class="confirmation-section">
-                        <h4><i class="fas fa-check-circle"></i> Confirmation</h4>
+                        <h4><i class="fas fa-check-circle"></i> Confirmación</h4>
 
                         <div class="confirmation-summary" id="confirmationSummary">
-                            <!-- Rempli dynamiquement -->
+                            <!-- Se rellena dinámicamente -->
                         </div>
 
                         <div class="confirmation-actions">
                             <button id="confirmReservationBtn" class="btn-primary btn-large">
-                                <i class="fas fa-check"></i> Confirmer la réservation
+                                <i class="fas fa-check"></i> Confirmar reserva
                             </button>
                             <button id="editReservationBtn" class="btn-secondary">
-                                <i class="fas fa-edit"></i> Modifier
+                                <i class="fas fa-edit"></i> Editar
                             </button>
                         </div>
                     </div>
@@ -591,56 +591,56 @@
 
                 <div class="step-navigation">
                     <button id="prevStepBtn" class="btn-secondary" disabled>
-                        <i class="fas fa-arrow-left"></i> Précédent
+                        <i class="fas fa-arrow-left"></i> Anterior
                     </button>
                     <button id="nextStepBtn" class="btn-primary">
-                        Suivant <i class="fas fa-arrow-right"></i>
+                        Siguiente <i class="fas fa-arrow-right"></i>
                     </button>
                     <button id="cancelReservationBtn" class="btn-secondary">
-                        <i class="fas fa-times"></i> Annuler
+                        <i class="fas fa-times"></i> Cancelar
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal nouveau projet -->
+    <!-- Modal nuevo proyecto -->
     <div id="newProjectModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-plus"></i> Nouveau projet</h3>
+                <h3><i class="fas fa-plus"></i> Nuevo proyecto</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="newProjectForm">
                     <div class="form-group">
                         <label for="projectName">
-                            <i class="fas fa-tag"></i> Nom du projet *
+                            <i class="fas fa-tag"></i> Nombre del proyecto *
                         </label>
                         <input type="text"
                                id="projectName"
-                               placeholder="Ex: Construction bureau, Rénovation salle..."
+                               placeholder="Ej: Construcción oficina, Renovación sala..."
                                class="form-input"
                                required>
                     </div>
 
                     <div class="form-group">
                         <label for="projectNumber">
-                            <i class="fas fa-hashtag"></i> Numéro de projet
+                            <i class="fas fa-hashtag"></i> Número de proyecto
                         </label>
                         <input type="text"
                                id="projectNumber"
-                               placeholder="Ex: PROJ-2024-001"
+                               placeholder="Ej: PROY-2024-001"
                                class="form-input">
                     </div>
 
                     <div class="form-group">
                         <label for="projectDescription">
-                            <i class="fas fa-align-left"></i> Description
+                            <i class="fas fa-align-left"></i> Descripción
                         </label>
                         <textarea id="projectDescription"
                                   rows="3"
-                                  placeholder="Description du projet..."
+                                  placeholder="Descripción del proyecto..."
                                   class="form-textarea"></textarea>
                     </div>
 
@@ -650,13 +650,13 @@
                         </label>
                         <input type="text"
                                id="projectManager"
-                               placeholder="Nom du responsable"
+                               placeholder="Nombre del responsable"
                                class="form-input">
                     </div>
 
                     <div class="form-group">
                         <label for="projectEndDate">
-                            <i class="fas fa-calendar-check"></i> Date de fin prévue
+                            <i class="fas fa-calendar-check"></i> Fecha de fin prevista
                         </label>
                         <input type="date"
                                id="projectEndDate"
@@ -670,10 +670,10 @@
 
                     <div class="modal-actions">
                         <button type="submit" class="btn-primary">
-                            <i class="fas fa-save"></i> Créer le projet
+                            <i class="fas fa-save"></i> Crear proyecto
                         </button>
                         <button type="button" class="btn-secondary close-modal">
-                            Annuler
+                            Cancelar
                         </button>
                     </div>
                 </form>
@@ -681,25 +681,25 @@
         </div>
     </div>
 
-    <!-- Modal libération réservation -->
+    <!-- Modal liberación de reserva -->
     <div id="releaseModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-unlock"></i> Libération de réservation</h3>
+                <h3><i class="fas fa-unlock"></i> Liberación de reserva</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="release-details" id="releaseDetails">
-                    <!-- Rempli dynamiquement -->
+                    <!-- Se rellena dinámicamente -->
                 </div>
 
                 <div class="form-group">
                     <label for="releaseComment">
-                        <i class="fas fa-comment"></i> Commentaire (optionnel)
+                        <i class="fas fa-comment"></i> Comentario (opcional)
                     </label>
                     <textarea id="releaseComment"
                               rows="2"
-                              placeholder="Raison de la libération..."
+                              placeholder="Razón de la liberación..."
                               class="form-textarea"></textarea>
                 </div>
 
@@ -710,46 +710,46 @@
 
                 <div class="modal-actions">
                     <button id="confirmReleaseBtn" class="btn-primary">
-                        <i class="fas fa-check"></i> Confirmer la libération
+                        <i class="fas fa-check"></i> Confirmar liberación
                     </button>
                     <button type="button" class="btn-secondary close-modal">
-                        Annuler
+                        Cancelar
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal prolongation -->
+    <!-- Modal prolongación -->
     <div id="extendModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-calendar-plus"></i> Prolongation de réservation</h3>
+                <h3><i class="fas fa-calendar-plus"></i> Prolongación de reserva</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="extend-details" id="extendDetails">
-                    <!-- Rempli dynamiquement -->
+                    <!-- Se rellena dinámicamente -->
                 </div>
 
                 <div class="form-group">
                     <label for="extendDuration">
-                        <i class="fas fa-calendar-alt"></i> Prolonger de
+                        <i class="fas fa-calendar-alt"></i> Prolongar por
                     </label>
                     <select id="extendDuration" class="form-select">
-                        <option value="7">7 jours</option>
-                        <option value="14" selected>14 jours</option>
-                        <option value="30">30 jours</option>
+                        <option value="7">7 días</option>
+                        <option value="14" selected>14 días</option>
+                        <option value="30">30 días</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="extendComment">
-                        <i class="fas fa-comment"></i> Commentaire (optionnel)
+                        <i class="fas fa-comment"></i> Comentario (opcional)
                     </label>
                     <textarea id="extendComment"
                               rows="2"
-                              placeholder="Raison de la prolongation..."
+                              placeholder="Razón de la prolongación..."
                               class="form-textarea"></textarea>
                 </div>
 
@@ -760,44 +760,44 @@
 
                 <div class="modal-actions">
                     <button id="confirmExtendBtn" class="btn-primary">
-                        <i class="fas fa-check"></i> Confirmer la prolongation
+                        <i class="fas fa-check"></i> Confirmar prolongación
                     </button>
                     <button type="button" class="btn-secondary close-modal">
-                        Annuler
+                        Cancelar
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal détails réservation -->
+    <!-- Modal detalles de reserva -->
     <div id="detailsModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-info-circle"></i> Détails de la réservation</h3>
+                <h3><i class="fas fa-info-circle"></i> Detalles de la reserva</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="reservation-full-details" id="reservationFullDetails">
-                    <!-- Rempli dynamiquement -->
+                    <!-- Se rellena dinámicamente -->
                 </div>
 
                 <div class="modal-actions">
                     <button id="releaseFromDetailsBtn" class="btn-primary">
-                        <i class="fas fa-unlock"></i> Libérer
+                        <i class="fas fa-unlock"></i> Liberar
                     </button>
                     <button id="extendFromDetailsBtn" class="btn-secondary">
-                        <i class="fas fa-calendar-plus"></i> Prolonger
+                        <i class="fas fa-calendar-plus"></i> Prolongar
                     </button>
                     <button type="button" class="btn-secondary close-modal">
-                        Fermer
+                        Cerrar
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Import des scripts -->
+    <!-- Importación de scripts -->
     <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
     <script type="module" src="reservations.js"></script>

@@ -1,11 +1,11 @@
-// ===== IMPORTS =====
+// ===== IMPORTACIONES =====
 import { supabase } from './supabaseClient.js';
 
-// ===== ÉTATS GLOBAUX =====
+// ===== ESTADOS GLOBALES =====
 let state = {
     user: null,
     filters: {
-        period: 'current_month',
+        period: 'current_month', // mes_actual
         startDate: null,
         endDate: null,
         userId: '',
@@ -19,92 +19,92 @@ let state = {
         movements: []
     },
     reports: {
-        stockValue: null,
-        lowStock: [],
-        outOfStock: [],
-        topArticles: [],
+        stockValue: null, // valor_stock
+        lowStock: [], // stock_bajo
+        outOfStock: [], // sin_stock
+        topArticles: [], // articulos_populares
         categories: []
     },
     dataTables: {}
 };
 
-// ===== ÉLÉMENTS DOM =====
+// ===== ELEMENTOS DOM =====
 const elements = {
-    // Overlay
+    // Overlay de carga
     loadingOverlay: document.getElementById('loadingOverlay'),
 
-    // Header
+    // Cabecera
     usernameDisplay: document.getElementById('usernameDisplay'),
-    logoutBtn: document.getElementById('logoutBtn'),
+    logoutBtn: document.getElementById('logoutBtn'), // boton_cerrar_sesion
 
-    // Filtres
-    periodSelect: document.getElementById('periodSelect'),
-    startDate: document.getElementById('startDate'),
-    endDate: document.getElementById('endDate'),
-    userFilter: document.getElementById('userFilter'),
-    projectFilter: document.getElementById('projectFilter'),
-    applyFiltersBtn: document.getElementById('applyFiltersBtn'),
-    resetFiltersBtn: document.getElementById('resetFiltersBtn'),
-    periodInfo: document.getElementById('periodInfo'),
+    // Filtros
+    periodSelect: document.getElementById('periodSelect'), // selector_periodo
+    startDate: document.getElementById('startDate'), // fecha_inicio
+    endDate: document.getElementById('endDate'), // fecha_fin
+    userFilter: document.getElementById('userFilter'), // filtro_usuario
+    projectFilter: document.getElementById('projectFilter'), // filtro_proyecto
+    applyFiltersBtn: document.getElementById('applyFiltersBtn'), // boton_aplicar_filtros
+    resetFiltersBtn: document.getElementById('resetFiltersBtn'), // boton_reiniciar_filtros
+    periodInfo: document.getElementById('periodInfo'), // info_periodo
 
-    // Carte valeur stock
-    totalStockValue: document.getElementById('totalStockValue'),
-    stockValueChange: document.getElementById('stockValueChange'),
-    previousStockValue: document.getElementById('previousStockValue'),
-    activeArticlesCount: document.getElementById('activeArticlesCount'),
-    averageArticleValue: document.getElementById('averageArticleValue'),
-    topCategory: document.getElementById('topCategory'),
-    stockValuePeriod: document.getElementById('stockValuePeriod'),
+    // Tarjeta valor de stock
+    totalStockValue: document.getElementById('totalStockValue'), // valor_total_stock
+    stockValueChange: document.getElementById('stockValueChange'), // cambio_valor_stock
+    previousStockValue: document.getElementById('previousStockValue'), // valor_stock_anterior
+    activeArticlesCount: document.getElementById('activeArticlesCount'), // numero_articulos_activos
+    averageArticleValue: document.getElementById('averageArticleValue'), // valor_medio_articulo
+    topCategory: document.getElementById('topCategory'), // categoria_principal
+    stockValuePeriod: document.getElementById('stockValuePeriod'), // periodo_valor_stock
 
-    // Tableaux
-    stockValueBody: document.getElementById('stockValueBody'),
-    stockValueTotal: document.getElementById('stockValueTotal'),
-    lowStockBody: document.getElementById('lowStockBody'),
-    outOfStockBody: document.getElementById('outOfStockBody'),
-    topArticlesBody: document.getElementById('topArticlesBody'),
-    categoriesBody: document.getElementById('categoriesBody'),
-    lowStockCount: document.getElementById('lowStockCount'),
-    outOfStockCount: document.getElementById('outOfStockCount'),
+    // Tablas
+    stockValueBody: document.getElementById('stockValueBody'), // cuerpo_tabla_valor_stock
+    stockValueTotal: document.getElementById('stockValueTotal'), // total_valor_stock
+    lowStockBody: document.getElementById('lowStockBody'), // cuerpo_tabla_stock_bajo
+    outOfStockBody: document.getElementById('outOfStockBody'), // cuerpo_tabla_sin_stock
+    topArticlesBody: document.getElementById('topArticlesBody'), // cuerpo_tabla_articulos_populares
+    categoriesBody: document.getElementById('categoriesBody'), // cuerpo_tabla_categorias
+    lowStockCount: document.getElementById('lowStockCount'), // contador_stock_bajo
+    outOfStockCount: document.getElementById('outOfStockCount'), // contador_sin_stock
 
-    // Période top articles
-    topArticlesPeriod: document.getElementById('topArticlesPeriod'),
+    // Período top articles
+    topArticlesPeriod: document.getElementById('topArticlesPeriod'), // periodo_articulos_populares
 
-    // Actions
-    exportPdfBtn: document.getElementById('exportPdfBtn'),
-    exportExcelBtn: document.getElementById('exportExcelBtn'),
-    refreshBtn: document.getElementById('refreshBtn'),
+    // Acciones
+    exportPdfBtn: document.getElementById('exportPdfBtn'), // boton_exportar_pdf
+    exportExcelBtn: document.getElementById('exportExcelBtn'), // boton_exportar_excel
+    refreshBtn: document.getElementById('refreshBtn'), // boton_refrescar
 
-    // Footer
-    lastUpdateTime: document.getElementById('lastUpdateTime')
+    // Pie de página
+    lastUpdateTime: document.getElementById('lastUpdateTime') // ultima_actualizacion
 };
 
-// ===== AUTHENTIFICATION =====
+// ===== AUTENTIFICACIÓN =====
 async function checkAuth() {
     try {
         const userJson = sessionStorage.getItem('current_user');
 
         if (!userJson) {
-            window.location.href = 'connexion.html';
+            window.location.href = 'connexion.html'; // página_de_inicio_de_sesion
             return false;
         }
 
         state.user = JSON.parse(userJson);
 
-        // Mettre à jour l'interface avec le nom d'utilisateur IMMÉDIATEMENT
+        // Actualizar la interfaz con el nombre de usuario INMEDIATAMENTE
         elements.usernameDisplay.textContent = state.user.username || state.user.email;
 
-        // DEBUG: Afficher les permissions pour vérification
-        console.log('Utilisateur connecté:', state.user.username);
-        console.log('Permissions:', state.user.permissions);
-        console.log('Permission stats:', state.user.permissions?.stats);
+        // DEBUG: Mostrar permisos para verificación
+        console.log('Usuario conectado:', state.user.username);
+        console.log('Permisos:', state.user.permissions);
+        console.log('Permiso stats:', state.user.permissions?.stats);
 
-        // Le SuperAdmin a toujours accès
+        // El SuperAdmin tiene siempre acceso
         const SUPERADMIN_USERNAME = 'Kennouille';
         const isSuperAdmin = state.user.username === SUPERADMIN_USERNAME;
 
         if (isSuperAdmin) {
-            console.log('SuperAdmin - accès autorisé automatiquement');
-            // Mettre à jour les permissions pour inclure stats si nécessaire
+            console.log('SuperAdmin - acceso autorizado automáticamente');
+            // Actualizar permisos para incluir stats si es necesario
             if (!state.user.permissions) {
                 state.user.permissions = {};
             }
@@ -112,34 +112,34 @@ async function checkAuth() {
             return true;
         }
 
-        // Pour les autres utilisateurs, vérifier la permission stats
+        // Para otros usuarios, verificar el permiso stats
         if (!state.user.permissions?.stats) {
-            alert('Vous n\'avez pas la permission d\'accéder à cette page');
-            window.location.href = 'accueil.html';
+            alert('No tienes permiso para acceder a esta página');
+            window.location.href = 'accueil.html'; // página_principal
             return false;
         }
 
         return true;
 
     } catch (error) {
-        console.error('Erreur d\'authentification:', error);
+        console.error('Error de autentificación:', error);
         sessionStorage.removeItem('current_user');
-        window.location.href = 'connexion.html';
+        window.location.href = 'connexion.html'; // página_de_inicio_de_sesion
         return false;
     }
 }
 
 function logout() {
-    if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    if (!confirm('¿Estás seguro de que quieres cerrar la sesión?')) {
         return;
     }
 
     sessionStorage.removeItem('current_user');
     sessionStorage.removeItem('supabase_token');
-    window.location.href = 'connexion.html';
+    window.location.href = 'connexion.html'; // página_de_inicio_de_sesion
 }
 
-// ===== FONCTIONS UTILITAIRES =====
+// ===== FUNCIONES UTILITARIAS =====
 function showLoading() {
     elements.loadingOverlay.style.display = 'flex';
 }
@@ -149,7 +149,7 @@ function hideLoading() {
 }
 
 function showAlert(message, type = 'info') {
-    // Créer une alerte temporaire
+    // Crear una alerta temporal
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert-message ${type}`;
     alertDiv.innerHTML = `
@@ -157,11 +157,11 @@ function showAlert(message, type = 'info') {
         <span>${message}</span>
     `;
 
-    // Ajouter au début du main-content
+    // Añadir al principio del main-content
     const mainContent = document.querySelector('.main-content');
     mainContent.insertBefore(alertDiv, mainContent.firstChild);
 
-    // Supprimer après 5 secondes
+    // Eliminar después de 5 segundos
     setTimeout(() => {
         if (alertDiv.parentNode) {
             alertDiv.parentNode.removeChild(alertDiv);
@@ -173,7 +173,7 @@ function formatDate(dateString) {
     if (!dateString) return 'N/A';
     try {
         const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
+        return date.toLocaleDateString('es-ES', { // Formato español
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
@@ -187,7 +187,7 @@ function formatDateTime(dateString) {
     if (!dateString) return 'N/A';
     try {
         const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
+        return date.toLocaleDateString('es-ES', { // Formato español
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -200,7 +200,7 @@ function formatDateTime(dateString) {
 }
 
 function formatCurrency(amount) {
-    return new Intl.NumberFormat('fr-FR', {
+    return new Intl.NumberFormat('es-ES', { // Formato español
         style: 'currency',
         currency: 'EUR',
         minimumFractionDigits: 2
@@ -212,27 +212,27 @@ function updateLastUpdateTime() {
     elements.lastUpdateTime.textContent = formatDateTime(now);
 }
 
-// ===== GESTION DES PÉRIODES =====
+// ===== GESTIÓN DE PERIODOS =====
 function getDateRangeForPeriod(period) {
     const now = new Date();
     const start = new Date();
     const end = new Date();
 
     switch (period) {
-        case 'current_month':
+        case 'current_month': // mes_actual
             start.setDate(1);
             end.setMonth(end.getMonth() + 1);
             end.setDate(0);
             break;
 
-        case 'last_month':
+        case 'last_month': // mes_anterior
             start.setMonth(start.getMonth() - 1);
             start.setDate(1);
             end.setMonth(end.getMonth());
             end.setDate(0);
             break;
 
-        case 'current_quarter':
+        case 'current_quarter': // trimestre_actual
             const currentQuarter = Math.floor(now.getMonth() / 3);
             start.setMonth(currentQuarter * 3);
             start.setDate(1);
@@ -240,7 +240,7 @@ function getDateRangeForPeriod(period) {
             end.setDate(getDaysInMonth(end.getFullYear(), end.getMonth()));
             break;
 
-        case 'last_quarter':
+        case 'last_quarter': // trimestre_anterior
             const lastQuarter = Math.floor(now.getMonth() / 3) - 1;
             start.setMonth(lastQuarter * 3);
             start.setDate(1);
@@ -248,7 +248,7 @@ function getDateRangeForPeriod(period) {
             end.setDate(getDaysInMonth(end.getFullYear(), end.getMonth()));
             break;
 
-        case 'current_year':
+        case 'current_year': // año_actual
             start.setMonth(0);
             start.setDate(1);
             end.setMonth(11);
@@ -256,7 +256,7 @@ function getDateRangeForPeriod(period) {
             break;
 
         default:
-            // Période personnalisée
+            // Período personalizado
             if (state.filters.startDate && state.filters.endDate) {
                 start.setTime(new Date(state.filters.startDate).getTime());
                 end.setTime(new Date(state.filters.endDate).getTime());
@@ -267,7 +267,7 @@ function getDateRangeForPeriod(period) {
             }
     }
 
-    // Ajuster les heures pour couvrir toute la journée
+    // Ajustar las horas para cubrir todo el día
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
 
@@ -294,38 +294,39 @@ function updatePeriodInfo() {
 
     let periodText = '';
     switch (state.filters.period) {
-        case 'current_month':
-            periodText = `Mois en cours : ${start.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+        case 'current_month': // mes_actual
+            periodText = `Mes actual: ${start.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`;
             break;
-        case 'last_month':
-            periodText = `Mois précédent : ${start.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+        case 'last_month': // mes_anterior
+            periodText = `Mes anterior: ${start.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`;
             break;
-        case 'current_quarter':
+        case 'current_quarter': // trimestre_actual
             const quarter = Math.floor(start.getMonth() / 3) + 1;
-            periodText = `Trimestre en cours : T${quarter} ${start.getFullYear()}`;
+            periodText = `Trimestre actual: T${quarter} ${start.getFullYear()}`;
             break;
-        case 'last_quarter':
+        case 'last_quarter': // trimestre_anterior
             const lastQuarter = Math.floor(start.getMonth() / 3) + 1;
-            periodText = `Trimestre précédent : T${lastQuarter} ${start.getFullYear()}`;
+            periodText = `Trimestre anterior: T${lastQuarter} ${start.getFullYear()}`;
             break;
-        case 'current_year':
-            periodText = `Année en cours : ${start.getFullYear()}`;
+        case 'current_year': // año_actual
+            periodText = `Año actual: ${start.getFullYear()}`;
             break;
-        case 'custom':
-            periodText = `Personnalisé : ${startStr} au ${endStr}`;
+        case 'custom': // personalizado
+            periodText = `Personalizado: ${startStr} al ${endStr}`;
             break;
     }
 
     elements.periodInfo.textContent = periodText;
+    // Separar el texto para usar solo la parte del periodo (ej: "Mes actual", "Trimestre anterior")
     elements.stockValuePeriod.textContent = periodText.split(':')[0].trim();
 }
 
-// ===== FONCTIONS SUPABASE =====
+// ===== FUNCIONES SUPABASE =====
 async function fetchData() {
     try {
         showLoading();
 
-        // Récupérer tous les articles
+        // Recuperar todos los artículos
         const { data: articles, error: articlesError } = await supabase
             .from('w_articles')
             .select('*')
@@ -334,7 +335,7 @@ async function fetchData() {
         if (articlesError) throw articlesError;
         state.data.articles = articles || [];
 
-        // Récupérer les réservations actives
+        // Recuperar las reservas activas
         const { data: reservations, error: reservationsError } = await supabase
             .from('w_reservations_actives')
             .select('*');
@@ -342,8 +343,8 @@ async function fetchData() {
         if (reservationsError) throw reservationsError;
         state.data.reservations = reservations || [];
 
-        // Récupérer les projets
-        console.log('Récupération des projets...');
+        // Recuperar los proyectos
+        console.log('Recuperando proyectos...');
         const { data: projects, error: projectsError } = await supabase
             .from('w_projets')
             .select('id, nom, numero')
@@ -351,21 +352,21 @@ async function fetchData() {
             .order('nom');
 
         if (projectsError) {
-            console.error('Erreur récupération projets:', projectsError);
+            console.error('Error recuperando proyectos:', projectsError);
             state.data.projects = [];
         } else {
-            console.log('Projets récupérés:', projects);
+            console.log('Proyectos recuperados:', projects);
             state.data.projects = projects || [];
         }
 
-        // Récupérer les utilisateurs
-        console.log('Récupération des utilisateurs...');
+        // Recuperar los usuarios
+        console.log('Recuperando usuarios...');
         const { data: users, error: usersError } = await supabase
             .from('w_users')
             .select('id, username')
             .order('username');
 
-        // Récupérer les mouvements récents
+        // Recuperar movimientos recientes
         const dateRange = getDateRangeForPeriod(state.filters.period);
         const { data: movements, error: movementsError } = await supabase
             .from('w_mouvements')
@@ -377,51 +378,51 @@ async function fetchData() {
         if (movementsError) throw movementsError;
         state.data.movements = movements || [];
 
-        // Mettre à jour les filtres
+        // Actualizar los filtros
         populateFilters();
 
-        // Générer les rapports
+        // Generar los informes
         generateReports();
 
-        // Mettre à jour l'affichage
+        // Actualizar la visualización
         updateDisplay();
 
-        // Initialiser DataTables
+        // Inicializar DataTables
         initDataTables();
 
         updateLastUpdateTime();
 
     } catch (error) {
-        console.error('Erreur chargement données:', error);
-        showAlert('Erreur lors du chargement des données', 'error');
+        console.error('Error cargando datos:', error);
+        showAlert('Error al cargar los datos', 'error');
     } finally {
         hideLoading();
     }
 }
 
 function populateFilters() {
-    // Peupler le filtre utilisateur
-    let userHtml = '<option value="">Tous les utilisateurs</option>';
+    // Poblar el filtro de usuario
+    let userHtml = '<option value="">Todos los usuarios</option>';
     state.data.users.forEach(user => {
         userHtml += `<option value="${user.id}">${user.username}</option>`;
     });
     elements.userFilter.innerHTML = userHtml;
     elements.userFilter.value = state.filters.userId;
 
-    // Peupler le filtre projet
-    let projectHtml = '<option value="">Tous les projets</option>';
+    // Poblar el filtro de proyecto
+    let projectHtml = '<option value="">Todos los proyectos</option>';
     state.data.projects.forEach(project => {
         projectHtml += `<option value="${project.id}">${project.nom} (${project.numero})</option>`;
     });
     elements.projectFilter.innerHTML = projectHtml;
     elements.projectFilter.value = state.filters.projectId;
 
-    // Mettre à jour les dates
+    // Actualizar las fechas
     const dateRange = getDateRangeForPeriod(state.filters.period);
     elements.startDate.value = dateRange.start.toISOString().split('T')[0];
     elements.endDate.value = dateRange.end.toISOString().split('T')[0];
 
-    // Afficher/masquer les dates personnalisées
+    // Mostrar/ocultar las fechas personalizadas
     const customDateElements = document.querySelectorAll('.custom-date');
     if (state.filters.period === 'custom') {
         customDateElements.forEach(el => el.style.display = 'flex');
@@ -430,7 +431,7 @@ function populateFilters() {
     }
 }
 
-// ===== GÉNÉRATION DES RAPPORTS =====
+// ===== GENERACIÓN DE INFORMES =====
 function generateReports() {
     generateStockValueReport();
     generateLowStockReport();
@@ -440,7 +441,7 @@ function generateReports() {
 }
 
 function generateStockValueReport() {
-    // Calculer la valeur totale du stock
+    // Calcular el valor total del stock
     let totalValue = 0;
     let activeArticles = 0;
     const categoryValues = {};
@@ -451,8 +452,8 @@ function generateStockValueReport() {
             totalValue += value;
             activeArticles++;
 
-            // Par catégorie
-            const category = article.categorie || 'Non catégorisé';
+            // Por categoría
+            const category = article.categorie || 'Sin categoría';
             if (!categoryValues[category]) {
                 categoryValues[category] = { value: 0, count: 0 };
             }
@@ -461,7 +462,7 @@ function generateStockValueReport() {
         }
     });
 
-    // Trouver la catégorie principale
+    // Encontrar la categoría principal
     let topCategory = '-';
     let maxValue = 0;
     Object.entries(categoryValues).forEach(([category, data]) => {
@@ -471,14 +472,14 @@ function generateStockValueReport() {
         }
     });
 
-    // Calculer la valeur moyenne
+    // Calcular el valor medio
     const averageValue = activeArticles > 0 ? totalValue / activeArticles : 0;
 
-    // Calculer la variation vs période précédente
+    // Calcular la variación vs período anterior
     const currentRange = getDateRangeForPeriod(state.filters.period);
     const previousRange = getPreviousPeriodRange(currentRange.start, currentRange.end);
 
-    // Pour l'exemple, on simule des données historiques
+    // Para el ejemplo, simulamos datos históricos
     const previousValue = totalValue * (0.9 + Math.random() * 0.2); // +/- 10%
     const changePercent = ((totalValue - previousValue) / previousValue) * 100;
 
@@ -499,19 +500,19 @@ function generateLowStockReport() {
         if (article.stock_min && article.quantite_disponible > 0) {
             const difference = article.quantite_disponible - article.stock_min;
 
-            if (difference <= article.stock_min * 0.2 && difference > 0) { // Moins de 20% au-dessus du min
+            if (difference <= article.stock_min * 0.2 && difference > 0) { // Menos del 20% por encima del mínimo
                 lowStock.push({
                     article,
                     current: article.quantite_disponible,
                     min: article.stock_min,
                     difference,
-                    status: difference <= 0 ? 'critique' : 'faible'
+                    status: difference <= 0 ? 'crítico' : 'bajo'
                 });
             }
         }
     });
 
-    // Trier par urgence
+    // Ordenar por urgencia
     lowStock.sort((a, b) => a.difference - b.difference);
 
     state.reports.lowStock = lowStock;
@@ -523,17 +524,17 @@ function generateOutOfStockReport() {
 
     state.data.articles.forEach(article => {
         if (article.quantite_disponible <= 0) {
-            // Trouver la dernière sortie pour cet article
+            // Encontrar la última salida para este artículo
             const lastMovement = state.data.movements
                 .filter(m => m.id_article === article.id && m.type === 'sortie')
                 .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
 
-            // Trouver la dernière commande (simulé)
+            // Encontrar el último pedido (simulado)
             const lastOrder = state.data.movements
                 .filter(m => m.id_article === article.id && m.type === 'entree')
                 .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
 
-            // Calculer la quantité manquante (par rapport au stock minimum)
+            // Calcular la cantidad faltante (respecto al stock mínimo)
             const missingQuantity = article.stock_min || 10;
 
             outOfStock.push({
@@ -554,7 +555,7 @@ function generateTopArticlesReport() {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - periodDays);
 
-    // Compter les réservations par article
+    // Contar reservaciones por artículo
     const articleStats = {};
 
     state.data.reservations.forEach(reservation => {
@@ -577,7 +578,7 @@ function generateTopArticlesReport() {
         }
     });
 
-    // Convertir en tableau et trier
+    // Convertir en array y ordenar
     const topArticles = Object.values(articleStats)
         .map(stat => ({
             ...stat,
@@ -593,9 +594,9 @@ function generateCategoriesReport() {
     const categoryStats = {};
     let totalValueAll = 0;
 
-    // Calculer les statistiques par catégorie
+    // Calcular estadísticas por categoría
     state.data.articles.forEach(article => {
-        const category = article.categorie || 'Non catégorisé';
+        const category = article.categorie || 'Sin categoría';
         const value = article.prix_unitaire * article.quantite_disponible;
 
         if (!categoryStats[category]) {
@@ -612,20 +613,20 @@ function generateCategoriesReport() {
         totalValueAll += value;
     });
 
-    // Convertir en tableau et calculer les pourcentages
+    // Convertir en array y calcular porcentajes
     const categories = Object.entries(categoryStats).map(([name, stats]) => ({
         name,
         ...stats,
         percentage: totalValueAll > 0 ? (stats.totalValue / totalValueAll) * 100 : 0
     }));
 
-    // Trier par valeur décroissante
+    // Ordenar por valor descendente
     categories.sort((a, b) => b.totalValue - a.totalValue);
 
     state.reports.categories = categories;
 }
 
-// ===== MISE À JOUR DE L'AFFICHAGE =====
+// ===== ACTUALIZACIÓN DE LA VISTA =====
 function updateDisplay() {
     updateStockValueCard();
     updateStockValueTable();
@@ -642,7 +643,7 @@ function updateStockValueCard() {
 
     elements.totalStockValue.textContent = formatCurrency(report.totalValue);
 
-    // Mettre à jour la variation
+    // Actualizar la variación
     const changeElement = elements.stockValueChange;
     changeElement.textContent = `${report.changePercent >= 0 ? '+' : ''}${report.changePercent.toFixed(1)}%`;
     changeElement.className = `stat-change ${report.changePercent >= 0 ? '' : 'negative'}`;
@@ -653,7 +654,7 @@ function updateStockValueCard() {
     elements.averageArticleValue.textContent = formatCurrency(report.averageValue);
     elements.topCategory.textContent = report.topCategory;
 
-    // Utiliser elements.periodInfo.textContent au lieu de periodText
+    // Usar elements.periodInfo.textContent en lugar de periodText
     const periodText = elements.periodInfo.textContent;
     elements.stockValuePeriod.textContent = periodText.split(':')[0].trim();
 }
@@ -677,7 +678,7 @@ function updateStockValueTable() {
                         <div class="article-name">${article.nom}</div>
                     </td>
                     <td>${article.code || article.numero || '-'}</td>
-                    <td>${article.categorie || 'Non catégorisé'}</td>
+                    <td>${article.categorie || 'Sin categoría'}</td>
                     <td>
                         <span class="stock-badge ${stockClass}">
                             ${article.quantite_disponible}
@@ -694,7 +695,7 @@ function updateStockValueTable() {
     if (html) {
         elements.stockValueBody.innerHTML = html;
     } else {
-        // Vide le tbody complètement pour DataTables
+        // Vaciar el tbody completamente para DataTables
         elements.stockValueBody.innerHTML = '';
     }
     elements.stockValueTotal.textContent = formatCurrency(tableTotal);
@@ -728,18 +729,18 @@ function updateLowStockTable() {
                 </td>
                 <td>
                     <span class="stock-badge ${status === 'critique' ? 'critical' : 'low'}">
-                        ${status === 'critique' ? 'Critique' : 'Faible'}
+                        ${status === 'critique' ? 'Crítico' : 'Bajo'}
                     </span>
                 </td>
                 <td>
                     <div class="quick-actions">
-                        <button class="quick-action-btn" title="Commander" onclick="orderArticle(${article.id})">
+                        <button class="quick-action-btn" title="Pedir" onclick="orderArticle(${article.id})">
                             <i class="fas fa-shopping-cart"></i>
                         </button>
-                        <button class="quick-action-btn" title="Voir l'historique" onclick="viewArticleHistory(${article.id})">
+                        <button class="quick-action-btn" title="Ver historial" onclick="viewArticleHistory(${article.id})">
                             <i class="fas fa-history"></i>
                         </button>
-                        <button class="quick-action-btn" title="Modifier le stock min" onclick="editMinStock(${article.id})">
+                        <button class="quick-action-btn" title="Editar stock mínimo" onclick="editMinStock(${article.id})">
                             <i class="fas fa-edit"></i>
                         </button>
                     </div>
@@ -768,22 +769,22 @@ function updateOutOfStockTable() {
                     <small>${article.code || ''}</small>
                 </td>
                 <td>${article.code || article.numero || '-'}</td>
-                <td>${lastMovement ? formatDateTime(lastMovement.created_at) : 'Jamais'}</td>
+                <td>${lastMovement ? formatDateTime(lastMovement.created_at) : 'Nunca'}</td>
                 <td>
                     <span class="stock-badge empty">
-                        ${missingQuantity} unités
+                        ${missingQuantity} unidades
                     </span>
                 </td>
-                <td>${lastOrder ? formatDateTime(lastOrder.created_at) : 'Jamais commandé'}</td>
+                <td>${lastOrder ? formatDateTime(lastOrder.created_at) : 'Nunca pedido'}</td>
                 <td>
                     <div class="quick-actions">
-                        <button class="quick-action-btn" title="Commander urgence" onclick="orderArticleUrgent(${article.id})">
+                        <button class="quick-action-btn" title="Pedido de emergencia" onclick="orderArticleUrgent(${article.id})">
                             <i class="fas fa-bolt"></i>
                         </button>
-                        <button class="quick-action-btn" title="Réapprovisionner" onclick="reorderArticle(${article.id})">
+                        <button class="quick-action-btn" title="Reponer stock" onclick="reorderArticle(${article.id})">
                             <i class="fas fa-truck"></i>
                         </button>
-                        <button class="quick-action-btn" title="Marquer comme obsolète" onclick="markObsolete(${article.id})">
+                        <button class="quick-action-btn" title="Marcar como obsoleto" onclick="markObsolete(${article.id})">
                             <i class="fas fa-ban"></i>
                         </button>
                     </div>
@@ -943,27 +944,27 @@ async function exportToPdf() {
 
         // En-tête
         doc.setFontSize(20);
-        doc.text('Rapport Statistiques Stock', 14, 22);
+        doc.text('Informe Estadísticas Stock', 14, 22); // Traduit "Rapport Statistiques Stock"
 
         doc.setFontSize(10);
         doc.setTextColor(100);
-        doc.text(`Généré le : ${new Date().toLocaleDateString('fr-FR')}`, 14, 30);
-        doc.text(`Période : ${elements.periodInfo.textContent}`, 14, 35);
+        doc.text(`Generado el : ${new Date().toLocaleDateString('es-ES')}`, 14, 30); // Traduit "Généré le :" et utilise le format espagnol
+        doc.text(`Período : ${elements.periodInfo.textContent}`, 14, 35); // Traduit "Période :"
 
         // Carte valeur totale
         doc.setFontSize(14);
-        doc.text('1. Valeur totale du stock', 14, 50);
+        doc.text('1. Valor total del stock', 14, 50); // Traduit "1. Valeur totale du stock"
 
         doc.setFontSize(12);
-        doc.text(`Valeur totale : ${elements.totalStockValue.textContent}`, 20, 60);
-        doc.text(`Variation : ${elements.stockValueChange.textContent}`, 20, 67);
-        doc.text(`Articles actifs : ${elements.activeArticlesCount.textContent}`, 20, 74);
+        doc.text(`Valor total : ${elements.totalStockValue.textContent}`, 20, 60); // Traduit "Valeur totale :"
+        doc.text(`Variación : ${elements.stockValueChange.textContent}`, 20, 67); // Traduit "Variation :"
+        doc.text(`Artículos activos : ${elements.activeArticlesCount.textContent}`, 20, 74); // Traduit "Articles actifs :"
 
         let yPosition = 85;
 
         // Tableau des articles
         doc.setFontSize(14);
-        doc.text('2. Articles avec stock et valeur', 14, yPosition);
+        doc.text('2. Artículos con stock y valor', 14, yPosition); // Traduit "2. Articles avec stock et valeur"
         yPosition += 10;
 
         const stockData = state.data.articles
@@ -980,7 +981,7 @@ async function exportToPdf() {
 
         doc.autoTable({
             startY: yPosition,
-            head: [['Article', 'Code', 'Catégorie', 'Quantité', 'Stock min', 'Prix unitaire', 'Valeur totale']],
+            head: [['Artículo', 'Código', 'Categoría', 'Cantidad', 'Stock min', 'Precio unitario', 'Valor total']], // Traduit les en-têtes de colonne
             body: stockData,
             theme: 'striped',
             headStyles: { fillColor: [37, 99, 235] }
@@ -991,7 +992,7 @@ async function exportToPdf() {
         // Alertes stock minimum
         if (state.reports.lowStock.length > 0) {
             doc.setFontSize(14);
-            doc.text('3. Alertes stock minimum', 14, yPosition);
+            doc.text('3. Alertas de stock mínimo', 14, yPosition); // Traduit "3. Alertes stock minimum"
             yPosition += 10;
 
             const lowStockData = state.reports.lowStock.map(item => [
@@ -1005,7 +1006,7 @@ async function exportToPdf() {
 
             doc.autoTable({
                 startY: yPosition,
-                head: [['Article', 'Code', 'Stock actuel', 'Stock min', 'Différence', 'État']],
+                head: [['Artículo', 'Código', 'Stock actual', 'Stock min', 'Diferencia', 'Estado']], // Traduit les en-têtes de colonne
                 body: lowStockData,
                 theme: 'striped',
                 headStyles: { fillColor: [245, 158, 11] }
@@ -1017,19 +1018,19 @@ async function exportToPdf() {
         // Ruptures de stock
         if (state.reports.outOfStock.length > 0) {
             doc.setFontSize(14);
-            doc.text('4. Ruptures de stock', 14, yPosition);
+            doc.text('4. Roturas de stock', 14, yPosition); // Traduit "4. Ruptures de stock"
             yPosition += 10;
 
             const outOfStockData = state.reports.outOfStock.map(item => [
                 item.article.nom.substring(0, 30),
                 item.article.code || '-',
-                item.lastMovement ? formatDate(item.lastMovement.created_at) : 'Jamais',
-                item.missingQuantity.toString() + ' unités'
+                item.lastMovement ? formatDate(item.lastMovement.created_at) : 'Jamais', // "Jamais" laissé car c'est une valeur et non une étiquette à traduire, sauf si vous spécifiez autrement.
+                item.missingQuantity.toString() + ' unidades' // Traduit "unités" en "unidades"
             ]);
 
             doc.autoTable({
                 startY: yPosition,
-                head: [['Article', 'Code', 'Dernière sortie', 'Quantité manquante']],
+                head: [['Artículo', 'Código', 'Última salida', 'Cantidad faltante']], // Traduit les en-têtes de colonne
                 body: outOfStockData,
                 theme: 'striped',
                 headStyles: { fillColor: [239, 68, 68] }
@@ -1037,13 +1038,13 @@ async function exportToPdf() {
         }
 
         // Enregistrer le PDF
-        doc.save(`rapport_stock_${new Date().toISOString().split('T')[0]}.pdf`);
+        doc.save(`informe_stock_${new Date().toISOString().split('T')[0]}.pdf`); // Modifié le nom du fichier pour être en espagnol
 
-        showAlert('Rapport PDF exporté avec succès', 'success');
+        showAlert('Informe PDF exportado con éxito', 'success'); // Traduit le message de succès
 
     } catch (error) {
-        console.error('Erreur export PDF:', error);
-        showAlert('Erreur lors de l\'export PDF', 'error');
+        console.error('Error exportación PDF:', error); // Traduit le message d'erreur console
+        showAlert('Error al exportar PDF', 'error'); // Traduit le message d'erreur
     } finally {
         hideLoading();
     }
@@ -1058,62 +1059,62 @@ async function exportToExcel() {
 
         // 1. Articles avec stock
         const articlesData = state.data.articles.map(article => ({
-            'Article': article.nom,
-            'Code': article.code || '',
-            'Catégorie': article.categorie || '',
-            'Quantité': article.quantite_disponible,
-            'Stock minimum': article.stock_min || '',
-            'Prix unitaire': article.prix_unitaire,
-            'Valeur totale': article.prix_unitaire * article.quantite_disponible,
-            'Unité': article.unite || '',
-            'Fournisseur': article.fournisseur || '',
-            'Dernière mise à jour': article.updated_at ? formatDateTime(article.updated_at) : ''
+            'Artículo': article.nom, // Traduit "Article"
+            'Código': article.code || '', // Traduit "Code"
+            'Categoría': article.categorie || '', // Traduit "Catégorie"
+            'Cantidad': article.quantite_disponible, // Traduit "Quantité"
+            'Stock Mínimo': article.stock_min || '', // Traduit "Stock minimum"
+            'Precio Unitario': article.prix_unitaire, // Traduit "Prix unitaire"
+            'Valor Total': article.prix_unitaire * article.quantite_disponible, // Traduit "Valeur totale"
+            'Unidad': article.unite || '', // Traduit "Unité"
+            'Proveedor': article.fournisseur || '', // Traduit "Fournisseur"
+            'Última actualización': article.updated_at ? formatDateTime(article.updated_at) : '' // Traduit "Dernière mise à jour"
         }));
 
         // 2. Alertes stock
         const alertsData = state.reports.lowStock.map(item => ({
-            'Article': item.article.nom,
-            'Code': item.article.code || '',
-            'Stock actuel': item.current,
-            'Stock minimum': item.min,
-            'Différence': item.difference,
-            'Pourcentage': item.min > 0 ? Math.round((item.current / item.min) * 100) + '%' : '0%',
-            'État': item.status === 'critique' ? 'Critique' : 'Faible',
-            'Catégorie': item.article.categorie || '',
-            'Prix unitaire': item.article.prix_unitaire
+            'Artículo': item.article.nom, // Traduit "Article"
+            'Código': item.article.code || '', // Traduit "Code"
+            'Stock Actual': item.current, // Traduit "Stock actuel"
+            'Stock Mínimo': item.min, // Traduit "Stock minimum"
+            'Diferencia': item.difference, // Traduit "Différence"
+            'Porcentaje': item.min > 0 ? Math.round((item.current / item.min) * 100) + '%' : '0%', // Traduit "Pourcentage"
+            'Estado': item.status === 'critique' ? 'Crítico' : 'Bajo', // Traduit "État" et les valeurs
+            'Categoría': item.article.categorie || '', // Traduit "Catégorie"
+            'Precio Unitario': item.article.prix_unitaire // Traduit "Prix unitaire"
         }));
 
         // 3. Ruptures
         const outagesData = state.reports.outOfStock.map(item => ({
-            'Article': item.article.nom,
-            'Code': item.article.code || '',
-            'Dernière sortie': item.lastMovement ? formatDateTime(item.lastMovement.created_at) : 'Jamais',
-            'Quantité manquante': item.missingQuantity,
-            'Dernière commande': item.lastOrder ? formatDateTime(item.lastOrder.created_at) : 'Jamais',
-            'Catégorie': item.article.categorie || '',
-            'Prix unitaire': item.article.prix_unitaire
+            'Artículo': item.article.nom, // Traduit "Article"
+            'Código': item.article.code || '', // Traduit "Code"
+            'Última salida': item.lastMovement ? formatDateTime(item.lastMovement.created_at) : 'Nunca', // Traduit "Dernière sortie" et "Jamais"
+            'Cantidad faltante': item.missingQuantity, // Traduit "Quantité manquante"
+            'Último pedido': item.lastOrder ? formatDateTime(item.lastOrder.created_at) : 'Nunca', // Traduit "Dernière commande" et "Jamais"
+            'Categoría': item.article.categorie || '', // Traduit "Catégorie"
+            'Precio Unitario': item.article.prix_unitaire // Traduit "Prix unitaire"
         }));
 
         // 4. Top articles
         const topData = state.reports.topArticles.map((item, index) => ({
-            'Rang': index + 1,
-            'Article': item.article.nom,
-            'Code': item.article.code || '',
-            'Nombre de réservations': item.reservationCount,
-            'Quantité totale': item.totalQuantity,
-            'Utilisateurs uniques': item.uniqueUsers,
-            'Prix unitaire': item.article.prix_unitaire,
-            'Valeur totale réservée': item.article.prix_unitaire * item.totalQuantity
+            'Rango': index + 1, // Traduit "Rang"
+            'Artículo': item.article.nom, // Traduit "Article"
+            'Código': item.article.code || '', // Traduit "Code"
+            'Número de reservaciones': item.reservationCount, // Traduit "Nombre de réservations"
+            'Cantidad total': item.totalQuantity, // Traduit "Quantité totale"
+            'Usuarios únicos': item.uniqueUsers, // Traduit "Utilisateurs uniques"
+            'Precio Unitario': item.article.prix_unitaire, // Traduit "Prix unitaire"
+            'Valor total reservado': item.article.prix_unitaire * item.totalQuantity // Traduit "Valeur totale réservée"
         }));
 
         // 5. Catégories
         const categoriesData = state.reports.categories.map(cat => ({
-            'Catégorie': cat.name,
-            'Nombre d\'articles': cat.articleCount,
-            'Stock total': cat.totalStock,
-            'Valeur totale': cat.totalValue,
-            'Pourcentage du total': cat.percentage.toFixed(1) + '%',
-            'Valeur moyenne par article': cat.articleCount > 0 ? cat.totalValue / cat.articleCount : 0
+            'Categoría': cat.name, // Traduit "Catégorie"
+            'Número de artículos': cat.articleCount, // Traduit "Nombre d'articles"
+            'Stock total': cat.totalStock, // Traduit "Stock total"
+            'Valor total': cat.totalValue, // Traduit "Valeur totale"
+            'Porcentaje del total': cat.percentage.toFixed(1) + '%', // Traduit "Pourcentage du total"
+            'Valor promedio por artículo': cat.articleCount > 0 ? cat.totalValue / cat.articleCount : 0 // Traduit "Valeur moyenne par article"
         }));
 
         // Créer un classeur avec plusieurs feuilles
@@ -1121,60 +1122,60 @@ async function exportToExcel() {
 
         // Ajouter les feuilles
         const ws1 = XLSX.utils.json_to_sheet(articlesData);
-        XLSX.utils.book_append_sheet(wb, ws1, 'Articles');
+        XLSX.utils.book_append_sheet(wb, ws1, 'Artículos'); // Traduit le nom de la feuille
 
         if (alertsData.length > 0) {
             const ws2 = XLSX.utils.json_to_sheet(alertsData);
-            XLSX.utils.book_append_sheet(wb, ws2, 'Alertes Stock');
+            XLSX.utils.book_append_sheet(wb, ws2, 'Alertas Stock'); // Traduit le nom de la feuille
         }
 
         if (outagesData.length > 0) {
             const ws3 = XLSX.utils.json_to_sheet(outagesData);
-            XLSX.utils.book_append_sheet(wb, ws3, 'Ruptures');
+            XLSX.utils.book_append_sheet(wb, ws3, 'Roturas'); // Traduit le nom de la feuille
         }
 
         if (topData.length > 0) {
             const ws4 = XLSX.utils.json_to_sheet(topData);
-            XLSX.utils.book_append_sheet(wb, ws4, 'Top Articles');
+            XLSX.utils.book_append_sheet(wb, ws4, 'Top Artículos'); // Traduit le nom de la feuille
         }
 
         if (categoriesData.length > 0) {
             const ws5 = XLSX.utils.json_to_sheet(categoriesData);
-            XLSX.utils.book_append_sheet(wb, ws5, 'Catégories');
+            XLSX.utils.book_append_sheet(wb, ws5, 'Categorías'); // Traduit le nom de la feuille
         }
 
         // Ajouter une feuille de résumé
         const summaryData = [{
-            'Statistique': 'Valeur totale du stock',
-            'Valeur': state.reports.stockValue?.totalValue || 0
+            'Estadística': 'Valor total del stock', // Traduit "Statistique" et "Valeur totale du stock"
+            'Valor': state.reports.stockValue?.totalValue || 0
         }, {
-            'Statistique': 'Nombre d\'articles actifs',
-            'Valeur': state.reports.stockValue?.activeArticles || 0
+            'Estadística': 'Número de artículos activos', // Traduit "Nombre d'articles actifs"
+            'Valor': state.reports.stockValue?.activeArticles || 0
         }, {
-            'Statistique': 'Alertes stock minimum',
-            'Valeur': state.reports.lowStock.length
+            'Estadística': 'Alertas de stock mínimo', // Traduit "Alertes stock minimum"
+            'Valor': state.reports.lowStock.length
         }, {
-            'Statistique': 'Ruptures de stock',
-            'Valeur': state.reports.outOfStock.length
+            'Estadística': 'Roturas de stock', // Traduit "Ruptures de stock"
+            'Valor': state.reports.outOfStock.length
         }, {
-            'Statistique': 'Période du rapport',
-            'Valeur': elements.periodInfo.textContent
+            'Estadística': 'Período del informe', // Traduit "Période du rapport"
+            'Valor': elements.periodInfo.textContent
         }, {
-            'Statistique': 'Date de génération',
-            'Valeur': new Date().toLocaleString('fr-FR')
+            'Estadística': 'Fecha de generación', // Traduit "Date de génération"
+            'Valor': new Date().toLocaleString('es-ES') // Utilise le format espagnol
         }];
 
         const ws6 = XLSX.utils.json_to_sheet(summaryData);
-        XLSX.utils.book_append_sheet(wb, ws6, 'Résumé');
+        XLSX.utils.book_append_sheet(wb, ws6, 'Resumen'); // Traduit le nom de la feuille
 
         // Générer et télécharger
-        XLSX.writeFile(wb, `donnees_stock_${new Date().toISOString().split('T')[0]}.xlsx`);
+        XLSX.writeFile(wb, `datos_stock_${new Date().toISOString().split('T')[0]}.xlsx`); // Modifié le nom du fichier pour être en espagnol
 
-        showAlert('Données exportées en Excel avec succès', 'success');
+        showAlert('Datos exportados a Excel con éxito', 'success'); // Traduit le message de succès
 
     } catch (error) {
-        console.error('Erreur export Excel:', error);
-        showAlert('Erreur lors de l\'export Excel', 'error');
+        console.error('Error exportación Excel:', error); // Traduit le message d'erreur console
+        showAlert('Error al exportar Excel', 'error'); // Traduit le message d'erreur
     } finally {
         hideLoading();
     }
@@ -1183,28 +1184,28 @@ async function exportToExcel() {
 // ===== FONCTIONS D'ACTION =====
 // Ces fonctions peuvent être implémentées selon vos besoins
 function orderArticle(articleId) {
-    showAlert('Fonctionnalité de commande à implémenter', 'info');
+    showAlert('Funcionalidad de pedido a implementar', 'info'); // Traduit "Fonctionnalité de commande à implémenter"
 }
 
 function viewArticleHistory(articleId) {
-    showAlert('Fonctionnalité historique à implémenter', 'info');
+    showAlert('Funcionalidad de historial a implementar', 'info'); // Traduit "Fonctionnalité historique à implémenter"
 }
 
 function editMinStock(articleId) {
-    showAlert('Fonctionnalité modification stock min à implémenter', 'info');
+    showAlert('Funcionalidad de modificación de stock mínimo a implementar', 'info'); // Traduit "Fonctionnalité modification stock min à implémenter"
 }
 
 function orderArticleUrgent(articleId) {
-    showAlert('Fonctionnalité commande urgente à implémenter', 'info');
+    showAlert('Funcionalidad de pedido urgente a implementar', 'info'); // Traduit "Fonctionnalité commande urgente à implémenter"
 }
 
 function reorderArticle(articleId) {
-    showAlert('Fonctionnalité réapprovisionnement à implémenter', 'info');
+    showAlert('Funcionalidad de reordenar a implementar', 'info'); // Traduit "Fonctionnalité réapprovisionnement à implémenter"
 }
 
 function markObsolete(articleId) {
-    if (confirm('Marquer cet article comme obsolète ?')) {
-        showAlert('Article marqué comme obsolète', 'success');
+    if (confirm('¿Marcar este artículo como obsoleto?')) { // Traduit la confirmation
+        showAlert('Artículo marcado como obsoleto', 'success'); // Traduit le message de succès
     }
 }
 
@@ -1245,7 +1246,7 @@ function setupEventListeners() {
         // Recharger les données
         await fetchData();
 
-        showAlert('Filtres appliqués avec succès', 'success');
+        showAlert('Filtros aplicados con éxito', 'success'); // Traduit le message de succès
     });
 
     elements.resetFiltersBtn.addEventListener('click', function() {
@@ -1267,7 +1268,7 @@ function setupEventListeners() {
         });
 
         updatePeriodInfo();
-        showAlert('Filtres réinitialisés', 'info');
+        showAlert('Filtros reiniciados', 'info'); // Traduit le message d'information
     });
 
     // Export
@@ -1302,7 +1303,7 @@ function setupEventListeners() {
         const table = document.getElementById(tableId);
         const wb = XLSX.utils.table_to_book(table);
         XLSX.writeFile(wb, `${tableId}_${new Date().toISOString().split('T')[0]}.xlsx`);
-        showAlert('Tableau exporté en Excel', 'success');
+        showAlert('Tabla exportada a Excel', 'success'); // Traduit le message de succès
     }
 }
 
@@ -1320,8 +1321,8 @@ async function init() {
         await fetchData();
 
     } catch (error) {
-        console.error('Erreur initialisation:', error);
-        showAlert('Erreur lors du chargement de l\'application', 'error');
+        console.error('Error de inicialización:', error); // Traduit le message d'erreur console
+        showAlert('Error al cargar la aplicación', 'error'); // Traduit le message d'erreur
     }
 }
 

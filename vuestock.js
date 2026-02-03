@@ -1,25 +1,25 @@
-// ===== CONFIGURATION DEBUG =====
+// ===== CONFIGURACIÓN DEBUG =====
 const DEBUG = {
     enabled: true,
-    quadView: false,    // Mettre à false pour désactiver logs QuadView
-    canvas: false,      // Mettre à false pour désactiver logs Canvas
-    api: true,          // Garder true pour les erreurs API
-    clics: false        // Mettre à false pour désactiver logs clics
+    quadView: false,    // Cambiar a false para desactivar logs QuadView
+    canvas: false,      // Cambiar a false para desactivar logs Canvas
+    api: true,          // Mantener true para errores API
+    clics: false        // Cambiar a false para desactivar logs clics
 };
 
-// Fonction helper pour les logs
+// Función auxiliar para logs
 function debugLog(category, ...args) {
     if (DEBUG.enabled && DEBUG[category]) {
         console.log(`[${category}]`, ...args);
     }
 }
 
-// ===== DÉBOGAGE =====
-console.log('vuestock.js chargé');
+// ===== DEPURACIÓN =====
+console.log('vuestock.js cargado');
 
-// Vérifier que tous les éléments DOM existent
+// Verificar que todos los elementos DOM existen
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM chargé');
+    console.log('DOM cargado');
 
     const requiredElements = [
         'btnAddRack', 'canvasPlan', 'planOverlay',
@@ -28,11 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     requiredElements.forEach(id => {
         const el = document.getElementById(id);
-        console.log(`${id}:`, el ? 'OK' : 'MANQUANT');
+        console.log(`${id}:`, el ? 'OK' : 'FALTANTE');
     });
 });
 
-// ===== CLASSE API MANAGER POUR NETLIFY =====
+// ===== CLASE API MANAGER PARA NETLIFY =====
 class ApiManager {
     constructor() {
         this.baseUrl = window.location.origin;
@@ -49,11 +49,11 @@ class ApiManager {
 
 
     async request(endpoint, method = 'GET', data = null) {
-        // Avec Netlify Functions, l'endpoint inclut déjà '/.netlify/functions/'
+        // Con Netlify Functions, el endpoint ya incluye '/.netlify/functions/'
         const url = `${this.baseUrl}${endpoint}`;
-        console.log('📡 API Call (Netlify):', url, method, data);
+        console.log('📡 Llamada API (Netlify):', url, method, data);
 
-        console.log('Testez cette URL:', url);
+        console.log('Prueba esta URL:', url);
 
         const options = {
             method: method,
@@ -69,14 +69,14 @@ class ApiManager {
         try {
             const response = await fetch(url, options);
 
-            console.log('📡 Response status:', response.status);
+            console.log('📡 Estado respuesta:', response.status);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const result = await response.json();
-            console.log('📡 Response data:', result);
+            console.log('📡 Datos respuesta:', result);
 
             if (result.error) {
                 throw new Error(result.error);
@@ -85,12 +85,12 @@ class ApiManager {
             return result;
 
         } catch (error) {
-            console.error('❌ API Request failed:', error);
+            console.error('❌ Solicitud API fallida:', error);
             throw error;
         }
     }
 
-    // Méthodes spécifiques
+    // Métodos específicos
     async getFullConfig() {
         return await this.request(this.endpoints.getConfig);
     }
@@ -100,7 +100,7 @@ class ApiManager {
     }
 
     async deleteRack(rackId) {
-        // ✅ L'ID doit être dans l'URL, pas dans le body
+        // ✅ El ID debe estar en la URL, no en el body
         return await this.request(`${this.endpoints.deleteRack}&rackId=${rackId}`, 'DELETE');
     }
 
@@ -122,10 +122,10 @@ class ApiManager {
 }
 
 
-// ===== CLASSE CANVAS MANAGER =====
+// ===== CLASE CANVAS MANAGER =====
 class CanvasManager {
     constructor(canvasId, overlayId) {
-        // Bind explicite de TOUTES les méthodes
+        // Bind explícito de TODOS los métodos
         this.drawGrid = this.drawGrid.bind(this);
         this.updateCoordinatesDisplay = this.updateCoordinatesDisplay.bind(this);
         this.handleMouseMove = this.handleMouseMove.bind(this);
@@ -141,12 +141,12 @@ class CanvasManager {
         this.saveAutoPosition = this.saveAutoPosition.bind(this);
         this._clickInProgress = false;
 
-        // Initialiser les propriétés
+        // Inicializar propiedades
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.overlay = document.getElementById(overlayId);
 
-        // Configuration
+        // Configuración
         this.gridSize = 40;
         this.scale = 1;
         this.offsetX = 0;
@@ -159,30 +159,30 @@ class CanvasManager {
         this.dragStartY = 0;
         this.currentTool = 'select';
 
-        // État de la souris
+        // Estado del ratón
         this.mouseX = 0;
         this.mouseY = 0;
         this.gridX = 0;
         this.gridY = 0;
 
-        // Variables pour le drag/resize/rotate
+        // Variables para drag/resize/rotate
         this.currentRack = null;
         this.currentElement = null;
         this.resizeHandle = null;
         this.resizeStartData = null;
         this.rotateStartData = null;
 
-        // Sauvegarde automatique
+        // Guardado automático
         this.saveTimeout = null;
         this.racks = [];
 
-        // Initialisation
+        // Inicialización
         this.initCanvas();
         this.drawGrid();
         this.initEvents();
     }
 
-    // === MÉTHODES ===
+    // === MÉTODOS ===
     drawGrid() {
         if (!this.ctx || !this.canvas) return;
 
@@ -192,15 +192,15 @@ class CanvasManager {
         const height = this.canvas.height;
         const gridSize = this.gridSize * this.scale;
 
-        // Calculer les positions de départ avec l'offset
+        // Calcular posiciones de inicio con el offset
         const startX = -this.offsetX % gridSize;
         const startY = -this.offsetY % gridSize;
 
-        // Dessiner la grille
+        // Dibujar la cuadrícula
         this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
         this.ctx.lineWidth = 1;
 
-        // Lignes verticales
+        // Líneas verticales
         for (let x = startX; x < width; x += gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(x, 0);
@@ -208,7 +208,7 @@ class CanvasManager {
             this.ctx.stroke();
         }
 
-        // Lignes horizontales
+        // Líneas horizontales
         for (let y = startY; y < height; y += gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
@@ -216,7 +216,7 @@ class CanvasManager {
             this.ctx.stroke();
         }
 
-        // Points de grille tous les 4 carreaux
+        // Puntos de cuadrícula cada 4 casillas
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
         for (let x = startX; x < width; x += gridSize * 4) {
             for (let y = startY; y < height; y += gridSize * 4) {
@@ -226,7 +226,7 @@ class CanvasManager {
             }
         }
 
-        // Mettre à jour les coordonnées affichées
+        // Actualizar coordenadas mostradas
         this.updateCoordinatesDisplay();
     }
 
@@ -298,18 +298,18 @@ class CanvasManager {
         }
     }
 
-    // === MÉTHODES POUR LES ÉTAGÈRES ===
+    // === MÉTODOS PARA LAS ESTANTERÍAS ===
     addRackToCanvas(rack) {
-        debugLog('canvas', 'addRackToCanvas called for rack:', rack.id, rack.code);
+        debugLog('canvas', 'addRackToCanvas llamado para estantería:', rack.id, rack.code);
 
-        // Vérifier si l'étagère existe déjà
+        // Verificar si la estantería ya existe
         const existingElement = this.overlay.querySelector(`[data-rack-id="${rack.id}"]`);
         if (existingElement) {
             existingElement.remove();
             this.racks = this.racks.filter(item => item.rack.id !== rack.id);
         }
 
-        // Créer l'élément DOM
+        // Crear elemento DOM
         const rackElement = document.createElement('div');
         rackElement.className = 'rack-on-plan';
         rackElement.dataset.rackId = rack.id;
@@ -333,10 +333,10 @@ class CanvasManager {
         rackElement.style.fontWeight = 'bold';
         rackElement.style.userSelect = 'none';
 
-        // Ajouter les poignées
+        // Añadir asas
         this.addRackHandles(rackElement, rack);
 
-        // Événements
+        // Eventos
         rackElement.addEventListener('mousedown', (e) => {
             this.startRackDrag(e, rack, rackElement);
         });
@@ -349,7 +349,7 @@ class CanvasManager {
         this.overlay.appendChild(rackElement);
         this.racks.push({ rack, element: rackElement });
 
-        // Auto-sélection pour les nouvelles étagères
+        // Auto-selección para nuevas estanterías
         if (!rack.id || rack.id.toString().includes('new')) {
             setTimeout(() => {
                 this.selectRack(rack, rackElement);
@@ -358,7 +358,7 @@ class CanvasManager {
     }
 
     addRackHandles(rackElement, rack) {
-        // Poignées de redimensionnement
+        // Asas de redimensionamiento
         const handles = [
             { class: 'handle-nw', cursor: 'nw-resize', top: '0', left: '0' },
             { class: 'handle-ne', cursor: 'ne-resize', top: '0', right: '0' },
@@ -394,7 +394,7 @@ class CanvasManager {
             rackElement.appendChild(handleEl);
         });
 
-        // Poignée de rotation
+        // Asa de rotación
         const rotateHandle = document.createElement('div');
         rotateHandle.className = 'rotate-handle';
         rotateHandle.innerHTML = '⟳';
@@ -423,7 +423,7 @@ class CanvasManager {
 
         rackElement.appendChild(rotateHandle);
 
-        // Dimensions
+        // Dimensiones
         const dimensions = document.createElement('div');
         dimensions.className = 'rack-dimensions';
         dimensions.style.position = 'absolute';
@@ -445,16 +445,16 @@ class CanvasManager {
     }
 
     startRackDrag(e, rack, element) {
-        // ✅ AJOUTEZ CECI EN PREMIER
-        // Si l'outil delete est actif, supprimer directement
+        // ✅ AÑADA ESTO PRIMERO
+        // Si la herramienta delete está activa, eliminar directamente
         if (this.currentTool === 'delete') {
-            if (confirm('Supprimer cette étagère et tous ses étages/emplacements ?')) {
+            if (confirm('¿Eliminar esta estantería y todos sus niveles/huecos?')) {
                 this.deleteRack(rack.id);
             }
-            return; // Ne pas continuer
+            return; // No continuar
         }
 
-        // Vérifier si on clique sur une poignée
+        // Verificar si se hace clic en un asa
         const handle = e.target.closest('.rack-handle, .rotate-handle');
         if (handle) {
             if (handle.classList.contains('rotate-handle')) {
@@ -465,23 +465,23 @@ class CanvasManager {
             return;
         }
 
-        // Autoriser le déplacement avec les outils "move" et "select"
+        // Permitir movimiento con herramientas "move" y "select"
         if (this.currentTool !== 'move' && this.currentTool !== 'select') {
             return;
         }
 
-        // Sinon, déplacement normal
-        this.isDragging = true; // ← Première fois
+        // Si no, movimiento normal
+        this.isDragging = true; // ← Primera vez
         this.currentRack = rack;
         this.currentElement = element;
         this.dragStartX = e.clientX - rack.position_x;
         this.dragStartY = e.clientY - rack.position_y;
 
-        // Sélectionner l'étagère
+        // Seleccionar la estantería
         this.selectRack(rack, element);
-        // this.isDragging = true; ← ❌ SUPPRIMEZ CETTE LIGNE (doublon)
+        // this.isDragging = true; ← ❌ ELIMINE ESTA LÍNEA (duplicado)
 
-        // Ajouter les événements globaux
+        // Añadir eventos globales
         document.addEventListener('mousemove', this.handleMouseMove);
         document.addEventListener('mouseup', this.handleMouseUp);
     }
@@ -492,24 +492,24 @@ class CanvasManager {
         let newX = e.clientX - this.dragStartX;
         let newY = e.clientY - this.dragStartY;
 
-        // ✅ CORRECTION : Utiliser la taille de grille Quad (20px) au lieu de Canvas (40px)
-        const gridSize = 20; // Taille de grille dans QuadView
+        // ✅ CORRECCIÓN: Usar tamaño de cuadrícula Quad (20px) en lugar de Canvas (40px)
+        const gridSize = 20; // Tamaño de cuadrícula en QuadView
         newX = Math.round(newX / gridSize) * gridSize;
         newY = Math.round(newY / gridSize) * gridSize;
 
-        // ✅ CORRECTION : Calculer les limites AVEC le scale
+        // ✅ CORRECCIÓN: Calcular límites CON el scale
         const scale = this.topViewScale || 1;
-        const canvasWidth = this.canvasTop.width / scale;  // Largeur réelle avec scale
-        const canvasHeight = this.canvasTop.height / scale; // Hauteur réelle avec scale
+        const canvasWidth = this.canvasTop.width / scale;  // Ancho real con scale
+        const canvasHeight = this.canvasTop.height / scale; // Alto real con scale
 
         const rackWidth = this.currentRack.displayWidth;
         const rackHeight = this.currentRack.displayHeight;
 
-        // ✅ Permettre le déplacement sur TOUTE la largeur
+        // ✅ Permitir movimiento en TODO el ancho
         newX = Math.max(0, Math.min(newX, canvasWidth - rackWidth));
         newY = Math.max(0, Math.min(newY, canvasHeight - rackHeight));
 
-        // Mettre à jour
+        // Actualizar
         this.currentRack.position_x = newX;
         this.currentRack.position_y = newY;
         this.currentElement.style.left = `${newX}px`;
@@ -519,7 +519,7 @@ class CanvasManager {
     }
 
     selectRack(rack, element) {
-        // Désélectionner toutes les autres
+        // Deseleccionar todas las demás
         document.querySelectorAll('.rack-on-plan').forEach(el => {
             el.classList.remove('selected');
             el.style.zIndex = '10';
@@ -528,12 +528,12 @@ class CanvasManager {
             });
         });
 
-        // Sélectionner celle-ci
+        // Seleccionar esta
         element.classList.add('selected');
         element.style.zIndex = '20';
         this.selectedRack = rack;
 
-        // Montrer les poignées
+        // Mostrar asas
         element.querySelectorAll('.rack-handle, .rotate-handle, .rack-dimensions').forEach(h => {
             h.style.display = 'block';
         });
@@ -557,7 +557,7 @@ class CanvasManager {
             mouseY: e.clientY
         };
 
-        // Ajouter les événements globaux
+        // Añadir eventos globales
         document.addEventListener('mousemove', this.handleResize);
         document.addEventListener('mouseup', this.handleMouseUp);
     }
@@ -573,7 +573,7 @@ class CanvasManager {
         let newX = this.resizeStartData.x;
         let newY = this.resizeStartData.y;
 
-        // Calcul selon la poignée utilisée
+        // Cálculo según el asa utilizada
         const gridDeltaX = Math.round(deltaX / this.gridSize);
         const gridDeltaY = Math.round(deltaY / this.gridSize);
 
@@ -602,7 +602,7 @@ class CanvasManager {
                 break;
         }
 
-        // Limites
+        // Límites
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
         const rackWidth = newWidth * this.gridSize;
@@ -613,7 +613,7 @@ class CanvasManager {
         if (newX + rackWidth > canvasWidth) newX = canvasWidth - rackWidth;
         if (newY + rackHeight > canvasHeight) newY = canvasHeight - rackHeight;
 
-        // Mettre à jour
+        // Actualizar
         this.currentRack.width = newWidth;
         this.currentRack.depth = newHeight;
         this.currentRack.position_x = newX;
@@ -624,7 +624,7 @@ class CanvasManager {
         this.currentElement.style.left = `${newX}px`;
         this.currentElement.style.top = `${newY}px`;
 
-        // Mettre à jour l'affichage des dimensions
+        // Actualizar visualización de dimensiones
         const dims = this.currentElement.querySelector('.rack-dimensions');
         if (dims) {
             dims.textContent = `${newWidth}×${newHeight}`;
@@ -647,7 +647,7 @@ class CanvasManager {
             startRotation: rack.rotation || 0
         };
 
-        // Ajouter les événements globaux
+        // Añadir eventos globales
         document.addEventListener('mousemove', this.handleRotation);
         document.addEventListener('mouseup', this.handleMouseUp);
     }
@@ -664,7 +664,7 @@ class CanvasManager {
 
         if (newRotation < 0) newRotation += 360;
 
-        // Snap à 15 degrés
+        // Snap a 15 grados
         newRotation = Math.round(newRotation / 15) * 15;
 
         this.currentRack.rotation = newRotation;
@@ -678,9 +678,9 @@ class CanvasManager {
 
         clearTimeout(this.saveTimeout);
         this.saveTimeout = setTimeout(() => {
-            // CORRECTION : Toujours envoyer l'ID pour une mise à jour
+            // CORRECCIÓN: Siempre enviar el ID para una actualización
             const payload = {
-                id: this.selectedRack.id, // <-- AJOUTER CE LÀ !
+                id: this.selectedRack.id, // <-- ¡AÑADIR ESTO AQUÍ!
                 position_x: this.selectedRack.position_x,
                 position_y: this.selectedRack.position_y,
                 rotation: this.selectedRack.rotation || 0,
@@ -689,7 +689,7 @@ class CanvasManager {
                 color: this.selectedRack.color
             };
 
-            // Si l'étagère a un code/nom, les inclure aussi
+            // Si la estantería tiene código/nombre, incluirlos también
             if (this.selectedRack.code) {
                 payload.code = this.selectedRack.code;
             }
@@ -697,16 +697,16 @@ class CanvasManager {
                 payload.name = this.selectedRack.name;
             }
 
-            console.log('💾 Auto-saving rack with ID:', this.selectedRack.id);
+            console.log('💾 Auto-guardando estantería con ID:', this.selectedRack.id);
 
             window.vueStock.api.saveRack(payload)
                 .then((result) => {
-                    console.log('✅ Auto-save successful:', result);
+                    console.log('✅ Auto-guardado exitoso:', result);
                 })
                 .catch(err => {
-                    console.error('❌ Erreur auto-save:', err);
+                    console.error('❌ Error auto-guardado:', err);
                 });
-        }, 1000); // 1 seconde après la dernière modification
+        }, 1000); // 1 segundo después de la última modificación
     }
 
     updatePropertiesPanel(rack) {
@@ -714,34 +714,34 @@ class CanvasManager {
         if (!panel || !rack) return;
 
         panel.innerHTML = `
-            <h4>Étagère ${rack.code}</h4>
+            <h4>Estantería ${rack.code}</h4>
             <div class="property-group">
                 <div class="property">
-                    <span class="property-label">Position:</span>
+                    <span class="property-label">Posición:</span>
                     <span class="property-value">${Math.round(rack.position_x / this.gridSize)}, ${Math.round(rack.position_y / this.gridSize)}</span>
                 </div>
                 <div class="property">
-                    <span class="property-label">Dimensions:</span>
-                    <span class="property-value">${rack.width} × ${rack.depth} cases</span>
+                    <span class="property-label">Dimensiones:</span>
+                    <span class="property-value">${rack.width} × ${rack.depth} casillas</span>
                 </div>
                 <div class="property">
-                    <span class="property-label">Rotation:</span>
+                    <span class="property-label">Rotación:</span>
                     <span class="property-value">${rack.rotation || 0}°</span>
                 </div>
                 <div class="property">
-                    <span class="property-label">Couleur:</span>
+                    <span class="property-label">Color:</span>
                     <input type="color" value="${rack.color || '#4a90e2'}" class="property-color" data-rack-id="${rack.id}">
                 </div>
             </div>
             <button class="btn btn-sm btn-block view-rack-btn" data-rack-id="${rack.id}">
-                <i class="fas fa-eye"></i> Voir les étages
+                <i class="fas fa-eye"></i> Ver niveles
             </button>
             <button class="btn btn-sm btn-danger btn-block delete-rack-btn" data-rack-id="${rack.id}">
-                <i class="fas fa-trash"></i> Supprimer
+                <i class="fas fa-trash"></i> Eliminar
             </button>
         `;
 
-        // ✅ Événements directs (pas de délégation empilée)
+        // ✅ Eventos directos (sin delegación apilada)
         const colorInput = panel.querySelector('.property-color');
         if (colorInput) {
             colorInput.addEventListener('change', (e) => {
@@ -763,58 +763,57 @@ class CanvasManager {
             });
         }
 
-        // ✅ Événement direct pour le bouton supprimer (une seule fois)
+        // ✅ Evento directo para el botón eliminar (una sola vez)
         const deleteBtn = panel.querySelector('.delete-rack-btn');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => {
-                if (confirm('Supprimer cette étagère et tous ses étages/emplacements ?')) {
+                if (confirm('¿Eliminar esta estantería y todos sus niveles/huecos?')) {
                     this.deleteRack(rack.id);
                 }
             });
         }
     }
 
-
     async deleteRack(rackId) {
         try {
-            // ✅ CORRECTION : Passer l'ID dans l'URL, pas dans le body
+            // ✅ CORRECCIÓN: Pasar el ID en la URL, no en el body
             if (window.vueStock?.api) {
                 await window.vueStock.api.deleteRack(rackId);
             }
 
-            // Supprimer du DOM
+            // Eliminar del DOM
             const element = this.overlay.querySelector(`[data-rack-id="${rackId}"]`);
             if (element) {
                 element.remove();
             }
 
-            // Supprimer du tableau
+            // Eliminar del array
             this.racks = this.racks.filter(item => item.rack.id !== rackId);
 
-            // Supprimer aussi du tableau de VueStock
+            // Eliminar también del array de VueStock
             if (window.vueStock) {
                 window.vueStock.racks = window.vueStock.racks.filter(r => r.id !== rackId);
             }
 
-            // Réinitialiser la sélection
+            // Reiniciar selección
             this.selectedRack = null;
 
-            // Mettre à jour le panneau
+            // Actualizar panel
             const panel = document.getElementById('propertiesPanel');
             if (panel) {
-                panel.innerHTML = '<p class="no-selection">Sélectionnez un élément pour voir ses propriétés</p>';
+                panel.innerHTML = '<p class="no-selection">Seleccione un elemento para ver sus propiedades</p>';
             }
 
-            // Mettre à jour les statistiques
+            // Actualizar estadísticas
             if (window.vueStock) {
                 window.vueStock.updateStats();
             }
 
-            console.log('🗑️ Étagère supprimée:', rackId);
+            console.log('🗑️ Estantería eliminada:', rackId);
 
         } catch (error) {
-            console.error('Erreur lors de la suppression:', error);
-            alert('Erreur: ' + error.message);
+            console.error('Error al eliminar:', error);
+            alert('Error: ' + error.message);
         }
     }
 
@@ -824,20 +823,20 @@ class CanvasManager {
     }
 
     initEvents() {
-        // Suivi de la souris
+        // Seguimiento del ratón
         this.canvas.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
             this.mouseX = e.clientX - rect.left;
             this.mouseY = e.clientY - rect.top;
 
-            // Convertir en coordonnées grille
+            // Convertir a coordenadas cuadrícula
             this.gridX = this.mouseX + this.offsetX;
             this.gridY = this.mouseY + this.offsetY;
 
             this.updateCoordinatesDisplay();
         });
 
-        // Zoom avec molette
+        // Zoom con rueda
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
 
@@ -852,7 +851,7 @@ class CanvasManager {
                 this.scale = Math.max(0.2, this.scale * (1 - zoomIntensity));
             }
 
-            // Ajuster l'offset pour zoomer vers la souris
+            // Ajustar offset para hacer zoom hacia el ratón
             const scaleRatio = this.scale / oldScale;
             this.offsetX = this.mouseX * (1 - scaleRatio) + this.offsetX * scaleRatio;
             this.offsetY = this.mouseY * (1 - scaleRatio) + this.offsetY * scaleRatio;
@@ -861,7 +860,7 @@ class CanvasManager {
             this.updateCoordinatesDisplay();
         });
 
-        // Outils - ATTENTION AUX ID
+        // Herramientas - ATENCIÓN A LOS ID
         const toolButtons = document.querySelectorAll('.tool-btn');
         toolButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -869,7 +868,7 @@ class CanvasManager {
                 btn.classList.add('active');
                 this.currentTool = btn.dataset.tool;
 
-                // Si outil "rack", créer une nouvelle étagère au clic
+                // Si herramienta "rack", crear una nueva estantería al clic
                 if (this.currentTool === 'rack') {
                     this.canvas.style.cursor = 'crosshair';
                 } else {
@@ -878,9 +877,9 @@ class CanvasManager {
             });
         });
 
-        // Clic sur le canvas pour créer une étagère
+        // Clic en el canvas para crear una estantería
         this.canvas.addEventListener('click', async (e) => {
-            // ✅ Protection contre double clic
+            // ✅ Protección contra doble clic
             if (this._clickInProgress) return;
 
             if (this.currentTool === 'rack') {
@@ -895,7 +894,7 @@ class CanvasManager {
                     const gridY = Math.round(y / this.gridSize) * this.gridSize;
 
                     if (window.vueStock) {
-                        // Trouver le prochain code disponible
+                        // Encontrar el próximo código disponible
                         const existingCodes = window.vueStock.racks.map(r => r.code);
                         let nextCode = 'A';
                         let charCode = 65;
@@ -903,7 +902,7 @@ class CanvasManager {
                         while (existingCodes.includes(nextCode)) {
                             charCode++;
                             nextCode = String.fromCharCode(charCode);
-                            if (charCode > 90) break; // Sécurité
+                            if (charCode > 90) break; // Seguridad
                         }
 
                         await window.vueStock.addRack({
@@ -921,15 +920,15 @@ class CanvasManager {
                         }
                     }
                 } finally {
-                    // ✅ Débloquer après 500ms (sécurité)
+                    // ✅ Desbloquear después de 500ms (seguridad)
                     setTimeout(() => {
                         this._clickInProgress = false;
                     }, 500);
                 }
             }
-        }, { once: false }); // Vérifier qu'il n'y a qu'UN seul addEventListener pour 'click'
+        }, { once: false }); // Verificar que solo haya UN addEventListener para 'click'
 
-        // Boutons de zoom - VÉRIFIER LES ID
+        // Botones de zoom - VERIFICAR LOS ID
         const zoomInBtn = document.getElementById('btnZoomIn');
         const zoomOutBtn = document.getElementById('btnZoomOut');
         const zoomResetBtn = document.getElementById('btnZoomReset');
@@ -952,19 +951,19 @@ class CanvasManager {
             this.drawGrid();
         });
 
-        // Grille magnétique toggle
+        // Toggle de cuadrícula magnética
         gridToggleBtn?.addEventListener('click', () => {
             const isActive = gridToggleBtn.classList.contains('active');
 
             if (isActive) {
                 gridToggleBtn.classList.remove('active');
-                gridToggleBtn.innerHTML = '<i class="fas fa-th"></i> Grille';
-                // Cacher la grille
+                gridToggleBtn.innerHTML = '<i class="fas fa-th"></i> Cuadrícula';
+                // Ocultar cuadrícula
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             } else {
                 gridToggleBtn.classList.add('active');
-                gridToggleBtn.innerHTML = '<i class="fas fa-th"></i> Grille ON';
-                // Afficher la grille
+                gridToggleBtn.innerHTML = '<i class="fas fa-th"></i> Cuadrícula ON';
+                // Mostrar cuadrícula
                 this.drawGrid();
             }
         });
@@ -979,55 +978,54 @@ class CanvasManager {
     }
 }
 
-// vuestock.js - AJOUTEZ après la classe CanvasManager
+// vuestock.js - AÑADIR después de la clase CanvasManager
 
 class QuadViewManager {
     constructor() {
         if (window.quadViewManagerInstance) {
-            return window.quadViewManagerInstance; // Retourne l'instance existante
+            return window.quadViewManagerInstance; // Retorna la instancia existente
         }
         window.quadViewManagerInstance = this;
 
-        this.currentView = 'quad'; // 'quad' ou 'single'
+        this.currentView = 'quad'; // 'quad' o 'single'
         this.selectedRack = null;
         this.selectedLevel = null;
         this.slotAnimationTimeout = null;
         this.isSlotAnimating = false;
 
-        // Propriétés pour la vue 3D isométrique rotative
-        this.rotation3D = 0; // Angle de rotation actuel (0-360°)
-        this.isDragging3D = false; // Est-ce qu'on fait tourner la vue
-        this.drag3DStartX = 0; // Position X de départ du drag
+        // Propiedades para la vista 3D isométrica rotativa
+        this.rotation3D = 0; // Ángulo de rotación actual (0-360°)
+        this.isDragging3D = false; // ¿Estamos girando la vista?
+        this.drag3DStartX = 0; // Posición X de inicio del drag
         this.isometric = {
-            angle: 30, // Angle isométrique (30° par défaut)
-            scale: 0.8, // Échelle de rendu
-            offsetX: 0, // Décalage horizontal
-            offsetY: 0  // Décalage vertical
+            angle: 30, // Ángulo isométrico (30° por defecto)
+            scale: 0.8, // Escala de renderizado
+            offsetX: 0, // Desplazamiento horizontal
+            offsetY: 0  // Desplazamiento vertical
         };
 
-        // Propriétés pour Vision Rayons X
-        this.hoveredRack = null; // Rack actuellement survolé
-        this.xrayProgress = 0; // Progression de l'effet rayons X (0 à 1)
-        this.xrayAnimFrame = null; // Frame d'animation rayons X
+        // Propiedades para Visión Rayos X
+        this.hoveredRack = null; // Estantería actualmente sobrevolada
+        this.xrayProgress = 0; // Progresión del efecto rayos X (0 a 1)
+        this.xrayAnimFrame = null; // Frame de animación rayos X
 
-        // Propriétés pour Zoom sur clic
-        this.focusedRack = null; // Rack actuellement en focus (zoom)
-        this.zoomProgress = 0; // Progression du zoom (0 à 1)
-        this.zoomAnimFrame = null; // Frame d'animation zoom
+        // Propiedades para Zoom al clic
+        this.focusedRack = null; // Estantería actualmente en foco (zoom)
+        this.zoomProgress = 0; // Progresión del zoom (0 a 1)
+        this.zoomAnimFrame = null; // Frame de animación zoom
         this.camera = {
-            targetRotation: 0, // Rotation cible de la caméra
-            targetScale: 1, // Échelle cible (1 = normal, 2 = zoom x2)
-            currentScale: 1 // Échelle actuelle
+            targetRotation: 0, // Rotación objetivo de la cámara
+            targetScale: 1, // Escala objetivo (1 = normal, 2 = zoom x2)
+            currentScale: 1 // Escala actual
         };
 
         this.initStockModal();
 
-        this.cameraFocusIndex = 0; // Index du rack centré
-        this.currentOffset = 0;    // Position actuelle de la caméra (pour animation)
+        this.cameraFocusIndex = 0; // Índice de la estantería centrada
+        this.currentOffset = 0;    // Posición actual de la cámara (para animación)
         this.draggedRack = null;
-        this.selectedRackZOffset = 0; // Décalage en Z pour le rack sélectionné
-        this.selectedRackAnimProgress = 0; // Progression de l'animation
-
+        this.selectedRackZOffset = 0; // Desplazamiento en Z para la estantería seleccionada
+        this.selectedRackAnimProgress = 0; // Progresión de la animación
 
 
         // Canvases
@@ -1040,33 +1038,33 @@ class QuadViewManager {
         this.ctxFront = this.canvasFront?.getContext('2d');
         this.ctx3D = this.canvas3D?.getContext('2d');
 
-        // Dimensions par défaut (seront ajustées)
-        this.rackHeightPerLevel = 40; // px par niveau
-        this.slotSize = 60; // px par emplacement
+        // Dimensiones por defecto (serán ajustadas)
+        this.rackHeightPerLevel = 40; // px por nivel
+        this.slotSize = 60; // px por hueco
 
         this.init();
     }
 
     init() {
-        console.log('QuadViewManager initialisé');
+        console.log('QuadViewManager inicializado');
 
-        // DEBUG : Vérifier l'état des canvas
+        // DEBUG: Verificar estado de los canvas
         console.log('Canvas Top:', this.canvasTop, 'Context:', this.ctxTop);
         console.log('Canvas Front:', this.canvasFront, 'Context:', this.ctxFront);
         console.log('Canvas 3D:', this.canvas3D, 'Context:', this.ctx3D);
 
-        // Dessiner un état initial vide
+        // Dibujar un estado inicial vacío
         this.drawEmptyState();
 
-        // Ajuster les dimensions des canvas
+        // Ajustar dimensiones de los canvas
         this.resizeCanvases();
 
-        // Événements de redimensionnement
+        // Eventos de redimensionamiento
         window.addEventListener('resize', () => this.resizeCanvases());
 
-        // AJOUT IMPORTANT : Événement clic sur le canvas haut-gauche
+        // AÑADIDO IMPORTANTE: Evento clic en el canvas superior-izquierdo
         if (this.canvasTop) {
-            // Mousedown pour démarrer le drag
+            // Mousedown para iniciar el drag
             this.canvasTop.addEventListener('mousedown', (e) => {
                 this.isDragging = false;
                 this.isResizing = false;
@@ -1083,9 +1081,9 @@ class QuadViewManager {
                     return;
                 }
 
-                // ✅ Si c'est un rack DIFFÉRENT, le sélectionner
+                // ✅ Si es una estantería DIFERENTE, seleccionarla
                 if (!this.selectedRack || clickedRack.id !== this.selectedRack.id) {
-                    // Fermer le tiroir
+                    // Cerrar el cajón
                     const container = document.getElementById('quadLevelSlots');
                     if (container) {
                         const currentDrawer = container.querySelector('.quad-drawer-container');
@@ -1101,11 +1099,11 @@ class QuadViewManager {
                         }
                     }
 
-                    // Sélectionner le nouveau rack
-                    console.log(`📌 Sélection du rack ${clickedRack.code}`);
+                    // Seleccionar la nueva estantería
+                    console.log(`📌 Selección de la estantería ${clickedRack.code}`);
                     this.selectedRack = clickedRack;
 
-                    // Mettre à jour toutes les vues
+                    // Actualizar todas las vistas
                     this.drawTopView(this.currentRacks);
                     this.drawFrontView(clickedRack);
                     this.updatePropertiesPanel(clickedRack);
@@ -1117,20 +1115,20 @@ class QuadViewManager {
                         this.animate3DRotation(0);
                     }
 
-                    // Centrer ce rack dans la vue 3D
+                    // Centrar esta estantería en la vista 3D
                     if (this.currentRacks) {
                         const rackIndex = this.currentRacks.findIndex(r => r.id === clickedRack.id);
                         if (rackIndex !== -1) {
                             this.cameraFocusIndex = rackIndex;
                             this.draw3DView(this.currentRacks);
-                            console.log(`🎯 Rack ${clickedRack.code} centré en 3D (index: ${rackIndex})`);
+                            console.log(`🎯 Estantería ${clickedRack.code} centrada en 3D (índice: ${rackIndex})`);
                         }
                     }
 
                     return;
                 }
 
-                // ✅ Si c'est le MÊME rack, gérer drag/resize/rotate
+                // ✅ Si es la MISMA estantería, manejar drag/resize/rotate
                 const handle = this.getClickedHandle(x, y);
                 if (handle) {
                     if (handle === 'rotate') {
@@ -1139,7 +1137,7 @@ class QuadViewManager {
                         this.rotateStartY = y;
                         this.rotateStartAngle = this.selectedRack.rotation || 0;
                         this.canvasTop.style.cursor = 'grab';
-                        console.log('🔄 Rotation démarrée pour', this.selectedRack.code);
+                        console.log('🔄 Rotación iniciada para', this.selectedRack.code);
                     } else {
                         this.isResizing = true;
                         this.resizeHandle = handle;
@@ -1149,29 +1147,29 @@ class QuadViewManager {
                         this.resizeStartHeight = this.selectedRack.displayHeight;
                         this.resizeStartPosX = this.selectedRack.displayX;
                         this.resizeStartPosY = this.selectedRack.displayY;
-                        console.log('📏 Redimensionnement démarré pour', this.selectedRack.code, 'poignée:', handle);
+                        console.log('📏 Redimensionamiento iniciado para', this.selectedRack.code, 'asa:', handle);
                     }
                     return;
                 }
 
-                // ✅ Démarrer le drag du rack
+                // ✅ Iniciar drag de la estantería
                 this.isDragging = true;
                 this.draggedRack = clickedRack;
                 this.dragStartX = x - clickedRack.displayX;
                 this.dragStartY = y - clickedRack.displayY;
                 this.canvasTop.style.cursor = 'grabbing';
-                console.log('🚀 Drag démarré pour', clickedRack.code);
+                console.log('🚀 Drag iniciado para', clickedRack.code);
             });
 
-            // Mousemove pour le drag
-            // Mousemove pour le drag, resize et rotation
+            // Mousemove para el drag
+            // Mousemove para el drag, resize y rotación
             this.canvasTop.addEventListener('mousemove', (e) => {
                 const rect = this.canvasTop.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
                 // === DRAG ===
-                if (this.isDragging && this.draggedRack) {  // ✅ CHANGÉ : utiliser draggedRack au lieu de selectedRack
+                if (this.isDragging && this.draggedRack) {  // ✅ CAMBIADO: usar draggedRack en lugar de selectedRack
                     let newDisplayX = x - this.dragStartX;
                     let newDisplayY = y - this.dragStartY;
 
@@ -1183,20 +1181,20 @@ class QuadViewManager {
                     const canvasWidth = this.canvasTop.width / viewScale;
                     const canvasHeight = this.canvasTop.height / viewScale;
 
-                    newDisplayX = Math.max(0, Math.min(newDisplayX, canvasWidth - this.draggedRack.displayWidth));  // ✅ CHANGÉ
-                    newDisplayY = Math.max(0, Math.min(newDisplayY, canvasHeight - this.draggedRack.displayHeight)); // ✅ CHANGÉ
+                    newDisplayX = Math.max(0, Math.min(newDisplayX, canvasWidth - this.draggedRack.displayWidth));  // ✅ CAMBIADO
+                    newDisplayY = Math.max(0, Math.min(newDisplayY, canvasHeight - this.draggedRack.displayHeight)); // ✅ CAMBIADO
 
-                    this.draggedRack.displayX = newDisplayX;  // ✅ CHANGÉ
-                    this.draggedRack.displayY = newDisplayY;  // ✅ CHANGÉ
+                    this.draggedRack.displayX = newDisplayX;  // ✅ CAMBIADO
+                    this.draggedRack.displayY = newDisplayY;  // ✅ CAMBIADO
 
                     const scale = 1;
-                    this.draggedRack.position_x = newDisplayX / scale;  // ✅ CHANGÉ
-                    this.draggedRack.position_y = newDisplayY / scale;  // ✅ CHANGÉ
+                    this.draggedRack.position_x = newDisplayX / scale;  // ✅ CAMBIADO
+                    this.draggedRack.position_y = newDisplayY / scale;  // ✅ CAMBIADO
 
                     const xInput = document.getElementById('quadRackX');
                     const yInput = document.getElementById('quadRackY');
-                    if (xInput) xInput.value = Math.round(this.draggedRack.position_x / 40);  // ✅ CHANGÉ
-                    if (yInput) yInput.value = Math.round(this.draggedRack.position_y / 40);  // ✅ CHANGÉ
+                    if (xInput) xInput.value = Math.round(this.draggedRack.position_x / 40);  // ✅ CAMBIADO
+                    if (yInput) yInput.value = Math.round(this.draggedRack.position_y / 40);  // ✅ CAMBIADO
 
                     this.drawTopView(this.currentRacks);
                 }
@@ -1212,23 +1210,23 @@ class QuadViewManager {
                     let newX = this.resizeStartPosX;
                     let newY = this.resizeStartPosY;
 
-                    // Selon la poignée, calculer nouvelles dimensions
+                    // Según el asa, calcular nuevas dimensiones
                     switch(this.resizeHandle) {
-                        case 'se': // Coin bas-droit
+                        case 'se': // Esquina inferior-derecha
                             newWidth = Math.max(20, this.resizeStartWidth + deltaX);
                             newHeight = Math.max(20, this.resizeStartHeight + deltaY);
                             break;
-                        case 'sw': // Coin bas-gauche
+                        case 'sw': // Esquina inferior-izquierda
                             newWidth = Math.max(20, this.resizeStartWidth - deltaX);
                             newHeight = Math.max(20, this.resizeStartHeight + deltaY);
                             newX = this.resizeStartPosX + (this.resizeStartWidth - newWidth);
                             break;
-                        case 'ne': // Coin haut-droit
+                        case 'ne': // Esquina superior-derecha
                             newWidth = Math.max(20, this.resizeStartWidth + deltaX);
                             newHeight = Math.max(20, this.resizeStartHeight - deltaY);
                             newY = this.resizeStartPosY + (this.resizeStartHeight - newHeight);
                             break;
-                        case 'nw': // Coin haut-gauche
+                        case 'nw': // Esquina superior-izquierda
                             newWidth = Math.max(20, this.resizeStartWidth - deltaX);
                             newHeight = Math.max(20, this.resizeStartHeight - deltaY);
                             newX = this.resizeStartPosX + (this.resizeStartWidth - newWidth);
@@ -1240,17 +1238,17 @@ class QuadViewManager {
                     newWidth = Math.round(newWidth / gridSize) * gridSize;
                     newHeight = Math.round(newHeight / gridSize) * gridSize;
 
-                    // Appliquer
+                    // Aplicar
                     this.selectedRack.displayWidth = newWidth;
                     this.selectedRack.displayHeight = newHeight;
                     this.selectedRack.displayX = newX;
                     this.selectedRack.displayY = newY;
 
-                    // Mettre à jour width/depth réels (en cases)
+                    // Actualizar width/depth reales (en casillas)
                     this.selectedRack.width = Math.round(newWidth / 20);
                     this.selectedRack.depth = Math.round(newHeight / 20);
 
-                    // Mettre à jour les inputs
+                    // Actualizar los inputs
                     const widthInput = document.getElementById('quadRackWidth');
                     const depthInput = document.getElementById('quadRackDepth');
                     if (widthInput) widthInput.value = this.selectedRack.width;
@@ -1259,21 +1257,21 @@ class QuadViewManager {
                     this.drawTopView(this.currentRacks);
                 }
 
-                // === ROTATION ===
+                // === ROTACIÓN ===
                 else if (this.isRotating && this.selectedRack) {
-                    // Calculer l'angle depuis le centre du rack
+                    // Calcular el ángulo desde el centro del rack
                     const centerX = this.selectedRack.displayX + this.selectedRack.displayWidth / 2;
                     const centerY = this.selectedRack.displayY + this.selectedRack.displayHeight / 2;
 
                     const angle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
 
-                    // Snap à 15 degrés
+                    // Snap a 15 grados
                     let newRotation = Math.round(angle / 15) * 15;
                     if (newRotation < 0) newRotation += 360;
 
                     this.selectedRack.rotation = newRotation;
 
-                    // Mettre à jour le slider
+                    // Actualizar el slider
                     const rotationSlider = document.getElementById('quadRackRotation');
                     const rotationValue = document.querySelector('.rotation-value');
                     if (rotationSlider) rotationSlider.value = newRotation;
@@ -1283,13 +1281,13 @@ class QuadViewManager {
                 }
             });
 
-            // Mouseup pour terminer le drag, resize et rotation
+            // Mouseup para terminar el drag, resize y rotación
             this.canvasTop.addEventListener('mouseup', (e) => {
-                // ✅ Nettoyer TOUS les états
+                // ✅ Limpiar TODOS los estados
                 if (this.isDragging) {
                     this.isDragging = false;
 
-                    // ✅ AJOUT : Sauvegarder la position finale
+                    // ✅ AÑADIDO: Guardar la posición final
                     if (this.draggedRack) {
                         const scale = 1;
                         this.draggedRack.position_x = this.draggedRack.displayX / scale;
@@ -1300,7 +1298,7 @@ class QuadViewManager {
                     this.dragStartX = null;
                     this.dragStartY = null;
                     this.canvasTop.style.cursor = 'default';
-                    console.log('⏹️ Drag terminé');
+                    console.log('⏹️ Drag terminado');
                 }
 
                 if (this.isResizing && this.selectedRack) {
@@ -1308,29 +1306,29 @@ class QuadViewManager {
                     this.resizeHandle = null;
                     this.canvasTop.style.cursor = 'default';
 
-                    // Mettre à jour position_x/y depuis displayX/Y
+                    // Actualizar position_x/y desde displayX/Y
                     const scale = 1;
                     this.selectedRack.position_x = this.selectedRack.displayX / scale;
                     this.selectedRack.position_y = this.selectedRack.displayY / scale;
 
-                    // Redessiner une dernière fois
+                    // Redibujar una última vez
                     this.drawTopView(this.currentRacks);
 
-                    console.log('⏹️ Resize terminé:', this.selectedRack.width, 'x', this.selectedRack.depth);
+                    console.log('⏹️ Resize terminado:', this.selectedRack.width, 'x', this.selectedRack.depth);
                 }
 
                 if (this.isRotating && this.selectedRack) {
                     this.isRotating = false;
                     this.canvasTop.style.cursor = 'default';
 
-                    // Redessiner une dernière fois
+                    // Redibujar una última vez
                     this.drawTopView(this.currentRacks);
 
-                    console.log('⏹️ Rotation terminée:', this.selectedRack.rotation, '°');
+                    console.log('⏹️ Rotación terminada:', this.selectedRack.rotation, '°');
                 }
             });
 
-            // Click pour sélectionner
+            // Click para seleccionar
             this.canvasTop.addEventListener('click', (e) => {
                 if (!this.isDragging) {
                     this.handleCanvasClick(e);
@@ -1339,16 +1337,16 @@ class QuadViewManager {
 
             this.canvasTop.style.cursor = 'default';
 
-            // Événement clic sur le canvas de face
+            // Evento clic en el canvas de frente
             if (this.canvasFront) {
                 this.canvasFront.addEventListener('click', (e) => {
                     this.handleFrontViewClick(e);
                 });
             }
 
-            // NOUVEAU : Événements pour la rotation 3D interactive
+            // NUEVO: Eventos para la rotación 3D interactiva
             if (this.canvas3D) {
-                // Démarrer la rotation au mousedown
+                // Iniciar la rotación al mousedown
                 this.canvas3D.addEventListener('mousedown', (e) => {
                     this.drag3DStartX = e.clientX;
                     this.drag3DStartTime = Date.now();
@@ -1356,9 +1354,9 @@ class QuadViewManager {
                     this.canvas3D.style.cursor = 'grabbing';
                 });
 
-                // Continuer la rotation pendant le mousemove
+                // Continuar la rotación durante el mousemove
                 this.canvas3D.addEventListener('mousemove', (e) => {
-                    // Démarrer le drag seulement si on bouge de plus de 5px
+                    // Iniciar el drag solo si se mueve más de 5px
                     if (this.drag3DStartX !== undefined) {
                         const distance = Math.abs(e.clientX - this.drag3DStartX);
                         this.drag3DTotalDistance += distance;
@@ -1371,44 +1369,44 @@ class QuadViewManager {
                     if (!this.isDragging3D) return;
 
                     const deltaX = e.clientX - this.drag3DStartX;
-                    this.rotation3D += deltaX * 0.5; // Sensibilité de rotation
+                    this.rotation3D += deltaX * 0.5; // Sensibilidad de rotación
                     this.drag3DStartX = e.clientX;
 
-                    // Garder l'angle entre 0 et 360
+                    // Mantener el ángulo entre 0 y 360
                     this.rotation3D = this.rotation3D % 360;
                     if (this.rotation3D < 0) this.rotation3D += 360;
 
-                    // Redessiner la scène 3D
+                    // Redibujar la escena 3D
                     if (this.currentRacks) {
                         this.draw3DView(this.currentRacks);
                     }
                 });
 
-                // Arrêter la rotation au mouseup
+                // Detener la rotación al mouseup
                 this.canvas3D.addEventListener('mouseup', () => {
                     this.isDragging3D = false;
                     this.drag3DStartX = undefined;
                     this.canvas3D.style.cursor = 'grab';
                 });
 
-                // Arrêter aussi si la souris quitte le canvas
+                // Detener también si el ratón sale del canvas
                 this.canvas3D.addEventListener('mouseleave', () => {
                     this.isDragging3D = false;
                     this.canvas3D.style.cursor = 'grab';
                 });
 
-                // Curseur initial
+                // Cursor inicial
                 this.canvas3D.style.cursor = 'grab';
 
-                // === NAVIGATION PAR FLÈCHES (CHANGEMENT UNIQUE) ===
+                // === NAVEGACIÓN POR FLECHAS (CAMBIO ÚNICO) ===
                 document.addEventListener('keydown', (e) => {
-                    // Vérifier qu'on est dans la vue quad
+                    // Verificar que estamos en la vista quad
                     if (this.currentView !== 'quad') return;
 
-                    // Vérifier qu'on a des racks
+                    // Verificar que tenemos estanterías
                     if (!this.currentRacks || this.currentRacks.length === 0) return;
 
-                    // Trier les racks comme dans draw3DView
+                    // Ordenar las estanterías como en draw3DView
                     const sortedRacks = [...this.currentRacks].sort((a, b) => {
                         return (a.position_x || 0) - (b.position_x || 0);
                     });
@@ -1421,39 +1419,39 @@ class QuadViewManager {
 
                     if (e.key === 'ArrowLeft') {
                         e.preventDefault();
-                        // Aller au rack précédent (ou dernier)
+                        // Ir a la estantería anterior (o la última)
                         const newIndex = currentIndex <= 0 ? sortedRacks.length - 1 : currentIndex - 1;
                         this.selectedRack = sortedRacks[newIndex];
                         this.draw3DView(this.currentRacks);
-                        console.log(`⬅️ Rack précédent: ${sortedRacks[newIndex].code}`);
+                        console.log(`⬅️ Estantería anterior: ${sortedRacks[newIndex].code}`);
                     }
 
                     if (e.key === 'ArrowRight') {
                         e.preventDefault();
-                        // Aller au rack suivant (ou premier)
+                        // Ir a la estantería siguiente (o la primera)
                         const newIndex = currentIndex >= sortedRacks.length - 1 ? 0 : currentIndex + 1;
                         this.selectedRack = sortedRacks[newIndex];
                         this.draw3DView(this.currentRacks);
-                        console.log(`➡️ Rack suivant: ${sortedRacks[newIndex].code}`);
+                        console.log(`➡️ Estantería siguiente: ${sortedRacks[newIndex].code}`);
                     }
                 });
 
-                // NOUVEAU : Détection du survol pour Vision Rayons X
+                // NUEVO: Detección de hover para Visión Rayos X
                 this.canvas3D.addEventListener('mousemove', (e) => {
-                    if (this.isDragging3D) return; // Ne pas détecter si on est en train de faire tourner
+                    if (this.isDragging3D) return; // No detectar si estamos girando
 
                     const rect = this.canvas3D.getBoundingClientRect();
                     const mouseX = e.clientX - rect.left;
                     const mouseY = e.clientY - rect.top;
 
-                    // Trouver quel rack est sous la souris
+                    // Encontrar qué estantería está bajo el ratón
                     const hoveredRack = this.findRackAt3DPosition(mouseX, mouseY);
 
-                    // Si on change de rack survolé
+                    // Si cambiamos de estantería sobrevolada
                     if (hoveredRack !== this.hoveredRack) {
                         this.hoveredRack = hoveredRack;
 
-                        // Démarrer/arrêter l'animation rayons X
+                        // Iniciar/detener la animación rayos X
                         if (hoveredRack) {
                             this.startXRayEffect();
                         } else {
@@ -1462,20 +1460,20 @@ class QuadViewManager {
                     }
                 });
 
-                // === BOUCLE D'ANIMATION POUR MOUVEMENT FLUIDE ===
+                // === BUCLE DE ANIMACIÓN PARA MOVIMIENTO FLUIDO ===
                 const animate = () => {
-                    // Redessiner la vue 3D seulement si besoin d'animation
+                    // Redibujar la vista 3D solo si necesita animación
                     if (this.currentRacks && this.currentOffset !== undefined) {
-                        // Toujours redessiner pour l'animation fluide
+                        // Siempre redibujar para la animación fluida
                         this.draw3DView(this.currentRacks);
                     }
                     requestAnimationFrame(animate);
                 };
                 animate();
 
-                // Clic pour zoomer sur un rack
+                // Clic para hacer zoom en una estantería
                 this.canvas3D.addEventListener('click', (e) => {
-                    // Ignorer si c'était un drag (distance > 5px ou durée > 200ms)
+                    // Ignorar si fue un drag (distancia > 5px o duración > 200ms)
                     const clickDuration = Date.now() - this.drag3DStartTime;
                     if (this.drag3DTotalDistance > 5 || clickDuration > 200) {
                         return;
@@ -1488,22 +1486,22 @@ class QuadViewManager {
                     const clickedRack = this.findRackAt3DPosition(mouseX, mouseY);
 
                     if (clickedRack) {
-                        // Zoomer sur ce rack
+                        // Hacer zoom en esta estantería
                         this.zoomOnRack(clickedRack);
                     } else if (this.focusedRack) {
-                        // Dézoomer si on clique en dehors
+                        // Deshacer zoom si se clica fuera
                         this.resetZoom();
                     }
                 });
             }
         }
 
-        // Réinitialisation 3D
+        // Reinicialización 3D
         document.getElementById('quad3DReset')?.addEventListener('click', () => {
             this.reset3DView();
         });
 
-        // Démarrer avec la vue quad
+        // Comenzar con la vista quad
         this.switchView('quad');
         this.selectedRack = null;
         this.selectedLevel = null;
@@ -1527,7 +1525,7 @@ class QuadViewManager {
     switchView(viewType) {
         this.currentView = viewType;
 
-        // Afficher/masquer les vues
+        // Mostrar/ocultar vistas
         const quadView = document.getElementById('quadView');
         const simpleView = document.getElementById('simpleView');
 
@@ -1536,7 +1534,7 @@ class QuadViewManager {
             simpleView.style.display = 'none';
             document.getElementById('viewMode').textContent = 'Quad';
 
-            // Redessiner toutes les vues
+            // Redibujar todas las vistas
             setTimeout(() => {
                 this.resizeCanvases();
                 if (window.vueStock) {
@@ -1556,49 +1554,49 @@ class QuadViewManager {
     }
 
 
-    // Mettre à jour toutes les vues avec les racks
+    // Actualizar todas las vistas con las estanterías
     updateAllViews(racks) {
-        console.log('QuadView.updateAllViews appelé avec', racks ? racks.length : 0, 'racks');
+        console.log('QuadView.updateAllViews llamado con', racks ? racks.length : 0, 'estanterías');
 
         this.currentRacks = racks;
 
         if (!racks || !racks.length) {
-            debugLog('quadView', 'Aucune donnée, dessin état vide');
+            debugLog('quadView', 'Sin datos, dibujando estado vacío');
             this.drawEmptyState();
             return;
         }
 
-        debugLog('quadView', 'Dessin de', racks.length, 'racks');
+        debugLog('quadView', 'Dibujando', racks.length, 'estanterías');
 
         try {
-            // 1. Vue du dessus
+            // 1. Vista superior
             this.drawTopView(racks);
 
-            // 2. Vue de face (si un rack est sélectionné)
+            // 2. Vista frontal (si una estantería está seleccionada)
             if (this.selectedRack) {
                 this.drawFrontView(this.selectedRack);
             }
 
 
-            // 3. Vue 3D isométrique
+            // 3. Vista 3D isométrica
             this.draw3DView(racks);
 
-            // 4. Vue étage (si un niveau est sélectionné)
+            // 4. Vista nivel (si un nivel está seleccionado)
             if (this.selectedLevel) {
                 this.updateLevelView(this.selectedLevel);
             }
 
-            // Mettre à jour les infos
+            // Actualizar información
             this.updateInfoPanel(racks);
 
-            debugLog('quadView', 'Toutes les vues mises à jour');
+            debugLog('quadView', 'Todas las vistas actualizadas');
         } catch (error) {
-            console.error('Erreur dans updateAllViews:', error);
+            console.error('Error en updateAllViews:', error);
         }
     }
 
     drawEmptyState() {
-        // Dessiner un état vide pour la vue du dessus
+        // Dibujar un estado vacío para la vista superior
         if (this.ctxTop && this.canvasTop) {
             const ctx = this.ctxTop;
             const width = this.canvasTop.width;
@@ -1612,10 +1610,10 @@ class QuadViewManager {
             ctx.font = '14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('Chargement des étagères...', width/2, height/2);
+            ctx.fillText('Cargando estanterías...', width/2, height/2);
         }
 
-        // Vue de face
+        // Vista frontal
         if (this.ctxFront && this.canvasFront) {
             const ctx = this.ctxFront;
             const width = this.canvasFront.width;
@@ -1629,10 +1627,10 @@ class QuadViewManager {
             ctx.font = '14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('Sélectionnez en premier un rack', width/2, height/2);
+            ctx.fillText('Seleccione primero una estantería', width/2, height/2);
         }
 
-        // Vue 3D
+        // Vista 3D
         if (this.ctx3D && this.canvas3D) {
             const ctx = this.ctx3D;
             const width = this.canvas3D.width;
@@ -1646,11 +1644,11 @@ class QuadViewManager {
             ctx.font = '14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('Vue 3D', width/2, height/2);
+            ctx.fillText('Vista 3D', width/2, height/2);
         }
     }
 
-    // Méthode pour gérer les clics sur le canvas
+    // Método para manejar los clics en el canvas
      handleCanvasClick(e) {
         console.log('=== handleCanvasClick ===');
 
@@ -1667,24 +1665,24 @@ class QuadViewManager {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        // ✅ LOGS DE DÉBOGAGE
-        console.log('🎯 COORDONNÉES BRUTES:');
+        // ✅ LOGS DE DEPURACIÓN
+        console.log('🎯 COORDENADAS BRUTAS:');
         console.log('  e.clientX:', e.clientX, 'e.clientY:', e.clientY);
         console.log('  rect.left:', rect.left.toFixed(1), 'rect.top:', rect.top.toFixed(1));
         console.log('  rect.width:', rect.width, 'rect.height:', rect.height);
         console.log('  canvas.width:', this.canvasTop.width, 'canvas.height:', this.canvasTop.height);
-        console.log('  x calculé:', x.toFixed(1), 'y calculé:', y.toFixed(1));
+        console.log('  x calculado:', x.toFixed(1), 'y calculado:', y.toFixed(1));
 
-        console.log(`🎯 Clic à: ${x}, ${y}`);
-        console.log(`📌 État actuel: selectedRack = ${this.selectedRack ? this.selectedRack.code : 'null'}`);
+        console.log(`🎯 Clic en: ${x}, ${y}`);
+        console.log(`📌 Estado actual: selectedRack = ${this.selectedRack ? this.selectedRack.code : 'null'}`);
 
-        // 1. TOUJOURS vérifier les poignettes si un rack est sélectionné
+        // 1. SIEMPRE verificar las asas si hay una estantería seleccionada
         if (this.selectedRack) {
-            console.log(`🔄 Rack ${this.selectedRack.code} sélectionné, vérification des poignettes...`);
+            console.log(`🔄 Estantería ${this.selectedRack.code} seleccionada, verificando asas...`);
             const handle = this.getClickedHandle(x, y);
-            console.log(`🔍 Résultat getClickedHandle: ${handle ? handle : 'null'}`);
+            console.log(`🔍 Resultado getClickedHandle: ${handle ? handle : 'null'}`);
             if (handle) {
-                console.log(`🔄 Poignette ${handle} cliquée`);
+                console.log(`🔄 Asa ${handle} clickeada`);
 
                 switch(handle) {
                     case 'nw':
@@ -1692,29 +1690,29 @@ class QuadViewManager {
                     case 'sw':
                     case 'se':
                         this.startResizeFromHandle(this.selectedRack, handle, x, y);
-                        return; // NE PAS CONTINUER
+                        return; // NO CONTINUAR
                     case 'rotate':
                         this.startRotationFromHandle(this.selectedRack, x, y);
-                        return; // NE PAS CONTINUER
+                        return; // NO CONTINUAR
                 }
             } else {
-                console.log(`❌ Aucune poignette détectée`);
+                console.log(`❌ Ningún asa detectada`);
             }
         }
 
-        // 2. Ensuite, vérifier si on clique sur un rack normal
+        // 2. Luego, verificar si se hace clic en una estantería normal
         const clickedRack = this.findRackAtPosition(x, y);
 
         if (clickedRack) {
-            console.log(`✅ Rack ${clickedRack.code} trouvé!`);
+            console.log(`✅ Estantería ${clickedRack.code} encontrada!`);
 
-            // Si c'est le même rack déjà sélectionné, ne rien faire (le mousedown gérera le drag)
+            // Si es la misma estantería ya seleccionada, no hacer nada (el mousedown manejará el drag)
             if (this.selectedRack && this.selectedRack.id === clickedRack.id) {
-                console.log(`📌 Rack ${clickedRack.code} déjà sélectionné`);
-                return; // Ne pas redessiner
+                console.log(`📌 Estantería ${clickedRack.code} ya seleccionada`);
+                return; // No redibujar
             }
 
-            // FERMER LE TIROIR AVANT DE CHANGER DE RACK
+            // CERRAR EL CAJÓN ANTES DE CAMBIAR DE ESTANTERÍA
             const container = document.getElementById('quadLevelSlots');
             if (container) {
                 const currentDrawer = container.querySelector('.quad-drawer-container');
@@ -1730,16 +1728,16 @@ class QuadViewManager {
                 }
             }
 
-            // Sélectionner le nouveau rack
-            console.log(`📌 Sélection du rack ${clickedRack.code}`);
+            // Seleccionar la nueva estantería
+            console.log(`📌 Selección de la estantería ${clickedRack.code}`);
             this.selectedRack = clickedRack;
 
-            // 1. Mettre à jour toutes les vues
+            // 1. Actualizar todas las vistas
             this.drawTopView(this.currentRacks);
             this.drawFrontView(clickedRack);
             this.updatePropertiesPanel(clickedRack);
 
-            // ✅ NOUVEAU : Faire tourner la vue 3D si le rack est tourné
+            // ✅ NUEVO: Girar la vista 3D si la estantería está girada
             if (this.currentRacks) {
                 const rackIndex = this.currentRacks.findIndex(r => r.id === clickedRack.id);
                 if (rackIndex !== -1) {
@@ -1753,53 +1751,53 @@ class QuadViewManager {
                     }
 
                     this.draw3DView(this.currentRacks);
-                    console.log(`🎯 Rack ${clickedRack.code} centré en 3D (index: ${rackIndex})`);
+                    console.log(`🎯 Estantería ${clickedRack.code} centrada en 3D (índice: ${rackIndex})`);
                 }
             }
 
-            // 2. CENTRER ce rack dans la vue 3D
+            // 2. CENTRAR esta estantería en la vista 3D
             if (this.currentRacks) {
-                // Calculer la position pour centrer ce rack
+                // Calcular la posición para centrar esta estantería
                 const rackIndex = this.currentRacks.findIndex(r => r.id === clickedRack.id);
                 if (rackIndex !== -1) {
-                    // Positionner la caméra pour que ce rack soit au centre
+                    // Posicionar la cámara para que esta estantería esté en el centro
                     const totalRacks = this.currentRacks.length;
                     const spacing = 120;
-                    this.cameraFocusIndex = rackIndex; // Nouvelle propriété à ajouter
+                    this.cameraFocusIndex = rackIndex; // Nueva propiedad a añadir
 
-                    // Redessiner la vue 3D avec ce rack centré
+                    // Redibujar la vista 3D con esta estantería centrada
                     this.draw3DView(this.currentRacks);
 
-                    console.log(`🎯 Rack ${clickedRack.code} centré en 3D (index: ${rackIndex})`);
+                    console.log(`🎯 Estantería ${clickedRack.code} centrada en 3D (índice: ${rackIndex})`);
                 }
             }
 
         } else {
-            console.log('❌ Aucun rack à cette position');
+            console.log('❌ Ninguna estantería en esta posición');
         }
     }
 
-    // Trouver un rack à une position donnée
+    // Encontrar una estantería en una posición dada
     findRackAtPosition(x, y) {
         if (!this.currentRacks) {
-            console.log('❌ currentRacks est null/undefined');
+            console.log('❌ currentRacks es null/undefined');
             return null;
         }
 
-        // ✅ CORRECTION : Appliquer le scale inverse aux coordonnées de la souris
+        // ✅ CORRECCIÓN: Aplicar el scale inverso a las coordenadas del ratón
         const scale = this.topViewScale || 1;
         const adjustedX = x / scale;
         const adjustedY = y / scale;
 
-        console.log(`🔍 Recherche parmi ${this.currentRacks.length} racks à: ${adjustedX},${adjustedY} (scale: ${scale})`);
+        console.log(`🔍 Buscando entre ${this.currentRacks.length} estanterías en: ${adjustedX},${adjustedY} (scale: ${scale})`);
 
         for (const rack of this.currentRacks) {
             if (!rack.displayX) {
-                console.log(`  Rack ${rack.code}: PAS de displayX`);
+                console.log(`  Estantería ${rack.code}: SIN displayX`);
                 continue;
             }
 
-            // Utiliser la taille réelle du rack (3x3, etc.)
+            // Usar el tamaño real del rack (3x3, etc.)
             const logicalGridSize = 20;
             const w = rack.width * logicalGridSize;
             const d = rack.depth * logicalGridSize;
@@ -1809,20 +1807,20 @@ class QuadViewManager {
             const top = rack.displayY;
             const bottom = top + (d / scale);
 
-            console.log(`  Rack ${rack.code}: ${left}-${right}, ${top}-${bottom}`);
+            console.log(`  Estantería ${rack.code}: ${left}-${right}, ${top}-${bottom}`);
 
             if (adjustedX >= left && adjustedX <= right && adjustedY >= top && adjustedY <= bottom) {
-                console.log(`✅ ${rack.code} TROUVÉ!`);
+                console.log(`✅ ${rack.code} ENCONTRADA!`);
                 return rack;
             }
         }
 
-        console.log('❌ Aucun rack correspond');
+        console.log('❌ Ninguna estantería coincide');
         return null;
     }
 
 
-    // Gestion du survol (pour changer le curseur)
+    // Manejo del hover (para cambiar el cursor)
     handleCanvasHover(e) {
         if (!this.currentRacks || this.currentRacks.length === 0) return;
 
@@ -1834,7 +1832,7 @@ class QuadViewManager {
 
         if (rack) {
             this.canvasTop.style.cursor = 'pointer';
-            // Option : afficher une info-bulle
+            // Opción: mostrar una información emergente
             this.showTooltip(rack, x, y);
         } else {
             this.canvasTop.style.cursor = 'default';
@@ -1842,9 +1840,9 @@ class QuadViewManager {
         }
     }
 
-    // Montrer une info-bulle
+    // Mostrar una información emergente
     showTooltip(rack, mouseX, mouseY) {
-        // Créer ou mettre à jour l'info-bulle
+        // Crear o actualizar la información emergente
         let tooltip = document.getElementById('quadTooltip');
 
         if (!tooltip) {
@@ -1866,17 +1864,17 @@ class QuadViewManager {
 
         tooltip.innerHTML = `
             <strong>${rack.code}</strong><br>
-            ${rack.name || 'Étagère ' + rack.code}<br>
-            ${rack.width} × ${rack.depth} cases
+            ${rack.name || 'Estantería ' + rack.code}<br>
+            ${rack.width} × ${rack.depth} casillas
         `;
 
-        // Positionner près du curseur de la souris
-        tooltip.style.left = (mouseX + 10) + 'px'; // 10px à droite du curseur
-        tooltip.style.top = (mouseY - 10) + 'px'; // 10px au-dessus du curseur
+        // Posicionar cerca del cursor del ratón
+        tooltip.style.left = (mouseX + 10) + 'px'; // 10px a la derecha del cursor
+        tooltip.style.top = (mouseY - 10) + 'px'; // 10px arriba del cursor
         tooltip.style.display = 'block';
     }
 
-    // Cacher l'info-bulle
+    // Ocultar la información emergente
     hideTooltip() {
         const tooltip = document.getElementById('quadTooltip');
         if (tooltip) {
@@ -1884,44 +1882,44 @@ class QuadViewManager {
         }
     }
 
-    // Ouvrir le modal d'édition
+    // Abrir el modal de edición
     openEditModal(rack) {
-        console.log('Ouverture du modal pour éditer le rack:', rack.code);
+        console.log('Abriendo modal para editar la estantería:', rack.code);
 
-        // Utiliser votre modal existant via VueStock
+        // Usar su modal existente via VueStock
         if (window.vueStock && window.vueStock.openRackModal) {
             window.vueStock.openRackModal(rack);
         } else if (window.openRackModal) {
             window.openRackModal(rack);
         } else {
-            console.warn('Fonction openRackModal non disponible');
-            // Option : créer un modal simple
+            console.warn('Función openRackModal no disponible');
+            // Opción: crear un modal simple
             this.createSimpleEditModal(rack);
         }
     }
 
-    // Modal simple si le modal principal n'est pas disponible
+    // Modal simple si el modal principal no está disponible
     createSimpleEditModal(rack) {
         const modal = document.createElement('div');
         modal.innerHTML = `
             <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;">
                 <div style="background:white;padding:20px;border-radius:8px;min-width:300px;">
-                    <h3>Éditer ${rack.code}</h3>
+                    <h3>Editar ${rack.code}</h3>
                     <div style="margin:10px 0;">
-                        <label>Code: <input type="text" value="${rack.code}" id="editRackCode"></label>
+                        <label>Código: <input type="text" value="${rack.code}" id="editRackCode"></label>
                     </div>
                     <div style="margin:10px 0;">
-                        <label>Largeur: <input type="number" value="${rack.width}" id="editRackWidth"></label>
+                        <label>Ancho: <input type="number" value="${rack.width}" id="editRackWidth"></label>
                     </div>
                     <div style="margin:10px 0;">
-                        <label>Profondeur: <input type="number" value="${rack.depth}" id="editRackDepth"></label>
+                        <label>Profundidad: <input type="number" value="${rack.depth}" id="editRackDepth"></label>
                     </div>
                     <div style="margin:10px 0;">
-                        <label>Couleur: <input type="color" value="${rack.color || '#4a90e2'}" id="editRackColor"></label>
+                        <label>Color: <input type="color" value="${rack.color || '#4a90e2'}" id="editRackColor"></label>
                     </div>
                     <div style="display:flex;justify-content:space-between;margin-top:20px;">
-                        <button id="cancelEdit">Annuler</button>
-                        <button id="saveEdit" style="background:#4a90e2;color:white;">Sauvegarder</button>
+                        <button id="cancelEdit">Cancelar</button>
+                        <button id="saveEdit" style="background:#4a90e2;color:white;">Guardar</button>
                     </div>
                 </div>
             </div>
@@ -1929,7 +1927,7 @@ class QuadViewManager {
 
         document.body.appendChild(modal);
 
-        // Événements
+        // Eventos
         document.getElementById('cancelEdit').addEventListener('click', () => {
             modal.remove();
         });
@@ -1940,19 +1938,19 @@ class QuadViewManager {
             const newDepth = parseInt(document.getElementById('editRackDepth').value);
             const newColor = document.getElementById('editRackColor').value;
 
-            // Mettre à jour localement
+            // Actualizar localmente
             rack.code = newCode;
             rack.width = newWidth;
             rack.depth = newDepth;
             rack.color = newColor;
 
-            // Redessiner
+            // Redibujar
             this.drawTopView(this.currentRacks);
 
-            // Fermer le modal
+            // Cerrar el modal
             modal.remove();
 
-            // Sauvegarder via API (si disponible)
+            // Guardar via API (si disponible)
             if (window.vueStock && window.vueStock.api) {
                 try {
                     await window.vueStock.api.saveRack({
@@ -1962,9 +1960,9 @@ class QuadViewManager {
                         depth: newDepth,
                         color: newColor
                     });
-                    console.log('Rack mis à jour via API');
+                    console.log('Estantería actualizada via API');
                 } catch (error) {
-                    console.error('Erreur API:', error);
+                    console.error('Error API:', error);
                 }
             }
         });
@@ -1980,44 +1978,44 @@ class QuadViewManager {
         ctx.clearRect(0, 0, width, height);
         this.drawGrid(ctx, width, height, 20);
 
-        // ✅ NOUVEAU : Calcul du zoom automatique
+        // ✅ NUEVO: Cálculo del zoom automático
         if (racks.length > 0) {
-            // Calculer la largeur totale nécessaire pour tous les racks
+            // Calcular el ancho total necesario para todas las estanterías
             const totalWidth = racks.reduce((sum, rack) => sum + (rack.width * 20) + 40, 0);
 
-            // Si ça dépasse la largeur du canvas, calculer un facteur de zoom
+            // Si supera el ancho del canvas, calcular un factor de zoom
             if (totalWidth > width - 100) {
                 const zoomFactor = (width - 100) / totalWidth;
-                // Appliquer le zoom (entre 0.3 et 1)
+                // Aplicar el zoom (entre 0.3 y 1)
                 const scale = Math.max(0.3, Math.min(1, zoomFactor));
 
-                // Sauvegarder le contexte et appliquer le zoom
+                // Guardar el contexto y aplicar el zoom
                 ctx.save();
                 ctx.scale(scale, scale);
 
-                // Stocker le scale pour l'utiliser ailleurs
+                // Almacenar el scale para usarlo en otro lugar
                 this.topViewScale = scale;
             } else {
                 this.topViewScale = 1;
             }
         }
 
-        // RÉGLAGE POUR UNE SEULE LIGNE
+        // AJUSTE PARA UNA SOLA LÍNEA
         const startX = 50;
         const startY = height / 2 - 40;
         const spacing = 40;
         let currentX = startX;
 
         racks.forEach((rack) => {
-            // Taille d'un carré en pixels LOGIQUES (toujours 20)
+            // Tamaño de un cuadrado en píxeles LÓGICOS (siempre 20)
             const logicalGridSize = 20;
             const scale = this.topViewScale || 1;
 
-            // Dimensions en pixels logiques (toujours proportionnelles à la grille)
+            // Dimensiones en píxeles lógicos (siempre proporcionales a la cuadrícula)
             const w = rack.width * logicalGridSize;
             const d = rack.depth * logicalGridSize;
 
-            // Stocker displayWidth et displayHeight UNE SEULE FOIS si non définis
+            // Almacenar displayWidth y displayHeight UNA SOLA VEZ si no están definidos
             if (rack.displayWidth === undefined) {
                 rack.displayWidth = w;
             }
@@ -2027,27 +2025,27 @@ class QuadViewManager {
 
             let x, y;
 
-            // Si ce rack est en cours de drag, utiliser displayX/Y existants
+            // Si esta estantería está siendo arrastrada, usar displayX/Y existentes
             if (this.isDragging && this.draggedRack && rack.id === this.draggedRack.id) {
-                // displayX/Y sont déjà en pixels logiques, pas besoin de diviser
+                // displayX/Y ya están en píxeles lógicos, no es necesario dividir
                 x = rack.displayX;
                 y = rack.displayY;
             }
             else if (rack.position_x !== undefined && rack.position_y !== undefined) {
-                const positionScale = 1; // Conversion position_x → pixels logiques
+                const positionScale = 1; // Conversión position_x → píxeles lógicos
                 const viewScale = this.topViewScale || 1; // Zoom global
 
-                // Position en pixels logiques (avant ctx.scale)
+                // Posición en píxeles lógicos (antes de ctx.scale)
                 x = rack.position_x * positionScale;
                 y = rack.position_y * positionScale;
 
-                // ✅ CORRECTION : Ramener à l'écran si hors limites
+                // ✅ CORRECCIÓN: Ajustar a pantalla si está fuera de límites
                 const maxX = (this.canvasTop.width / viewScale) - 100;
                 const maxY = (this.canvasTop.height / viewScale) - 100;
 
                 if (x > maxX) {
                     x = maxX;
-                    rack.position_x = x; // Mettre à jour pour sauvegarde
+                    rack.position_x = x; // Actualizar para guardar
                 }
 
                 if (y > maxY) {
@@ -2055,11 +2053,11 @@ class QuadViewManager {
                     rack.position_y = y;
                 }
 
-                // Stocker en pixels physiques (après ctx.scale)
+                // Almacenar en píxeles físicos (después de ctx.scale)
                 rack.displayX = x;
                 rack.displayY = y;
             }
-            // Sinon, calculer automatiquement
+            // Si no, calcular automáticamente
             else {
                 if (currentX + w > width - 50) {
                     currentX = Math.max(startX, width - 50 - w);
@@ -2074,20 +2072,20 @@ class QuadViewManager {
                 currentX += w + spacing;
             }
 
-            // ✅ AJOUT DE LA ROTATION VISUELLE
-            ctx.save(); // Sauvegarder le contexte
+            // ✅ AÑADIDO DE LA ROTACIÓN VISUAL
+            ctx.save(); // Guardar el contexto
 
-            // Si rotation, appliquer la transformation
+            // Si hay rotación, aplicar la transformación
             if (rack.rotation && rack.rotation !== 0) {
-                // Translater au centre du rack
+                // Trasladar al centro del rack
                 const centerX = x + (w / scale) / 2;
                 const centerY = y + (d / scale) / 2;
                 ctx.translate(centerX, centerY);
-                ctx.rotate((rack.rotation * Math.PI) / 180); // Convertir degrés en radians
+                ctx.rotate((rack.rotation * Math.PI) / 180); // Convertir grados a radianes
                 ctx.translate(-centerX, -centerY);
             }
 
-            // Dessin du rack (code original)
+            // Dibujo del rack (código original)
             ctx.fillStyle = rack.color || '#4a90e2';
             ctx.fillRect(x, y, w / scale, d / scale);
             ctx.strokeStyle = '#333';
@@ -2099,11 +2097,11 @@ class QuadViewManager {
             ctx.textBaseline = 'middle';
             ctx.fillText(rack.code, x + (w / scale) / 2, y + (d / scale) / 2);
 
-            ctx.restore(); // Restaurer le contexte (annule la rotation)
+            ctx.restore(); // Restaurar el contexto (anula la rotación)
 
-            // Poignettes (APRÈS la restauration pour qu'elles ne tournent pas)
+            // Asas (DESPUÉS de la restauración para que no giren)
             if (this.selectedRack && rack.id === this.selectedRack.id) {
-                // Surbrillance
+                // Resaltado
                 ctx.save();
                 if (rack.rotation && rack.rotation !== 0) {
                     const centerX = x + (w / scale) / 2;
@@ -2118,38 +2116,38 @@ class QuadViewManager {
                 ctx.strokeRect(x - 2, y - 2, (w / scale) + 4, (d / scale) + 4);
                 ctx.restore();
 
-                // Les poignettes ne tournent PAS (elles restent toujours horizontales/verticales)
+                // Las asas NO giran (siempre permanecen horizontales/verticales)
                 const handleSize = 8;
                 const handleColor = '#007bff';
                 const handleBorder = '#ffffff';
                 const rackVisualWidth = w / scale;
                 const rackVisualHeight = d / scale;
 
-                // Coin supérieur gauche
+                // Esquina superior izquierda
                 ctx.fillStyle = handleBorder;
                 ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
                 ctx.fillRect(x - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
-                // Coin supérieur droit
+                // Esquina superior derecha
                 ctx.fillStyle = handleBorder;
                 ctx.fillRect(x + rackVisualWidth - handleSize/2, y - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
                 ctx.fillRect(x + rackVisualWidth - handleSize/2 + 1, y - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
-                // Coin inférieur gauche
+                // Esquina inferior izquierda
                 ctx.fillStyle = handleBorder;
                 ctx.fillRect(x - handleSize/2, y + rackVisualHeight - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
                 ctx.fillRect(x - handleSize/2 + 1, y + rackVisualHeight - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
-                // Coin inférieur droit
+                // Esquina inferior derecha
                 ctx.fillStyle = handleBorder;
                 ctx.fillRect(x + rackVisualWidth - handleSize/2, y + rackVisualHeight - handleSize/2, handleSize, handleSize);
                 ctx.fillStyle = handleColor;
                 ctx.fillRect(x + rackVisualWidth - handleSize/2 + 1, y + rackVisualHeight - handleSize/2 + 1, handleSize - 2, handleSize - 2);
 
-                // Poignette de rotation
+                // Asa de rotación
                 const rotateHandleSize = 30;
                 const rotateHandleCenterX = x + (rackVisualWidth / 2);
                 const rotateHandleY = y - 25;
@@ -2174,7 +2172,7 @@ class QuadViewManager {
                 ctx.arc(rotateHandleCenterX, rotateHandleY, 3, 0, Math.PI * 2);
                 ctx.fill();
 
-                console.log(`🎯 Rack ${rack.code}: rotate poignette DESSINÉE à x=${rotateHandleCenterX.toFixed(1)}, y=${rotateHandleY.toFixed(1)}`);
+                console.log(`🎯 Estantería ${rack.code}: asa de rotación DIBUJADA en x=${rotateHandleCenterX.toFixed(1)}, y=${rotateHandleY.toFixed(1)}`);
 
                 rack._debugRotateHandle = {
                     centerX: rotateHandleCenterX,
@@ -2193,7 +2191,7 @@ class QuadViewManager {
             ctx.restore();
         }
 
-        document.getElementById('quadRackCount').textContent = `${racks.length} racks`;
+        document.getElementById('quadRackCount').textContent = `${racks.length} estanterías`;
     }
 
     drawFrontView(rack) {
@@ -2203,19 +2201,19 @@ class QuadViewManager {
         const width = this.canvasFront.width;
         const height = this.canvasFront.height;
 
-        // Effacer
+        // Limpiar
         ctx.clearRect(0, 0, width, height);
 
-        // Dessiner le rack en élévation
+        // Dibujar la estantería en elevación
         const rackWidth = rack.width * 30;
         const startX = (width - rackWidth) / 2;
         const startY = height - 20;
 
-        // Base du rack
+        // Base de la estantería
         ctx.fillStyle = rack.color || '#4a90e2';
         ctx.fillRect(startX, startY - 10, rackWidth, 10);
 
-        // Niveaux (du bas vers le haut)
+        // Niveles (de abajo hacia arriba)
         if (rack.levels && rack.levels.length) {
             const levels = [...rack.levels].sort((a, b) => a.display_order - b.display_order);
 
@@ -2225,17 +2223,17 @@ class QuadViewManager {
             levels.forEach(level => {
                 const levelTop = currentY - levelHeight;
 
-                // Étage
+                // Nivel
                 ctx.fillStyle = level.code % 20 === 0 ? '#6c757d' : '#adb5bd';
                 ctx.fillRect(startX, levelTop, rackWidth, levelHeight);
 
-                // ✅ NOUVEAU : Cadre jaune si level sélectionné
+                // ✅ NUEVO: Marco amarillo si nivel seleccionado
                 if (this.selectedLevel && this.selectedLevel.id === level.id) {
                     ctx.strokeStyle = '#ffd700';
                     ctx.lineWidth = 4;
                     ctx.strokeRect(startX - 2, levelTop - 2, rackWidth + 4, levelHeight + 4);
 
-                    // Effet glow (seulement si en animation)
+                    // Efecto resplandor (solo si en animación)
                     if (this.isSlotAnimating) {
                         ctx.shadowColor = '#ffd700';
                         ctx.shadowBlur = 15;
@@ -2245,7 +2243,7 @@ class QuadViewManager {
                 }
 
 
-                // Séparateur
+                // Separador
                 ctx.strokeStyle = '#495057';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -2253,7 +2251,7 @@ class QuadViewManager {
                 ctx.lineTo(startX + rackWidth, levelTop);
                 ctx.stroke();
 
-                // Code de l'étage
+                // Código del nivel
                 ctx.fillStyle = '#fff';
                 ctx.font = 'bold 12px Arial';
                 ctx.textAlign = 'center';
@@ -2262,7 +2260,7 @@ class QuadViewManager {
                 currentY -= levelHeight;
             });
 
-            // Hauteur totale
+            // Altura total
             const totalHeight = startY - currentY;
             ctx.fillStyle = 'rgba(0,0,0,0.1)';
             ctx.fillRect(startX - 30, currentY, 25, totalHeight);
@@ -2271,16 +2269,16 @@ class QuadViewManager {
             ctx.font = '10px Arial';
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`${levels.length} étages`, startX - 35, currentY + totalHeight/2);
+            ctx.fillText(`${levels.length} niveles`, startX - 35, currentY + totalHeight/2);
         }
 
-        // Code du rack en bas
+        // Código de la estantería abajo
         ctx.fillStyle = '#333';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`Rack ${rack.code}`, width/2, height - 5);
+        ctx.fillText(`Estantería ${rack.code}`, width/2, height - 5);
 
-        document.getElementById('quadSelectedRack').textContent = `Rack ${rack.code} - ${rack.levels?.length || 0} étages`;
+        document.getElementById('quadSelectedRack').textContent = `Estantería ${rack.code} - ${rack.levels?.length || 0} niveles`;
     }
 
 
@@ -2295,14 +2293,14 @@ class QuadViewManager {
 
         const rackWidth = this.selectedRack.width * 30;
         const startX = (this.canvasFront.width - rackWidth) / 2;
-        const baseHeight = 10; // hauteur de la base du rack (DOIT matcher le draw)
+        const baseHeight = 10; // altura de la base de la estantería (DEBE coincidir con el draw)
         const startY = this.canvasFront.height - 20 - baseHeight;
 
         const levelHeight = 40;
         let currentY = startY;
 
 
-        // 🔑 MÊME ORDRE QUE LE DESSIN
+        // 🔑 MISMO ORDEN QUE EL DIBUJO
         const levels = [...this.selectedRack.levels]
             .sort((a, b) => a.display_order - b.display_order);
 
@@ -2316,11 +2314,11 @@ class QuadViewManager {
                 clickY >= levelTop &&
                 clickY <= levelBottom
             ) {
-                console.log('✅ Étage cliqué:', level.code);
+                console.log('✅ Nivel clicado:', level.code);
                 this.selectedLevel = level;
 
                 document.getElementById('quadLevelInfo').textContent =
-                    `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
+                    `Nivel ${level.code} - ${level.slots?.length || 0} huecos`;
 
                 this.updateLevelView(level);
                 return;
@@ -2334,7 +2332,7 @@ class QuadViewManager {
     draw3DView(racks) {
         if (!this.ctx3D || !this.canvas3D) return;
 
-        // ✅ AJOUT : Vérification si racks est vide
+        // ✅ AÑADIDO: Verificación si racks está vacío
         if (!racks || racks.length === 0) {
             const ctx = this.ctx3D;
             const width = this.canvas3D.width;
@@ -2342,17 +2340,17 @@ class QuadViewManager {
 
             ctx.clearRect(0, 0, width, height);
 
-            // Fond simple
+            // Fondo simple
             ctx.fillStyle = '#667eea';
             ctx.fillRect(0, 0, width, height);
 
-            // Message
+            // Mensaje
             ctx.fillStyle = 'rgba(255,255,255,0.9)';
             ctx.font = '14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Aucun rack à afficher', width/2, height/2);
+            ctx.fillText('No hay estanterías para mostrar', width/2, height/2);
 
-            return; // ← IMPORTANT : sortir de la fonction
+            return; // ← IMPORTANTE: salir de la función
         }
 
         const ctx = this.ctx3D;
@@ -2360,10 +2358,10 @@ class QuadViewManager {
         const height = this.canvas3D.height;
 
 
-        // Effacer
+        // Limpiar
         ctx.clearRect(0, 0, width, height);
 
-        // Fond gradient animé selon la rotation (CORRIGÉ)
+        // Fondo gradient animado según la rotación (CORREGIDO)
         const gradientAngle = (this.rotation3D % 360) * Math.PI / 180;
         const gx = Math.max(0, Math.min(width, width * 0.5 + Math.cos(gradientAngle) * width * 0.3));
         const gy = Math.max(0, Math.min(height, height * 0.5 + Math.sin(gradientAngle) * height * 0.3));
@@ -2375,14 +2373,14 @@ class QuadViewManager {
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
-        // Grille de sol en perspective
+        // Cuadrícula de suelo en perspectiva
         this.drawFloorGrid(ctx, width, height);
 
-        // ✅ REMPLACER TOUT À PARTIR D'ICI
+        // ✅ REEMPLAZAR TODO DESDE AQUÍ
         const centerX = width / 2;
         const centerY = height / 2 + 50;
 
-        // Trier les racks
+        // Ordenar las estanterías
         const sortedRacks = [...racks].sort((a, b) => {
             const aRotated = a.rotation && a.rotation !== 0 ? 1 : 0;
             const bRotated = b.rotation && b.rotation !== 0 ? 1 : 0;
@@ -2400,10 +2398,10 @@ class QuadViewManager {
         const focusIndex = selectedIndex !== -1 ? selectedIndex : 0;
         this.cameraFocusIndex = focusIndex;
 
-        // ✅ NOUVEAU : Calculer les positions en tenant compte des vraies dimensions
+        // ✅ NUEVO: Calcular las posiciones teniendo en cuenta las dimensiones reales
         let currentX = 0;
         const racksWithDepth = sortedRacks.map((rack, index) => {
-            // Calculer la largeur effective selon la rotation
+            // Calcular el ancho efectivo según la rotación
             let effectiveWidth = rack.width * 20;
 
             if (rack.rotation && rack.rotation !== 0) {
@@ -2420,13 +2418,13 @@ class QuadViewManager {
                 z = 0;
             }
 
-            // ✅ CORRECTION : Espacement de 120px au lieu de effectiveWidth + 10
-            currentX += 120; // Espacement fixe comme avant
+            // ✅ CORRECCIÓN: Espaciado de 120px en lugar de effectiveWidth + 10
+            currentX += 120; // Espaciado fijo como antes
 
             return { rack, x, z, effectiveWidth };
         });
 
-        // ✅ NOUVEAU : Calculer l'offset pour centrer le rack sélectionné
+        // ✅ NUEVO: Calcular el offset para centrar la estantería seleccionada
         let targetOffset = 0;
         if (focusIndex > 0) {
             for (let i = 0; i < focusIndex; i++) {
@@ -2448,21 +2446,21 @@ class QuadViewManager {
             this.currentOffset = targetOffset;
         }
 
-        // Dessiner chaque rack
+        // Dibujar cada estantería
         racksWithDepth.forEach(({ rack, x, z, effectiveWidth }, index) => {
             const isSelected = this.selectedRack && rack.id === this.selectedRack.id;
             const isHovered = (rack === this.hoveredRack);
             const xrayAlpha = isHovered ? this.xrayProgress : 0;
             const zoomScale = this.camera.currentScale;
 
-            // SUPPRIMER la rotation orbitale des racks
-            // const angle = (this.rotation3D || 0) * Math.PI / 180; // ← À SUPPRIMER
+            // ELIMINAR la rotación orbital de las estanterías
+            // const angle = (this.rotation3D || 0) * Math.PI / 180; // ← A ELIMINAR
 
-            // Position originale SANS rotation
-            const rotatedX = x + this.currentOffset; // ← Directement, pas de rotation
-            const rotatedZ = z; // ← Directement, pas de rotation
+            // Posición original SIN rotación
+            const rotatedX = x + this.currentOffset; // ← Directamente, sin rotación
+            const rotatedZ = z; // ← Directamente, sin rotación
 
-            // Projection isométrique SANS rotation orbitale
+            // Proyección isométrica SIN rotación orbital
             const isoX = centerX + rotatedX * this.isometric.scale * zoomScale;
             const isoY = centerY - rotatedZ * this.isometric.scale * 0.5 * zoomScale;
 
@@ -2492,17 +2490,17 @@ class QuadViewManager {
             );
         });
 
-        // Indicateur de rotation
+        // Indicador de rotación
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'left';
         ctx.fillText(`🔄 ${Math.round(this.rotation3D)}°`, 10, 25);
 
         ctx.font = '12px Arial';
-        ctx.fillText(`${racks.length} racks - Glissez pour tourner`, 10, 45);
+        ctx.fillText(`${racks.length} estanterías - Arrastre para girar`, 10, 45);
     }
 
-    // Dessiner la grille du sol en perspective
+    // Dibujar la cuadrícula del suelo en perspectiva
     drawFloorGrid(ctx, width, height) {
         ctx.save();
 
@@ -2513,7 +2511,7 @@ class QuadViewManager {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.lineWidth = 1;
 
-        // Lignes radiales
+        // Líneas radiales
         for (let i = 0; i < 12; i++) {
             const angle = (i * 30 + this.rotation3D) * Math.PI / 180;
             const x1 = centerX + Math.cos(angle) * 50;
@@ -2527,7 +2525,7 @@ class QuadViewManager {
             ctx.stroke();
         }
 
-        // Cercles concentriques
+        // Círculos concéntricos
         for (let r = 50; r <= 250; r += 50) {
             ctx.beginPath();
             ctx.ellipse(centerX, centerY, r, r * 0.5, 0, 0, Math.PI * 2);
@@ -2537,20 +2535,20 @@ class QuadViewManager {
         ctx.restore();
     }
 
-    // Dessiner un rack comme une armoire (perspective frontale)
+    // Dibujar una estantería como un armario (perspectiva frontal)
     drawCabinetRack(ctx, x, y, width, height, depth, rack, opacity = 1) {
         ctx.save();
         ctx.globalAlpha = opacity;
 
-        // ✅ CORRECTION : Inverser width et depth si rotation proche de 90° ou 270°
+        // ✅ CORRECCIÓN: Invertir ancho y profundidad si rotación cercana a 90° o 270°
         let effectiveWidth = width;
         let effectiveDepth = depth;
-        let showSide = false; // true = on voit le côté au lieu de la face
+        let showSide = false; // true = vemos el lado en lugar de la cara
 
         if (rack.rotation && rack.rotation !== 0) {
             const angle = rack.rotation % 360;
 
-            // Si rotation proche de 90° ou 270°, inverser les dimensions
+            // Si rotación cercana a 90° o 270°, invertir las dimensiones
             if ((angle > 45 && angle < 135) || (angle > 225 && angle < 315)) {
                 effectiveWidth = depth;
                 effectiveDepth = width;
@@ -2562,26 +2560,26 @@ class QuadViewManager {
         const cabinetHeight = height;
         const cabinetDepth = effectiveDepth * 0.3;
 
-        // Face avant
+        // Cara frontal
         ctx.fillStyle = rack.color;
         ctx.fillRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
 
-        // Bordure
+        // Borde
         ctx.strokeStyle = '#333';
         ctx.lineWidth = 2;
         ctx.strokeRect(x - cabinetWidth/2, y - cabinetHeight, cabinetWidth, cabinetHeight);
 
-        // Code du rack - TOUJOURS sur la face avant, même pour les racks tournés
+        // Código del rack - SIEMPRE en la cara frontal, incluso para estanterías giradas
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // SUPPRIMER le if/else pour showSide
-        // TOUJOURS dessiner sur la face avant
+        // ELIMINAR el if/else para showSide
+        // SIEMPRE dibujar en la cara frontal
         ctx.fillText(rack.code, x, y - cabinetHeight/2);
 
-        // Effet de profondeur (côté droit)
+        // Efecto de profundidad (lado derecho)
         ctx.fillStyle = this.adjustColor(rack.color, -20);
         ctx.beginPath();
         ctx.moveTo(x + cabinetWidth/2, y - cabinetHeight);
@@ -2591,12 +2589,12 @@ class QuadViewManager {
         ctx.closePath();
         ctx.fill();
 
-        // ✅ NOUVEAU : Si showSide, dessiner les tiroirs sur la face latérale droite
+        // ✅ NUEVO: Si showSide, dibujar los cajones en la cara lateral derecha
         if (showSide && rack.levels && rack.levels.length > 0) {
             const lateralWidth = cabinetDepth;
             const lateralHeight = cabinetHeight;
 
-            // Face latérale avec tiroirs
+            // Cara lateral con cajones
             ctx.fillStyle = rack.color;
             ctx.beginPath();
             ctx.moveTo(x + cabinetWidth/2, y - cabinetHeight);
@@ -2606,7 +2604,7 @@ class QuadViewManager {
             ctx.closePath();
             ctx.fill();
 
-            // Dessiner les étages sur cette face latérale
+            // Dibujar los niveles en esta cara lateral
             const levelHeight = lateralHeight / rack.levels.length;
             const sortedLevels = [...rack.levels].sort((a, b) => parseInt(a.code) - parseInt(b.code));
 
@@ -2614,7 +2612,7 @@ class QuadViewManager {
                 const levelYTop = y - cabinetHeight + (index * levelHeight);
                 const levelYBottom = levelYTop + levelHeight;
 
-                // Ligne de séparation en perspective
+                // Línea de separación en perspectiva
                 ctx.strokeStyle = 'rgba(255,255,255,0.5)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -2622,7 +2620,7 @@ class QuadViewManager {
                 ctx.lineTo(x + cabinetWidth/2 + lateralWidth, levelYBottom - lateralWidth*0.5);
                 ctx.stroke();
 
-                // Code de l'étage
+                // Código del nivel
                 if (levelHeight > 15) {
                     ctx.fillStyle = 'rgba(255,255,255,0.8)';
                     ctx.font = '9px Arial';
@@ -2635,7 +2633,7 @@ class QuadViewManager {
 
         }
 
-        // Effet de profondeur (dessus) - RESTE IDENTIQUE
+        // Efecto de profundidad (parte superior) - PERMANECE IDÉNTICO
         ctx.fillStyle = this.adjustColor(rack.color, 10);
         ctx.beginPath();
         ctx.moveTo(x - cabinetWidth/2, y - cabinetHeight);
@@ -2645,7 +2643,7 @@ class QuadViewManager {
         ctx.closePath();
         ctx.fill();
 
-        // Surbrillance si sélectionné
+        // Resaltado si está seleccionado
         if (opacity < 1) {
             ctx.strokeStyle = '#ffeb3b';
             ctx.lineWidth = 3;
@@ -2655,16 +2653,16 @@ class QuadViewManager {
         ctx.restore();
     }
 
-    // Dessiner un rack en vue isométrique avec effets Rayons X et Opacité
+    // Dibujar una estantería en vista isométrica con efectos Rayos X y Opacidad
     drawIsoRack(ctx, x, y, width, depth, height, rack, angle, opacity = 1, xrayAlpha = 0) {
         ctx.save();
-        // Appliquer l'opacité globale
+        // Aplicar la opacidad global
         ctx.globalAlpha = opacity;
 
-        // Angle isométrique standard (30°)
-        const iso = Math.PI / 6; // 30 degrés
+        // Ángulo isométrico estándar (30°)
+        const iso = Math.PI / 6; // 30 grados
 
-        // Points de base du rack (au sol)
+        // Puntos base del rack (en el suelo)
         const basePoints = [
             { x: -width/2, z: -depth/2 },
             { x: width/2, z: -depth/2 },
@@ -2672,16 +2670,16 @@ class QuadViewManager {
             { x: -width/2, z: depth/2 }
         ];
 
-        // Convertir en coordonnées isométriques
+        // Convertir a coordenadas isométricas
         const isoPoints = basePoints.map(p => ({
             x: x + (p.x * Math.cos(iso) - p.z * Math.cos(iso)),
             y: y + (p.x * Math.sin(iso) + p.z * Math.sin(iso))
         }));
 
-        // Calculer les couleurs avec effet Rayons X (plus transparent = plus clair)
-        const faceOpacity = 1 - (xrayAlpha * 0.7); // Max 70% de transparence
+        // Calcular los colores con efecto Rayos X (más transparente = más claro)
+        const faceOpacity = 1 - (xrayAlpha * 0.7); // Máx 70% de transparencia
 
-        // Face avant (plus sombre)
+        // Cara frontal (más oscura)
         ctx.fillStyle = this.adjustColor(rack.color, -30);
         ctx.globalAlpha = opacity * faceOpacity;
         ctx.beginPath();
@@ -2695,7 +2693,7 @@ class QuadViewManager {
         ctx.globalAlpha = opacity;
         ctx.stroke();
 
-        // Face droite (encore plus sombre)
+        // Cara derecha (aún más oscura)
         ctx.fillStyle = this.adjustColor(rack.color, -50);
         ctx.globalAlpha = opacity * faceOpacity;
         ctx.beginPath();
@@ -2708,7 +2706,7 @@ class QuadViewManager {
         ctx.globalAlpha = opacity;
         ctx.stroke();
 
-        // Face du dessus (plus claire)
+        // Cara superior (más clara)
         ctx.fillStyle = this.adjustColor(rack.color, 20);
         ctx.globalAlpha = opacity * faceOpacity;
         ctx.beginPath();
@@ -2721,15 +2719,15 @@ class QuadViewManager {
         ctx.globalAlpha = opacity;
         ctx.stroke();
 
-        // Dessiner les étages (VISIBLES avec Rayons X)
+        // Dibujar los niveles (VISIBLES con Rayos X)
         if (rack.levels && rack.levels.length > 0) {
             const levelHeight = height / rack.levels.length;
 
             rack.levels.forEach((level, index) => {
                 const levelY = y - (index + 1) * levelHeight;
 
-                // Ligne de séparation (plus visible avec rayons X)
-                const lineAlpha = 0.5 + (xrayAlpha * 0.5); // Plus visible avec rayons X
+                // Línea de separación (más visible con rayos X)
+                const lineAlpha = 0.5 + (xrayAlpha * 0.5); // Más visible con rayos X
                 ctx.strokeStyle = `rgba(0,0,0,${lineAlpha})`;
                 ctx.lineWidth = 2;
                 ctx.globalAlpha = opacity;
@@ -2739,14 +2737,14 @@ class QuadViewManager {
                 ctx.lineTo(isoPoints[2].x, levelY);
                 ctx.stroke();
 
-                // EFFET RAYONS X : Montrer le contenu de l'étage
+                // EFECTO RAYOS X: Mostrar el contenido del nivel
                 if (xrayAlpha > 0.3) {
                     this.drawLevelContents(ctx, isoPoints, levelY, levelHeight, level, xrayAlpha, opacity);
                 }
             });
         }
 
-        // Code du rack
+        // Código del rack
         ctx.globalAlpha = opacity;
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 16px Arial';
@@ -2757,14 +2755,14 @@ class QuadViewManager {
         ctx.fillText(rack.code, x, y - height/2);
         ctx.shadowBlur = 0;
 
-        // Indicateur du nombre d'étages
+        // Indicador del número de niveles
         if (rack.levels && rack.levels.length > 0) {
             ctx.font = '10px Arial';
             ctx.fillStyle = 'rgba(255,255,255,0.8)';
-            ctx.fillText(`${rack.levels.length} étages`, x, y - height - 10);
+            ctx.fillText(`${rack.levels.length} niveles`, x, y - height - 10);
         }
 
-        // Effet de glow si rayons X actif
+        // Efecto de resplandor si rayos X activo
         if (xrayAlpha > 0) {
             ctx.globalAlpha = xrayAlpha * 0.5;
             ctx.strokeStyle = '#00ffff';
@@ -2772,7 +2770,7 @@ class QuadViewManager {
             ctx.shadowColor = '#00ffff';
             ctx.shadowBlur = 10;
 
-            // Contour brillant
+            // Contorno brillante
             ctx.beginPath();
             ctx.moveTo(isoPoints[0].x, isoPoints[0].y);
             ctx.lineTo(isoPoints[1].x, isoPoints[1].y);
@@ -2787,37 +2785,37 @@ class QuadViewManager {
         ctx.restore();
     }
 
-    // Dessiner le contenu d'un étage (visible en mode Rayons X)
+    // Dibujar el contenido de un nivel (visible en modo Rayos X)
     drawLevelContents(ctx, isoPoints, levelY, levelHeight, level, xrayAlpha, opacity) {
         if (!level.slots || level.slots.length === 0) return;
 
         ctx.save();
 
-        // Calculer la largeur de l'étage
+        // Calcular el ancho del nivel
         const levelWidth = Math.abs(isoPoints[1].x - isoPoints[0].x);
         const slotWidth = levelWidth / Math.max(level.slots.length, 1);
 
-        // Parcourir les emplacements
+        // Recorrer los huecos
         level.slots.forEach((slot, index) => {
             const slotX = isoPoints[0].x + (index + 0.5) * slotWidth;
             const slotY = levelY - levelHeight / 2;
 
-            // Vérifier si l'emplacement contient des articles
+            // Verificar si el hueco contiene artículos
             const hasArticles = slot.articles && slot.articles.length > 0;
 
             if (hasArticles) {
                 const article = slot.articles[0];
                 const quantity = article.quantity || article.stock_actuel || 0;
 
-                // Couleur selon le stock
-                let stockColor = '#2ecc71'; // Vert par défaut
+                // Color según el stock
+                let stockColor = '#2ecc71'; // Verde por defecto
                 if (quantity === 0) {
-                    stockColor = '#e74c3c'; // Rouge
+                    stockColor = '#e74c3c'; // Rojo
                 } else if (quantity <= (article.stock_minimum || 3)) {
-                    stockColor = '#f39c12'; // Orange
+                    stockColor = '#f39c12'; // Naranja
                 }
 
-                // Dessiner une petite boîte pour l'article
+                // Dibujar una pequeña caja para el artículo
                 const boxSize = Math.min(slotWidth * 0.6, 8);
 
                 ctx.globalAlpha = opacity * xrayAlpha;
@@ -2826,12 +2824,12 @@ class QuadViewManager {
                 ctx.arc(slotX, slotY, boxSize / 2, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Bordure brillante
+                // Borde brillante
                 ctx.strokeStyle = '#fff';
                 ctx.lineWidth = 1;
                 ctx.stroke();
 
-                // Afficher la quantité si assez de place
+                // Mostrar la cantidad si hay suficiente espacio
                 if (boxSize > 5 && xrayAlpha > 0.7) {
                     ctx.globalAlpha = opacity * xrayAlpha;
                     ctx.fillStyle = '#fff';
@@ -2841,7 +2839,7 @@ class QuadViewManager {
                     ctx.fillText(quantity.toString(), slotX, slotY);
                 }
             } else {
-                // Emplacement vide - petit point gris
+                // Hueco vacío - pequeño punto gris
                 ctx.globalAlpha = opacity * xrayAlpha * 0.3;
                 ctx.fillStyle = '#95a5a6';
                 const emptySize = Math.min(slotWidth * 0.3, 4);
@@ -2854,59 +2852,59 @@ class QuadViewManager {
         ctx.restore();
     }
 
-    // Ajuster la luminosité d'une couleur
+    // Ajustar el brillo de un color
     adjustColor(color, amount) {
-        // Convertir hex en RGB
+        // Convertir hex a RGB
         const hex = color.replace('#', '');
         let r = parseInt(hex.substr(0, 2), 16);
         let g = parseInt(hex.substr(2, 2), 16);
         let b = parseInt(hex.substr(4, 2), 16);
 
-        // Ajuster
+        // Ajustar
         r = Math.max(0, Math.min(255, r + amount));
         g = Math.max(0, Math.min(255, g + amount));
         b = Math.max(0, Math.min(255, b + amount));
 
-        // Reconvertir en hex
+        // Reconverter a hex
         return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
 
-    // Dans QuadViewManager
+    // En QuadViewManager
 
     updateLevelView(level) {
         const container = document.getElementById('quadLevelSlots');
         if (!container || !level) return;
 
-        // Vérifier s'il y a déjà un tiroir ouvert
+        // Verificar si ya hay un cajón abierto
         const currentDrawer = container.querySelector('.quad-drawer-container');
 
         if (currentDrawer && currentDrawer.classList.contains('open')) {
-            // Fermer le tiroir actuel avec animation
+            // Cerrar el cajón actual con animación
             currentDrawer.classList.remove('open');
 
-            // Attendre LA FIN de l'animation de fermeture (700ms)
+            // Esperar AL FIN de la animación de cierre (700ms)
             setTimeout(() => {
                 container.innerHTML = '';
                 this.createDrawer(container, level);
             }, 700);
         } else {
-            // Pas de tiroir ouvert, créer directement
+            // Sin cajón abierto, crear directamente
             container.innerHTML = '';
             this.createDrawer(container, level);
         }
     }
 
     createDrawer(container, level) {
-        // Créer la structure du tiroir
+        // Crear la estructura del cajón
         const drawerContainer = document.createElement('div');
         drawerContainer.className = 'quad-drawer-container';
 
-        // Titre sur une ligne
+        // Título en una línea
         drawerContainer.innerHTML = `
             <div class="drawer-front">
-                <div>Étage ${level.code}</div>
-                <div class="level-label">${level.slots?.length || 0} emplacements</div>
-                <div class="drawer-handle" title="Cliquez pour ouvrir/fermer"></div>
+                <div>Nivel ${level.code}</div>
+                <div class="level-label">${level.slots?.length || 0} huecos</div>
+                <div class="drawer-handle" title="Haga clic para abrir/cerrar"></div>
             </div>
             <div class="drawer-body">
                 <div class="drawer-interior">
@@ -2917,12 +2915,12 @@ class QuadViewManager {
 
         container.appendChild(drawerContainer);
 
-        // Ouvrir le tiroir après un court délai
+        // Abrir el cajón después de un corto retraso
         setTimeout(() => {
             drawerContainer.classList.add('open');
         }, 100);
 
-        // Événement sur la poignée
+        // Evento en el asa
         const handle = drawerContainer.querySelector('.drawer-handle');
         handle.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -2930,17 +2928,17 @@ class QuadViewManager {
         });
 
         document.getElementById('quadLevelInfo').textContent =
-            `Étage ${level.code} - ${level.slots?.length || 0} emplacements`;
+            `Nivel ${level.code} - ${level.slots?.length || 0} huecos`;
     }
 
-    // Dans QuadViewManager - Modifiez generateSlotElements() :
+    // En QuadViewManager - Modifique generateSlotElements() :
 
     generateSlotElements(slots) {
         if (!slots || slots.length === 0) {
             return `
                 <div class="empty-drawer-message">
                     <i class="fas fa-box-open"></i>
-                    <p>Tiroir vide</p>
+                    <p>Cajón vacío</p>
                 </div>
             `;
         }
@@ -2972,15 +2970,15 @@ class QuadViewManager {
             `;
         });
 
-        // APRÈS avoir créé le HTML, ajouter les événements avec setTimeout
+        // DESPUÉS de crear el HTML, añadir los eventos con setTimeout
         setTimeout(() => {
             this.bindSlotEvents();
         }, 300);
 
-        return html; // <-- AJOUTEZ CETTE LIGNE
-    } // <-- FERMETURE DE LA FONCTION ICI
+        return html; // <-- AÑADIR ESTA LÍNEA
+    } // <-- CIERRE DE LA FUNCIÓN AQUÍ
 
-    // NOUVELLE MÉTHODE - Événements sur les slots
+    // NUEVO MÉTODO - Eventos en los huecos
     bindSlotEvents() {
         const slots = document.querySelectorAll('.quad-slot.occupied');
 
@@ -2992,26 +2990,26 @@ class QuadViewManager {
         });
     }
 
-    // NOUVELLE MÉTHODE - Ouvrir le modal
+    // NUEVO MÉTODO - Abrir el modal
     openStockModal(slotElement) {
-        // ✅ NOUVEAU : Retirer la sélection précédente
+        // ✅ NUEVO: Quitar la selección anterior
         const previousSelected = document.querySelectorAll('.quad-slot.selected-slot');
         previousSelected.forEach(slot => {
             slot.classList.remove('selected-slot', 'animating');
         });
 
-        // Nettoyer le timeout d'animation
+        // Limpiar el timeout de animación
         if (this.slotAnimationTimeout) {
             clearTimeout(this.slotAnimationTimeout);
             this.slotAnimationTimeout = null;
         }
 
-        // ✅ NOUVEAU : Réinitialiser l'ancienne sélection
+        // ✅ NUEVO: Reinicializar la selección anterior
         this.selectedSlot = null;
         this.selectedLevel = null;
         this.isSlotAnimating = false;
 
-        // ✅ NOUVEAU : Redessiner la vue Front pour enlever le cadre jaune
+        // ✅ NUEVO: Redibujar la vista Front para quitar el marco amarillo
         if (this.selectedRack) {
             this.drawFrontView(this.selectedRack);
         }
@@ -3023,16 +3021,16 @@ class QuadViewManager {
 
         if (!articleId) return;
 
-        // Trouver l'article dans les données
+        // Encontrar el artículo en los datos
         const article = this.findArticleById(articleId);
         if (!article) return;
 
-        // Remplir le modal
+        // Rellenar el modal
         document.getElementById('modalArticlePhoto').src =
             article.photo || article.photo_url || 'https://via.placeholder.com/150x150/cccccc/666666?text=📦';
 
         document.getElementById('modalArticleName').textContent =
-            article.name || article.nom || 'Article';
+            article.name || article.nom || 'Artículo';
 
         document.getElementById('modalSlotCode').textContent = fullCode;
         document.getElementById('modalBarcode').textContent =
@@ -3046,19 +3044,19 @@ class QuadViewManager {
         const minStock = article.stock_minimum || 0;
         document.getElementById('modalMinStock').textContent = minStock;
 
-        // Définir la valeur de l'input
+        // Definir el valor del input
         const stockInput = document.getElementById('modalStockInput');
         stockInput.value = currentStock;
         stockInput.dataset.articleId = articleId;
         stockInput.dataset.currentStock = currentStock;
 
-        // Ouvrir le modal
+        // Abrir el modal
         document.getElementById('stockModalOverlay').classList.add('active');
     }
 
-    // NOUVELLE MÉTHODE - Trouver un article par ID
+    // NUEVO MÉTODO - Encontrar un artículo por ID
     findArticleById(articleId) {
-        // Parcourir tous les racks, niveaux et slots
+        // Recorrer todas las estanterías, niveles y huecos
         if (!window.vueStock || !window.vueStock.racks) return null;
 
         for (const rack of window.vueStock.racks) {
@@ -3081,12 +3079,12 @@ class QuadViewManager {
         return null;
     }
 
-    // Initialiser les événements du modal (à appeler une fois au chargement)
+    // Inicializar los eventos del modal (llamar una vez al cargar)
     initStockModal() {
         const overlay = document.getElementById('stockModalOverlay');
         const modal = document.getElementById('stockModal');
 
-        // Fermer le modal
+        // Cerrar el modal
         document.getElementById('closeStockModal').addEventListener('click', () => {
             overlay.classList.remove('active');
         });
@@ -3101,7 +3099,7 @@ class QuadViewManager {
             }
         });
 
-        // Boutons +/-
+        // Botones +/-
         document.getElementById('btnIncrease').addEventListener('click', () => {
             const input = document.getElementById('modalStockInput');
             input.value = parseInt(input.value || 0) + 1;
@@ -3115,13 +3113,13 @@ class QuadViewManager {
             }
         });
 
-        // Sauvegarder
+        // Guardar
         document.getElementById('saveStockModal').addEventListener('click', async () => {
             await this.saveStockChanges();
         });
     }
 
-    // NOUVELLE MÉTHODE - Sauvegarder les changements
+    // NUEVO MÉTODO - Guardar los cambios
     async saveStockChanges() {
         const input = document.getElementById('modalStockInput');
         const articleId = input.dataset.articleId;
@@ -3129,25 +3127,25 @@ class QuadViewManager {
         const oldQuantity = parseInt(input.dataset.currentStock || 0);
 
         if (newQuantity === oldQuantity) {
-            alert('Aucun changement détecté');
+            alert('No se detectaron cambios');
             return;
         }
 
         if (newQuantity < 0) {
-            alert('La quantité ne peut pas être négative');
+            alert('La cantidad no puede ser negativa');
             return;
         }
 
-        // SAUVEGARDER originalText AVANT try
+        // GUARDAR originalText ANTES del try
         const saveBtn = document.getElementById('saveStockModal');
-        const originalText = saveBtn.innerHTML; // <-- DÉPLACÉ ICI
+        const originalText = saveBtn.innerHTML; // <-- MOVIDO AQUÍ
 
         try {
-            // Désactiver le bouton pendant la sauvegarde
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+            // Desactivar el botón durante la guarda
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
             saveBtn.disabled = true;
 
-            // Appeler l'API pour mettre à jour
+            // Llamar a la API para actualizar
             if (window.vueStock && window.vueStock.api) {
                 const result = await window.vueStock.api.updateStock({
                     article_id: articleId,
@@ -3155,37 +3153,37 @@ class QuadViewManager {
                 });
 
                 if (result.success) {
-                    // Mettre à jour localement
+                    // Actualizar localmente
                     this.updateLocalStock(articleId, newQuantity);
 
-                    // Mettre à jour l'affichage
+                    // Actualizar la visualización
                     this.refreshSlotDisplay(articleId, newQuantity);
 
-                    // AJOUT IMPORTANT : Mettre à jour les statistiques
+                    // AÑADIDO IMPORTANTE: Actualizar las estadísticas
                     if (window.vueStock.updateStats) {
                         window.vueStock.updateStats();
                     }
 
-                    // Fermer le modal
+                    // Cerrar el modal
                     document.getElementById('stockModalOverlay').classList.remove('active');
 
-                    // Notification
+                    // Notificación
                     if (window.vueStock.showNotification) {
-                        window.vueStock.showNotification(`Stock mis à jour: ${oldQuantity} → ${newQuantity}`);
+                        window.vueStock.showNotification(`Stock actualizado: ${oldQuantity} → ${newQuantity}`);
                     }
                 }
             }
         } catch (error) {
-            console.error('Erreur mise à jour stock:', error);
-            alert('Erreur: ' + error.message);
+            console.error('Error actualizando stock:', error);
+            alert('Error: ' + error.message);
         } finally {
-            // Réactiver le bouton - originalText est maintenant accessible
-            saveBtn.innerHTML = originalText; // <-- CORRECT
+            // Reactivar el botón - originalText ahora es accesible
+            saveBtn.innerHTML = originalText; // <-- CORRECTO
             saveBtn.disabled = false;
         }
     }
 
-    // NOUVELLE MÉTHODE - Mettre à jour localement
+    // NUEVO MÉTODO - Actualizar localmente
     updateLocalStock(articleId, newQuantity) {
         if (!window.vueStock || !window.vueStock.racks) return;
 
@@ -3209,32 +3207,32 @@ class QuadViewManager {
         }
     }
 
-    // NOUVELLE MÉTHODE - Rafraîchir l'affichage
+    // NUEVO MÉTODO - Actualizar la visualización
     refreshSlotDisplay(articleId, newQuantity) {
-        // Trouver le slot correspondant
+        // Encontrar el hueco correspondiente
         const slotElement = document.querySelector(`[data-article-id="${articleId}"]`);
         if (!slotElement) return;
 
-        // Mettre à jour la quantité affichée
+        // Actualizar la cantidad mostrada
         const quantityElement = slotElement.querySelector('.article-quantity');
         if (quantityElement) {
             quantityElement.textContent = newQuantity;
         }
 
-        // Mettre à jour la couleur selon le nouveau stock
+        // Actualizar el color según el nuevo stock
         const article = this.findArticleById(articleId);
         if (article) {
             const newStockLevel = this.getStockLevel(article);
 
-            // Retirer les anciennes classes
+            // Quitar las clases antiguas
             slotElement.classList.remove('stock-good', 'stock-low', 'stock-zero');
 
-            // Ajouter la nouvelle classe
+            // Añadir la nueva clase
             if (newStockLevel) {
                 slotElement.classList.add(newStockLevel);
             }
 
-            // Mettre à jour le tooltip
+            // Actualizar el tooltip
             const slotData = {
                 code: slotElement.dataset.slotCode,
                 full_code: slotElement.dataset.fullCode,
@@ -3260,7 +3258,7 @@ class QuadViewManager {
     }
 
     generateSlotTooltip(slot, article) {
-        const baseText = `Emplacement ${slot.code}`;
+        const baseText = `Hueco ${slot.code}`;
 
         if (!article) {
             return `${baseText} - Libre`;
@@ -3268,34 +3266,34 @@ class QuadViewManager {
 
         const stockActuel = article.stock_actuel || 0;
         const stockMinimum = article.stock_minimum || 0;
-        const articleName = article.nom || 'Article';
+        const articleName = article.nom || 'Artículo';
 
         let status = '';
         if (stockActuel === 0) {
-            status = 'Stock épuisé';
+            status = 'Stock agotado';
         } else if (stockActuel <= stockMinimum) {
-            status = `Stock faible (min: ${stockMinimum})`;
+            status = `Stock bajo (mín: ${stockMinimum})`;
         } else {
-            status = `Stock OK (min: ${stockMinimum})`;
+            status = `Stock OK (mín: ${stockMinimum})`;
         }
 
-        return `${baseText} - ${articleName}\n${stockActuel} unités - ${status}`;
+        return `${baseText} - ${articleName}\n${stockActuel} unidades - ${status}`;
     }
 
 
     generateSlotContent(slot, article, zoomClass) {
         if (!article) {
-            // Slot vide
+            // Hueco vacío
             return `
                 <div class="quad-slot-code">${slot.code}</div>
                 <div class="quad-slot-status">Libre</div>
             `;
         }
 
-        // CORRECTION DES NOMS DE COLONNES :
+        // CORRECCIÓN DE NOMBRES DE COLUMNAS:
         const imageUrl = article.photo || article.photo_url || 'https://via.placeholder.com/40x40/cccccc/666666?text=📦';
         const stock = article.quantity || article.stock_actuel || 0;
-        const articleName = article.name || article.nom || 'Article';
+        const articleName = article.name || article.nom || 'Artículo';
 
         return `
             <div class="slot-content">
@@ -3311,17 +3309,17 @@ class QuadViewManager {
         `;
     }
 
-    // Modifiez getStockLevel() :
+    // Modifique getStockLevel():
     getStockLevel(article) {
         if (!article) return '';
 
-        // CORRECTION : vos colonnes sont 'quantity' et pas 'stock_actuel'
-        // Mais je ne vois pas 'stock_minimum' dans vos données...
+        // CORRECCIÓN: sus columnas son 'quantity' y no 'stock_actuel'
+        // Pero no veo 'stock_minimum' en sus datos...
         const stockActuel = article.quantity || article.stock_actuel || 0;
 
-        // Vous devez avoir 'stock_minimum' dans vos données Supabase
-        // Si non, utilisez une valeur par défaut ou ajoutez la colonne
-        const stockMinimum = article.stock_minimum || 3; // 3 par défaut selon votre INSERT
+        // Usted debe tener 'stock_minimum' en sus datos Supabase
+        // Si no, use un valor por defecto o añada la columna
+        const stockMinimum = article.stock_minimum || 3; // 3 por defecto según su INSERT
 
         if (stockActuel === 0) {
             return 'stock-zero';
@@ -3332,35 +3330,35 @@ class QuadViewManager {
         }
     }
 
-    // Modifiez generateSlotTooltip() :
+    // Modifique generateSlotTooltip():
     generateSlotTooltip(slot, article) {
-        const baseText = `Emplacement ${slot.code}`;
+        const baseText = `Hueco ${slot.code}`;
 
         if (!article) {
             return `${baseText} - Libre`;
         }
 
         const stockActuel = article.quantity || article.stock_actuel || 0;
-        const stockMinimum = article.stock_minimum || 3; // Valeur par défaut
-        const articleName = article.name || article.nom || 'Article';
+        const stockMinimum = article.stock_minimum || 3; // Valor por defecto
+        const articleName = article.name || article.nom || 'Artículo';
 
         let status = '';
         if (stockActuel === 0) {
-            status = 'Stock épuisé';
+            status = 'Stock agotado';
         } else if (stockActuel <= stockMinimum) {
-            status = `Stock faible (min: ${stockMinimum})`;
+            status = `Stock bajo (mín: ${stockMinimum})`;
         } else {
-            status = `Stock OK (min: ${stockMinimum})`;
+            status = `Stock OK (mín: ${stockMinimum})`;
         }
 
-        return `${baseText} - ${articleName}\n${stockActuel} unités - ${status}`;
+        return `${baseText} - ${articleName}\n${stockActuel} unidades - ${status}`;
     }
 
     drawGrid(ctx, width, height, size) {
         ctx.strokeStyle = 'rgba(0,0,0,0.1)';
         ctx.lineWidth = 1;
 
-        // Lignes verticales
+        // Líneas verticales
         for (let x = 0; x < width; x += size) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
@@ -3368,7 +3366,7 @@ class QuadViewManager {
             ctx.stroke();
         }
 
-        // Lignes horizontales
+        // Líneas horizontales
         for (let y = 0; y < height; y += size) {
             ctx.beginPath();
             ctx.moveTo(0, y);
@@ -3378,31 +3376,31 @@ class QuadViewManager {
     }
 
     reset3DView() {
-        console.log('Vue 3D réinitialisée');
+        console.log('Vista 3D reinicializada');
 
-        // Annuler toute animation en cours
+        // Cancelar cualquier animación en curso
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
             this.animationFrame = null;
         }
 
-        // Animation de retour à la position initiale
+        // Animación de retorno a la posición inicial
         const targetRotation = 0;
         const currentRotation = this.rotation3D || 0;
         const diff = targetRotation - currentRotation;
 
         let step = 0;
-        const steps = 40; // Animation plus longue pour le reset
+        const steps = 40; // Animación más larga para el reset
         const animate = () => {
             step++;
             const newRotation = currentRotation + (diff * step / steps);
 
-            // Vérifier que la valeur est valide
+            // Verificar que el valor es válido
             if (!isNaN(newRotation) && isFinite(newRotation)) {
                 this.rotation3D = newRotation;
             }
 
-            // Réinitialiser aussi l'angle isométrique
+            // Reinicializar también el ángulo isométrico
             this.isometric.angle = 30;
 
             if (this.currentRacks) {
@@ -3412,7 +3410,7 @@ class QuadViewManager {
             if (step < steps) {
                 this.animationFrame = requestAnimationFrame(animate);
             } else {
-                // Forcer exactement 0 à la fin
+                // Forzar exactamente 0 al final
                 this.rotation3D = 0;
                 if (this.currentRacks) {
                     this.draw3DView(this.currentRacks);
@@ -3431,11 +3429,11 @@ class QuadViewManager {
 
         const startRotation = this.rotation3D || 0;
 
-        // SUPPRIMER cette inversion
-        // const invertedTarget = -targetRotation; // ← À SUPPRIMER
-        const finalTarget = targetRotation; // ← UTILISER directement targetRotation
+        // ELIMINAR esta inversión
+        // const invertedTarget = -targetRotation; // ← A ELIMINAR
+        const finalTarget = targetRotation; // ← USAR directamente targetRotation
 
-        let diff = finalTarget - startRotation; // ← CHANGÉ : finalTarget au lieu de invertedTarget
+        let diff = finalTarget - startRotation; // ← CAMBIADO: finalTarget en lugar de invertedTarget
         while (diff > 180) diff -= 360;
         while (diff < -180) diff += 360;
 
@@ -3458,7 +3456,7 @@ class QuadViewManager {
             if (step < steps) {
                 this.rotation3DAnimFrame = requestAnimationFrame(animate);
             } else {
-                this.rotation3D = finalTarget; // ← CHANGÉ : finalTarget au lieu de invertedTarget
+                this.rotation3D = finalTarget; // ← CAMBIADO: finalTarget en lugar de invertedTarget
                 if (this.currentRacks) {
                     this.draw3DView(this.currentRacks);
                 }
@@ -3468,7 +3466,7 @@ class QuadViewManager {
         animate();
     }
 
-    // Trouver quel rack est sous une position de souris
+    // Encontrar qué estantería está bajo una posición del ratón
     findRackAt3DPosition(mouseX, mouseY) {
         if (!this.currentRacks || this.currentRacks.length === 0) return null;
 
@@ -3477,40 +3475,40 @@ class QuadViewManager {
         const centerX = width / 2;
         const centerY = height / 2 + 50;
 
-        // Disposition linéaire (DOIT MATCHER draw3DView)
+        // Disposición lineal (DEBE COINCIDIR con draw3DView)
         const startX = -200;
         const spacingX = 120;
 
-        // Trier comme dans draw3DView
+        // Ordenar como en draw3DView
         const sortedRacks = [...this.currentRacks].sort((a, b) => {
             return (a.position_x || 0) - (b.position_x || 0);
         });
 
-        // Parcourir tous les racks
+        // Recorrer todas las estanterías
         for (let i = 0; i < sortedRacks.length; i++) {
             const rack = sortedRacks[i];
 
-            // Position linéaire (identique à draw3DView)
+            // Posición lineal (idéntica a draw3DView)
             const x = startX + (i * spacingX);
-            const z = 0; // Tous à la même profondeur
+            const z = 0; // Todas a la misma profundidad
 
-            // Projection isométrique
+            // Proyección isométrica
             const isoX = centerX + x * this.isometric.scale;
             const isoY = centerY - z * this.isometric.scale * 0.5;
 
-            // Échelle
+            // Escala
             const depthScale = 1 - (i / sortedRacks.length) * 0.1;
             const scale = depthScale;
             const rackWidth = rack.width * 20 * scale;
             const rackHeight = (rack.levels?.length || 1) * 12 * scale;
 
-            // Zone de détection (rectangle)
+            // Zona de detección (rectángulo)
             const left = isoX - rackWidth / 2;
             const right = isoX + rackWidth / 2;
             const top = isoY - rackHeight;
             const bottom = isoY;
 
-            // Vérifier si la souris est dans cette zone
+            // Verificar si el ratón está en esta zona
             if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom) {
                 return rack;
             }
@@ -3519,16 +3517,16 @@ class QuadViewManager {
         return null;
     }
 
-    // Démarrer l'effet Rayons X
+    // Iniciar el efecto Rayos X
     startXRayEffect() {
-        // Annuler l'animation précédente si existe
+        // Cancelar la animación anterior si existe
         if (this.xrayAnimFrame) {
             cancelAnimationFrame(this.xrayAnimFrame);
         }
 
-        // Animation progressive
+        // Animación progresiva
         const animate = () => {
-            this.xrayProgress += 0.08; // Vitesse d'apparition
+            this.xrayProgress += 0.08; // Velocidad de aparición
             if (this.xrayProgress > 1) this.xrayProgress = 1;
 
             if (this.currentRacks) {
@@ -3543,16 +3541,16 @@ class QuadViewManager {
         animate();
     }
 
-    // Arrêter l'effet Rayons X
+    // Detener el efecto Rayos X
     stopXRayEffect() {
-        // Annuler l'animation
+        // Cancelar la animación
         if (this.xrayAnimFrame) {
             cancelAnimationFrame(this.xrayAnimFrame);
         }
 
-        // Animation de disparition
+        // Animación de desaparición
         const animate = () => {
-            this.xrayProgress -= 0.1; // Vitesse de disparition
+            this.xrayProgress -= 0.1; // Velocidad de desaparición
             if (this.xrayProgress < 0) this.xrayProgress = 0;
 
             if (this.currentRacks) {
@@ -3567,9 +3565,9 @@ class QuadViewManager {
         animate();
     }
 
-    // Zoomer sur un rack
+    // Hacer zoom en una estantería
     zoomOnRack(rack) {
-        // Si c'est déjà le rack en focus, dézoomer
+        // Si ya es la estantería en foco, deshacer zoom
         if (this.focusedRack === rack) {
             this.resetZoom();
             return;
@@ -3577,33 +3575,33 @@ class QuadViewManager {
 
         this.focusedRack = rack;
 
-        // Annuler animation précédente
+        // Cancelar animación anterior
         if (this.zoomAnimFrame) {
             cancelAnimationFrame(this.zoomAnimFrame);
         }
 
-        // Trouver l'angle du rack pour le centrer
+        // Encontrar el ángulo de la estantería para centrarla
         const rackIndex = this.currentRacks.indexOf(rack);
         const baseAngle = (rackIndex / this.currentRacks.length) * 360;
 
-        // Calculer la rotation nécessaire pour centrer le rack
-        // On veut que le rack soit à 0° (face à nous)
+        // Calcular la rotación necesaria para centrar la estantería
+        // Queremos que la estantería esté a 0° (de frente a nosotros)
         let targetRotation = -baseAngle;
 
-        // Normaliser l'angle pour trouver le chemin le plus court
+        // Normalizar el ángulo para encontrar el camino más corto
         const currentRotation = this.rotation3D;
         let diff = targetRotation - currentRotation;
 
-        // Prendre le chemin le plus court (éviter de tourner 350° au lieu de 10°)
+        // Tomar el camino más corto (evitar girar 350° en lugar de 10°)
         if (diff > 180) diff -= 360;
         if (diff < -180) diff += 360;
 
         targetRotation = currentRotation + diff;
 
         this.camera.targetRotation = targetRotation;
-        this.camera.targetScale = 1.4; // Zoom plus modéré (au lieu de 1.8)
+        this.camera.targetScale = 1.4; // Zoom más moderado (en lugar de 1.8)
 
-        // Animation
+        // Animación
         const startRotation = this.rotation3D;
         const startScale = this.camera.currentScale;
         let step = 0;
@@ -3614,10 +3612,10 @@ class QuadViewManager {
             const progress = step / steps;
             const easeProgress = 1 - Math.pow(1 - progress, 3); // Easing
 
-            // Rotation fluide
+            // Rotación fluida
             this.rotation3D = startRotation + (targetRotation - startRotation) * easeProgress;
 
-            // Zoom fluide
+            // Zoom fluido
             this.camera.currentScale = startScale + (this.camera.targetScale - startScale) * easeProgress;
             this.zoomProgress = easeProgress;
 
@@ -3632,14 +3630,14 @@ class QuadViewManager {
 
         animate();
 
-        console.log(`🔍 Zoom sur rack ${rack.code} - Rotation: ${Math.round(targetRotation)}°, Scale: 1.4x`);
+        console.log(`🔍 Zoom en estantería ${rack.code} - Rotación: ${Math.round(targetRotation)}°, Escala: 1.4x`);
     }
 
-    // Réinitialiser le zoom
+    // Reinicializar el zoom
     resetZoom() {
         this.focusedRack = null;
 
-        // Annuler animation précédente
+        // Cancelar animación anterior
         if (this.zoomAnimFrame) {
             cancelAnimationFrame(this.zoomAnimFrame);
         }
@@ -3674,57 +3672,57 @@ class QuadViewManager {
 
         if (this.selectedRack) {
             document.getElementById('selectedElement').textContent =
-                `Rack ${this.selectedRack.code}`;
+                `Estantería ${this.selectedRack.code}`;
         } else if (this.selectedLevel) {
             document.getElementById('selectedElement').textContent =
-                `Étage ${this.selectedLevel.code}`;
+                `Nivel ${this.selectedLevel.code}`;
         }
     }
 
-    // Mettre à jour le panneau Propriétés à gauche
+    // Actualizar el panel Propiedades a la izquierda
     updatePropertiesPanel(rack) {
         const panel = document.getElementById('propertiesPanel');
         if (!panel) {
-            console.warn('Panneau Propriétés non trouvé');
+            console.warn('Panel Propiedades no encontrado');
             return;
         }
 
-        // Vérifier si le rack a des niveaux
+        // Verificar si la estantería tiene niveles
         const levelCount = rack.levels ? rack.levels.length : 0;
         const slotCount = rack.levels ? rack.levels.reduce((sum, level) =>
             sum + (level.slots ? level.slots.length : 0), 0) : 0;
 
         panel.innerHTML = `
-            <h4><i class="fas fa-warehouse"></i> Étagère ${rack.code}</h4>
+            <h4><i class="fas fa-warehouse"></i> Estantería ${rack.code}</h4>
             <div class="property-group">
                 <div class="property">
-                    <span class="property-label">Nom:</span>
+                    <span class="property-label">Nombre:</span>
                     <input type="text" class="property-input" id="quadRackName"
-                           value="${rack.name || 'Étagère ' + rack.code}"
-                           placeholder="Nom de l'étagère">
+                           value="${rack.name || 'Estantería ' + rack.code}"
+                           placeholder="Nombre de la estantería">
                 </div>
                 <div class="property">
-                    <span class="property-label">Position:</span>
+                    <span class="property-label">Posición:</span>
                     <div class="property-coords">
                         <input type="number" class="coord-input" id="quadRackX"
-                               value="${Math.round(rack.position_x / 40)}" min="0" title="Position X">
+                               value="${Math.round(rack.position_x / 40)}" min="0" title="Posición X">
                         <span>×</span>
                         <input type="number" class="coord-input" id="quadRackY"
-                               value="${Math.round(rack.position_y / 40)}" min="0" title="Position Y">
+                               value="${Math.round(rack.position_y / 40)}" min="0" title="Posición Y">
                     </div>
                 </div>
                 <div class="property">
-                    <span class="property-label">Dimensions:</span>
+                    <span class="property-label">Dimensiones:</span>
                     <div class="property-dimensions">
                         <input type="number" class="dim-input" id="quadRackWidth"
-                               value="${rack.width}" min="1" max="10" title="Largeur en cases">
+                               value="${rack.width}" min="1" max="10" title="Ancho en casillas">
                         <span>×</span>
                         <input type="number" class="dim-input" id="quadRackDepth"
-                               value="${rack.depth}" min="1" max="10" title="Profondeur en cases">
+                               value="${rack.depth}" min="1" max="10" title="Profundidad en casillas">
                     </div>
                 </div>
                 <div class="property">
-                    <span class="property-label">Rotation:</span>
+                    <span class="property-label">Rotación:</span>
                     <div class="property-rotation">
                         <input type="range" class="rotation-slider" id="quadRackRotation"
                                value="${rack.rotation || 0}" min="0" max="360" step="15">
@@ -3732,46 +3730,46 @@ class QuadViewManager {
                     </div>
                 </div>
                 <div class="property">
-                    <span class="property-label">Couleur:</span>
+                    <span class="property-label">Color:</span>
                     <input type="color" class="property-color" id="quadRackColor"
                            value="${rack.color || '#4a90e2'}">
                 </div>
                 <div class="property">
-                    <span class="property-label">Contenu:</span>
+                    <span class="property-label">Contenido:</span>
                     <span class="property-value">
-                        ${levelCount} étage(s), ${slotCount} emplacement(s)
+                        ${levelCount} nivel(es), ${slotCount} hueco(s)
                     </span>
                 </div>
             </div>
 
             <div class="property-actions">
                 <button class="btn btn-sm btn-primary btn-block" id="quadSaveRack">
-                    <i class="fas fa-save"></i> Sauvegarder
+                    <i class="fas fa-save"></i> Guardar
                 </button>
                 <button class="btn btn-sm btn-danger btn-block" id="quadDeleteRack">
-                    <i class="fas fa-trash"></i> Supprimer
+                    <i class="fas fa-trash"></i> Eliminar
                 </button>
                 <button class="btn btn-sm btn-secondary btn-block" id="quadViewRackDetails">
-                    <i class="fas fa-eye"></i> Voir les étages
+                    <i class="fas fa-eye"></i> Ver niveles
                 </button>
             </div>
         `;
 
-        // Ajouter les événements
+        // Añadir los eventos
         this.bindPropertiesEvents(rack);
     }
 
-    // Vider le panneau Propriétés
+    // Vaciar el panel Propiedades
     clearPropertiesPanel() {
         const panel = document.getElementById('propertiesPanel');
         if (panel) {
-            panel.innerHTML = '<p class="no-selection">Sélectionnez un élément pour voir ses propriétés</p>';
+            panel.innerHTML = '<p class="no-selection">Seleccione un elemento para ver sus propiedades</p>';
         }
     }
 
-    // Lier les événements du panneau Propriétés
+    // Enlazar los eventos del panel Propiedades
     bindPropertiesEvents(rack) {
-        // Mise à jour en temps réel de la rotation
+        // Actualización en tiempo real de la rotación
         const rotationSlider = document.getElementById('quadRackRotation');
         const rotationValue = document.querySelector('.rotation-value');
 
@@ -3783,7 +3781,7 @@ class QuadViewManager {
             });
         }
 
-        // Mise à jour de la couleur en temps réel
+        // Actualización del color en tiempo real
         const colorInput = document.getElementById('quadRackColor');
         if (colorInput) {
             colorInput.addEventListener('input', (e) => {
@@ -3792,7 +3790,7 @@ class QuadViewManager {
             });
         }
 
-        // Bouton Sauvegarder
+        // Botón Guardar
         const saveBtn = document.getElementById('quadSaveRack');
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
@@ -3800,7 +3798,7 @@ class QuadViewManager {
             });
         }
 
-        // Bouton Supprimer
+        // Botón Eliminar
         const deleteBtn = document.getElementById('quadDeleteRack');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => {
@@ -3808,7 +3806,7 @@ class QuadViewManager {
             });
         }
 
-        // Bouton Voir les étages
+        // Botón Ver niveles
         const viewBtn = document.getElementById('quadViewRackDetails');
         if (viewBtn) {
             viewBtn.addEventListener('click', () => {
@@ -3820,7 +3818,7 @@ class QuadViewManager {
     async saveRackChanges(rack) {
         if (!rack) return;
 
-        // Récupérer les valeurs modifiées
+        // Recuperar los valores modificados
         const nameInput = document.getElementById('quadRackName');
         const xInput = document.getElementById('quadRackX');
         const yInput = document.getElementById('quadRackY');
@@ -3830,37 +3828,37 @@ class QuadViewManager {
         const colorInput = document.getElementById('quadRackColor');
 
         if (nameInput) rack.name = nameInput.value;
-        if (xInput) rack.position_x = parseInt(xInput.value) * 40; // Convertir en pixels
+        if (xInput) rack.position_x = parseInt(xInput.value) * 40; // Convertir a píxeles
         if (yInput) rack.position_y = parseInt(yInput.value) * 40;
         if (widthInput) rack.width = parseInt(widthInput.value);
         if (depthInput) rack.depth = parseInt(depthInput.value);
         if (rotationInput) rack.rotation = parseInt(rotationInput.value);
         if (colorInput) rack.color = colorInput.value;
 
-        // 🔴 AJOUTEZ CETTE LIGNE ICI (juste avant console.log) :
-        // Synchroniser position_x/y avec displayX/Y avant tout
+        // 🔴 AÑADA ESTA LÍNEA AQUÍ (justo antes de console.log):
+        // Sincronizar position_x/y con displayX/Y antes de todo
         if (typeof rack.displayX !== 'undefined' && typeof rack.displayY !== 'undefined') {
             const scale = 1;
             rack.position_x = rack.displayX / scale;
             rack.position_y = rack.displayY / scale;
         }
 
-        console.log('Sauvegarde du rack:', rack);
+        console.log('Guardando la estantería:', rack);
 
-        // Redessiner
+        // Redibujar
         this.drawFrontView(rack);
 
-        // Mettre à jour uniquement le panneau sans redessiner
+        // Actualizar solo el panel sin redibujar
         this.updatePropertiesPanel(rack);
 
-        // Sauvegarder via API
+        // Guardar via API
         if (window.vueStock && window.vueStock.api) {
             try {
                 const result = await window.vueStock.api.saveRack({
                     id: rack.id,
                     code: rack.code,
                     name: rack.name,
-                    position_x: rack.position_x, // ✅ Maintenant synchronisé
+                    position_x: rack.position_x, // ✅ Ahora sincronizado
                     position_y: rack.position_y,
                     rotation: rack.rotation || 0,
                     width: rack.width,
@@ -3868,39 +3866,39 @@ class QuadViewManager {
                     color: rack.color
                 });
 
-                console.log('Rack sauvegardé:', result);
+                console.log('Estantería guardada:', result);
 
-                // 🟢 RETIREZ ou COMMETEZ ces lignes (elles sont maintenant inutiles) :
+                // 🟢 QUITE o COMENTE estas líneas (ahora son innecesarias):
                 // const scale = 1;
                 // rack.position_x = rack.displayX / scale;
                 // rack.position_y = rack.displayY / scale;
 
-                this.showQuadNotification('Étagère sauvegardée', 'success');
+                this.showQuadNotification('Estantería guardada', 'success');
 
             } catch (error) {
-                console.error('Erreur sauvegarde:', error);
-                this.showQuadNotification('Erreur sauvegarde: ' + error.message, 'error');
+                console.error('Error guardando:', error);
+                this.showQuadNotification('Error guardando: ' + error.message, 'error');
             }
         } else {
-            this.showQuadNotification('Modifications locales sauvegardées', 'info');
+            this.showQuadNotification('Modificaciones locales guardadas', 'info');
         }
     }
 
-    // Supprimer un rack
+    // Eliminar una estantería
     async deleteRack(rack) {
-        if (!rack || !confirm(`Supprimer l'étagère ${rack.code} et tous ses étages/emplacements ?`)) {
+        if (!rack || !confirm(`¿Eliminar la estantería ${rack.code} y todos sus niveles/huecos?`)) {
             return;
         }
 
-        console.log('Suppression du rack:', rack.code);
+        console.log('Eliminando la estantería:', rack.code);
 
         try {
-            // Supprimer via API
+            // Eliminar via API
             if (window.vueStock && window.vueStock.api) {
                 await window.vueStock.api.deleteRack(rack.id);
             }
 
-            // Supprimer du tableau local
+            // Eliminar del array local
             if (this.currentRacks) {
                 const index = this.currentRacks.findIndex(r => r.id === rack.id);
                 if (index !== -1) {
@@ -3908,46 +3906,46 @@ class QuadViewManager {
                 }
             }
 
-            // Supprimer de VueStock aussi
+            // Eliminar también de VueStock
             if (window.vueStock && window.vueStock.racks) {
                 window.vueStock.racks = window.vueStock.racks.filter(r => r.id !== rack.id);
             }
 
-            // Mettre à jour l'affichage
+            // Actualizar la visualización
             this.selectedRack = null;
             this.clearPropertiesPanel();
             this.drawTopView(this.currentRacks);
             this.updateInfoPanel(this.currentRacks);
 
-            this.showQuadNotification(`Étagère ${rack.code} supprimée`, 'success');
+            this.showQuadNotification(`Estantería ${rack.code} eliminada`, 'success');
 
         } catch (error) {
-            console.error('Erreur suppression:', error);
-            this.showQuadNotification('Erreur suppression: ' + error.message, 'error');
+            console.error('Error eliminando:', error);
+            this.showQuadNotification('Error eliminando: ' + error.message, 'error');
         }
     }
 
-    // Voir les détails du rack (aller à la vue étagère)
+    // Ver los detalles de la estantería (ir a la vista estantería)
     viewRackDetails(rack) {
-        console.log('Voir les détails du rack:', rack.code);
+        console.log('Ver detalles de la estantería:', rack.code);
 
-        // Utiliser la navigation existante de VueStock
+        // Usar la navegación existente de VueStock
         if (window.vueStock && window.vueStock.goToRackView) {
             window.vueStock.goToRackView(rack);
         } else {
-            this.showQuadNotification('Navigation non disponible', 'warning');
+            this.showQuadNotification('Navegación no disponible', 'warning');
         }
     }
 
-    // Afficher une notification dans le contexte Quad
+    // Mostrar una notificación en el contexto Quad
     showQuadNotification(message, type = 'info') {
-        console.log(`Quad Notification [${type}]:`, message);
+        console.log(`Quad Notificación [${type}]:`, message);
 
-        // Utiliser le système de notification existant ou créer un simple alert
+        // Usar el sistema de notificación existente o crear un simple alert
         if (window.vueStock && window.vueStock.showNotification) {
             window.vueStock.showNotification(message, type);
         } else {
-            // Notification simple
+            // Notificación simple
             const notification = document.createElement('div');
             notification.style.cssText = `
                 position: fixed;
@@ -3974,7 +3972,7 @@ class QuadViewManager {
 
         const rack = this.selectedRack;
 
-        // ✅ Appliquer le scale inverse
+        // ✅ Aplicar el scale inverso
         const scale = this.topViewScale || 1;
         const adjustedClickX = clickX / scale;
         const adjustedClickY = clickY / scale;
@@ -3987,8 +3985,8 @@ class QuadViewManager {
         const handleSize = 8;
         const rotateHandleSize = 30;
 
-        // ✅ UTILISER EXACTEMENT LES MÊMES CALCULS QUE DANS drawTopView
-        const rackVisualWidth = rackWidth;  // Déjà en pixels logiques
+        // ✅ USAR EXACTAMENTE LOS MISMOS CÁLCULOS QUE EN drawTopView
+        const rackVisualWidth = rackWidth;  // Ya en píxeles lógicos
         const rackVisualHeight = rackHeight;
 
         const rotateHandleCenterX = rackX + (rackVisualWidth / 2);
@@ -4027,16 +4025,16 @@ class QuadViewManager {
             }
         };
 
-        console.log('🔍 Clic ajusté:', adjustedClickX.toFixed(1), adjustedClickY.toFixed(1), '(scale:', scale.toFixed(3) + ')');
-        console.log('🎯 Rotate calculée:',
+        console.log('🔍 Clic ajustado:', adjustedClickX.toFixed(1), adjustedClickY.toFixed(1), '(scale:', scale.toFixed(3) + ')');
+        console.log('🎯 Rotate calculada:',
                     (rotateHandleCenterX - rotateHandleSize/2).toFixed(1), '-',
                     (rotateHandleCenterX + rotateHandleSize/2).toFixed(1), ',',
                     (rotateHandleCenterY - rotateHandleSize/2).toFixed(1), '-',
                     (rotateHandleCenterY + rotateHandleSize/2).toFixed(1));
 
-        // ✅ VÉRIFICATION avec les valeurs stockées
+        // ✅ VERIFICACIÓN con los valores almacenados
         if (rack._debugRotateHandle) {
-            console.log('🎯 Rotate DESSINÉE:',
+            console.log('🎯 Rotate DIBUJADA:',
                         rack._debugRotateHandle.left.toFixed(1), '-',
                         rack._debugRotateHandle.right.toFixed(1), ',',
                         rack._debugRotateHandle.top.toFixed(1), '-',
@@ -4047,21 +4045,21 @@ class QuadViewManager {
             const inX = adjustedClickX >= handleRect.x && adjustedClickX <= handleRect.x + handleRect.width;
             const inY = adjustedClickY >= handleRect.y && adjustedClickY <= handleRect.y + handleRect.height;
 
-            console.log(`  ${handleName}: ${handleRect.x.toFixed(1)}-${(handleRect.x + handleRect.width).toFixed(1)}, ${handleRect.y.toFixed(1)}-${(handleRect.y + handleRect.height).toFixed(1)} -> ${inX && inY ? '✅ HIT!' : 'miss'}`);
+            console.log(`  ${handleName}: ${handleRect.x.toFixed(1)}-${(handleRect.x + handleRect.width).toFixed(1)}, ${handleRect.y.toFixed(1)}-${(handleRect.y + handleRect.height).toFixed(1)} -> ${inX && inY ? '✅ GOLPE!' : 'fallo'}`);
 
             if (inX && inY) {
-                console.log('✅✅✅ Poignette détectée:', handleName);
+                console.log('✅✅✅ Asa detectada:', handleName);
                 return handleName;
             }
         }
 
-        console.log('❌ Aucune poignette détectée');
+        console.log('❌ Ningún asa detectada');
         return null;
     }
 
-    // Démarrer le redimensionnement depuis une poignette
+    // Iniciar el redimensionamiento desde un asa
     startResizeFromHandle(rack, handle, startX, startY) {
-        console.log('Redimensionnement depuis', handle, 'pour le rack', rack.code);
+        console.log('Redimensionamiento desde', handle, 'para la estantería', rack.code);
 
         this.currentMode = 'resize';
         this.currentRack = rack;
@@ -4075,7 +4073,7 @@ class QuadViewManager {
             position_y: rack.position_y
         };
 
-        // Changer le curseur selon la poignette
+        // Cambiar el cursor según el asa
         const cursorMap = {
             'nw': 'nw-resize',
             'ne': 'ne-resize',
@@ -4087,14 +4085,14 @@ class QuadViewManager {
             this.canvasTop.style.cursor = cursorMap[handle];
         }
 
-        // Ajouter les événements
+        // Añadir los eventos
         this.canvasTop.addEventListener('mousemove', this.handleResize.bind(this));
         this.canvasTop.addEventListener('mouseup', this.stopResize.bind(this));
 
-        this.showQuadNotification('Redimensionnement activé. Glissez pour modifier la taille.', 'info');
+        this.showQuadNotification('Redimensionamiento activado. Arrastre para modificar el tamaño.', 'info');
     }
 
-    // Gérer le redimensionnement
+    // Manejar el redimensionamiento
     handleResize(e) {
         if (this.currentMode !== 'resize' || !this.currentRack || !this.resizeHandle) return;
 
@@ -4105,7 +4103,7 @@ class QuadViewManager {
         const deltaX = mouseX - this.resizeStart.x;
         const deltaY = mouseY - this.resizeStart.y;
 
-        // Calculer la différence en cases (chaque case = 20px dans cette vue)
+        // Calcular la diferencia en casillas (cada casilla = 20px en esta vista)
         const gridSize = 20;
         const scale = 1;
         const deltaGridX = Math.round(deltaX / gridSize);
@@ -4116,26 +4114,26 @@ class QuadViewManager {
         let newPosX = this.resizeStart.position_x;
         let newPosY = this.resizeStart.position_y;
 
-        // Appliquer les changements selon la poignette
+        // Aplicar los cambios según el asa
         switch(this.resizeHandle) {
-            case 'se': // Coin inférieur droit
+            case 'se': // Esquina inferior derecha
                 newWidth = Math.max(1, this.resizeStart.width + deltaGridX);
                 newDepth = Math.max(1, this.resizeStart.depth + deltaGridY);
                 break;
 
-            case 'sw': // Coin inférieur gauche
+            case 'sw': // Esquina inferior izquierda
                 newWidth = Math.max(1, this.resizeStart.width - deltaGridX);
                 newDepth = Math.max(1, this.resizeStart.depth + deltaGridY);
-                newPosX = this.resizeStart.position_x + (deltaGridX * 40); // 40 = gridSize * 2 (scale inverse)
+                newPosX = this.resizeStart.position_x + (deltaGridX * 40); // 40 = gridSize * 2 (scale inverso)
                 break;
 
-            case 'ne': // Coin supérieur droit
+            case 'ne': // Esquina superior derecha
                 newWidth = Math.max(1, this.resizeStart.width + deltaGridX);
                 newDepth = Math.max(1, this.resizeStart.depth - deltaGridY);
                 newPosY = this.resizeStart.position_y + (deltaGridY * 40);
                 break;
 
-            case 'nw': // Coin supérieur gauche
+            case 'nw': // Esquina superior izquierda
                 newWidth = Math.max(1, this.resizeStart.width - deltaGridX);
                 newDepth = Math.max(1, this.resizeStart.depth - deltaGridY);
                 newPosX = this.resizeStart.position_x + (deltaGridX * 40);
@@ -4143,13 +4141,13 @@ class QuadViewManager {
                 break;
         }
 
-        // Appliquer les changements
+        // Aplicar los cambios
         this.currentRack.width = newWidth;
         this.currentRack.depth = newDepth;
         this.currentRack.position_x = newPosX;
         this.currentRack.position_y = newPosY;
 
-        // Mettre à jour les champs dans le panneau
+        // Actualizar los campos en el panel
         const widthInput = document.getElementById('quadRackWidth');
         const depthInput = document.getElementById('quadRackDepth');
         const xInput = document.getElementById('quadRackX');
@@ -4160,11 +4158,11 @@ class QuadViewManager {
         if (xInput) xInput.value = Math.round(newPosX / 40);
         if (yInput) yInput.value = Math.round(newPosY / 40);
 
-        // Redessiner
+        // Redibujar
         this.drawTopView(this.currentRacks);
     }
 
-    // Arrêter le redimensionnement
+    // Detener el redimensionamiento
     stopResize() {
         if (this.currentMode === 'resize') {
             this.currentMode = null;
@@ -4178,13 +4176,13 @@ class QuadViewManager {
                 this.canvasTop.removeEventListener('mouseup', this.stopResize);
             }
 
-            this.showQuadNotification('Redimensionnement terminé', 'info');
+            this.showQuadNotification('Redimensionamiento terminado', 'info');
         }
     }
 
-    // Démarrer la rotation depuis la poignette
+    // Iniciar la rotación desde el asa
     startRotationFromHandle(rack, startX, startY) {
-        console.log('Rotation depuis poignette pour le rack', rack.code);
+        console.log('Rotación desde asa para la estantería', rack.code);
 
         this.currentMode = 'rotate';
         this.currentRack = rack;
@@ -4200,14 +4198,14 @@ class QuadViewManager {
             this.canvasTop.style.cursor = 'grab';
         }
 
-        // Ajouter les événements
+        // Añadir los eventos
         this.canvasTop.addEventListener('mousemove', this.handleRotationDrag.bind(this));
         this.canvasTop.addEventListener('mouseup', this.stopRotationDrag.bind(this));
 
-        this.showQuadNotification('Rotation activée. Glissez pour tourner le rack.', 'info');
+        this.showQuadNotification('Rotación activada. Arrastre para girar la estantería.', 'info');
     }
 
-    // Gérer la rotation par glisser
+    // Manejar la rotación por arrastre
     handleRotationDrag(e) {
         if (this.currentMode !== 'rotate' || !this.currentRack || !this.rotateStart) return;
 
@@ -4215,29 +4213,29 @@ class QuadViewManager {
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        // Calculer l'angle
+        // Calcular el ángulo
         const deltaX = mouseX - this.rotateStart.centerX;
         const deltaY = mouseY - this.rotateStart.centerY;
         const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
 
-        // Snap à 15 degrés
+        // Snap a 15 grados
         let newRotation = Math.round(angle / 15) * 15;
         if (newRotation < 0) newRotation += 360;
 
-        // Appliquer
+        // Aplicar
         this.currentRack.rotation = newRotation;
 
-        // Mettre à jour le slider
+        // Actualizar el slider
         const rotationSlider = document.getElementById('quadRackRotation');
         const rotationValue = document.querySelector('.rotation-value');
         if (rotationSlider) rotationSlider.value = newRotation;
         if (rotationValue) rotationValue.textContent = newRotation + '°';
 
-        // Redessiner
+        // Redibujar
         this.drawTopView(this.currentRacks);
     }
 
-    // Arrêter la rotation
+    // Detener la rotación
     stopRotationDrag() {
         if (this.currentMode === 'rotate') {
             this.currentMode = null;
@@ -4250,22 +4248,22 @@ class QuadViewManager {
                 this.canvasTop.removeEventListener('mouseup', this.stopRotationDrag);
             }
 
-            this.showQuadNotification('Rotation terminée', 'info');
+            this.showQuadNotification('Rotación terminada', 'info');
         }
     }
 
-    // Méthodes pour la sélection
+    // Métodos para la selección
     selectRack(rack) {
         this.selectedRack = rack;
         this.selectedLevel = null;
 
-        // Mettre à jour les vues
+        // Actualizar las vistas
         if (window.vueStock) {
             this.drawFrontView(rack);
             this.updateAllViews(window.vueStock.racks);
         }
 
-        // Si le rack a des niveaux, sélectionner le premier
+        // Si la estantería tiene niveles, seleccionar el primero
         if (rack.levels && rack.levels.length > 0) {
             this.selectLevel(rack.levels[0]);
         }
@@ -4278,12 +4276,12 @@ class QuadViewManager {
 }
 
 
-// vuestock.js - Version 1.0 - Structure de base
+// vuestock.js - Versión 1.0 - Estructura base
 class VueStock {
     constructor() {
-        // EMPÊCHER L'INITIALISATION MULTIPLE
+        // EVITAR LA INICIALIZACIÓN MÚLTIPLE
         if (window.vueStockInstance) {
-            console.warn('⚠️ VueStock déjà initialisé, retour de l\'instance existante');
+            console.warn('⚠️ VueStock ya inicializado, retornando la instancia existente');
             return window.vueStockInstance;
         }
         window.vueStockInstance = this;
@@ -4291,29 +4289,29 @@ class VueStock {
         this.currentView = 'plan'; // plan, rack, level
         this.selectedRack = null;
         this.selectedLevel = null;
-        this.racks = []; // Stockage temporaire des étagères
-        this.levels = []; // Stockage temporaire des étages
-        this.slots = []; // Stockage temporaire des emplacements
+        this.racks = []; // Almacenamiento temporal de las estanterías
+        this.levels = []; // Almacenamiento temporal de los niveles
+        this.slots = []; // Almacenamiento temporal de los huecos
         this.canvasManager = null;
         this.api = new ApiManager();
 
-        // AJOUT pour QuadView
+        // AÑADIDO para QuadView
         this.quadViewManager = null;
 
         this.init();
     }
 
     init() {
-        // Protection anti-double init
+        // Protección anti-doble init
         if (this.initialized) {
-            console.warn("⚠️ VueStock déjà initialisé, retour de l'instance existante");
+            console.warn("⚠️ VueStock ya inicializado, retornando la instancia existente");
             return this;
         }
         this.initialized = true;
 
-        console.log('VueStock initialisé (1ère fois)');
+        console.log('VueStock inicializado (1ª vez)');
 
-        // Récupérer les paramètres URL
+        // Recuperar los parámetros URL
         const urlParams = new URLSearchParams(window.location.search);
         this.rackCode = urlParams.get('rack');
         this.levelCode = urlParams.get('level');
@@ -4327,57 +4325,57 @@ class VueStock {
     }
 
 
-    // AJOUTER CETTE MÉTHODE APRÈS init()
+    // AÑADIR ESTE MÉTODO DESPUÉS de init()
     initQuadView() {
-    // Vérifier si QuadViewManager est déjà initialisé
+    // Verificar si QuadViewManager ya está inicializado
     if (this.quadViewManager) {
-        console.log('QuadViewManager déjà initialisé');
+        console.log('QuadViewManager ya inicializado');
         return;
     }
 
-    // Initialiser le QuadViewManager seulement si on est en vue plan
+    // Inicializar QuadViewManager solo si estamos en vista plan
     if (this.currentView === 'plan') {
         setTimeout(() => {
-            console.log('Initialisation de QuadViewManager...');
+            console.log('Inicializando QuadViewManager...');
             this.quadViewManager = new QuadViewManager();
 
-            // Récupérer les paramètres de l'URL
+            // Recuperar los parámetros de la URL
             const params = new URLSearchParams(window.location.search);
             const rackCode = params.get('rack');
             const levelCode = params.get('level');
             const slotCode = params.get('slot');
 
-            // Si des paramètres sont présents dans l'URL, les utiliser
+            // Si hay parámetros presentes en la URL, usarlos
             if (rackCode || levelCode || slotCode) {
-                // Trouver le rack correspondant dans this.racks
+                // Encontrar la estantería correspondiente en this.racks
                 const selectedRack = this.racks.find(rack => rack.code === rackCode);
 
                 if (selectedRack) {
-                    // Mettre à jour la vue avec le rack sélectionné
+                    // Actualizar la vista con la estantería seleccionada
                     this.quadViewManager.updateAllViews([selectedRack]);
 
-                    // Si un level est spécifié
+                    // Si se especifica un nivel
                     if (levelCode) {
                         const selectedLevel = selectedRack.levels.find(level => level.code === levelCode);
                         if (selectedLevel) {
-                            // Mettre à jour la vue avec le level sélectionné
+                            // Actualizar la vista con el nivel seleccionado
                             this.quadViewManager.updateLevelView(selectedLevel);
                         }
                     }
 
-                    // Si un slot est spécifié
+                    // Si se especifica un hueco
                     if (slotCode) {
                         const selectedSlot = selectedRack.slots.find(slot => slot.code === slotCode);
                         if (selectedSlot) {
-                            // Mettre à jour la vue avec le slot sélectionné
+                            // Actualizar la vista con el hueco seleccionado
                             this.quadViewManager.updateSlotView(selectedSlot);
                         }
                     }
                 }
             } else {
-                // Si aucun paramètre n'est présent dans l'URL, passer tous les racks
+                // Si no hay parámetros en la URL, pasar todas las estanterías
                 if (this.racks && this.racks.length > 0) {
-                    debugLog('quadView', 'Passage de', this.racks.length, 'racks');
+                    debugLog('quadView', 'Pasando', this.racks.length, 'estanterías');
                     this.quadViewManager.updateAllViews(this.racks);
                 }
             }
@@ -4386,23 +4384,23 @@ class VueStock {
 }
 
 
-    // ===== GESTION DES VUES =====
+    // ===== GESTIÓN DE VISTAS =====
     showView(viewName) {
-        // Mettre à jour la vue courante
+        // Actualizar la vista actual
         this.currentView = viewName;
 
-        // Masquer toutes les vues
+        // Ocultar todas las vistas
         document.querySelectorAll('.view').forEach(view => {
             view.classList.remove('active');
         });
 
-        // Afficher la vue demandée
+        // Mostrar la vista solicitada
         const viewElement = document.getElementById(`view${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`);
         if (viewElement) {
             viewElement.classList.add('active');
         }
 
-        // Mettre à jour le breadcrumb
+        // Actualizar el breadcrumb
         this.updateBreadcrumb();
 
         if (viewName === 'plan' && !this.canvasManager) {
@@ -4411,7 +4409,7 @@ class VueStock {
             }, 100);
         }
 
-        // AJOUT : Initialiser la vue quad si on est en vue plan
+        // AÑADIDO: Inicializar la vista quad si estamos en vista plan
         if (viewName === 'plan') {
             setTimeout(() => {
                 this.initQuadView();
@@ -4420,38 +4418,38 @@ class VueStock {
     }
 
     initCanvas() {
-        // Initialiser le canvas manager
+        // Inicializar el canvas manager
         window.canvasManager = new CanvasManager('canvasPlan', 'planOverlay');
         this.canvasManager = window.canvasManager;
 
-        // Redessiner la grille
+        // Redibujar la cuadrícula
         setTimeout(() => {
             this.canvasManager.drawGrid();
 
-            // Ajouter les racks déjà chargés
+            // Añadir las estanterías ya cargadas
             this.racks.forEach(rack => {
                 this.canvasManager.addRackToCanvas(rack);
             });
         }, 50);
     }
 
-    // ===== GESTION DES VUES =====
+    // ===== GESTIÓN DE VISTAS =====
     showView(viewName) {
-        // Mettre à jour la vue courante
+        // Actualizar la vista actual
         this.currentView = viewName;
 
-        // Masquer toutes les vues
+        // Ocultar todas las vistas
         document.querySelectorAll('.view').forEach(view => {
             view.classList.remove('active');
         });
 
-        // Afficher la vue demandée
+        // Mostrar la vista solicitada
         const viewElement = document.getElementById(`view${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`);
         if (viewElement) {
             viewElement.classList.add('active');
         }
 
-        // Mettre à jour le breadcrumb
+        // Actualizar el breadcrumb
         this.updateBreadcrumb();
 
         if (viewName === 'plan' && !this.canvasManager) {
@@ -4460,7 +4458,7 @@ class VueStock {
             }, 100);
         }
 
-        // AJOUT : Initialiser la vue quad si on est en vue plan
+        // AÑADIDO: Inicializar la vista quad si estamos en vista plan
         if (viewName === 'plan') {
             setTimeout(() => {
                 this.initQuadView();
@@ -4472,34 +4470,34 @@ class VueStock {
         const breadcrumb = document.getElementById('breadcrumb');
         breadcrumb.innerHTML = '';
 
-        // Toujours le plan en premier
-        const planItem = this.createBreadcrumbItem('Plan du stock', 'plan');
+        // Siempre el plan primero
+        const planItem = this.createBreadcrumbItem('Plan del stock', 'plan');
         breadcrumb.appendChild(planItem);
 
-        // Si on est sur une étagère
+        // Si estamos en una estantería
         if (this.currentView === 'rack' && this.selectedRack) {
             breadcrumb.appendChild(this.createBreadcrumbSeparator());
             const rackItem = this.createBreadcrumbItem(
-                `Étagère ${this.selectedRack.code}`,
+                `Estantería ${this.selectedRack.code}`,
                 'rack',
-                false // pas cliquable car on y est déjà
+                false // no clicable porque ya estamos ahí
             );
             breadcrumb.appendChild(rackItem);
         }
 
-        // Si on est sur un étage
+        // Si estamos en un nivel
         if (this.currentView === 'level' && this.selectedRack && this.selectedLevel) {
             breadcrumb.appendChild(this.createBreadcrumbSeparator());
             const rackItem = this.createBreadcrumbItem(
-                `Étagère ${this.selectedRack.code}`,
+                `Estantería ${this.selectedRack.code}`,
                 'rack',
-                true // cliquable pour revenir
+                true // clicable para volver
             );
             breadcrumb.appendChild(rackItem);
 
             breadcrumb.appendChild(this.createBreadcrumbSeparator());
             const levelItem = this.createBreadcrumbItem(
-                `Étage ${this.selectedLevel.code}`,
+                `Nivel ${this.selectedLevel.code}`,
                 'level',
                 false
             );
@@ -4534,37 +4532,37 @@ class VueStock {
         return span;
     }
 
-    // ===== NAVIGATION ENTRE VUES =====
+    // ===== NAVEGACIÓN ENTRE VISTAS =====
     goToRackView(rack) {
         this.selectedRack = rack;
         this.selectedLevel = null;
 
-        // Mettre à jour le titre
+        // Actualizar el título
         document.getElementById('rackTitle').textContent = rack.code;
         document.getElementById('rackCodeInput').value = rack.code;
 
-        // Charger les étages de cette étagère
+        // Cargar los niveles de esta estantería
         this.loadLevelsForRack(rack.id);
 
-        // Afficher la vue
+        // Mostrar la vista
         this.showView('rack');
     }
 
     goToLevelView(level) {
         this.selectedLevel = level;
 
-        // Mettre à jour les titres
+        // Actualizar los títulos
         document.getElementById('levelTitle').textContent = level.code;
         document.getElementById('levelRackTitle').textContent = this.selectedRack.code;
         document.getElementById('levelCodeInput').value = level.code;
 
-        // Charger les emplacements de cet étage
+        // Cargar los huecos de este nivel
         this.loadSlotsForLevel(level.id);
 
-        // Afficher la vue
+        // Mostrar la vista
         this.showView('level');
 
-        // Mettre à jour l'URL avec le niveau sélectionné
+        // Actualizar la URL con el nivel seleccionado
         const url = new URL(window.location);
         url.searchParams.set('level', level.code);
         window.history.pushState({}, '', url);
@@ -4582,32 +4580,32 @@ class VueStock {
     }
 
 
-    // ===== GESTION DES ÉTAGÈRES =====
+    // ===== GESTIÓN DE LAS ESTANTERÍAS =====
     async addRack(rackData) {
-        // PROTECTION CONTRE LES DOUBLES CLICS
+        // PROTECCIÓN CONTRA DOBLES CLICS
         if (this._addingRackInProgress) {
-            console.log('⏳ Ajout d\'étagère déjà en cours, veuillez patienter...');
-            this.showNotification('Ajout en cours, veuillez patienter...', 'warning');
+            console.log('⏳ Añadiendo estantería ya en curso, por favor espere...');
+            this.showNotification('Añadiendo en curso, por favor espere...', 'warning');
             return null;
         }
 
-        console.log('🟢 [VueStock.addRack] Called with:', rackData);
+        console.log('🟢 [VueStock.addRack] Llamado con:', rackData);
 
-        // Bloquer les nouveaux clics
+        // Bloquear nuevos clics
         this._addingRackInProgress = true;
 
-        // Désactiver le bouton visuellement
+        // Desactivar el botón visualmente
         const addButton = document.getElementById('btnAddRack');
         if (addButton) {
             const originalText = addButton.innerHTML;
-            addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+            addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
             addButton.disabled = true;
         }
 
         try {
             const payload = {
                 code: rackData.code,
-                name: rackData.name || `Étagère ${rackData.code}`,
+                name: rackData.name || `Estantería ${rackData.code}`,
                 position_x: rackData.x || rackData.position_x,
                 position_y: rackData.y || rackData.position_y,
                 rotation: rackData.rotation || 0,
@@ -4616,7 +4614,7 @@ class VueStock {
                 color: rackData.color
             };
 
-            console.log('🟢 Payload pour API:', payload);
+            console.log('🟢 Payload para API:', payload);
 
             const result = await this.api.saveRack(payload);
 
@@ -4634,80 +4632,80 @@ class VueStock {
                     levels: []
                 };
 
-                // CORRECTION : Vérifier si l'étagère existe déjà
+                // CORRECCIÓN: Verificar si la estantería ya existe
                 const existingIndex = this.racks.findIndex(r => r.id === newRack.id);
                 if (existingIndex === -1) {
-                    // Nouvelle étagère
+                    // Nueva estantería
                     this.racks.push(newRack);
                 } else {
-                    // Mise à jour
+                    // Actualización
                     this.racks[existingIndex] = newRack;
                 }
 
-                // Dessiner sur le canvas UNE SEULE FOIS
+                // Dibujar en el canvas UNA SOLA VEZ
                 if (this.currentView === 'plan' && this.canvasManager) {
-                    // Supprimer l'ancien élément si existe
+                    // Eliminar el elemento antiguo si existe
                     const oldElement = document.querySelector(`[data-rack-id="${newRack.id}"]`);
                     if (oldElement) {
                         oldElement.remove();
                     }
 
-                    // Ajouter le nouvel élément UNE FOIS
+                    // Añadir el nuevo elemento UNA VEZ
                     this.canvasManager.addRackToCanvas(newRack);
                 }
 
-                // AJOUT IMPORTANT : Mettre à jour QuadView si actif
+                // AÑADIDO IMPORTANTE: Actualizar QuadView si está activo
                 if (this.quadViewManager && this.currentView === 'plan') {
-                    console.log('Mise à jour QuadView après ajout de rack');
+                    console.log('Actualizando QuadView después de añadir estantería');
                     this.quadViewManager.updateAllViews(this.racks);
                 }
 
                 this.updateStats();
-                this.showNotification(`Étagère ${newRack.code} créée`);
+                this.showNotification(`Estantería ${newRack.code} creada`);
 
                 return newRack;
             }
 
         } catch (error) {
-            console.error('❌ Erreur lors de la sauvegarde:', error);
+            console.error('❌ Error al guardar:', error);
 
-            // Message d'erreur plus informatif
-            let errorMessage = 'Erreur lors de la création';
+            // Mensaje de error más informativo
+            let errorMessage = 'Error al crear';
             if (error.message.includes('500')) {
-                errorMessage = 'Erreur serveur (500). L\'étagère a peut-être été créée malgré tout.';
+                errorMessage = 'Error servidor (500). La estantería puede haberse creado de todos modos.';
             } else if (error.message.includes('409') || error.message.includes('duplicate')) {
-                errorMessage = 'Une étagère avec ce code existe déjà.';
+                errorMessage = 'Ya existe una estantería con este código.';
             }
 
             this.showNotification(errorMessage, 'error');
 
         } finally {
-            // TOUJOURS débloquer à la fin
+            // SIEMPRE desbloquear al final
             this._addingRackInProgress = false;
 
-            // Réactiver le bouton
+            // Reactivar el botón
             if (addButton) {
-                addButton.innerHTML = '<i class="fas fa-plus"></i> Ajouter étagère';
+                addButton.innerHTML = '<i class="fas fa-plus"></i> Añadir estantería';
                 addButton.disabled = false;
             }
         }
     }
 
     drawRackOnCanvas(rack) {
-        // Au lieu de créer manuellement l'élément, utiliser CanvasManager
+        // En lugar de crear manualmente el elemento, usar CanvasManager
         if (this.canvasManager) {
             this.canvasManager.addRackToCanvas(rack);
         } else {
-            // Fallback si canvasManager pas encore initialisé
-            console.log('CanvasManager non initialisé, étagère mise en attente:', rack);
+            // Fallback si canvasManager aún no inicializado
+            console.log('CanvasManager no inicializado, estantería puesta en espera:', rack);
         }
     }
 
-    // ===== GESTION DES ÉTAGES (incréments de 10) =====
+    // ===== GESTIÓN DE LOS NIVELES (incrementos de 10) =====
     async addLevelToRack(rackId, levelCode = null) {
-        // Vérifier si une opération est déjà en cours
+        // Verificar si una operación ya está en curso
         if (this._addingLevel) {
-            console.log('⚠️ Opération d\'ajout d\'étage déjà en cours');
+            console.log('⚠️ Operación de añadir nivel ya en curso');
             return;
         }
 
@@ -4717,22 +4715,22 @@ class VueStock {
             const rack = this.racks.find(r => r.id === rackId);
             if (!rack) return;
 
-            // Si pas de code spécifié, trouver le prochain multiple de 10
+            // Si no se especifica código, encontrar el próximo múltiplo de 10
             if (!levelCode) {
                 const existingCodes = rack.levels.map(l => parseInt(l.code)).filter(n => !isNaN(n));
                 const maxCode = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
                 levelCode = (Math.floor(maxCode / 10) * 10) + 10;
             }
 
-            // Vérifier si ce niveau existe déjà (avant l'appel API)
+            // Verificar si este nivel ya existe (antes de la llamada API)
             const levelExists = rack.levels.some(l => l.code === levelCode.toString());
             if (levelExists) {
-                this.showNotification(`L'étage ${levelCode} existe déjà`, 'warning');
+                this.showNotification(`El nivel ${levelCode} ya existe`, 'warning');
                 return;
             }
 
-            // Appeler l'API UNE SEULE FOIS
-            console.log('📤 Appel API save-level avec:', { rack_id: rackId, level_code: levelCode });
+            // Llamar a la API UNA SOLA VEZ
+            console.log('📤 Llamada API save-level con:', { rack_id: rackId, level_code: levelCode });
 
             const result = await this.api.saveLevel({
                 rack_id: rackId,
@@ -4751,24 +4749,24 @@ class VueStock {
 
                 rack.levels.push(newLevel);
 
-                // Afficher dans la vue étagère
+                // Mostrar en la vista estantería
                 this.displayLevelInRackView(newLevel);
 
                 this.updateStats();
-                this.showNotification(`Étage ${levelCode} ajouté à l'étagère ${rack.code}`);
+                this.showNotification(`Nivel ${levelCode} añadido a la estantería ${rack.code}`);
 
                 return newLevel;
             }
         } catch (error) {
-            console.error('Erreur lors de l\'ajout de l\'étage:', error);
-            this.showNotification('Erreur: ' + error.message, 'error');
+            console.error('Error al añadir el nivel:', error);
+            this.showNotification('Error: ' + error.message, 'error');
 
-            // Afficher l'erreur spécifique dupliquée
+            // Mostrar el error específico duplicado
             if (error.message.includes('duplicate') || error.message.includes('409')) {
-                this.showNotification(`L'étage ${levelCode} existe déjà dans cette étagère`, 'error');
+                this.showNotification(`El nivel ${levelCode} ya existe en esta estantería`, 'error');
             }
         } finally {
-            // Toujours débloquer à la fin
+            // Siempre desbloquear al final
             this._addingLevel = false;
         }
     }
@@ -4776,13 +4774,13 @@ class VueStock {
     displayLevelInRackView(level) {
         const rackContainer = document.getElementById('rackContainer');
 
-        // Retirer l'état vide s'il existe
+        // Quitar el estado vacío si existe
         const emptyState = rackContainer.querySelector('.empty-state');
         if (emptyState) {
             emptyState.remove();
         }
 
-        // Créer l'élément d'étage
+        // Crear el elemento de nivel
         const levelElement = document.createElement('div');
         levelElement.className = 'rack-level';
         levelElement.dataset.levelId = level.id;
@@ -4791,23 +4789,23 @@ class VueStock {
             <div class="rack-level-header">
                 <div class="level-number">${level.code}</div>
                 <div class="level-info">
-                    <h4>Étage ${level.code}</h4>
+                    <h4>Nivel ${level.code}</h4>
                     <div class="level-slots">
-                        ${level.slots.length} emplacement(s)
+                        ${level.slots.length} hueco(s)
                     </div>
                 </div>
             </div>
             <div class="level-actions">
-                <button class="btn btn-sm" title="Configurer">
+                <button class="btn btn-sm" title="Configurar">
                     <i class="fas fa-cog"></i>
                 </button>
-                <button class="btn btn-sm btn-primary" title="Voir les emplacements">
+                <button class="btn btn-sm btn-primary" title="Ver los huecos">
                     <i class="fas fa-eye"></i>
                 </button>
             </div>
         `;
 
-        // Ajouter l'événement pour aller à la vue étage
+        // Añadir el evento para ir a la vista nivel
         const viewBtn = levelElement.querySelector('.btn-primary');
         viewBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -4818,9 +4816,9 @@ class VueStock {
     }
 
     async addSlotToLevel(levelId, slotCode = null, count = 1) {
-        // Protection contre les clics multiples
+        // Protección contra clics múltiples
         if (this._addingSlot) {
-            console.log('⚠️ Opération d\'ajout d\'emplacement déjà en cours');
+            console.log('⚠️ Operación de añadir hueco ya en curso');
             return;
         }
 
@@ -4834,7 +4832,7 @@ class VueStock {
             const slots = [];
 
             for (let i = 0; i < count; i++) {
-                // Si pas de code spécifié, trouver le prochain multiple de 10
+                // Si no se especifica código, encontrar el próximo múltiplo de 10
                 let currentSlotCode;
                 if (!slotCode) {
                     const existingCodes = level.slots.map(s => parseInt(s.code)).filter(n => !isNaN(n));
@@ -4844,16 +4842,16 @@ class VueStock {
                     currentSlotCode = parseInt(slotCode) + (i * 10);
                 }
 
-                // Vérifier si cet emplacement existe déjà
+                // Verificar si este hueco ya existe
                 const slotExists = level.slots.some(s => s.code === currentSlotCode.toString());
                 if (slotExists) {
-                    console.log(`⚠️ Emplacement ${currentSlotCode} existe déjà`);
-                    continue; // Passer au suivant
+                    console.log(`⚠️ Hueco ${currentSlotCode} ya existe`);
+                    continue; // Pasar al siguiente
                 }
 
                 try {
-                    // Appeler l'API pour sauvegarder l'emplacement
-                    console.log(`📤 Appel save-slot pour: ${currentSlotCode}`);
+                    // Llamar a la API para guardar el hueco
+                    console.log(`📤 Llamada save-slot para: ${currentSlotCode}`);
 
                     const result = await this.api.saveSlot({
                         level_id: levelId,
@@ -4877,19 +4875,19 @@ class VueStock {
                         slots.push(newSlot);
                     }
                 } catch (error) {
-                    console.error(`Erreur pour l'emplacement ${currentSlotCode}:`, error);
-                    // Continuer avec les autres emplacements
+                    console.error(`Error para el hueco ${currentSlotCode}:`, error);
+                    // Continuar con los otros huecos
                     if (error.message.includes('duplicate') || error.message.includes('409')) {
-                        console.log(`L'emplacement ${currentSlotCode} existe déjà`);
+                        console.log(`El hueco ${currentSlotCode} ya existe`);
                     }
                 }
             }
 
-            // Afficher dans la vue étage
+            // Mostrar en la vista nivel
             if (slots.length > 0) {
                 this.displaySlotsInLevelView(slots);
                 this.updateStats();
-                this.showNotification(`${slots.length} emplacement(s) ajouté(s) à l'étage ${level.code}`);
+                this.showNotification(`${slots.length} hueco(s) añadido(s) al nivel ${level.code}`);
             }
 
             return slots;
@@ -4901,19 +4899,19 @@ class VueStock {
     displaySlotsInLevelView(slots) {
         const levelContainer = document.getElementById('levelContainer');
 
-        // Retirer l'état vide s'il existe
+        // Quitar el estado vacío si existe
         const emptyState = levelContainer.querySelector('.empty-state');
         if (emptyState) {
             emptyState.remove();
         }
 
-        // Ajouter chaque emplacement
+        // Añadir cada hueco
         slots.forEach(slot => {
             const slotElement = document.createElement('div');
             slotElement.className = 'slot-item';
             slotElement.dataset.slotId = slot.id;
 
-            // Déterminer la classe en fonction du statut
+            // Determinar la clase según el estado
             if (slot.articles && slot.articles.length > 0) {
                 const totalQty = slot.articles.reduce((sum, art) => sum + art.quantity, 0);
                 slotElement.classList.add(totalQty >= 10 ? 'full' : 'occupied');
@@ -4922,15 +4920,15 @@ class VueStock {
             slotElement.innerHTML = `
                 <div class="slot-code">${slot.code}</div>
                 <div class="slot-status">
-                    ${slot.articles && slot.articles.length > 0 ? 'Occupé' : 'Libre'}
+                    ${slot.articles && slot.articles.length > 0 ? 'Ocupado' : 'Libre'}
                 </div>
             `;
 
-            // Au clic, afficher les articles dans la sidebar
+            // Al clic, mostrar los artículos en la barra lateral
             slotElement.addEventListener('click', () => {
                 this.displaySlotContents(slot);
 
-                // Animation de sélection
+                // Animación de selección
                 document.querySelectorAll('.slot-item').forEach(s => {
                     s.classList.remove('selected');
                 });
@@ -4941,7 +4939,7 @@ class VueStock {
         });
     }
 
-    // ===== AFFICHAGE DU CONTENU D'UN EMPLACEMENT =====
+    // ===== VISUALIZACIÓN DEL CONTENIDO DE UN HUECO =====
     displaySlotContents(slot) {
         const contentsDiv = document.getElementById('slotContents');
 
@@ -4949,32 +4947,32 @@ class VueStock {
             contentsDiv.innerHTML = `
                 <div class="empty-slot">
                     <i class="fas fa-box-open fa-2x"></i>
-                    <p>Emplacement vide</p>
+                    <p>Hueco vacío</p>
                     <button class="btn btn-sm btn-success">
-                        <i class="fas fa-plus"></i> Ajouter un article
+                        <i class="fas fa-plus"></i> Añadir un artículo
                     </button>
                 </div>
             `;
             return;
         }
 
-        let html = `<h4>Emplacement ${slot.full_code}</h4>`;
+        let html = `<h4>Hueco ${slot.full_code}</h4>`;
 
         slot.articles.forEach(article => {
             html += `
                 <div class="article-item">
                     <div class="article-header">
                         <span class="article-name">${article.name}</span>
-                        <span class="article-qty">${article.quantity} unités</span>
+                        <span class="article-qty">${article.quantity} unidades</span>
                     </div>
                     <div class="article-actions">
-                        <button class="btn btn-xs" title="Augmenter">
+                        <button class="btn btn-xs" title="Aumentar">
                             <i class="fas fa-plus"></i>
                         </button>
-                        <button class="btn btn-xs" title="Diminuer">
+                        <button class="btn btn-xs" title="Disminuir">
                             <i class="fas fa-minus"></i>
                         </button>
-                        <button class="btn btn-xs btn-danger" title="Supprimer">
+                        <button class="btn btn-xs btn-danger" title="Eliminar">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -4985,31 +4983,31 @@ class VueStock {
         contentsDiv.innerHTML = html;
     }
 
-    // ===== STATISTIQUES =====
+    // ===== ESTADÍSTICAS =====
     updateStats() {
-        // Compter les étagères
+        // Contar las estanterías
         const rackCount = this.racks.length;
 
-        // Compter les étages totaux
+        // Contar los niveles totales
         const levelCount = this.racks.reduce((sum, rack) => sum + rack.levels.length, 0);
 
-        // Compter les emplacements totaux
+        // Contar los huecos totales
         const slotCount = this.racks.reduce((sum, rack) =>
             sum + rack.levels.reduce((levelSum, level) => levelSum + level.slots.length, 0), 0);
 
-        // CORRECTION : Compter les emplacements OCCUPÉS
+        // CORRECCIÓN: Contar los huecos OCUPADOS
         const occupiedSlotCount = this.racks.reduce((sum, rack) =>
             sum + rack.levels.reduce((levelSum, level) =>
                 levelSum + level.slots.reduce((slotSum, slot) =>
                     slotSum + (slot.articles && slot.articles.length > 0 ? 1 : 0), 0), 0), 0);
 
-        // Calculer le pourcentage d'occupation
+        // Calcular el porcentaje de ocupación
         let occupationPercentage = '0%';
         if (slotCount > 0) {
             const percentage = Math.round((occupiedSlotCount / slotCount) * 100);
             occupationPercentage = `${percentage}%`;
 
-            // Mettre à jour le style selon le taux
+            // Actualizar el estilo según la tasa
             const occupationElement = document.getElementById('statOccupation');
             occupationElement.classList.remove('occupation-low', 'occupation-medium', 'occupation-high');
 
@@ -5022,25 +5020,25 @@ class VueStock {
             }
         }
 
-        // Mettre à jour l'interface
+        // Actualizar la interfaz
         document.getElementById('statRacks').textContent = rackCount;
         document.getElementById('statLevels').textContent = levelCount;
         document.getElementById('statSlots').textContent = slotCount;
         document.getElementById('statOccupation').textContent = occupationPercentage;
 
-        // Ajouter un tooltip avec le détail
+        // Añadir un tooltip con el detalle
         const occupationElement = document.getElementById('statOccupation');
         if (occupationElement) {
-            occupationElement.title = `${occupiedSlotCount} emplacements occupés sur ${slotCount}`;
+            occupationElement.title = `${occupiedSlotCount} huecos ocupados de ${slotCount}`;
         }
     }
 
-    // ===== NOTIFICATIONS =====
+    // ===== NOTIFICACIONES =====
     showNotification(message, type = 'success') {
         const notification = document.getElementById('notification');
         const text = document.getElementById('notificationText');
 
-        // Changer la couleur selon le type
+        // Cambiar el color según el tipo
         if (type === 'error') {
             notification.style.background = 'var(--danger-color)';
         } else if (type === 'warning') {
@@ -5052,30 +5050,30 @@ class VueStock {
         text.textContent = message;
         notification.classList.add('show');
 
-        // Masquer après 3 secondes
+        // Ocultar después de 3 segundos
         setTimeout(() => {
             notification.classList.remove('show');
         }, 3000);
     }
 
-    // ===== CHARGEMENT DES DONNÉES =====
+    // ===== CARGA DE DATOS =====
     async loadData() {
         this.showLoader(true);
 
         try {
-            // Attendre 2 secondes pour laisser Netlify répondre
+            // Esperar 2 segundos para dejar que Netlify responda
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Essayer l'API
+            // Intentar la API
             const result = await this.api.getFullConfig();
 
             if (result.success && result.data) {
-                // Charger les étagères avec leurs niveaux et emplacements
+                // Cargar las estanterías con sus niveles y huecos
                 this.racks = result.data.racks || result.data;
 
-                // Si l'API retourne directement les étagères avec leurs niveaux
+                // Si la API retorna directamente las estanterías con sus niveles
                 if (result.data.levels) {
-                    // Associer les niveaux aux étagères
+                    // Asociar los niveles a las estanterías
                     this.racks.forEach(rack => {
                         rack.levels = result.data.levels
                             .filter(level => level.rack_id === rack.id)
@@ -5093,16 +5091,16 @@ class VueStock {
                 }
 
                 this.displayRacksFromAPI();
-                this.showNotification('Données chargées depuis Netlify Function');
+                this.showNotification('Datos cargados desde Netlify Function');
 
-                // ✅ NOUVEAU : Chercher l'article depuis l'URL
+                // ✅ NUEVO: Buscar el artículo desde la URL
                 this.searchArticleFromURL();
 
             }
 
         } catch (error) {
-            console.log('API non disponible (déploiement en cours)');
-            // Ne pas afficher d'erreur, juste continuer
+            console.log('API no disponible (despliegue en curso)');
+            // No mostrar error, solo continuar
             this.updateStats();
         } finally {
             this.showLoader(false);
@@ -5110,29 +5108,29 @@ class VueStock {
     }
 
     autoSelectTarget() {
-        // Gestion des paramètres URL
+        // Gestión de parámetros URL
         if (this.rackCode) {
             const targetRack = this.racks.find(r => r.code === this.rackCode);
             if (targetRack) {
                 this.goToRackView(targetRack);
-                console.log('✅ Rack sélectionné depuis URL:', targetRack.code);
+                console.log('✅ Estantería seleccionada desde URL:', targetRack.code);
 
-                // Gestion du niveau depuis URL
+                // Gestión del nivel desde URL
                 if (this.levelCode) {
                     setTimeout(() => {
                         const targetLevel = targetRack.levels?.find(l => l.code === this.levelCode);
                         if (targetLevel) {
                             this.goToLevelView(targetLevel);
-                            console.log('✅ Niveau sélectionné depuis URL:', targetLevel.code);
+                            console.log('✅ Nivel seleccionado desde URL:', targetLevel.code);
 
-                            // Gestion du slot depuis URL
+                            // Gestión del hueco desde URL
                             if (this.slotCode) {
                                 setTimeout(() => {
                                     const slotElement = document.querySelector(`.slot-item[data-slot-code="${this.slotCode}"]`);
                                     if (slotElement) {
                                         slotElement.classList.add('pulse');
                                         slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                        console.log('✅ Emplacement mis en évidence depuis URL:', this.slotCode);
+                                        console.log('✅ Hueco resaltado desde URL:', this.slotCode);
                                     }
                                 }, 500);
                             }
@@ -5142,34 +5140,34 @@ class VueStock {
             }
         }
 
-        // Gestion de la cible traditionnelle (si elle existe)
+        // Gestión del objetivo tradicional (si existe)
         if (window.vuestockTarget) {
             const { rack, level, slot } = window.vuestockTarget;
-            console.log('🎯 Cible traditionnelle détectée:', { rack, level, slot });
+            console.log('🎯 Objetivo tradicional detectado:', { rack, level, slot });
 
-            // 1. Sélectionner le rack
+            // 1. Seleccionar la estantería
             if (rack) {
                 const targetRack = this.racks.find(r => r.code === rack);
                 if (targetRack) {
                     this.goToRackView(targetRack);
-                    console.log('✅ Rack sélectionné (traditionnel):', targetRack.code);
+                    console.log('✅ Estantería seleccionada (tradicional):', targetRack.code);
 
-                    // 2. Sélectionner le niveau (après un délai pour laisser le temps au rendu)
+                    // 2. Seleccionar el nivel (después de un retraso para dejar tiempo al renderizado)
                     if (level) {
                         setTimeout(() => {
                             const targetLevel = targetRack.levels?.find(l => l.code === level);
                             if (targetLevel) {
                                 this.goToLevelView(targetLevel);
-                                console.log('✅ Niveau sélectionné (traditionnel):', targetLevel.code);
+                                console.log('✅ Nivel seleccionado (tradicional):', targetLevel.code);
 
-                                // 3. Mettre en évidence l'emplacement (après un délai)
+                                // 3. Resaltar el hueco (después de un retraso)
                                 if (slot) {
                                     setTimeout(() => {
                                         const slotElement = document.querySelector(`.slot-item[data-slot-code="${slot}"]`);
                                         if (slotElement) {
                                             slotElement.classList.add('pulse');
                                             slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                            console.log('✅ Emplacement mis en évidence (traditionnel):', slot);
+                                            console.log('✅ Hueco resaltado (tradicional):', slot);
                                         }
                                     }, 500);
                                 }
@@ -5182,20 +5180,20 @@ class VueStock {
     }
 
     searchArticleFromURL() {
-        // Récupérer les paramètres URL
+        // Recuperar los parámetros URL
         const urlParams = new URLSearchParams(window.location.search);
         const articleId = urlParams.get('articleId');
         const articleName = urlParams.get('articleName');
 
-        // Si pas de paramètres, ne rien faire
+        // Si no hay parámetros, no hacer nada
         if (!articleId && !articleName) {
-            console.log('Pas de paramètres article dans l\'URL');
+            console.log('No hay parámetros artículo en la URL');
             return;
         }
 
-        console.log('🔍 Recherche article depuis URL:', { articleId, articleName });
+        console.log('🔍 Buscando artículo desde URL:', { articleId, articleName });
 
-        // Chercher l'article dans tous les racks/levels/slots
+        // Buscar el artículo en todas las estanterías/niveles/huecos
         let foundRack = null;
         let foundLevel = null;
         let foundSlot = null;
@@ -5218,7 +5216,7 @@ class VueStock {
                         foundRack = rack;
                         foundLevel = level;
                         foundSlot = slot;
-                        console.log('✅ Article trouvé:', {
+                        console.log('✅ Artículo encontrado:', {
                             rack: rack.code,
                             level: level.code,
                             slot: slot.code,
@@ -5232,30 +5230,30 @@ class VueStock {
             if (foundSlot) break;
         }
 
-        // Si trouvé, utiliser QuadView pour sélectionner
+        // Si se encuentra, usar QuadView para seleccionar
         if (foundRack && foundLevel && foundSlot && this.quadViewManager) {
             setTimeout(() => {
-                // ✅ Sélectionner le rack dans QuadView
+                // ✅ Seleccionar la estantería en QuadView
                 this.quadViewManager.selectedRack = foundRack;
-                console.log('➡️ Rack sélectionné dans QuadView:', foundRack.code);
+                console.log('➡️ Estantería seleccionada en QuadView:', foundRack.code);
 
                 setTimeout(() => {
-                    // ✅ Sélectionner le level dans QuadView
+                    // ✅ Seleccionar el nivel en QuadView
                     this.quadViewManager.selectedLevel = foundLevel;
-                    console.log('➡️ Level sélectionné dans QuadView:', foundLevel.code);
+                    console.log('➡️ Nivel seleccionado en QuadView:', foundLevel.code);
 
                     setTimeout(() => {
-                        // ✅ Sélectionner le slot dans QuadView
+                        // ✅ Seleccionar el hueco en QuadView
                         this.quadViewManager.selectedSlot = foundSlot;
-                        console.log('➡️ Slot sélectionné dans QuadView:', foundSlot.code);
+                        console.log('➡️ Hueco seleccionado en QuadView:', foundSlot.code);
 
-                        // ✅ Redessiner la vue Front pour montrer le level sélectionné
+                        // ✅ Redibujar la vista Front para mostrar el nivel seleccionado
                         this.quadViewManager.drawFrontView(foundRack);
 
-                        // ✅ Recréer le tiroir pour montrer le slot sélectionné
+                        // ✅ Recrear el cajón para mostrar el hueco seleccionado
                         this.quadViewManager.updateLevelView(foundLevel);
 
-                        // ✅ Retirer l'animation après 3 secondes (garde le cadre jaune)
+                        // ✅ Quitar la animación después de 3 segundos (mantiene el marco amarillo)
                         if (this.quadViewManager.slotAnimationTimeout) {
                             clearTimeout(this.quadViewManager.slotAnimationTimeout);
                         }
@@ -5263,7 +5261,7 @@ class VueStock {
                         this.quadViewManager.isSlotAnimating = true;
 
                         this.quadViewManager.slotAnimationTimeout = setTimeout(() => {
-                            // Retirer la classe "animating" mais garder "selected-slot"
+                            // Quitar la clase "animating" pero mantener "selected-slot"
                             const animatingSlots = document.querySelectorAll('.quad-slot.animating');
                             animatingSlots.forEach(slot => {
                                 slot.classList.remove('animating');
@@ -5271,40 +5269,40 @@ class VueStock {
 
                             this.quadViewManager.isSlotAnimating = false;
 
-                            // ✅ NOUVEAU : Redessiner le front view sans le glow
+                            // ✅ NUEVO: Redibujar el front view sin el resplandor
                             this.quadViewManager.drawFrontView(foundRack);
 
-                            console.log('✅ Animation terminée, cadre jaune conservé');
+                            console.log('✅ Animación terminada, marco amarillo conservado');
                         }, 3200);
 
 
 
-                        // ✅ Redessiner toutes les vues avec les sélections
+                        // ✅ Redibujar todas las vistas con las selecciones
                         this.quadViewManager.updateAllViews(this.racks);
-                        console.log('✅ QuadView mis à jour avec les sélections');
+                        console.log('✅ QuadView actualizado con las selecciones');
 
-                        // ✅ Afficher une notification
-                        this.showNotification(`Article trouvé: ${foundSlot.code} - ${foundRack.code}${foundLevel.code}`, 'success');
+                        // ✅ Mostrar una notificación
+                        this.showNotification(`Artículo encontrado: ${foundSlot.code} - ${foundRack.code}${foundLevel.code}`, 'success');
                     }, 300);
                 }, 300);
             }, 300);
         } else if (!foundRack) {
-            console.warn('❌ Article non trouvé dans le stock');
-            this.showNotification('Article non trouvé', 'warning');
+            console.warn('❌ Artículo no encontrado en el stock');
+            this.showNotification('Artículo no encontrado', 'warning');
         }
     }
 
 
     displayRacksFromAPI() {
-        // Nettoyer le canvas
+        // Limpiar el canvas
         const overlay = document.getElementById('planOverlay');
         if (overlay) overlay.innerHTML = '';
 
-        // Tableau temporaire pour éviter doublons
+        // Array temporal para evitar duplicados
         const racksMap = {};
 
         this.racks.forEach(rack => {
-            // Normaliser les données API
+            // Normalizar los datos API
             const rackData = {
                 id: rack.id,
                 code: rack.rack_code || rack.code,
@@ -5318,26 +5316,26 @@ class VueStock {
                 levels: rack.levels || []
             };
 
-            // Éviter les doublons via id
+            // Evitar duplicados via id
             if (!racksMap[rackData.id]) {
                 racksMap[rackData.id] = rackData;
 
-                // Ajouter au canvas
+                // Añadir al canvas
                 if (this.canvasManager) {
                     this.canvasManager.addRackToCanvas(rackData);
                 }
             }
         });
 
-        // Remplacer le tableau interne par la version unique
+        // Reemplazar el array interno por la versión única
         this.racks = Object.values(racksMap);
 
-        // Mettre à jour les stats
+        // Actualizar las estadísticas
         this.updateStats();
 
-        // AJOUT IMPORTANT : Mettre à jour QuadView si actif
+        // AÑADIDO IMPORTANTE: Actualizar QuadView si está activo
         if (this.quadViewManager && this.currentView === 'plan') {
-            console.log('Mise à jour QuadView depuis displayRacksFromAPI()');
+            console.log('Actualizando QuadView desde displayRacksFromAPI()');
             this.quadViewManager.updateAllViews(this.racks);
         }
     }
@@ -5351,9 +5349,9 @@ class VueStock {
         }
     }
 
-    // ===== GESTION DES ÉVÉNEMENTS =====
+    // ===== GESTIÓN DE EVENTOS =====
     initEvents() {
-        // Navigation entre vues
+        // Navegación entre vistas
         document.getElementById('backToPlan')?.addEventListener('click', () => {
             this.showView('plan');
         });
@@ -5362,12 +5360,12 @@ class VueStock {
             this.showView('rack');
         });
 
-        // Bouton Ajouter étagère - CORRIGÉ
+        // Botón Añadir estantería - CORREGIDO
         document.getElementById('btnAddRack').addEventListener('click', () => {
-            this.openRackModal(); // Appel direct, pas via window
+            this.openRackModal(); // Llamada directa, no via window
         });
 
-        // Bouton Ajouter étage
+        // Botón Añadir nivel
         document.getElementById('btnAddLevel')?.addEventListener('click', () => {
             if (this.selectedRack) {
                 this.addLevelToRack(this.selectedRack.id);
@@ -5380,7 +5378,7 @@ class VueStock {
             }
         });
 
-        // Bouton Ajouter emplacement
+        // Botón Añadir hueco
         document.getElementById('btnAddSlot')?.addEventListener('click', () => {
             if (this.selectedLevel) {
                 this.addSlotToLevel(this.selectedLevel.id);
@@ -5393,27 +5391,27 @@ class VueStock {
             }
         });
 
-        // Génération automatique d'étages
+        // Generación automática de niveles
         document.getElementById('btnAutoLevels')?.addEventListener('click', () => {
             if (this.selectedRack) {
-                // Générer les étages 10, 20, 30, 40, 50
+                // Generar los niveles 10, 20, 30, 40, 50
                 for (let i = 1; i <= 5; i++) {
                     this.addLevelToRack(this.selectedRack.id, (i * 10).toString());
                 }
             }
         });
 
-        // Génération automatique d'emplacements
+        // Generación automática de huecos
         document.getElementById('btnAutoSlots')?.addEventListener('click', () => {
             if (this.selectedLevel) {
-                // Générer les emplacements 10 à 100 par pas de 10
+                // Generar los huecos 10 a 100 por paso de 10
                 for (let i = 1; i <= 10; i++) {
                     this.addSlotToLevel(this.selectedLevel.id, (i * 10).toString());
                 }
             }
         });
 
-        // Recherche d'article
+        // Búsqueda de artículo
         document.getElementById('btnSearch')?.addEventListener('click', () => {
             this.searchArticle();
         });
@@ -5424,12 +5422,12 @@ class VueStock {
             }
         });
 
-        // Sauvegarde
+        // Guardar
         document.getElementById('btnSave')?.addEventListener('click', () => {
             this.saveData();
         });
 
-        // Modal étagère
+        // Modal estantería
         this.initModalEvents();
     }
 
@@ -5437,19 +5435,19 @@ class VueStock {
         const modal = document.getElementById('rackModal');
         const overlay = document.getElementById('modalOverlay');
 
-        // CORRECTION : Définir openRackModal comme méthode de VueStock
+        // CORRECCIÓN: Definir openRackModal como método de VueStock
         this.openRackModal = (rack = null) => {
             if (rack) {
-                // Mode édition
+                // Modo edición
                 document.getElementById('modalRackCode').value = rack.code;
                 document.getElementById('modalRackName').value = rack.name;
                 document.getElementById('modalRackWidth').value = rack.width;
                 document.getElementById('modalRackDepth').value = rack.depth;
                 document.getElementById('modalRackColor').value = rack.color;
             } else {
-                // Mode création
+                // Modo creación
                 document.getElementById('rackForm').reset();
-                // Suggérer un code d'étagère
+                // Sugerir un código de estantería
                 const nextCode = String.fromCharCode(65 + this.racks.length); // A, B, C...
                 document.getElementById('modalRackCode').value = nextCode;
             }
@@ -5457,12 +5455,12 @@ class VueStock {
             overlay.classList.add('active');
         };
 
-        // Exposer aussi sur window pour les boutons dans CanvasManager
+        // Exponer también en window para los botones en CanvasManager
         window.openRackModal = (rack = null) => {
             this.openRackModal(rack);
         };
 
-        // Fermer modal
+        // Cerrar modal
         document.getElementById('closeRackModal')?.addEventListener('click', () => {
             overlay.classList.remove('active');
         });
@@ -5477,13 +5475,13 @@ class VueStock {
             }
         });
 
-        // Sauvegarder
+        // Guardar
         document.getElementById('saveRackModal')?.addEventListener('click', async () => {
-            // Désactiver le bouton pendant le traitement
+            // Desactivar el botón durante el procesamiento
             const saveButton = document.getElementById('saveRackModal');
             if (saveButton) {
                 const originalText = saveButton.innerHTML;
-                saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+                saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
                 saveButton.disabled = true;
             }
 
@@ -5495,20 +5493,20 @@ class VueStock {
                 const color = document.getElementById('modalRackColor').value;
 
                 if (!code) {
-                    this.showNotification('Le code étagère est requis', 'error');
+                    this.showNotification('El código de estantería es requerido', 'error');
                     return;
                 }
 
                 const codeExists = this.racks.some(r => r.code === code);
                 if (codeExists) {
-                    this.showNotification(`Le code ${code} existe déjà`, 'error');
+                    this.showNotification(`El código ${code} ya existe`, 'error');
                     return;
                 }
 
-                // Création de l'étagère
+                // Creación de la estantería
                 const newRack = await this.addRack({
                     code,
-                    name: name || `Étagère ${code}`,
+                    name: name || `Estantería ${code}`,
                     x: 100 + (this.racks.length * 150),
                     y: 100,
                     width: width || 3,
@@ -5516,32 +5514,32 @@ class VueStock {
                     color: color || '#4a90e2'
                 });
 
-                // Fermer le modal seulement si succès
+                // Cerrar el modal solo si éxito
                 if (newRack) {
                     document.getElementById('modalOverlay').classList.remove('active');
 
-                    // Mettre à jour QuadView
+                    // Actualizar QuadView
                     if (this.quadViewManager && this.currentView === 'plan') {
                         this.quadViewManager.updateAllViews(this.racks);
                     }
                 }
 
             } catch (error) {
-                console.error('Erreur dans saveRackModal:', error);
+                console.error('Error en saveRackModal:', error);
 
             } finally {
-                // TOUJOURS réactiver le bouton
+                // SIEMPRE reactivar el botón
                 if (saveButton) {
-                    saveButton.innerHTML = 'Enregistrer';
+                    saveButton.innerHTML = 'Guardar';
                     saveButton.disabled = false;
                 }
             }
         });
     }
 
-    // ===== VUE 3D =====
+    // ===== VISTA 3D =====
     open3DView = async () => {
-        console.log('Ouverture de la vue 3D');
+        console.log('Abriendo la vista 3D');
         const modal3D = document.getElementById('modal3D');
 
         modal3D.classList.add('active');
@@ -5553,7 +5551,7 @@ class VueStock {
         }
     }
 
-    // ===== RECHERCHE D'ARTICLE =====
+    // ===== BÚSQUEDA DE ARTÍCULO =====
     async searchArticle() {
         const searchTerm = document.getElementById('searchArticle').value.trim();
         if (!searchTerm) return;
@@ -5561,90 +5559,90 @@ class VueStock {
         this.showLoader(true);
 
         try {
-            // Rechercher via l'API
+            // Buscar via la API
             const results = await this.api.searchArticles(searchTerm);
 
             if (results.length > 0) {
-                // Prendre le premier résultat pour la démonstration
+                // Tomar el primer resultado para la demostración
                 const article = results[0];
 
                 if (article.full_code) {
-                    // ✅ NOUVEAU : Proposer d'ouvrir la vue 3D
-                    const open3D = confirm(`Article trouvé dans ${article.full_code}\n\nOuvrir la vue 3D pour localiser l'article ?`);
+                    // ✅ NUEVO: Proponer abrir la vista 3D
+                    const open3D = confirm(`Artículo encontrado en ${article.full_code}\n\n¿Abrir la vista 3D para localizar el artículo?`);
 
                     if (open3D) {
-                        // Ouvrir la vue 3D (fonction globale)
+                        // Abrir la vista 3D (función global)
                         await open3DView();
 
-                        // Si vous voulez localiser l'article, ajoutez ceci :
+                        // Si quieres localizar el artículo, añade esto:
                         // if (window.vueStock3D?.locateArticle) {
                         //     window.vueStock3D.locateArticle(article.full_code);
                         // }
                     } else {
-                        // Comportement classique (2D)
+                        // Comportamiento clásico (2D)
                         this.highlightSlotByFullCode(article.full_code);
                     }
 
-                    this.showNotification(`Article trouvé dans ${article.full_code}`);
+                    this.showNotification(`Artículo encontrado en ${article.full_code}`);
                 } else {
-                    this.showNotification('Article trouvé mais non stocké', 'warning');
+                    this.showNotification('Artículo encontrado pero no almacenado', 'warning');
                 }
             } else {
-                this.showNotification('Aucun article trouvé', 'warning');
+                this.showNotification('Ningún artículo encontrado', 'warning');
             }
 
         } catch (error) {
-            console.error('Erreur de recherche:', error);
-            this.showNotification('Erreur de recherche: ' + error.message, 'error');
+            console.error('Error de búsqueda:', error);
+            this.showNotification('Error de búsqueda: ' + error.message, 'error');
         } finally {
             this.showLoader(false);
         }
     }
 
-    // ✅ NOUVELLE MÉTHODE : Ouvrir la 3D et localiser
+    // ✅ NUEVO MÉTODO: Abrir la 3D y localizar
     open3DAndLocate(fullCode) {
-        console.log('🎯 Localisation 3D pour:', fullCode);
+        console.log('🎯 Localización 3D para:', fullCode);
 
-        // Extraire rack, level, slot du code (ex: "A-10-20")
+        // Extraer estantería, nivel, hueco del código (ej: "A-10-20")
         const parts = fullCode.split('-');
         if (parts.length !== 3) {
-            console.error('Format de code invalide:', fullCode);
+            console.error('Formato de código inválido:', fullCode);
             return;
         }
 
         const [rackCode, levelCode, slotCode] = parts;
 
-        // Trouver l'étagère
+        // Encontrar la estantería
         const rack = this.racks.find(r => r.code === rackCode);
         if (!rack) {
-            console.error('Étagère non trouvée:', rackCode);
+            console.error('Estantería no encontrada:', rackCode);
             return;
         }
 
-        // Trouver l'étage
+        // Encontrar el nivel
         const level = rack.levels?.find(l => l.code === levelCode);
         if (!level) {
-            console.error('Étage non trouvé:', levelCode);
+            console.error('Nivel no encontrado:', levelCode);
             return;
         }
 
-        // Trouver l'emplacement
+        // Encontrar el hueco
         const slot = level.slots?.find(s => s.code === slotCode);
         if (!slot) {
-            console.error('Emplacement non trouvé:', slotCode);
+            console.error('Hueco no encontrado:', slotCode);
             return;
         }
 
-        // Ouvrir le modal 3D
+        // Abrir el modal 3D
         const modal3D = document.getElementById('modal3D');
         modal3D.classList.add('active');
 
-        // Initialiser la vue 3D si nécessaire
+        // Inicializar la vista 3D si es necesario
         if (!window.view3DManager) {
             window.view3DManager = new View3DManager();
             window.view3DManager.init();
 
-            // Attendre que la 3D soit chargée
+            // Esperar a que la 3D cargue
             setTimeout(() => {
                 window.view3DManager.locateAndHighlight(rack, level, slot);
             }, 500);
@@ -5654,28 +5652,28 @@ class VueStock {
     }
 
     highlightSlotByFullCode(fullCode) {
-        // Extraire les parties du code: A-10-20
+        // Extraer las partes del código: A-10-20
         const parts = fullCode.split('-');
         if (parts.length !== 3) return;
 
         const [rackCode, levelCode, slotCode] = parts;
 
-        // Trouver l'étagère
+        // Encontrar la estantería
         const rack = this.racks.find(r => r.code === rackCode);
         if (!rack) return;
 
-        // Aller à la vue étagère
+        // Ir a la vista estantería
         this.goToRackView(rack);
 
-        // Trouver l'étage
+        // Encontrar el nivel
         const level = rack.levels?.find(l => l.level_code === levelCode);
         if (!level) return;
 
-        // Aller à la vue étage
+        // Ir a la vista nivel
         setTimeout(() => {
             this.goToLevelView(level);
 
-            // Mettre en surbrillance l'emplacement
+            // Resaltar el hueco
             setTimeout(() => {
                 const slotElement = document.querySelector(`[data-slot-code="${slotCode}"]`);
                 if (slotElement) {
@@ -5690,24 +5688,24 @@ class VueStock {
         }, 500);
     }
 
-    // ===== SAUVEGARDE DES DONNÉES =====
+    // ===== GUARDAR DATOS =====
     async saveData() {
         this.showLoader(true);
 
         try {
-            // Sauvegarder uniquement si nécessaire
-            // Ici, vous pouvez décider de sauvegarder les modifications
-            // ou simplement ne rien faire car chaque étagère est sauvegardée individuellement
+            // Guardar solo si es necesario
+            // Aquí puedes decidir guardar las modificaciones
+            // o simplemente no hacer nada porque cada estantería se guarda individualmente
 
-            // Option : Sauvegarder toutes les étagères modifiées
+            // Opción: Guardar todas las estanterías modificadas
             let savedCount = 0;
 
             for (const rack of this.racks) {
-                // Vérifier si l'étagère a été modifiée
-                // Pour simplifier, on sauvegarde tout
+                // Verificar si la estantería ha sido modificada
+                // Para simplificar, guardamos todo
                 try {
                     await this.api.saveRack({
-                        id: rack.id, // Inclure l'ID pour mise à jour
+                        id: rack.id, // Incluir el ID para actualización
                         code: rack.code,
                         name: rack.name,
                         position_x: rack.position_x,
@@ -5719,21 +5717,21 @@ class VueStock {
                     });
                     savedCount++;
                 } catch (error) {
-                    console.error(`Erreur pour étagère ${rack.code}:`, error);
+                    console.error(`Error para estantería ${rack.code}:`, error);
                 }
             }
 
-            this.showNotification(`${savedCount} étagère(s) sauvegardée(s)`);
+            this.showNotification(`${savedCount} estantería(s) guardada(s)`);
 
         } catch (error) {
-            console.error('Erreur de sauvegarde:', error);
-            this.showNotification('Erreur lors de la sauvegarde: ' + error.message, 'error');
+            console.error('Error de guardado:', error);
+            this.showNotification('Error al guardar: ' + error.message, 'error');
         } finally {
             this.showLoader(false);
         }
     }
 
-    // ===== CHARGEMENT DES NIVEAUX POUR UNE ÉTAGÈRE =====
+    // ===== CARGA DE NIVELES PARA UNA ESTANTERÍA =====
     loadLevelsForRack(rackId) {
         const rack = this.racks.find(r => r.id === rackId);
         if (!rack) return;
@@ -5745,14 +5743,14 @@ class VueStock {
             rackContainer.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-th-large fa-3x"></i>
-                    <p>Aucun étage configuré</p>
+                    <p>Ningún nivel configurado</p>
                     <button class="btn btn-primary" id="btnAddFirstLevel">
-                        Ajouter le premier étage
+                        Añadir el primer nivel
                     </button>
                 </div>
             `;
 
-            // Re-binder l'événement
+            // Re-enlazar el evento
             document.getElementById('btnAddFirstLevel').addEventListener('click', () => {
                 this.addLevelToRack(rackId);
             });
@@ -5763,7 +5761,7 @@ class VueStock {
         }
     }
 
-    // ===== CHARGEMENT DES EMPLACEMENTS POUR UN ÉTAGE =====
+    // ===== CARGA DE HUECOS PARA UN NIVEL =====
     loadSlotsForLevel(levelId) {
         const rack = this.racks.find(r => r.levels.some(l => l.id === levelId));
         const level = rack?.levels.find(l => l.id === levelId);
@@ -5776,14 +5774,14 @@ class VueStock {
             levelContainer.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-box-open fa-3x"></i>
-                    <p>Aucun emplacement configuré</p>
+                    <p>Ningún hueco configurado</p>
                     <button class="btn btn-primary" id="btnAddFirstSlot">
-                        Ajouter le premier emplacement
+                        Añadir el primer hueco
                     </button>
                 </div>
             `;
 
-            // Re-binder l'événement
+            // Re-enlazar el evento
             document.getElementById('btnAddFirstSlot').addEventListener('click', () => {
                 this.addSlotToLevel(levelId);
             });
@@ -5793,16 +5791,16 @@ class VueStock {
     }
 
     refreshEventListeners() {
-        // Cette méthode peut être appelée si les événements ne fonctionnent pas
-        console.log('Rafraîchissement des événements...');
+        // Este método puede ser llamado si los eventos no funcionan
+        console.log('Refrescando eventos...');
 
-        // Réinitialiser les événements du canvas
+        // Reinicializar los eventos del canvas
         if (this.canvasManager) {
-            // Recréer le canvas manager
+            // Recrear el canvas manager
             this.canvasManager = new CanvasManager('canvasPlan', 'planOverlay');
             window.canvasManager = this.canvasManager;
 
-            // Redessiner tout
+            // Redibujar todo
             setTimeout(() => {
                 this.canvasManager.drawGrid();
                 this.racks.forEach(rack => {
@@ -5813,13 +5811,13 @@ class VueStock {
     }
 
     loadTestData() {
-        console.log('Chargement des données de test');
+        console.log('Cargando datos de prueba');
 
-        // Données de test
+        // Datos de prueba
         const testRack = {
             id: 1,
             code: 'A',
-            name: 'Étagère principale A',
+            name: 'Estantería principal A',
             position_x: 200,
             position_y: 200,
             width: 3,
@@ -5852,35 +5850,35 @@ class VueStock {
 
         this.racks = [testRack];
 
-        // Afficher sur le canvas
+        // Mostrar en el canvas
         if (this.canvasManager) {
             this.canvasManager.addRackToCanvas(testRack);
         }
 
         this.updateStats();
-        this.showNotification('Données de test chargées', 'warning');
+        this.showNotification('Datos de prueba cargados', 'warning');
     }
 }
 
-// ===== INITIALISATION AU CHARGEMENT =====
+// ===== INICIALIZACIÓN AL CARGAR =====
 document.addEventListener('DOMContentLoaded', () => {
-    // Récupérer les paramètres URL
+    // Recuperar los parámetros URL
     const urlParams = new URLSearchParams(window.location.search);
     const articleId = urlParams.get('articleId');
     const articleName = urlParams.get('articleName');
 
     window.vueStock = new VueStock();
 
-    // Initialiser la vue quad après un délai
+    // Inicializar la vista quad después de un retraso
     setTimeout(() => {
         if (window.vueStock.quadViewManager) {
             window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
 
-            // Si on a un articleId dans l'URL, chercher et ouvrir son emplacement
+            // Si tenemos un articleId en la URL, buscar y abrir su hueco
             if (articleId || articleName) {
-                console.log('🔍 Recherche article depuis URL:', { articleId, articleName });
+                console.log('🔍 Buscando artículo desde URL:', { articleId, articleName });
 
-                // Chercher l'article dans tous les racks/levels/slots
+                // Buscar el artículo en todas las estanterías/niveles/huecos
                 let foundRack = null;
                 let foundLevel = null;
                 let foundSlot = null;
@@ -5894,7 +5892,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         for (const slot of level.slots) {
                             if (!slot.articles || slot.articles.length === 0) continue;
 
-                            // Chercher l'article dans ce slot
+                            // Buscar el artículo en este hueco
                             const article = slot.articles.find(a =>
                                 (articleId && a.id === articleId) ||
                                 (articleName && a.name === articleName)
@@ -5904,7 +5902,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 foundRack = rack;
                                 foundLevel = level;
                                 foundSlot = slot;
-                                console.log('✅ Article trouvé:', { rack: rack.code, level: level.code, slot: slot.code });
+                                console.log('✅ Artículo encontrado:', { rack: rack.code, level: level.code, slot: slot.code });
                                 break;
                             }
                         }
@@ -5913,27 +5911,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (foundSlot) break;
                 }
 
-                // Si trouvé, ouvrir rack → level → slot
+                // Si se encuentra, abrir estantería → nivel → hueco
                 if (foundRack && foundLevel && foundSlot) {
-                    // Étape 1: Ouvrir le rack
+                    // Paso 1: Abrir la estantería
                     window.vueStock.goToRackView(foundRack);
 
-                    // Étape 2: Ouvrir le level (après 500ms)
+                    // Paso 2: Abrir el nivel (después de 500ms)
                     setTimeout(() => {
                         window.vueStock.goToLevelView(foundLevel);
 
-                        // Étape 3: Mettre en évidence le slot (après 500ms supplémentaires)
+                        // Paso 3: Resaltar el hueco (después de 500ms adicionales)
                         setTimeout(() => {
                             const slotElement = document.querySelector(`.slot-item[data-slot-id="${foundSlot.id}"]`);
                             if (slotElement) {
                                 slotElement.classList.add('pulse');
                                 slotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                console.log('✅ Slot mis en évidence');
+                                console.log('✅ Hueco resaltado');
                             }
                         }, 500);
                     }, 500);
                 } else {
-                    console.warn('❌ Article non trouvé dans le stock');
+                    console.warn('❌ Artículo no encontrado en el stock');
                 }
             }
         }
@@ -5941,9 +5939,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// Debug button pour tester QuadView
+// Botón de debug para probar QuadView
 document.addEventListener('DOMContentLoaded', () => {
-    // Ajouter un bouton de debug temporaire
+    // Añadir un botón de debug temporal
     const debugBtn = document.createElement('button');
     debugBtn.id = 'debugQuadBtn';
     debugBtn.innerHTML = '🔍 Debug Quad';
@@ -5952,21 +5950,20 @@ document.addEventListener('DOMContentLoaded', () => {
     debugBtn.addEventListener('click', () => {
         console.log('=== DEBUG QUAD ===');
         console.log('VueStock:', window.vueStock);
-        console.log('Racks:', window.vueStock?.racks?.length, 'racks');
+        console.log('Estanterías:', window.vueStock?.racks?.length, 'estanterías');
         console.log('QuadViewManager:', window.vueStock?.quadViewManager);
 
         if (window.vueStock?.quadViewManager) {
-            console.log('Mise à jour forcée de QuadView...');
+            console.log('Actualización forzada de QuadView...');
             window.vueStock.quadViewManager.updateAllViews(window.vueStock.racks);
-            alert('QuadView mis à jour avec ' + window.vueStock.racks.length + ' racks');
+            alert('QuadView actualizado con ' + window.vueStock.racks.length + ' estanterías');
         } else {
-            alert('QuadViewManager non initialisé. Attendez le chargement ou basculez en vue Plan.');
+            alert('QuadViewManager no inicializado. Espere a la carga o cambie a vista Plan.');
         }
     });
 
     document.body.appendChild(debugBtn);
 
-    // Initialiser VueStock
+    // Inicializar VueStock
     window.vueStock = new VueStock();
 });
-

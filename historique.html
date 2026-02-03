@@ -1,9 +1,12 @@
+Aquí tienes el código HTML traducido al español. He mantenido los nombres de los archivos (`historique.css`, `accueil.html`, etc.) y los valores de los atributos (como `data-period`) intactos para no romper la funcionalidad ni los estilos.
+
+```html
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="es"> <!-- Cambiado a 'es' -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historique - Gestion Stock</title>
+    <title>Historial - Gestión de Stock</title> <!-- TRADUIT -->
     <link rel="stylesheet" href="historique.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -14,7 +17,7 @@
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
-            <p>Chargement de l'historique...</p>
+            <p>Cargando el historial...</p> <!-- TRADUIT -->
         </div>
     </div>
 
@@ -22,11 +25,11 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <h1><i class="fas fa-history"></i> Historique des mouvements</h1>
+                <h1><i class="fas fa-history"></i> Historial de movimientos</h1> <!-- TRADUIT -->
                 <div class="header-info">
                     <span class="back-link">
                         <a href="accueil.html">
-                            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                            <i class="fas fa-arrow-left"></i> Volver al inicio <!-- TRADUIT -->
                         </a>
                     </span>
                 </div>
@@ -37,7 +40,7 @@
                     <span id="usernameDisplay">...</span>
                 </span>
                 <button id="logoutBtn" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    <i class="fas fa-sign-out-alt"></i> Cerrar sesión <!-- TRADUIT -->
                 </button>
             </div>
         </header>
@@ -47,22 +50,22 @@
             <!-- Section filtres -->
             <section class="filters-section">
                 <div class="filters-header">
-                    <h2><i class="fas fa-filter"></i> Filtres de recherche</h2>
+                    <h2><i class="fas fa-filter"></i> Filtros de búsqueda</h2> <!-- TRADUIT -->
                     <div class="filters-stats">
-                        <span id="movementsCount">0</span> mouvements
+                        <span id="movementsCount">0</span> movimientos <!-- TRADUIT -->
                     </div>
                 </div>
 
                 <div class="filters-grid">
                     <!-- Filtre rapide -->
                     <div class="filter-card">
-                        <h3><i class="fas fa-search"></i> Recherche rapide</h3>
+                        <h3><i class="fas fa-search"></i> Búsqueda rápida</h3> <!-- TRADUIT -->
                         <div class="search-container">
                             <input type="text"
                                    id="quickSearch"
-                                   placeholder="Rechercher par article, utilisateur, projet..."
-                                   class="search-input">
-                            <button id="clearSearchBtn" class="btn-clear" title="Effacer la recherche">
+                                   placeholder="Buscar por artículo, usuario, proyecto..."
+                                   class="search-input"> <!-- TRADUIT (placeholder) -->
+                            <button id="clearSearchBtn" class="btn-clear" title="Borrar búsqueda"> <!-- TRADUIT (title) -->
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -70,23 +73,24 @@
 
                     <!-- Filtres période -->
                     <div class="filter-card">
-                        <h3><i class="fas fa-calendar-alt"></i> Période</h3>
+                        <h3><i class="fas fa-calendar-alt"></i> Período</h3> <!-- TRADUIT -->
                         <div class="period-filters">
                             <div class="period-buttons">
-                                <button class="period-btn active" data-period="today">Aujourd'hui</button>
-                                <button class="period-btn" data-period="week">7 derniers jours</button>
-                                <button class="period-btn" data-period="month">30 derniers jours</button>
-                                <button class="period-btn" data-period="quarter">3 derniers mois</button>
-                                <button class="period-btn" data-period="all">Tout</button>
+                                <!-- Les data-period restent en anglais pour le JS -->
+                                <button class="period-btn active" data-period="today">Hoy</button> <!-- TRADUIT -->
+                                <button class="period-btn" data-period="week">Últimos 7 días</button> <!-- TRADUIT -->
+                                <button class="period-btn" data-period="month">Últimos 30 días</button> <!-- TRADUIT -->
+                                <button class="period-btn" data-period="quarter">Últimos 3 meses</button> <!-- TRADUIT -->
+                                <button class="period-btn" data-period="all">Todo</button> <!-- TRADUIT -->
                             </div>
                             <div class="custom-period">
                                 <div class="date-inputs">
                                     <div class="date-input">
-                                        <label for="startDate">Du :</label>
+                                        <label for="startDate">Desde:</label> <!-- TRADUIT -->
                                         <input type="date" id="startDate" class="date-picker">
                                     </div>
                                     <div class="date-input">
-                                        <label for="endDate">Au :</label>
+                                        <label for="endDate">Hasta:</label> <!-- TRADUIT -->
                                         <input type="date" id="endDate" class="date-picker">
                                     </div>
                                 </div>
@@ -96,25 +100,26 @@
 
                     <!-- Filtres avancés -->
                     <div class="filter-card">
-                        <h3><i class="fas fa-sliders-h"></i> Filtres avancés</h3>
+                        <h3><i class="fas fa-sliders-h"></i> Filtros avanzados</h3> <!-- TRADUIT -->
                         <div class="advanced-filters">
                             <div class="filter-row">
                                 <div class="filter-group">
-                                    <label for="filterType">Type de mouvement</label>
+                                    <label for="filterType">Tipo de movimiento</label> <!-- TRADUIT -->
                                     <select id="filterType" class="filter-select">
-                                        <option value="">Tous les types</option>
-                                        <option value="entree">Entrées</option>
-                                        <option value="sortie">Sorties</option>
-                                        <option value="reservation">Réservations</option>
-                                        <option value="liberation">Libérations</option>
-                                        <option value="ajustement">Ajustements</option>
+                                        <option value="">Todos los tipos</option> <!-- TRADUIT -->
+                                        <!-- Les values restent pour le JS -->
+                                        <option value="entree">Entradas</option> <!-- TRADUIT -->
+                                        <option value="sortie">Salidas</option> <!-- TRADUIT -->
+                                        <option value="reservation">Reservas</option> <!-- TRADUIT -->
+                                        <option value="liberation">Liberaciones</option> <!-- TRADUIT -->
+                                        <option value="ajustement">Ajustes</option> <!-- TRADUIT -->
                                     </select>
                                 </div>
 
                                 <div class="filter-group">
-                                    <label for="filterUser">Utilisateur</label>
+                                    <label for="filterUser">Usuario</label> <!-- TRADUIT -->
                                     <select id="filterUser" class="filter-select">
-                                        <option value="">Tous les utilisateurs</option>
+                                        <option value="">Todos los usuarios</option> <!-- TRADUIT -->
                                         <!-- Rempli dynamiquement -->
                                     </select>
                                 </div>
@@ -122,18 +127,18 @@
 
                             <div class="filter-row">
                                 <div class="filter-group">
-                                    <label for="filterArticle">Article</label>
+                                    <label for="filterArticle">Artículo</label> <!-- TRADUIT -->
                                     <select id="filterArticle" class="filter-select">
-                                        <option value="">Tous les articles</option>
+                                        <option value="">Todos los artículos</option> <!-- TRADUIT -->
                                         <!-- Rempli dynamiquement -->
                                     </select>
                                 </div>
 
                                 <div class="filter-group">
-                                    <label for="filterProject">Projet</label>
+                                    <label for="filterProject">Proyecto</label> <!-- TRADUIT -->
                                     <select id="filterProject" class="filter-select">
-                                        <option value="">Tous les projets</option>
-                                        <option value="none">Sans projet</option>
+                                        <option value="">Todos los proyectos</option> <!-- TRADUIT -->
+                                        <option value="none">Sin proyecto</option> <!-- TRADUIT -->
                                         <!-- Rempli dynamiquement -->
                                     </select>
                                 </div>
@@ -145,21 +150,21 @@
                 <!-- Actions filtres -->
                 <div class="filter-actions">
                     <button id="exportHistoryBtn" class="btn-export">
-                        <i class="fas fa-file-export"></i> Exporter l'historique
+                        <i class="fas fa-file-export"></i> Exportar historial <!-- TRADUIT -->
                     </button>
                 </div>
             </section>
 
             <!-- Section statistiques -->
             <section class="stats-section">
-                <h2><i class="fas fa-chart-pie"></i> Vue d'ensemble</h2>
+                <h2><i class="fas fa-chart-pie"></i> Resumen</h2> <!-- TRADUIT -->
                 <div class="stats-grid">
                     <div class="stat-card total">
                         <div class="stat-icon">
                             <i class="fas fa-exchange-alt"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Mouvements totaux</h3>
+                            <h3>Movimientos totales</h3> <!-- TRADUIT -->
                             <p class="stat-value" id="statTotalMovements">0</p>
                         </div>
                     </div>
@@ -169,7 +174,7 @@
                             <i class="fas fa-arrow-down"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Entrées</h3>
+                            <h3>Entradas</h3> <!-- TRADUIT -->
                             <p class="stat-value" id="statEntries">0</p>
                         </div>
                     </div>
@@ -179,7 +184,7 @@
                             <i class="fas fa-arrow-up"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Sorties</h3>
+                            <h3>Salidas</h3> <!-- TRADUIT -->
                             <p class="stat-value" id="statExits">0</p>
                         </div>
                     </div>
@@ -189,7 +194,7 @@
                             <i class="fas fa-calendar-check"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Réservations</h3>
+                            <h3>Reservas</h3> <!-- TRADUIT -->
                             <p class="stat-value" id="statReservations">0</p>
                         </div>
                     </div>
@@ -199,13 +204,13 @@
             <!-- Section historique -->
             <section class="history-section">
                 <div class="history-header">
-                    <h2><i class="fas fa-list"></i> Historique des mouvements</h2>
+                    <h2><i class="fas fa-list"></i> Historial de movimientos</h2>
                     <div class="view-toggle">
                         <button id="tableViewBtn" class="view-btn active">
-                            <i class="fas fa-table"></i> Tableau
+                            <i class="fas fa-table"></i> Tabla
                         </button>
                         <button id="timelineViewBtn" class="view-btn">
-                            <i class="fas fa-stream"></i> Chronologie
+                            <i class="fas fa-stream"></i> Cronología
                         </button>
                     </div>
                 </div>
@@ -216,15 +221,15 @@
                         <table id="historyTable" class="history-table">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Type</th>
-                                    <th>Article</th>
-                                    <th>Quantité</th>
-                                    <th>Stock après</th>
-                                    <th>Projet</th>
-                                    <th>Utilisateur</th>
-                                    <th>Commentaire</th>
-                                    <th>Actions</th>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Artículo</th>
+                                    <th>Cantidad</th>
+                                    <th>Stock después</th>
+                                    <th>Proyecto</th>
+                                    <th>Usuario</th>
+                                    <th>Comentario</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="historyTableBody">
@@ -235,7 +240,7 @@
 
                     <div class="table-footer">
                         <div class="pagination-info">
-                            <span id="paginationText">Affichage 0-0 sur 0</span>
+                            <span id="paginationText">Mostrando 0-0 de 0</span>
                         </div>
                         <div class="pagination-controls">
                             <button id="firstPageBtn" class="btn-pagination" disabled>
@@ -245,7 +250,7 @@
                                 <i class="fas fa-angle-left"></i>
                             </button>
                             <span class="page-info">
-                                Page <span id="currentPage">1</span> sur <span id="totalPages">1</span>
+                                Página <span id="currentPage">1</span> de <span id="totalPages">1</span>
                             </span>
                             <button id="nextPageBtn" class="btn-pagination" disabled>
                                 <i class="fas fa-angle-right"></i>
@@ -264,7 +269,7 @@
                             <!-- Rempli dynamiquement -->
                             <div class="timeline-placeholder">
                                 <i class="fas fa-stream"></i>
-                                <p>Sélectionnez une période pour voir la chronologie</p>
+                                <p>Seleccione un período para ver la cronología</p>
                             </div>
                         </div>
                     </div>
@@ -272,11 +277,11 @@
 
                 <!-- Dernières sorties -->
                 <div class="recent-section">
-                    <h3><i class="fas fa-clock"></i> 10 dernières sorties de stock</h3>
+                    <h3><i class="fas fa-clock"></i> Últimas 10 salidas de stock</h3>
                     <div class="recent-exits" id="recentExits">
                         <!-- Rempli dynamiquement -->
                         <div class="loading-recent">
-                            <i class="fas fa-spinner fa-spin"></i> Chargement...
+                            <i class="fas fa-spinner fa-spin"></i> Cargando...
                         </div>
                     </div>
                 </div>
@@ -285,7 +290,7 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Système de gestion de stock • Historique</p>
+            <p>Sistema de gestión de stock • Historial</p>
         </footer>
     </div>
 
@@ -293,7 +298,7 @@
     <div id="detailModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-info-circle"></i> Détails du mouvement</h3>
+                <h3><i class="fas fa-info-circle"></i> Detalles del movimiento</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
@@ -302,7 +307,7 @@
                 </div>
                 <div class="modal-actions">
                     <button class="btn-secondary close-modal">
-                        Fermer
+                        Cerrar
                     </button>
                 </div>
             </div>

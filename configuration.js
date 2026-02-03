@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient.js';
 
-// Éléments DOM et variables
+// Elementos DOM y variables
 let currentUser = null;
 let allUsers = [];
 const SUPERADMIN_USERNAME = 'Kennouille';
@@ -8,20 +8,20 @@ const SUPERADMIN_CODE = '109801';
 let isSuperAdmin = false;
 
 document.addEventListener('DOMContentLoaded', async function() {
-    // Vérifier l'authentification
+    // Verificar autenticación
     await checkAuth();
 
-    // Charger les utilisateurs
+    // Cargar usuarios
     await loadUsers();
 
-    // Configurer les événements
+    // Configurar eventos
     setupEventListeners();
 
-    // Cacher le loading
+    // Ocultar el loading
     document.getElementById('loadingOverlay').style.display = 'none';
 });
 
-// AJOUTEZ CETTE FONCTION EN HAUT DU FICHIER, juste après les imports
+// AGREGUE ESTA FUNCIÓN EN LA PARTE SUPERIOR DEL ARCHIVO, justo después de las importaciones
 function generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0;
@@ -30,10 +30,10 @@ function generateUUID() {
     });
 }
 
-// ===== AUTHENTIFICATION =====
+// ===== AUTENTICACIÓN =====
 async function checkAuth() {
     try {
-        // Récupérer l'utilisateur depuis sessionStorage
+        // Recuperar el usuario de sessionStorage
         const userJson = sessionStorage.getItem('current_user');
 
         if (!userJson) {
@@ -43,24 +43,24 @@ async function checkAuth() {
 
         currentUser = JSON.parse(userJson);
 
-        // Vérifier les permissions
+        // Verificar permisos
         if (!currentUser.permissions?.config) {
-            alert('Vous n\'avez pas la permission d\'accéder à cette page');
+            alert('No tienes permiso para acceder a esta página');
             window.location.href = 'accueil.html';
             return;
         }
 
-        // Vérifier si c'est le SuperAdmin
+        // Verificar si es el SuperAdmin
         isSuperAdmin = currentUser.username === SUPERADMIN_USERNAME;
 
-        // Mettre à jour l'interface
+        // Actualizar la interfaz de usuario
         updateUserInterface();
 
-        // Afficher/cacher la section SuperAdmin
+        // Mostrar/ocultar la sección SuperAdmin
         toggleSuperAdminSection();
 
     } catch (error) {
-        console.error('Erreur d\'authentification:', error);
+        console.error('Error de autenticación:', error);
         sessionStorage.removeItem('current_user');
         window.location.href = 'connexion.html';
     }
@@ -83,42 +83,42 @@ function toggleSuperAdminSection() {
 
 // ===== SUPER ADMIN =====
 function setupSuperAdminInfo() {
-    // TOUJOURS afficher des étoiles par défaut pour le code, même pour le SuperAdmin
+    // SIEMPRE mostrar estrellas por defecto para el código, incluso para el SuperAdmin
     document.getElementById('superadminUsername').textContent = SUPERADMIN_USERNAME;
-    document.getElementById('superadminCode').textContent = '**********'; // Masqué par défaut
+    document.getElementById('superadminCode').textContent = '**********'; // Oculto por defecto
 
-    // Pour les autres admins, afficher uniquement des étoiles
+    // Para otros admins, mostrar solo estrellas
     if (!isSuperAdmin) {
         document.getElementById('superadminUsername').textContent = '**********';
         document.getElementById('superadminCode').textContent = '**********';
     }
 }
 
-// Révéler les informations SuperAdmin
+// Revelar información SuperAdmin
 document.getElementById('revealSuperadminBtn')?.addEventListener('click', function() {
     const usernameSpan = document.getElementById('superadminUsername');
     const codeSpan = document.getElementById('superadminCode');
 
-    // Si le SuperAdmin est connecté
+    // Si el SuperAdmin está conectado
     if (isSuperAdmin) {
         if (this.innerHTML.includes('fa-eye')) {
-            // Révéler le code seulement
+            // Revelar solo el código
             usernameSpan.textContent = SUPERADMIN_USERNAME;
             codeSpan.textContent = SUPERADMIN_CODE;
-            this.innerHTML = '<i class="fas fa-eye-slash"></i> Cacher le code';
+            this.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar código';
         } else {
-            // Masquer le code avec des étoiles
+            // Ocultar el código con estrellas
             usernameSpan.textContent = SUPERADMIN_USERNAME;
             codeSpan.textContent = '**********';
-            this.innerHTML = '<i class="fas fa-eye"></i> Révéler le code';
+            this.innerHTML = '<i class="fas fa-eye"></i> Revelar código';
         }
     } else {
-        // Pour les non-SuperAdmin, toujours masqué
-        alert('Seul le SuperAdmin peut révéler ces informations');
+        // Para los no SuperAdmin, siempre oculto
+        alert('Solo el SuperAdmin puede revelar esta información');
     }
 });
 
-// Mettre à jour le SuperAdmin
+// Actualizar SuperAdmin
 document.getElementById('updateSuperadminForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -128,40 +128,40 @@ document.getElementById('updateSuperadminForm')?.addEventListener('submit', asyn
     const errorDiv = document.getElementById('superadminError');
     const errorText = document.getElementById('superadminErrorText');
 
-    // Validation
+    // Validación
     if (newUsername.length < 3) {
-        showError(errorDiv, errorText, 'Le nom d\'utilisateur doit contenir au moins 3 caractères');
+        showError(errorDiv, errorText, 'El nombre de usuario debe contener al menos 3 caracteres');
         return;
     }
 
     if (!/^\d{6}$/.test(newCode)) {
-        showError(errorDiv, errorText, 'Le code doit contenir exactement 6 chiffres');
+        showError(errorDiv, errorText, 'El código debe contener exactamente 6 dígitos');
         return;
     }
 
     if (newCode !== confirmCode) {
-        showError(errorDiv, errorText, 'Les codes ne correspondent pas');
+        showError(errorDiv, errorText, 'Los códigos no coinciden');
         return;
     }
 
-    // Demander confirmation
-    if (!confirm('⚠️ ATTENTION : Vous allez modifier les informations du SuperAdmin.\n\nCette action est irréversible. Continuer ?')) {
+    // Pedir confirmación
+    if (!confirm('⚠️ ADVERTENCIA: Va a modificar la información del SuperAdmin.\n\nEsta acción es irreversible. ¿Continuar?')) {
         return;
     }
 
-    // Pour l'instant, juste afficher un message
-    // Dans la vraie version, tu mettrais à jour la base de données
-    alert(`SuperAdmin mis à jour :
-Nom: ${newUsername}
-Code: ${newCode}
+    // Por ahora, solo mostrar un mensaje
+    // En la versión real, actualizarías la base de datos
+    alert(`SuperAdmin actualizado:
+Nombre: ${newUsername}
+Código: ${newCode}
 
-(En réalité, tu devrais mettre à jour dans ta table w_users)`);
+(En realidad, deberías actualizar en tu tabla w_users)`);
 
-    // Réinitialiser le formulaire
+    // Reiniciar el formulario
     this.reset();
 });
 
-// ===== GESTION DES UTILISATEURS =====
+// ===== GESTIÓN DE USUARIOS =====
 async function loadUsers() {
     try {
         const { data: users, error } = await supabase
@@ -175,8 +175,8 @@ async function loadUsers() {
         displayUsers(allUsers);
 
     } catch (error) {
-        console.error('Erreur lors du chargement des utilisateurs:', error);
-        alert('Erreur lors du chargement des utilisateurs');
+        console.error('Error al cargar usuarios:', error);
+        alert('Error al cargar usuarios');
     }
 }
 
@@ -185,22 +185,22 @@ function displayUsers(users) {
     const usersCount = document.getElementById('usersCount');
     const paginationInfo = document.getElementById('paginationInfo');
 
-    // Mettre à jour le compteur
-    usersCount.textContent = `${users.length} utilisateur${users.length > 1 ? 's' : ''}`;
-    paginationInfo.textContent = `Affiche 1-${users.length} sur ${users.length}`;
+    // Actualizar el contador
+    usersCount.textContent = `${users.length} usuario${users.length > 1 ? 's' : ''}`;
+    paginationInfo.textContent = `Mostrando 1-${users.length} de ${users.length}`;
 
     if (users.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="5" class="loading-cell">
-                    <i class="fas fa-user-slash"></i> Aucun utilisateur trouvé
+                    <i class="fas fa-user-slash"></i> Ningún usuario encontrado
                 </td>
             </tr>
         `;
         return;
     }
 
-    // Construire le tableau
+    // Construir la tabla
     tbody.innerHTML = '';
 
     users.forEach(user => {
@@ -209,13 +209,13 @@ function displayUsers(users) {
 
         const row = document.createElement('tr');
 
-        // Colonne Utilisateur
+        // Columna Usuario
         let usernameCell = user.username;
         if (isSuperAdminUser && !isSuperAdmin) {
             usernameCell = '**********';
         }
 
-        // Colonne Permissions
+        // Columna Permisos
         let permissionsHTML = '';
         const permissions = user.permissions || {};
 
@@ -227,14 +227,14 @@ function displayUsers(users) {
                 if (value && key !== 'accueil') {
                     const permissionNames = {
                         'config': 'Admin',
-                        'creation': 'Création',
-                        'stats': 'Stats',
-                        'historique': 'Historique',
-                        'impression': 'Impression',
-                        'gestion': 'Gestion',
-                        'projets': 'Projets',
-                        'reservations': 'Réservations',
-                        'vuestock': 'Vue Stock'
+                        'creation': 'Creación',
+                        'stats': 'Estadísticas',
+                        'historique': 'Historial',
+                        'impression': 'Impresión',
+                        'gestion': 'Gestión',
+                        'projets': 'Proyectos',
+                        'reservations': 'Reservas',
+                        'vuestock': 'Ver Stock'
                     };
 
                     permissionsHTML += `<span class="permission-tag ${key === 'config' ? 'admin' : ''}">${permissionNames[key] || key}</span>`;
@@ -243,15 +243,15 @@ function displayUsers(users) {
             permissionsHTML += '</div>';
         }
 
-        // Colonne Dates
-        const createdAt = user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : '-';
-        const lastLogin = user.last_login ? new Date(user.last_login).toLocaleDateString('fr-FR') : 'Jamais';
+        // Columna Fechas
+        const createdAt = user.created_at ? new Date(user.created_at).toLocaleDateString('es-ES') : '-';
+        const lastLogin = user.last_login ? new Date(user.last_login).toLocaleDateString('es-ES') : 'Nunca';
 
-        // Colonne Actions
+        // Columna Acciones
         let actionsHTML = '';
 
         if (isSuperAdminUser) {
-            // SuperAdmin - seulement le SuperAdmin peut le modifier
+            // SuperAdmin - solo el SuperAdmin puede modificarlo
             if (isSuperAdmin) {
                 actionsHTML = `
                     <button class="btn-action edit" data-id="${user.id}">
@@ -259,22 +259,22 @@ function displayUsers(users) {
                     </button>
                 `;
             } else {
-                actionsHTML = '<span class="text-secondary">Accès restreint</span>';
+                actionsHTML = '<span class="text-secondary">Acceso restringido</span>';
             }
         } else if (isCurrentUser) {
-            // Utilisateur courant - peut modifier son mot de passe
+            // Usuario actual - puede modificar su contraseña
             actionsHTML = `
                 <button class="btn-action edit" data-id="${user.id}">
-                    <i class="fas fa-key"></i> MDP
+                    <i class="fas fa-key"></i> Contraseña
                 </button>
             `;
         } else {
-            // Autres utilisateurs
+            // Otros usuarios
             actionsHTML = `
-                <button class="btn-action edit" data-id="${user.id}" title="Modifier">
+                <button class="btn-action edit" data-id="${user.id}" title="Modificar">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn-action delete" data-id="${user.id}" title="Supprimer">
+                <button class="btn-action delete" data-id="${user.id}" title="Eliminar">
                     <i class="fas fa-trash"></i>
                 </button>
             `;
@@ -283,7 +283,7 @@ function displayUsers(users) {
         row.innerHTML = `
             <td>
                 <strong>${usernameCell}</strong>
-                ${isCurrentUser ? '<br><small><i class="fas fa-user"></i> (Vous)</small>' : ''}
+                ${isCurrentUser ? '<br><small><i class="fas fa-user"></i> (Tú)</small>' : ''}
             </td>
             <td class="permissions-cell">${permissionsHTML}</td>
             <td>${createdAt}</td>
@@ -294,12 +294,12 @@ function displayUsers(users) {
         tbody.appendChild(row);
     });
 
-    // Ajouter les événements aux boutons d'action
+    // Agregar eventos a los botones de acción
     setupUserActionButtons();
 }
 
 function setupUserActionButtons() {
-    // Boutons d'édition
+    // Botones de edición
     document.querySelectorAll('.btn-action.edit').forEach(btn => {
         btn.addEventListener('click', function() {
             const userId = this.dataset.id;
@@ -310,7 +310,7 @@ function setupUserActionButtons() {
         });
     });
 
-    // Boutons de suppression
+    // Botones de eliminación
     document.querySelectorAll('.btn-action.delete').forEach(btn => {
         btn.addEventListener('click', function() {
             const userId = this.dataset.id;
@@ -322,17 +322,17 @@ function setupUserActionButtons() {
     });
 }
 
-// ===== MODAL D'ÉDITION =====
+// ===== MODAL DE EDICIÓN =====
 function openEditModal(user) {
     const modal = document.getElementById('editUserModal');
     const form = document.getElementById('editUserForm');
     const isSuperAdminUser = user.username === SUPERADMIN_USERNAME;
 
-    // Remplir le formulaire
+    // Rellenar el formulario
     document.getElementById('editUserId').value = user.id;
     document.getElementById('editUsername').value = user.username;
 
-    // Gérer la visibilité du nom d'utilisateur pour SuperAdmin
+    // Gestionar la visibilidad del nombre de usuario para SuperAdmin
     if (isSuperAdminUser && !isSuperAdmin) {
         document.getElementById('editUsername').value = '**********';
         document.getElementById('editUsername').disabled = true;
@@ -340,25 +340,25 @@ function openEditModal(user) {
         document.getElementById('editUsername').disabled = false;
     }
 
-    // Créer les checkboxes de permissions
+    // Crear las casillas de verificación de permisos
     const permissionsList = document.getElementById('editPermissionsList');
     permissionsList.innerHTML = '';
 
     const allPermissions = [
-        { id: 'edit_perm_config', key: 'config', label: 'Configuration', icon: 'fa-cog', desc: 'Admin - Gérer les utilisateurs' },
-        { id: 'edit_perm_creation', key: 'creation', label: 'CrÉation article', icon: 'fa-plus-circle', desc: 'CrÉer de nouveaux articles' },
-        { id: 'edit_perm_stats', key: 'stats', label: 'Statistiques', icon: 'fa-chart-bar', desc: 'Voir les rapports et stats' },
-        { id: 'edit_perm_historique', key: 'historique', label: 'Historique', icon: 'fa-history', desc: 'Consulter l\'historique' },
-        { id: 'edit_perm_impression', key: 'impression', label: 'Impression', icon: 'fa-print', desc: 'Imprimer Étiquettes et rapports' },
-        { id: 'edit_perm_gestion', key: 'gestion', label: 'Gestion articles', icon: 'fa-box-open', desc: 'Modifier/supprimer articles' },
-        { id: 'edit_perm_projets', key: 'projets', label: 'Gestion projets', icon: 'fa-project-diagram', desc: 'CrÉer/gÉrer les projets' },
-        { id: 'edit_perm_reservations', key: 'reservations', label: 'RÉservations', icon: 'fa-clipboard-list', desc: 'GÉrer les rÉservations' },
-        { id: 'edit_perm_vuestock', key: 'vuestock', label: 'Vue Stock', icon: 'fa-eye', desc: 'Visualiser le stock complet' }
+        { id: 'edit_perm_config', key: 'config', label: 'Configuración', icon: 'fa-cog', desc: 'Admin - Gestionar usuarios' },
+        { id: 'edit_perm_creation', key: 'creation', label: 'Creación artículo', icon: 'fa-plus-circle', desc: 'Crear nuevos artículos' },
+        { id: 'edit_perm_stats', key: 'stats', label: 'Estadísticas', icon: 'fa-chart-bar', desc: 'Ver informes y estadísticas' },
+        { id: 'edit_perm_historique', key: 'historique', label: 'Historial', icon: 'fa-history', desc: 'Consultar el historial' },
+        { id: 'edit_perm_impression', key: 'impression', label: 'Impresión', icon: 'fa-print', desc: 'Imprimir etiquetas e informes' },
+        { id: 'edit_perm_gestion', key: 'gestion', label: 'Gestión artículos', icon: 'fa-box-open', desc: 'Modificar/eliminar artículos' },
+        { id: 'edit_perm_projets', key: 'projets', label: 'Gestión proyectos', icon: 'fa-project-diagram', desc: 'Crear/gestionar proyectos' },
+        { id: 'edit_perm_reservations', key: 'reservations', label: 'Reservas', icon: 'fa-clipboard-list', desc: 'Gestionar reservas' },
+        { id: 'edit_perm_vuestock', key: 'vuestock', label: 'Ver Stock', icon: 'fa-eye', desc: 'Visualizar el stock completo' }
     ];
 
     allPermissions.forEach(perm => {
         const isChecked = user.permissions?.[perm.key] || false;
-        const isDisabled = isSuperAdminUser && !isSuperAdmin; // Bloqué si pas SuperAdmin
+        const isDisabled = isSuperAdminUser && !isSuperAdmin; // Bloqueado si no es SuperAdmin
         const isCurrentUserConfig = user.username === currentUser.username && perm.key === 'config';
 
         const div = document.createElement('div');
@@ -374,17 +374,17 @@ function openEditModal(user) {
                 <i class="fas ${perm.icon}"></i>
                 <span>${perm.label}</span>
                 <small>${perm.desc}</small>
-                ${isCurrentUserConfig ? '<br><small class="text-warning"><i class="fas fa-info-circle"></i> Ne peut pas dÉsactiver sa propre permission admin</small>' : ''}
+                ${isCurrentUserConfig ? '<br><small class="text-warning"><i class="fas fa-info-circle"></i> No se puede desactivar el propio permiso de admin</small>' : ''}
             </label>
         `;
         permissionsList.appendChild(div);
     });
 
-    // Afficher le modal
+    // Mostrar el modal
     modal.style.display = 'flex';
 }
 
-// ===== AJOUT D'UTILISATEUR =====
+// ===== ADICIÓN DE USUARIO =====
 document.getElementById('addUserForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -393,33 +393,33 @@ document.getElementById('addUserForm')?.addEventListener('submit', async functio
     const errorDiv = document.getElementById('addUserError');
     const errorText = document.getElementById('addUserErrorText');
 
-    // Validation
+    // Validación
     if (!username || !password) {
-        showError(errorDiv, errorText, 'Veuillez remplir tous les champs');
+        showError(errorDiv, errorText, 'Por favor, complete todos los campos');
         return;
     }
 
     if (username.length < 3) {
-        showError(errorDiv, errorText, 'Le nom d\'utilisateur doit contenir au moins 3 caractères');
+        showError(errorDiv, errorText, 'El nombre de usuario debe contener al menos 3 caracteres');
         return;
     }
 
-    // Vérifier si l'utilisateur existe déjà
+    // Verificar si el usuario ya existe
     const userExists = allUsers.some(user =>
         user.username.toLowerCase() === username.toLowerCase()
     );
 
     if (userExists) {
-        showError(errorDiv, errorText, 'Cet utilisateur existe déjà');
+        showError(errorDiv, errorText, 'Este usuario ya existe');
         return;
     }
 
-    // Récupérer les permissions
+    // Recuperar los permisos
     const permissions = {
-        accueil: true // Toujours vrai
+        accueil: true // Siempre verdadero
     };
 
-    // Liste des permissions
+    // Lista de permisos
     const permissionKeys = ['config', 'creation', 'stats', 'historique', 'impression', 'gestion', 'projets', 'reservations', 'vuestock'];
 
     permissionKeys.forEach(key => {
@@ -428,44 +428,44 @@ document.getElementById('addUserForm')?.addEventListener('submit', async functio
     });
 
     try {
-        // Insérer le nouvel utilisateur
+        // Insertar el nuevo usuario
         const { data, error } = await supabase
             .from('w_users')
             .insert([
                 {
                     id: generateUUID(),
                     username: username,
-                    password: password, // À sécuriser plus tard avec bcrypt
+                    password: password, // Se asegurará más tarde con bcrypt
                     permissions: permissions
                 }
             ]);
 
         if (error) throw error;
 
-        // Recharger la liste des utilisateurs
+        // Recargar la lista de usuarios
         await loadUsers();
 
-        // Réinitialiser le formulaire
+        // Reiniciar el formulario
         this.reset();
 
-        // Afficher un message de succès
-        alert(`Utilisateur "${username}" créé avec succès !`);
+        // Mostrar un mensaje de éxito
+        alert(`¡Usuario "${username}" creado con éxito!`);
 
     } catch (error) {
-        console.error('Erreur lors de la création de l\'utilisateur:', error);
-        showError(errorDiv, errorText, 'Erreur lors de la création de l\'utilisateur');
+        console.error('Error al crear el usuario:', error);
+        showError(errorDiv, errorText, 'Error al crear el usuario');
     }
 });
 
-// ===== ÉVÉNEMENTS =====
+// ===== EVENTOS =====
 function setupEventListeners() {
-    // Déconnexion
+    // Cierre de sesión
     document.getElementById('logoutBtn').addEventListener('click', logout);
 
-    // Actualiser la liste
+    // Actualizar lista
     document.getElementById('refreshUsersBtn').addEventListener('click', loadUsers);
 
-    // Recherche d'utilisateurs
+    // Búsqueda de usuarios
     document.getElementById('searchUsersInput').addEventListener('input', function() {
         const searchTerm = this.value.toLowerCase();
         const filteredUsers = allUsers.filter(user =>
@@ -474,19 +474,19 @@ function setupEventListeners() {
         displayUsers(filteredUsers);
     });
 
-    // Fermer le modal
+    // Cerrar modal
     document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', function() {
             document.getElementById('editUserModal').style.display = 'none';
         });
     });
 
-    // Annuler la modification SuperAdmin
+    // Cancelar modificación SuperAdmin
     document.getElementById('cancelUpdateBtn')?.addEventListener('click', function() {
         document.getElementById('updateSuperadminForm').reset();
     });
 
-    // Gestion du modal d'édition
+    // Gestión del modal de edición
     const editUserForm = document.getElementById('editUserForm');
     if (editUserForm) {
         editUserForm.addEventListener('submit', handleEditUser);
@@ -508,25 +508,25 @@ async function handleEditUser(e) {
 
     const isSuperAdminUser = user.username === SUPERADMIN_USERNAME;
 
-    // Validation
+    // Validación
     if (!isSuperAdminUser && newUsername.length < 3) {
-        showError(errorDiv, errorText, 'Le nom d\'utilisateur doit contenir au moins 3 caractères');
+        showError(errorDiv, errorText, 'El nombre de usuario debe contener al menos 3 caracteres');
         return;
     }
 
-    // Vérifier si le nom d'utilisateur existe déjà (sauf pour le même utilisateur)
+    // Verificar si el nombre de usuario ya existe (excepto para el mismo usuario)
     if (!isSuperAdminUser && newUsername !== user.username) {
         const usernameExists = allUsers.some(u =>
             u.id !== userId && u.username.toLowerCase() === newUsername.toLowerCase()
         );
 
         if (usernameExists) {
-            showError(errorDiv, errorText, 'Ce nom d\'utilisateur est déjà pris');
+            showError(errorDiv, errorText, 'Este nombre de usuario ya está en uso');
             return;
         }
     }
 
-    // Récupérer les nouvelles permissions
+    // Recuperar los nuevos permisos
     const newPermissions = { accueil: true };
     const checkboxes = document.querySelectorAll('#editPermissionsList input[type="checkbox"]');
 
@@ -535,15 +535,15 @@ async function handleEditUser(e) {
         newPermissions[key] = checkbox.checked;
     });
 
-    // Si l'utilisateur modifié est l'utilisateur courant et qu'il se retire admin
+    // Si el usuario modificado es el usuario actual y se quita los permisos de admin
     if (user.username === currentUser.username && !newPermissions.config && user.permissions?.config) {
-        if (!confirm('⚠️ ATTENTION : Vous êtes sur le point de vous retirer les permissions admin.\n\nVous ne pourrez plus accéder à cette page.\nContinuer ?')) {
+        if (!confirm('⚠️ ATENCIÓN : Estás a punto de quitarte los permisos de administrador.\n\nNo podrás acceder a esta página.\n¿Continuar?')) {
             return;
         }
     }
 
     try {
-        // Préparer les données de mise à jour
+        // Preparar los datos de actualización
         const updateData = {};
 
         if (!isSuperAdminUser) {
@@ -556,7 +556,7 @@ async function handleEditUser(e) {
 
         updateData.permissions = newPermissions;
 
-        // Mettre à jour l'utilisateur
+        // Actualizar el usuario
         const { error } = await supabase
             .from('w_users')
             .update(updateData)
@@ -564,27 +564,27 @@ async function handleEditUser(e) {
 
         if (error) throw error;
 
-        // Recharger la liste
+        // Recargar la lista
         await loadUsers();
 
-        // Fermer le modal
+        // Cerrar el modal
         document.getElementById('editUserModal').style.display = 'none';
 
-        // Si l'utilisateur courant s'est modifié, mettre à jour la session
+        // Si el usuario actual se modificó a sí mismo, actualizar la sesión
         if (user.username === currentUser.username) {
             const updatedUser = { ...currentUser, ...updateData };
             sessionStorage.setItem('current_user', JSON.stringify(updatedUser));
 
-            // Si il s'est retiré admin, rediriger
+            // Si se quitó los permisos de admin, redirigir
             if (!newPermissions.config && user.permissions?.config) {
-                alert('Vous avez perdu les permissions admin. Redirection...');
+                alert('Has perdido los permisos de administrador. Redirigiendo...');
                 window.location.href = 'accueil.html';
             }
         }
 
     } catch (error) {
-        console.error('Erreur lors de la modification de l\'utilisateur:', error);
-        showError(errorDiv, errorText, 'Erreur lors de la modification');
+        console.error('Error al modificar el usuario:', error);
+        showError(errorDiv, errorText, 'Error al modificar');
     }
 }
 
@@ -594,20 +594,20 @@ async function handleDeleteUser() {
 
     if (!user) return;
 
-    // Empêcher la suppression du SuperAdmin
+    // Impedir la eliminación del SuperAdmin
     if (user.username === SUPERADMIN_USERNAME) {
-        alert('Impossible de supprimer le SuperAdmin');
+        alert('Imposible eliminar al SuperAdmin');
         return;
     }
 
-    // Empêcher l'utilisateur de se supprimer lui-même
+    // Impedir que el usuario se elimine a sí mismo
     if (user.username === currentUser.username) {
-        alert('Vous ne pouvez pas supprimer votre propre compte');
+        alert('No puedes eliminar tu propia cuenta');
         return;
     }
 
-    // Demander confirmation
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur "${user.username}" ?\n\nCette action est irréversible.`)) {
+    // Pedir confirmación
+    if (!confirm(`¿Estás seguro de que quieres eliminar al usuario "${user.username}"?\n\nEsta acción es irreversible.`)) {
         return;
     }
 
@@ -619,32 +619,32 @@ async function handleDeleteUser() {
 
         if (error) throw error;
 
-        // Recharger la liste
+        // Recargar la lista
         await loadUsers();
 
-        // Fermer le modal
+        // Cerrar el modal
         document.getElementById('editUserModal').style.display = 'none';
 
     } catch (error) {
-        console.error('Erreur lors de la suppression:', error);
-        alert('Erreur lors de la suppression de l\'utilisateur');
+        console.error('Error al eliminar:', error);
+        alert('Error al eliminar al usuario');
     }
 }
 
 async function confirmDeleteUser(user) {
-    // Empêcher la suppression du SuperAdmin
+    // Impedir la eliminación del SuperAdmin
     if (user.username === SUPERADMIN_USERNAME) {
-        alert('Impossible de supprimer le SuperAdmin');
+        alert('Imposible eliminar al SuperAdmin');
         return;
     }
 
-    // Empêcher l'utilisateur de se supprimer lui-même
+    // Impedir que el usuario se elimine a sí mismo
     if (user.username === currentUser.username) {
-        alert('Vous ne pouvez pas supprimer votre propre compte');
+        alert('No puedes eliminar tu propia cuenta');
         return;
     }
 
-    if (!confirm(`Supprimer l'utilisateur "${user.username}" ?`)) {
+    if (!confirm(`¿Eliminar al usuario "${user.username}"?`)) {
         return;
     }
 
@@ -656,16 +656,16 @@ async function confirmDeleteUser(user) {
 
         if (error) throw error;
 
-        // Recharger la liste
+        // Recargar la lista
         await loadUsers();
 
     } catch (error) {
-        console.error('Erreur lors de la suppression:', error);
-        alert('Erreur lors de la suppression');
+        console.error('Error al eliminar:', error);
+        alert('Error al eliminar');
     }
 }
 
-// ===== UTILITAIRES =====
+// ===== UTILIDADES =====
 function showError(div, textElement, message) {
     textElement.textContent = message;
     div.style.display = 'flex';
@@ -676,7 +676,7 @@ function showError(div, textElement, message) {
 }
 
 function logout() {
-    if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
         return;
     }
 
@@ -685,7 +685,7 @@ function logout() {
     window.location.href = 'connexion.html';
 }
 
-// Fermer le modal en cliquant à l'extérieur
+// Cerrar modal al hacer clic fuera
 document.getElementById('editUserModal')?.addEventListener('click', function(e) {
     if (e.target === this) {
         this.style.display = 'none';

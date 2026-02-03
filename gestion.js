@@ -43,7 +43,7 @@ async function checkAuth() {
 
         // Vérifier les permissions
         if (!currentUser.permissions?.gestion) {
-            alert('Vous n\'avez pas la permission de gérer les articles');
+            alert('No tiene permiso para gestionar los artículos'); // TRADUIT
             window.location.href = 'accueil.html';
             return;
         }
@@ -81,7 +81,7 @@ async function loadArticles() {
 
     } catch (error) {
         console.error('Erreur lors du chargement des articles:', error);
-        alert('Erreur lors du chargement des articles');
+        alert('Error al cargar los artículos'); // TRADUIT
     }
 }
 
@@ -161,10 +161,10 @@ function updateArticlesTable() {
             <tr>
                 <td colspan="9" style="text-align: center; padding: 3rem;">
                     <i class="fas fa-box-open" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
-                    <p>Aucun article trouvé</p>
+                    <p>No se encontraron artículos</p>
                 </td>
             </tr>
-        `;
+        `; // TRADUIT (Contenu HTML)
         return;
     }
 
@@ -178,23 +178,23 @@ function updateArticlesTable() {
 
         // Déterminer le statut
         let statusClass = 'status-active';
-        let statusText = 'Actif';
+        let statusText = 'Activo'; // TRADUIT
 
         if (!article.actif) {
             statusClass = 'status-inactive';
-            statusText = 'Inactif';
+            statusText = 'Inactivo'; // TRADUIT
         } else if (article.stock_actuel === 0) {
             statusClass = 'status-out';
-            statusText = 'Rupture';
+            statusText = 'Agotado'; // TRADUIT (Rupture -> Agotado)
         } else if (article.stock_actuel <= article.stock_minimum) {
             statusClass = 'status-low';
-            statusText = 'Stock bas';
+            statusText = 'Stock bajo'; // TRADUIT
         }
 
         // Formater la date
         const lastUpdate = article.updated_at ?
-            new Date(article.updated_at).toLocaleDateString('fr-FR') :
-            new Date(article.created_at).toLocaleDateString('fr-FR');
+            new Date(article.updated_at).toLocaleDateString('es-ES') : // TRADUIT (Locale)
+            new Date(article.created_at).toLocaleDateString('es-ES');  // TRADUIT (Locale)
 
         row.innerHTML = `
             <td class="select-column">
@@ -210,7 +210,7 @@ function updateArticlesTable() {
             </td>
             <td>
                 <div class="article-info">
-                    <div class="article-name">${article.nom || 'Sans nom'}</div>
+                    <div class="article-name">${article.nom || 'Sin nombre'}</div>
                     <div class="article-details">
                         <span class="article-number">${article.numero || 'N/A'}</span>
                         ${article.reference_interne ? `<span>${article.reference_interne}</span>` : ''}
@@ -223,7 +223,7 @@ function updateArticlesTable() {
             </td>
             <td class="price-info">
                 <div class="price-amount">${(article.prix_unitaire || 0).toFixed(2)} €</div>
-                <div class="price-unit">unité</div>
+                <div class="price-unit">unidad</div>
             </td>
             <td class="value-info">${totalValue.toFixed(2)} €</td>
             <td class="status-cell">
@@ -231,17 +231,17 @@ function updateArticlesTable() {
             </td>
             <td class="date-info">${lastUpdate}</td>
             <td class="actions-cell">
-                <button class="btn-table-action view" data-id="${article.id}" title="Voir détails">
+                <button class="btn-table-action view" data-id="${article.id}" title="Ver detalles">
                     <i class="fas fa-eye"></i>
                 </button>
-                <button class="btn-table-action edit" data-id="${article.id}" title="Modifier">
+                <button class="btn-table-action edit" data-id="${article.id}" title="Editar">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn-table-action delete" data-id="${article.id}" title="Supprimer">
+                <button class="btn-table-action delete" data-id="${article.id}" title="Eliminar">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
-        `;
+        `; // TRADUIT (Titres, Textes par défaut)
 
         tbody.appendChild(row);
     });
@@ -425,7 +425,7 @@ async function showArticleDetails(articleId) {
 
     } catch (error) {
         console.error('Erreur lors du chargement des détails:', error);
-        alert('Erreur lors du chargement des détails de l\'article');
+        alert('Error al cargar los detalles del artículo'); // TRADUIT
     }
 }
 
@@ -452,28 +452,28 @@ function displayArticleDetails(article) {
     const totalValue = (article.stock_actuel || 0) * (article.prix_unitaire || 0);
 
     // Formater les dates
-    const createdDate = new Date(article.created_at).toLocaleDateString('fr-FR');
+    const createdDate = new Date(article.created_at).toLocaleDateString('es-ES'); // TRADUIT (Locale)
     const updatedDate = article.updated_at ?
-        new Date(article.updated_at).toLocaleDateString('fr-FR') :
+        new Date(article.updated_at).toLocaleDateString('es-ES') : // TRADUIT (Locale)
         createdDate;
 
     // Déterminer le statut
     let statusClass = 'status-active';
     let statusIcon = 'fa-check-circle';
-    let statusText = 'Actif';
+    let statusText = 'Activo'; // TRADUIT
 
     if (!article.actif) {
         statusClass = 'status-inactive';
         statusIcon = 'fa-ban';
-        statusText = 'Inactif';
+        statusText = 'Inactivo'; // TRADUIT
     } else if (article.stock_actuel === 0) {
         statusClass = 'status-out';
         statusIcon = 'fa-times-circle';
-        statusText = 'Rupture';
+        statusText = 'Agotado'; // TRADUIT
     } else if (article.stock_actuel <= article.stock_minimum) {
         statusClass = 'status-low';
         statusIcon = 'fa-exclamation-triangle';
-        statusText = 'Stock bas';
+        statusText = 'Stock bajo'; // TRADUIT
     }
 
     // Formater l'emplacement
@@ -487,7 +487,7 @@ function displayArticleDetails(article) {
     }
 
     if (article.w_vuestock_levels) {
-        locationParts.push(`Niveau ${article.w_vuestock_levels.level_code}`);
+        locationParts.push(`Nivel ${article.w_vuestock_levels.level_code}`); // TRADUIT
     }
 
     if (article.w_vuestock_slots) {
@@ -496,7 +496,7 @@ function displayArticleDetails(article) {
 
     const locationString = locationParts.length > 0
         ? locationParts.join(' → ')
-        : 'Non spécifié';
+        : 'No especificado'; // TRADUIT
 
 
     // GÉNÉRER LE HTML complet
@@ -513,8 +513,8 @@ function displayArticleDetails(article) {
                         </div>`
                     }
                     <div class="photo-overlay">
-                        <button id="changePhotoBtn" class="btn-change-photo" title="Changer la photo">
-                            <i class="fas fa-camera"></i> Changer
+                        <button id="changePhotoBtn" class="btn-change-photo" title="Cambiar la foto">
+                            <i class="fas fa-camera"></i> Cambiar
                         </button>
                     </div>
                 </div>
@@ -523,25 +523,25 @@ function displayArticleDetails(article) {
 
             <!-- Informations de base -->
             <div class="detail-section">
-                <h4><i class="fas fa-info-circle"></i> Informations</h4>
+                <h4><i class="fas fa-info-circle"></i> Información</h4>
                 <div class="detail-item">
-                    <span class="detail-label">Nom :</span>
+                    <span class="detail-label">Nombre:</span>
                     <span class="detail-value">${article.nom || 'N/A'}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Numéro :</span>
+                    <span class="detail-label">Número:</span>
                     <span class="detail-value code">${article.numero || 'N/A'}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Référence interne :</span>
+                    <span class="detail-label">Referencia interna:</span>
                     <span class="detail-value">${article.reference_interne || 'N/A'}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Code-barre :</span>
+                    <span class="detail-label">Código de barras:</span>
                     <span class="detail-value code">${article.code_barre || 'N/A'}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Statut :</span>
+                    <span class="detail-label">Estado:</span>
                     <span class="detail-value">
                         <span class="status-badge ${statusClass}">
                             <i class="fas ${statusIcon}"></i> ${statusText}
@@ -552,30 +552,30 @@ function displayArticleDetails(article) {
 
             <!-- Emplacement -->
             <div class="detail-section">
-                <h4><i class="fas fa-map-marker-alt"></i> Emplacement</h4>
+                <h4><i class="fas fa-map-marker-alt"></i> Ubicación</h4>
                 <div class="detail-item">
-                    <span class="detail-label">Localisation :</span>
+                    <span class="detail-label">Localización:</span>
                     <span class="detail-value">${locationString}</span>
                 </div>
             </div>
 
             <!-- Stock et prix -->
             <div class="detail-section">
-                <h4><i class="fas fa-chart-line"></i> Stock et prix</h4>
+                <h4><i class="fas fa-chart-line"></i> Stock y precios</h4>
                 <div class="detail-item">
-                    <span class="detail-label">Stock actuel :</span>
+                    <span class="detail-label">Stock actual:</span>
                     <span class="detail-value">${article.stock_actuel || 0}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Stock minimum :</span>
+                    <span class="detail-label">Stock mínimo:</span>
                     <span class="detail-value">${article.stock_minimum || 1}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Prix unitaire :</span>
+                    <span class="detail-label">Precio unitario:</span>
                     <span class="detail-value">${(article.prix_unitaire || 0).toFixed(2)} €</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Valeur totale :</span>
+                    <span class="detail-label">Valor total:</span>
                     <span class="detail-value" style="color: var(--success-color); font-size: 1.1rem;">
                         ${totalValue.toFixed(2)} €
                     </span>
@@ -584,21 +584,21 @@ function displayArticleDetails(article) {
 
             <!-- Caractéristiques -->
             <div class="detail-section">
-                <h4><i class="fas fa-align-left"></i> Caractéristiques</h4>
+                <h4><i class="fas fa-align-left"></i> Características</h4>
                 <div class="detail-description">
-                    ${article.caracteristiques || 'Aucune description'}
+                    ${article.caracteristiques || 'Sin descripción'}
                 </div>
             </div>
 
             <!-- Métadonnées -->
             <div class="detail-section">
-                <h4><i class="fas fa-database"></i> Métadonnées</h4>
+                <h4><i class="fas fa-database"></i> Metadatos</h4>
                 <div class="detail-item">
-                    <span class="detail-label">Créé le :</span>
+                    <span class="detail-label">Creado el:</span>
                     <span class="detail-value">${createdDate}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Modifié le :</span>
+                    <span class="detail-label">Modificado el:</span>
                     <span class="detail-value">${updatedDate}</span>
                 </div>
             </div>
@@ -606,10 +606,10 @@ function displayArticleDetails(article) {
             <!-- Actions -->
             <div class="detail-actions">
                 <button id="editFromDetailsBtn" class="btn-primary">
-                    <i class="fas fa-edit"></i> Modifier
+                    <i class="fas fa-edit"></i> Editar
                 </button>
                 <button id="viewHistoryBtn" class="btn-secondary">
-                    <i class="fas fa-history"></i> Historique
+                    <i class="fas fa-history"></i> Historial
                 </button>
             </div>
         </div>
@@ -678,19 +678,19 @@ function displayArticleDetails(article) {
 }
 
 // ===== CHANGEMENT DE PHOTO =====
-async function handlePhotoChange(event, articleId, articleName = 'Article') {
+async function handlePhotoChange(event, articleId, articleName = 'Artículo') { // TRADUIT (Default param)
     const file = event.target.files[0];
     if (!file) return;
 
     // Vérifier le type de fichier
     if (!file.type.match('image.*')) {
-        alert('Veuillez sélectionner une image (JPG, PNG, WebP)');
+        alert('Por favor, seleccione una imagen (JPG, PNG, WebP)'); // TRADUIT
         return;
     }
 
     // Vérifier la taille (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-        if (!confirm('L\'image est trop lourde (max 5MB). Voulez-vous l\'optimiser automatiquement ?')) {
+        if (!confirm('La imagen es demasiado pesada (máx 5MB). ¿Desea optimizarla automáticamente?')) { // TRADUIT
             return;
         }
     }
@@ -707,9 +707,9 @@ async function handlePhotoChange(event, articleId, articleName = 'Article') {
             photoContainer.innerHTML = `
                 <div class="photo-uploading">
                     <i class="fas fa-spinner fa-spin fa-2x"></i>
-                    <p>Traitement de l'image...</p>
+                    <p>Procesando imagen...</p>
                 </div>
-            `;
+            `; // TRADUIT
         }
 
         // Optimiser l'image
@@ -737,7 +737,7 @@ async function handlePhotoChange(event, articleId, articleName = 'Article') {
 
     } catch (error) {
         console.error('Erreur lors du changement de photo:', error);
-        alert('Erreur lors du changement de photo : ' + error.message);
+        alert('Error al cambiar la foto: ' + error.message); // TRADUIT
 
         // Restaurer l'affichage original
         if (photoContainer && originalContent) {
@@ -858,11 +858,11 @@ function updatePhotoDisplay(photoUrl, articleName) {
     photoContainer.innerHTML = `
         <img src="${photoUrl}" alt="${articleName}" loading="lazy" id="detailPhotoImg">
         <div class="photo-overlay">
-            <button id="changePhotoBtn" class="btn-change-photo" title="Changer la photo">
-                <i class="fas fa-camera"></i> Changer
+            <button id="changePhotoBtn" class="btn-change-photo" title="Cambiar la foto">
+                <i class="fas fa-camera"></i> Cambiar
             </button>
         </div>
-    `;
+    `; // TRADUIT (Title et Button text)
 
     // Réattacher l'événement
     const changePhotoBtn = document.getElementById('changePhotoBtn');
@@ -897,10 +897,10 @@ function showPhotoUploadSuccess() {
     successDiv.innerHTML = `
         <i class="fas fa-check-circle" style="font-size: 1.2rem;"></i>
         <div>
-            <div style="font-weight: bold; margin-bottom: 4px;">Photo mise à jour</div>
-            <div style="font-size: 0.9rem; opacity: 0.9;">L'image a été modifiée avec succès</div>
+            <div style="font-weight: bold; margin-bottom: 4px;">Foto actualizada</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">La imagen se ha modificado con éxito</div>
         </div>
-    `;
+    `; // TRADUIT
 
     document.body.appendChild(successDiv);
 
@@ -934,45 +934,45 @@ async function openEditModal(articleId) {
         const formContent = document.getElementById('editFormContent');
         formContent.innerHTML = `
             <div class="form-group">
-                <label for="editName">Nom *</label>
+                <label for="editName">Nombre *</label>
                 <input type="text" id="editName" class="form-input" value="${article.nom || ''}" required>
             </div>
 
             <div class="form-group">
-                <label for="editNumber">Numéro *</label>
+                <label for="editNumber">Número *</label>
                 <input type="text" id="editNumber" class="form-input" value="${article.numero || ''}" required>
             </div>
 
             <div class="form-group">
-                <label for="editBarcode">Code-barre</label>
+                <label for="editBarcode">Código de barras</label>
                 <input type="text" id="editBarcode" class="form-input" value="${article.code_barre || ''}">
             </div>
 
             <div class="form-group">
-                <label for="editReference">Référence interne</label>
+                <label for="editReference">Referencia interna</label>
                 <input type="text" id="editReference" class="form-input" value="${article.reference_interne || ''}">
             </div>
 
             <div class="form-group">
-                <label for="editStock">Stock actuel</label>
+                <label for="editStock">Stock actual</label>
                 <input type="number" id="editStock" class="form-input" value="${article.stock_actuel || 0}" min="0">
             </div>
 
             <div class="form-group">
-                <label for="editMinStock">Stock minimum</label>
+                <label for="editMinStock">Stock mínimo</label>
                 <input type="number" id="editMinStock" class="form-input" value="${article.stock_minimum || 1}" min="1">
             </div>
 
             <div class="form-group">
-                <label for="editPrice">Prix unitaire (€)</label>
+                <label for="editPrice">Precio unitario (€)</label>
                 <input type="number" id="editPrice" class="form-input" value="${article.prix_unitaire || 0}" min="0" step="0.01">
             </div>
 
             <div class="form-group">
-                <label for="editActive">Statut</label>
+                <label for="editActive">Estado</label>
                 <select id="editActive" class="form-select">
-                    <option value="true" ${article.actif ? 'selected' : ''}>Actif</option>
-                    <option value="false" ${!article.actif ? 'selected' : ''}>Inactif</option>
+                    <option value="true" ${article.actif ? 'selected' : ''}>Activo</option>
+                    <option value="false" ${!article.actif ? 'selected' : ''}>Inactivo</option>
                 </select>
             </div>
 
@@ -980,29 +980,29 @@ async function openEditModal(articleId) {
             <div class="form-group">
                 <label for="editRack">Rack</label>
                 <select id="editRack" class="form-select">
-                    <option value="">-- Sélectionner un rack --</option>
+                    <option value="">-- Seleccionar un rack --</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="editLevel">Niveau</label>
+                <label for="editLevel">Nivel</label>
                 <select id="editLevel" class="form-select" disabled>
-                    <option value="">-- Sélectionner un niveau --</option>
+                    <option value="">-- Seleccionar un nivel --</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="editSlot">Slot</label>
+                <label for="editSlot">Posición</label>
                 <select id="editSlot" class="form-select" disabled>
-                    <option value="">-- Sélectionner un emplacement --</option>
+                    <option value="">-- Seleccionar una posición --</option>
                 </select>
             </div>
 
             <div class="form-group" style="grid-column: 1 / -1;">
-                <label for="editDescription">Caractéristiques</label>
+                <label for="editDescription">Características</label>
                 <textarea id="editDescription" class="form-textarea" rows="4">${article.caracteristiques || ''}</textarea>
             </div>
-        `;
+        `; // TRADUIT (Labels et Options)
 
         // Afficher le modal
         document.getElementById('editModal').style.display = 'flex';
@@ -1012,7 +1012,7 @@ async function openEditModal(articleId) {
 
     } catch (error) {
         console.error('Erreur lors du chargement de l\'article:', error);
-        alert('Erreur lors du chargement de l\'article');
+        alert('Error al cargar el artículo'); // TRADUIT
     }
 }
 
@@ -1055,7 +1055,7 @@ async function loadEditModalLocationData(article) {
 
 async function loadEditModalLevels(rackId, currentLevelId, currentSlotId) {
     const levelSelect = document.getElementById('editLevel');
-    levelSelect.innerHTML = '<option value="">-- Sélectionner un niveau --</option>';
+    levelSelect.innerHTML = '<option value="">-- Seleccionar un nivel --</option>'; // TRADUIT
     levelSelect.disabled = false;
 
     try {
@@ -1091,7 +1091,7 @@ async function loadEditModalLevels(rackId, currentLevelId, currentSlotId) {
 
 async function loadEditModalSlots(levelId, currentSlotId) {
     const slotSelect = document.getElementById('editSlot');
-    slotSelect.innerHTML = '<option value="">-- Sélectionner un emplacement --</option>';
+    slotSelect.innerHTML = '<option value="">-- Seleccionar una posición --</option>'; // TRADUIT
     slotSelect.disabled = false;
 
     try {
@@ -1109,7 +1109,7 @@ async function loadEditModalSlots(levelId, currentSlotId) {
                 option.value = slot.id;
                 // Vérifier le statut
                 const isOccupied = slot.status === 'occupied';
-                option.textContent = `${slot.slot_code} ${isOccupied ? '(Occupé)' : ''}`;
+                option.textContent = `${slot.slot_code} ${isOccupied ? '(Ocupado)' : ''}`; // TRADUIT
                 // Ne pas désactiver le slot actuel même s'il est occupé
                 option.disabled = isOccupied && slot.id !== currentSlotId;
                 option.style.color = isOccupied && slot.id !== currentSlotId ? '#999' : '';
@@ -1135,8 +1135,8 @@ function setupEditModalLocationEvents(article) {
         const rackId = this.value;
         levelSelect.disabled = !rackId;
         slotSelect.disabled = true;
-        levelSelect.innerHTML = '<option value="">-- Sélectionner un niveau --</option>';
-        slotSelect.innerHTML = '<option value="">-- Sélectionner un emplacement --</option>';
+        levelSelect.innerHTML = '<option value="">-- Seleccionar un nivel --</option>'; // TRADUIT
+        slotSelect.innerHTML = '<option value="">-- Seleccionar una posición --</option>'; // TRADUIT
 
         if (rackId) {
             await loadEditModalLevels(rackId, null, null);
@@ -1147,7 +1147,7 @@ function setupEditModalLocationEvents(article) {
     levelSelect.addEventListener('change', async function() {
         const levelId = this.value;
         slotSelect.disabled = !levelId;
-        slotSelect.innerHTML = '<option value="">-- Sélectionner un emplacement --</option>';
+        slotSelect.innerHTML = '<option value="">-- Seleccionar una posición --</option>'; // TRADUIT
 
         if (levelId) {
             await loadEditModalSlots(levelId, null);
@@ -1166,10 +1166,10 @@ async function confirmDeleteArticle(articleId) {
 
         if (fetchError) throw fetchError;
 
-        const articleName = article.nom || 'cet article';
+        const articleName = article.nom || 'este artículo'; // TRADUIT
 
         showConfirmModal(
-            `Supprimer l'article "${articleName}" ?`,
+            `¿Eliminar el artículo "${articleName}"?`, // TRADUIT
             async () => {
                 await deleteArticle(articleId);
             }
@@ -1177,7 +1177,7 @@ async function confirmDeleteArticle(articleId) {
 
     } catch (error) {
         console.error('Erreur lors de la confirmation:', error);
-        alert('Erreur lors de la suppression');
+        alert('Error durante la eliminación'); // TRADUIT
     }
 }
 
@@ -1223,20 +1223,20 @@ async function deleteArticle(articleId) {
             document.getElementById('articleDetails').innerHTML = `
                 <div class="details-placeholder">
                     <i class="fas fa-box"></i>
-                    <p>Sélectionnez un article pour voir ses détails</p>
+                    <p>Seleccione un artículo para ver sus detalles</p>
                 </div>
-            `;
+            `; // TRADUIT
             currentArticleDetails = null;
         }
 
         // Fermer le modal d'édition si ouvert
         document.getElementById('editModal').style.display = 'none';
 
-        alert('Article supprimé avec succès');
+        alert('Artículo eliminado con éxito'); // TRADUIT
 
     } catch (error) {
         console.error('Erreur lors de la suppression:', error);
-        alert('Erreur lors de la suppression de l\'article');
+        alert('Error al eliminar el artículo'); // TRADUIT
     }
 }
 
@@ -1394,7 +1394,7 @@ async function handleEditSubmit(e) {
 
     // Validation
     if (!formData.nom || !formData.numero) {
-        showEditError('Le nom et le numéro sont obligatoires');
+        showEditError('El nombre y el número son obligatorios'); // TRADUIT
         return;
     }
 
@@ -1443,11 +1443,11 @@ async function handleEditSubmit(e) {
             await showArticleDetails(articleId);
         }
 
-        alert('Article modifié avec succès');
+        alert('Artículo modificado con éxito'); // TRADUIT
 
     } catch (error) {
         console.error('Erreur lors de la modification:', error);
-        showEditError('Erreur lors de la modification : ' + error.message);
+        showEditError('Error al modificar: ' + error.message); // TRADUIT
     }
 }
 
@@ -1475,7 +1475,7 @@ async function exportToPDF() {
         // Afficher un indicateur de chargement
         const exportBtn = document.getElementById('exportPdfBtn');
         const originalText = exportBtn.innerHTML;
-        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération...';
+        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...'; // TRADUIT
         exportBtn.disabled = true;
 
         // Récupérer les articles (filtrés comme dans le tableau)
@@ -1485,10 +1485,10 @@ async function exportToPDF() {
         const pdfData = articlesToExport.map(article => {
             const totalValue = (article.stock_actuel || 0) * (article.prix_unitaire || 0);
 
-            let status = 'Actif';
-            if (!article.actif) status = 'Inactif';
-            else if (article.stock_actuel === 0) status = 'Rupture';
-            else if (article.stock_actuel <= article.stock_minimum) status = 'Stock bas';
+            let status = 'Activo'; // TRADUIT
+            if (!article.actif) status = 'Inactivo'; // TRADUIT
+            else if (article.stock_actuel === 0) status = 'Agotado'; // TRADUIT
+            else if (article.stock_actuel <= article.stock_minimum) status = 'Stock bajo'; // TRADUIT
 
             return [
                 article.numero || '',
@@ -1508,19 +1508,20 @@ async function exportToPDF() {
         // Titre
         doc.setFontSize(20);
         doc.setTextColor(40, 40, 40);
-        doc.text('INVENTAIRE DES ARTICLES', 14, 22);
+        doc.text('INVENTARIO DE ARTÍCULOS', 14, 22); // TRADUIT
 
         // Sous-titre
         doc.setFontSize(11);
         doc.setTextColor(100, 100, 100);
-        doc.text(`Export généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, 14, 30);
-        doc.text(`Total articles : ${articlesToExport.length}`, 14, 36);
+        // TRADUIT: Format date es-ES
+        doc.text(`Exportado el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`, 14, 30);
+        doc.text(`Total de artículos: ${articlesToExport.length}`, 14, 36); // TRADUIT
 
         // Ajouter le tableau
         doc.autoTable({
             startY: 45,
             head: [
-                ['Numéro', 'Nom', 'Référence', 'Stock', 'Prix unitaire', 'Valeur totale', 'Statut']
+                ['Número', 'Nombre', 'Referencia', 'Stock', 'Precio unitario', 'Valor total', 'Estado'] // TRADUIT
             ],
             body: pdfData,
             theme: 'grid',
@@ -1552,7 +1553,7 @@ async function exportToPDF() {
                 doc.setFontSize(10);
                 doc.setTextColor(150, 150, 150);
                 doc.text(
-                    `Page ${data.pageNumber}`,
+                    `Página ${data.pageNumber}`, // TRADUIT
                     doc.internal.pageSize.width / 2,
                     doc.internal.pageSize.height - 10,
                     { align: 'center' }
@@ -1561,7 +1562,7 @@ async function exportToPDF() {
         });
 
         // Sauvegarder le PDF
-        const fileName = `inventaire_articles_${new Date().toISOString().split('T')[0]}.pdf`;
+        const fileName = `inventario_articulos_${new Date().toISOString().split('T')[0]}.pdf`; // TRADUIT (nom fichier)
         doc.save(fileName);
 
         // Restaurer le bouton
@@ -1569,7 +1570,7 @@ async function exportToPDF() {
         exportBtn.disabled = false;
 
         // Afficher un message de succès
-        showExportSuccess('PDF généré avec succès !');
+        showExportSuccess('¡PDF generado con éxito!'); // TRADUIT
 
     } catch (error) {
         console.error('Erreur export PDF:', error);
@@ -1579,7 +1580,7 @@ async function exportToPDF() {
         exportBtn.innerHTML = '<i class="fas fa-file-pdf"></i> PDF';
         exportBtn.disabled = false;
 
-        alert('Erreur lors de l\'export PDF : ' + error.message);
+        alert('Error al exportar PDF: ' + error.message); // TRADUIT
     }
 }
 
@@ -1605,10 +1606,10 @@ function showExportSuccess(message) {
     successDiv.innerHTML = `
         <i class="fas fa-check-circle" style="font-size: 1.2rem;"></i>
         <div>
-            <div style="font-weight: bold; margin-bottom: 4px;">Export réussi</div>
+            <div style="font-weight: bold; margin-bottom: 4px;">Exportación exitosa</div>
             <div style="font-size: 0.9rem; opacity: 0.9;">${message}</div>
         </div>
-    `;
+    `; // TRADUIT
 
     document.body.appendChild(successDiv);
 
@@ -1670,9 +1671,9 @@ async function massEdit() {
     if (selectedArticles.size === 0) return;
 
     showConfirmModal(
-        `Modifier ${selectedArticles.size} article(s) ?`,
+        `¿Modificar ${selectedArticles.size} artículo(s)?`, // TRADUIT
         async () => {
-            alert('Modification en masse à implémenter');
+            alert('Modificación masiva pendiente de implementación'); // TRADUIT
             // Ici tu pourrais ouvrir un modal pour modifier plusieurs champs à la fois
         }
     );
@@ -1682,9 +1683,12 @@ async function massArchive() {
     if (selectedArticles.size === 0) return;
 
     showConfirmModal(
-        `Archiver ${selectedArticles.size} article(s) ?\n\nLes articles seront marqués comme inactifs.`,
+        `¿Archivar ${selectedArticles.size} artículo(s)?\n\nLos artículos se marcarán como inactivos.`, // TRADUIT
         async () => {
             try {
+                // Sauvegarder le nombre avant de vider la sélection pour l'alerte
+                const count = selectedArticles.size;
+
                 const { error } = await supabase
                     .from('w_articles')
                     .update({ actif: false, updated_at: new Date().toISOString() })
@@ -1700,11 +1704,11 @@ async function massArchive() {
                 updateSelectionInfo();
                 updateMassActionButtons();
 
-                alert(`${selectedArticles.size} article(s) archivé(s) avec succès`);
+                alert(`${count} artículo(s) archivado(s) con éxito`); // TRADUIT
 
             } catch (error) {
                 console.error('Erreur lors de l\'archivage:', error);
-                alert('Erreur lors de l\'archivage');
+                alert('Error al archivar'); // TRADUIT
             }
         }
     );
@@ -1716,11 +1720,11 @@ function updateArticlesCount() {
 }
 
 function logout() {
-    if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    if (!confirm('¿Está seguro de que desea cerrar sesión?')) { // TRADUIT
         return;
     }
 
     sessionStorage.removeItem('current_user');
     sessionStorage.removeItem('supabase_token');
-    window.location.href = 'connexion.html';
+    window.location.href = 'connexion.html'; // Nom du fichier maintenu tel quel
 }

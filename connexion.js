@@ -1,41 +1,41 @@
-// Importer Supabase depuis ton fichier
+// Importar Supabase desde tu archivo
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', async function() {
     const splash = document.getElementById('splashScreen');
     const loginContainer = document.querySelector('.login-container');
 
-    // Le login est caché au début (grâce au CSS)
+    // El login está oculto al principio (gracias al CSS)
 
     try {
-        // On charge le contenu HTML de nexen-suite.html
+        // Cargamos el contenido HTML de nexen-suite.html
         const response = await fetch('nexen-suite.html');
         const html = await response.text();
         splash.innerHTML = html;
     } catch (err) {
-        console.error("Erreur lors du chargement de nexen-suite.html", err);
-        splash.innerHTML = "<h2>Chargement...</h2>";
+        console.error("Error al cargar nexen-suite.html", err);
+        splash.innerHTML = "<h2>Cargando...</h2>";
     }
 
-    // Après 6 secondes, on fait disparaître le splash
+    // Después de 6 segundos, hacemos desaparecer el splash
     setTimeout(() => {
         splash.classList.add('fade-out');
 
-        // Après la transition du splash, on montre le login
+        // Después de la transición del splash, mostramos el login
         setTimeout(() => {
             splash.remove();
             loginContainer.classList.add('show');
-        }, 1000); // Correspond à la durée de la transition fade-out
-    }, 4000); // 6 secondes d'affichage du splash
+        }, 1000); // Corresponde a la duración de la transición fade-out
+    }, 4000); // 6 segundos de visualización del splash
 
-    // Vérifier si l'utilisateur est déjà connecté
+    // Verificar si el usuario ya está conectado
     const user = sessionStorage.getItem('current_user');
     if (user) {
         window.location.href = 'accueil.html';
     }
 });
 
-// Gérer la soumission du formulaire
+// Gestionar el envío del formulario
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -44,20 +44,20 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const errorMessage = document.getElementById('errorMessage');
     const errorText = document.getElementById('errorText');
 
-    // Validation basique
+    // Validación básica
     if (!username || !password) {
-        showError('Veuillez remplir tous les champs');
+        showError('Por favor, complete todos los campos');
         return;
     }
 
-    // Désactiver le bouton
+    // Desactivar el botón
     const loginBtn = document.querySelector('.login-btn');
     const originalText = loginBtn.innerHTML;
-    loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connexion...';
+    loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conectando...';
     loginBtn.disabled = true;
 
     try {
-        // Rechercher l'utilisateur dans la table 'w_users'
+        // Buscar el usuario en la tabla 'w_users'
         const { data: userData, error: userError } = await supabase
             .from('w_users')
             .select('*')
@@ -65,13 +65,13 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             .single();
 
         if (userError || !userData) {
-            showError('Nom d\'utilisateur incorrect');
+            showError('Nombre de usuario incorrecto');
             return;
         }
 
-        // Vérifier le mot de passe
+        // Verificar la contraseña
         if (password === userData.password) {
-            // Connexion réussie - stocker les infos utilisateur
+            // Conexión exitosa - almacenar la información del usuario
             sessionStorage.setItem('current_user', JSON.stringify({
                 id: userData.id,
                 username: userData.username,
@@ -79,23 +79,23 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                 isAdmin: userData.permissions?.config || false
             }));
 
-            // Rediriger vers l'accueil
+            // Redirigir al inicio
             window.location.href = 'accueil.html';
         } else {
-            showError('Mot de passe incorrect');
+            showError('Contraseña incorrecta');
         }
 
     } catch (error) {
-        console.error('Erreur de connexion:', error);
-        showError('Erreur de connexion au serveur');
+        console.error('Error de conexión:', error);
+        showError('Error de conexión al servidor');
     } finally {
-        // Réactiver le bouton
+        // Reactivar el botón
         loginBtn.innerHTML = originalText;
         loginBtn.disabled = false;
     }
 });
 
-// Fonction pour afficher les erreurs
+// Función para mostrar errores
 function showError(message) {
     const errorMessage = document.getElementById('errorMessage');
     const errorText = document.getElementById('errorText');
@@ -108,7 +108,7 @@ function showError(message) {
     }, 5000);
 }
 
-// Effacer l'erreur quand l'utilisateur tape
+// Borrar el error cuando el usuario escribe
 document.getElementById('username').addEventListener('input', function() {
     document.getElementById('errorMessage').style.display = 'none';
 });

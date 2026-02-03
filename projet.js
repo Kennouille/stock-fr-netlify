@@ -154,7 +154,7 @@ async function checkAuth() {
         const hasProjectPermission = state.user.isAdmin || state.user.permissions?.projets || state.user.permissions?.admin;
 
         if (!hasProjectPermission) {
-            alert('Accès réservé aux utilisateurs avec la permission "Projets"');
+            alert('Acceso reservado a los usuarios con el permiso "Proyectos"');
             window.location.href = 'accueil.html';
             return false;
         }
@@ -170,7 +170,7 @@ async function checkAuth() {
 }
 
 function logout() {
-    if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    if (!confirm('¿Está seguro de que desea cerrar sesión?')) {
         return;
     }
 
@@ -213,7 +213,7 @@ function formatDate(dateString) {
     if (!dateString) return 'N/A';
     try {
         const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
+        return date.toLocaleDateString('es-ES', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
@@ -227,7 +227,7 @@ function formatDateTime(dateString) {
     if (!dateString) return 'N/A';
     try {
         const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
+        return date.toLocaleDateString('es-ES', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -243,7 +243,7 @@ function formatDateTimeUTC(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
 
-    return date.toLocaleString('fr-FR', {
+    return date.toLocaleString('es-ES', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -271,7 +271,7 @@ function calculateDaysLeft(endDate) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        if (end < today) return 0; // Déjà terminé
+        if (end < today) return 0; // Ya terminado
 
         const diffTime = end - today;
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -298,7 +298,7 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
         }
 
         // Demander confirmation
-        if (!confirm(`Utiliser ${quantityToUse} article(s) sur ${originalQuantity} réservés ?`)) {
+        if (!confirm(`¿Utilizar ${quantityToUse} artículo(s) de los ${originalQuantity} reservados?`)) {
             return;
         }
 
@@ -327,11 +327,11 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
         if (articleError) throw articleError;
 
         // Créer le mouvement de sortie avec plus d'informations
-        const articleName = reservation.w_articles?.nom || 'Article inconnu';
-        const projetNom = state.currentProject?.nom || 'Projet inconnu';
+        const articleName = reservation.w_articles?.nom || 'Artículo desconocido';
+        const projetNom = state.currentProject?.nom || 'Proyecto desconocido';
         const mouvementComment = comment
-            ? `${comment} | Source: Réservation #${reservationId} (${articleName})`
-            : `Sortie pour projet "${projetNom}" depuis réservation #${reservationId} (${articleName})`;
+            ? `${comment} | Origen: Reserva #${reservationId} (${articleName})`
+            : `Salida para proyecto "${projetNom}" desde reserva #${reservationId} (${articleName})`;
 
         const { error: movementError } = await supabase
             .from('w_mouvements')
@@ -347,7 +347,7 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
                 stock_avant: article.stock_actuel,
                 stock_apres: article.stock_actuel - quantityToUse,
                 date_mouvement: new Date().toISOString().split('T')[0],
-                heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
+                heure_mouvement: new Date().toLocaleTimeString('es-ES', { hour12: false }),
                 created_at: new Date().toISOString()
             }]);
 
@@ -410,11 +410,11 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
             await showProjectDetails(state.currentProject.id);
         }
 
-        showAlert(`${quantityToUse} article(s) marqué(s) comme utilisé(s)`, 'success');
+        showAlert(`${quantityToUse} artículo(s) marcado(s) como utilizado(s)`, 'success');
 
     } catch (error) {
         console.error('Erreur utilisation réservation:', error);
-        showAlert('Erreur lors de la mise à jour de la réservation', 'error');
+        showAlert('Error al actualizar la reserva', 'error');
     } finally {
         hideLoading();
     }
@@ -427,12 +427,12 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
         <div class="modal-overlay use-reservation-modal">
             <div class="modal" style="max-width: 500px;">
                 <div class="modal-header">
-                    <h3><i class="fas fa-check-circle"></i> Marquer comme utilisé</h3>
+                    <h3><i class="fas fa-check-circle"></i> Marcar como utilizado</h3>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><i class="fas fa-boxes"></i> Quantité à utiliser *</label>
+                        <label><i class="fas fa-boxes"></i> Cantidad a utilizar *</label>
                         <div class="quantity-input-group">
                             <button type="button" class="quantity-btn minus" id="useQuantityMinus">
                                 <i class="fas fa-minus"></i>
@@ -448,15 +448,15 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
                             </button>
                         </div>
                         <div class="quantity-info">
-                            <span>Quantité réservée : <strong>${originalQuantity}</strong></span>
+                            <span>Cantidad reservada : <strong>${originalQuantity}</strong></span>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label><i class="fas fa-comment"></i> Commentaire (optionnel)</label>
+                        <label><i class="fas fa-comment"></i> Comentario (opcional)</label>
                         <textarea id="useComment"
                                   rows="3"
-                                  placeholder="Détails de l'utilisation..."
+                                  placeholder="Detalles del uso..."
                                   class="form-textarea"></textarea>
                     </div>
 
@@ -467,10 +467,10 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
 
                     <div class="modal-actions">
                         <button id="confirmUseReservationBtn" class="btn-success">
-                            <i class="fas fa-check"></i> Confirmer l'utilisation
+                            <i class="fas fa-check"></i> Confirmar el uso
                         </button>
                         <button type="button" class="btn-secondary close-modal">
-                            Annuler
+                            Cancelar
                         </button>
                     </div>
                 </div>
@@ -521,7 +521,7 @@ async function showUseReservationModal(reservationId, articleId, originalQuantit
         const comment = modal.querySelector('#useComment').value.trim();
 
         if (!quantityToUse || quantityToUse < 1 || quantityToUse > originalQuantity) {
-            modal.querySelector('#useReservationErrorText').textContent = 'Quantité invalide';
+            modal.querySelector('#useReservationErrorText').textContent = 'Cantidad no válida';
             modal.querySelector('#useReservationError').style.display = 'flex';
             return;
         }
@@ -552,7 +552,7 @@ async function fetchProjects() {
 
     } catch (error) {
         console.error('Erreur chargement projets:', error);
-        showAlert('Erreur lors du chargement des projets', 'error');
+        showAlert('Error al cargar los proyectos', 'error');
     } finally {
         hideLoading();
     }
@@ -678,7 +678,7 @@ async function archiveProject(projectId) {
         if (reservations && reservations.length > 0) {
             for (const reservation of reservations) {
                 console.log('Libération réservation:', reservation.id);
-                await releaseReservation(reservation.id, 'Libération automatique - Projet archivé');
+                await releaseReservation(reservation.id, 'Liberación automática - Proyecto archivado');
             }
         }
 
@@ -814,7 +814,7 @@ async function createReservation(reservationData) {
                 projet_id: reservationData.projectId,
                 utilisateur_id: state.user.id,
                 utilisateur: state.user.username,
-                commentaire: reservationData.comment || 'Réservation',
+                commentaire: reservationData.comment || 'Reserva',
                 date_debut: now.toISOString().split('T')[0],
                 date_fin: endDate.toISOString().split('T')[0],
                 created_at: now.toISOString()
@@ -833,7 +833,7 @@ async function createReservation(reservationData) {
 
 async function releaseReservation(reservationId, comment = '') {
     try {
-        // 1️⃣ Récupérer la réservation
+        // 1️⃣ Recuperar la reserva
         const { data: reservation, error: fetchError } = await supabase
             .from('w_reservations_actives')
             .select('article_id, projet_id, quantite')
@@ -842,7 +842,7 @@ async function releaseReservation(reservationId, comment = '') {
 
         if (fetchError) throw fetchError;
 
-        // 2️⃣ Récupérer stock_reserve actuel
+        // 2️⃣ Recuperar stock_reserve actual
         const { data: article, error: articleError } = await supabase
             .from('w_articles')
             .select('stock_reserve')
@@ -851,7 +851,7 @@ async function releaseReservation(reservationId, comment = '') {
 
         if (articleError) throw articleError;
 
-        // 3️⃣ Mettre à jour stock_reserve
+        // 3️⃣ Actualizar stock_reserve
         const newReservedStock =
             Math.max(0, (article.stock_reserve || 0) - reservation.quantite);
 
@@ -862,7 +862,7 @@ async function releaseReservation(reservationId, comment = '') {
 
         if (updateStockError) throw updateStockError;
 
-        // 4️⃣ Supprimer le mouvement "reservation"
+        // 4️⃣ Eliminar el movimiento "reservation"
         const { error: deleteMovementError } = await supabase
             .from('w_mouvements')
             .delete()
@@ -872,7 +872,7 @@ async function releaseReservation(reservationId, comment = '') {
 
         if (deleteMovementError) throw deleteMovementError;
 
-        // 5️⃣ Supprimer la réservation active
+        // 5️⃣ Eliminar la reserva activa
         const { error } = await supabase
             .from('w_reservations_actives')
             .delete()
@@ -882,12 +882,12 @@ async function releaseReservation(reservationId, comment = '') {
 
         return true;
     } catch (error) {
-        console.error('Erreur libération réservation:', error);
+        console.error('Error liberación reserva:', error);
         throw error;
     }
 }
 
-// ===== FONCTIONS SUPABASE =====
+// ===== FUNCIONES SUPABASE =====
 async function getProjectReservations(projectId) {
     try {
         const project = state.projects.find(p => p.id === projectId) ||
@@ -895,9 +895,9 @@ async function getProjectReservations(projectId) {
 
         if (!project) return { sorties: [], reservations: [] };
 
-        console.log('Recherche pour projet:', project.nom);
+        console.log('Buscando para proyecto:', project.nom);
 
-        // 1. RÉCUPÉRER LES SORTIES (par projet_id)
+        // 1. RECUPERAR LAS SALIDAS (por proyecto_id)
         const { data: sorties, error: sortiesError } = await supabase
             .from('w_mouvements')
             .select(`
@@ -905,13 +905,13 @@ async function getProjectReservations(projectId) {
                 article:article_id (nom, numero, code_barre, prix_unitaire),
                 utilisateur:utilisateur_id (username)
             `)
-            .eq('projet_id', projectId)  // Colonne projet_id
+            .eq('projet_id', projectId)  // Columna projet_id
             .eq('type', 'sortie')
             .order('created_at', { ascending: false });
 
         if (sortiesError) {
-            console.error('Erreur récupération sorties par ID:', sortiesError);
-            // Essayer avec le nom
+            console.error('Error recuperación salidas por ID:', sortiesError);
+            // Intentar con el nombre
             const { data: sortiesByName, error: sortiesByNameError } = await supabase
                 .from('w_mouvements')
                 .select(`
@@ -924,7 +924,7 @@ async function getProjectReservations(projectId) {
                 .order('created_at', { ascending: false });
 
             if (sortiesByNameError) {
-                console.error('Erreur récupération sorties par nom:', sortiesByNameError);
+                console.error('Error recuperación salidas por nombre:', sortiesByNameError);
                 throw sortiesByNameError;
             }
 
@@ -934,7 +934,7 @@ async function getProjectReservations(projectId) {
             };
         }
 
-        // 2. RÉCUPÉRER LES RÉSERVATIONS (utilise created_at au lieu de date_reservation)
+        // 2. RECUPERAR LAS RESERVAS (usa created_at en lugar de date_reservation)
         const { data: reservations, error: reservationsError } = await supabase
             .from('w_reservations_actives')
             .select(`
@@ -950,10 +950,10 @@ async function getProjectReservations(projectId) {
                 )
             `)
             .eq('projet_id', projectId)
-            .order('created_at', { ascending: false });  // CHANGÉ : date_reservation → created_at
+            .order('created_at', { ascending: false });  // CAMBIADO : date_reservation → created_at
 
         if (reservationsError) {
-            console.error('Erreur récupération réservations:', reservationsError);
+            console.error('Error recuperación reservas:', reservationsError);
             throw reservationsError;
         }
 
@@ -963,7 +963,7 @@ async function getProjectReservations(projectId) {
         };
 
     } catch (error) {
-        console.error('Erreur chargement données projet:', error);
+        console.error('Error carga datos proyecto:', error);
         return { sorties: [], reservations: [] };
     }
 }
@@ -975,7 +975,7 @@ async function getProjectHistory(projectId) {
 
         if (!project) return [];
 
-        // ESCAPER le nom du projet pour éviter les problèmes
+        // ESCAPAR el nombre del proyecto para evitar problemas
         const nomProjetEchappe = project.nom.replace(/'/g, "''");
 
         const { data, error } = await supabase
@@ -993,14 +993,14 @@ async function getProjectHistory(projectId) {
         return data || [];
 
     } catch (error) {
-        console.error('Erreur chargement historique projet:', error);
+        console.error('Error carga historial proyecto:', error);
         return [];
     }
 }
 
 async function fetchMovements() {
     try {
-        console.log('=== CHARGEMENT MOUVEMENTS ===');
+        console.log('=== CARGA MOVIMIENTOS ===');
 
         const { data, error } = await supabase
             .from('w_mouvements')
@@ -1008,28 +1008,28 @@ async function fetchMovements() {
             .or('type.eq.sortie,type.eq.retour_projet');
 
         if (error) {
-            console.error('Erreur:', error);
+            console.error('Error:', error);
             throw error;
         }
 
-        console.log('Mouvements chargés:', data);
-        console.log('=== FIN CHARGEMENT ===');
+        console.log('Movimientos cargados:', data);
+        console.log('=== FIN CARGA ===');
 
         state.movements = data || [];
 
     } catch (error) {
-        console.error('Erreur chargement mouvements:', error);
+        console.error('Error carga movimientos:', error);
         state.movements = [];
     }
 }
 
-// ===== MISE À JOUR DE L'AFFICHAGE =====
+// ===== ACTUALIZACIÓN DE LA PANTALLA =====
 function updateStatistics() {
-    // Compter les projets actifs
+    // Contar proyectos activos
     elements.activeProjectsCount.textContent = state.projects.length;
     elements.archivedTabCount.textContent = state.archivedProjects.length;
 
-    // Calculer le total des articles réservés
+    // Calcular el total de artículos reservados
     let totalItems = 0;
     let totalValue = 0;
 
@@ -1048,7 +1048,7 @@ function updateStatistics() {
     elements.totalReservedItems.textContent = totalItems;
     elements.reservedValue.textContent = `${totalValue.toFixed(2)} €`;
 
-    // Compter les utilisateurs uniques avec des réservations
+    // Contar usuarios únicos con reservas
     const uniqueUsers = new Set(
         state.reservations.map(r => r.id_user).filter(Boolean)
     );
@@ -1056,10 +1056,10 @@ function updateStatistics() {
 }
 
 function updateProjectsDisplay() {
-    // Filtrer les projets
+    // Filtrar proyectos
     let filteredProjects = [...state.projects];
 
-    // Filtre par statut
+    // Filtro por estado
     if (state.filters.status) {
         filteredProjects = filteredProjects.filter(project => {
             const status = getProjectStatus(project);
@@ -1067,14 +1067,14 @@ function updateProjectsDisplay() {
         });
     }
 
-    // Filtre par responsable
+    // Filtro por responsable
     if (state.filters.manager) {
         filteredProjects = filteredProjects.filter(project =>
             project.responsable === state.filters.manager
         );
     }
 
-    // Recherche texte
+    // Búsqueda de texto
     if (elements.searchProjects.value.trim()) {
         const searchTerm = elements.searchProjects.value.toLowerCase().trim();
         filteredProjects = filteredProjects.filter(project => {
@@ -1089,7 +1089,7 @@ function updateProjectsDisplay() {
         });
     }
 
-    // Trier
+    // Ordenar
     filteredProjects.sort((a, b) => {
         switch (state.filters.sortBy) {
             case 'name':
@@ -1109,9 +1109,9 @@ function updateProjectsDisplay() {
         elements.projectsGrid.innerHTML = `
             <div class="no-projects">
                 <i class="fas fa-project-diagram"></i>
-                <p>Aucun projet trouvé</p>
+                <p>No se encontraron proyectos</p>
                 <button id="createFirstProjectBtn" class="btn-primary">
-                    <i class="fas fa-plus"></i> Créer un premier projet
+                    <i class="fas fa-plus"></i> Crear un primer proyecto
                 </button>
             </div>
         `;
@@ -1127,26 +1127,26 @@ function updateProjectsDisplay() {
     filteredProjects.forEach(project => {
         const projectReservations = state.reservations.filter(r => r.projet_id === project.id);
 
-        // DEBUG : Voir ce qui est dans state.movements
-        console.log('=== DEBUG PROJET ===');
-        console.log('Projet ID:', project.id);
-        console.log('Projet Nom:', project.nom);
-        console.log('Total mouvements dans state:', state.movements?.length || 0);
-        console.log('Mouvements pour ce projet (ID):', state.movements?.filter(m => m.projet_id === project.id));
-        console.log('Mouvements pour ce projet (Nom):', state.movements?.filter(m => m.projet === project.nom));
+        // DEBUG : Ver qué hay en state.movements
+        console.log('=== DEBUG PROYECTO ===');
+        console.log('ID Proyecto:', project.id);
+        console.log('Nombre Proyecto:', project.nom);
+        console.log('Total movimientos en state:', state.movements?.length || 0);
+        console.log('Movimientos para este proyecto (ID):', state.movements?.filter(m => m.projet_id === project.id));
+        console.log('Movimientos para este proyecto (Nombre):', state.movements?.filter(m => m.projet === project.nom));
 
-        // Filtrer les SORTIES pour ce projet (par ID OU par nom)
+        // Filtrar las SALIDAS para este proyecto (por ID O por nombre)
         const projectSorties = state.movements?.filter(m =>
             m.type === 'sortie' &&
             (m.projet_id === project.id || m.projet === project.nom)
         ) || [];
 
-        console.log('Sorties trouvées:', projectSorties);
+        console.log('Salidas encontradas:', projectSorties);
 
-        // Calculer le total des articles sortis
+        // Calcular el total de artículos salidos
         const itemsUsedCount = projectSorties.reduce((sum, m) => sum + (m.quantite || 0), 0);
 
-        console.log('itemsUsedCount calculé:', itemsUsedCount);
+        console.log('itemsUsedCount calculado:', itemsUsedCount);
         console.log('=== FIN DEBUG ===');
         const status = getProjectStatus(project);
         const daysLeft = calculateDaysLeft(project.date_fin_prevue);
@@ -1156,58 +1156,58 @@ function updateProjectsDisplay() {
                 <div class="project-card-header">
                     <div>
                         <div class="project-name">${project.nom}</div>
-                        <div class="project-number">${project.numero || 'Sans numéro'}</div>
+                        <div class="project-number">${project.numero || 'Sin número'}</div>
                     </div>
 
                 </div>
 
                 <div class="project-description">
-                    ${project.description || 'Aucune description'}
+                    ${project.description || 'Sin descripción'}
                 </div>
 
                 <div class="project-meta">
                     <div class="project-meta-item">
                         <span class="project-meta-value">${itemsUsedCount}</span>
-                        <span class="project-meta-label">Articles</span>
+                        <span class="project-meta-label">Artículos</span>
                     </div>
                     <div class="project-meta-item">
                         <span class="project-meta-value">${daysLeft}</span>
-                        <span class="project-meta-label">Jours restants</span>
+                        <span class="project-meta-label">Días restantes</span>
                     </div>
                     <div class="project-meta-item">
                         <span class="project-meta-value">${projectReservations.length}</span>
-                        <span class="project-meta-label">Réservations</span>
+                        <span class="project-meta-label">Reservas</span>
                     </div>
                 </div>
 
                 <div class="project-info">
                     <div class="project-info-item">
                         <i class="fas fa-user-tie"></i>
-                        <span>Responsable : ${project.responsable || 'Non défini'}</span>
+                        <span>Responsable : ${project.responsable || 'No definido'}</span>
                     </div>
                     <div class="project-info-item">
                         <i class="fas fa-calendar"></i>
-                        <span>Créé le : ${formatDate(project.created_at)}</span>
+                        <span>Creado el : ${formatDate(project.created_at)}</span>
                     </div>
                     ${project.date_fin_prevue ? `
                     <div class="project-info-item">
                         <i class="fas fa-calendar-check"></i>
-                        <span>Fin prévue : ${formatDate(project.date_fin_prevue)}</span>
+                        <span>Fin prevista : ${formatDate(project.date_fin_prevue)}</span>
                     </div>
                     ` : ''}
                 </div>
 
                 <div class="project-actions">
                     <button class="btn-primary btn-small view-project-details" data-id="${project.id}">
-                        <i class="fas fa-eye"></i> Détails
+                        <i class="fas fa-eye"></i> Detalles
                     </button>
                     ${status === 'archived' ? `
                     <button class="btn-secondary btn-small unarchive-project" data-id="${project.id}">
-                        <i class="fas fa-box-open"></i> Désarchiver
+                        <i class="fas fa-box-open"></i> Desarchivar
                     </button>
                     ` : `
                     <button class="btn-secondary btn-small archive-project" data-id="${project.id}">
-                        <i class="fas fa-archive"></i> Archiver
+                        <i class="fas fa-archive"></i> Archivar
                     </button>
                     `}
                 </div>
@@ -1217,7 +1217,7 @@ function updateProjectsDisplay() {
 
     elements.projectsGrid.innerHTML = html;
 
-    // Ajouter les événements
+    // Añadir eventos
     document.querySelectorAll('.view-project-details').forEach(btn => {
         btn.addEventListener('click', function() {
             const projectId = this.dataset.id;
@@ -1245,7 +1245,7 @@ function updateArchivedProjectsDisplay() {
         elements.archivedProjectsGrid.innerHTML = `
             <div class="no-projects">
                 <i class="fas fa-archive"></i>
-                <p>Aucun projet archivé</p>
+                <p>Ningún proyecto archivado</p>
             </div>
         `;
         return;
@@ -1261,45 +1261,45 @@ function updateArchivedProjectsDisplay() {
                 <div class="project-card-header">
                     <div>
                         <div class="project-name">${project.nom}</div>
-                        <div class="project-number">${project.numero || 'Sans numéro'}</div>
+                        <div class="project-number">${project.numero || 'Sin número'}</div>
                     </div>
                     <span class="project-status archived">
-                        Archivé
+                        Archivado
                     </span>
                 </div>
 
                 <div class="project-description">
-                    ${project.description || 'Aucune description'}
+                    ${project.description || 'Sin descripción'}
                 </div>
 
                 <div class="project-meta">
                     <div class="project-meta-item">
                         <span class="project-meta-value">${itemsCount}</span>
-                        <span class="project-meta-label">Articles</span>
+                        <span class="project-meta-label">Artículos</span>
                     </div>
                     <div class="project-meta-item">
                         <span class="project-meta-value">${formatDate(project.archived_at)}</span>
-                        <span class="project-meta-label">Archivé le</span>
+                        <span class="project-meta-label">Archivado el</span>
                     </div>
                 </div>
 
                 <div class="project-info">
                     <div class="project-info-item">
                         <i class="fas fa-user-tie"></i>
-                        <span>Responsable : ${project.responsable || 'Non défini'}</span>
+                        <span>Responsable : ${project.responsable || 'No definido'}</span>
                     </div>
                     <div class="project-info-item">
                         <i class="fas fa-calendar"></i>
-                        <span>Créé le : ${formatDate(project.created_at)}</span>
+                        <span>Creado el : ${formatDate(project.created_at)}</span>
                     </div>
                 </div>
 
                 <div class="project-actions">
                     <button class="btn-primary btn-small view-project-details" data-id="${project.id}">
-                        <i class="fas fa-eye"></i> Détails
+                        <i class="fas fa-eye"></i> Detalles
                     </button>
                     <button class="btn-secondary btn-small unarchive-project" data-id="${project.id}">
-                        <i class="fas fa-box-open"></i> Désarchiver
+                        <i class="fas fa-box-open"></i> Desarchivar
                     </button>
                 </div>
             </div>
@@ -1308,7 +1308,7 @@ function updateArchivedProjectsDisplay() {
 
     elements.archivedProjectsGrid.innerHTML = html;
 
-    // ← AJOUTE CETTE SECTION POUR LES ÉVÉNEMENTS
+    // ← AÑADIR ESTA SECCIÓN PARA LOS EVENTOS
     document.querySelectorAll('.view-project-details').forEach(btn => {
         btn.addEventListener('click', function() {
             const projectId = this.dataset.id;
@@ -1327,7 +1327,7 @@ function updateArchivedProjectsDisplay() {
 function populateManagerFilter() {
     const managers = [...new Set(state.projects.map(p => p.responsable).filter(Boolean))];
 
-    let html = '<option value="">Tous les responsables</option>';
+    let html = '<option value="">Todos los responsables</option>';
     managers.forEach(manager => {
         html += `<option value="${manager}">${manager}</option>`;
     });
@@ -1337,14 +1337,14 @@ function populateManagerFilter() {
 }
 
 function populateArticleSelect() {
-    let html = '<option value="">Sélectionnez un article</option>';
+    let html = '<option value="">Seleccionar un artículo</option>';
     state.articles.forEach(article => {
-        // Calculer le stock disponible réel
+        // Calcular el stock disponible real
         const stockReserve = article.stock_reserve || 0;
         const stockActuel = article.stock_actuel || 0;
         const stockDisponible = Math.max(0, stockActuel - stockReserve);
 
-        // Affiche seulement les articles avec stock disponible > 0
+        // Mostrar solo artículos con stock disponible > 0
         if (stockDisponible > 0) {
             html += `<option value="${article.id}">${article.nom} (${article.code || article.numero}) - Stock disponible: ${stockDisponible}</option>`;
         }
@@ -1352,7 +1352,7 @@ function populateArticleSelect() {
     elements.reservationArticle.innerHTML = html;
 }
 
-// ===== GESTION DES MODALS =====
+// ===== GESTIÓN DE LOS MODALES =====
 function showModal(modalElement) {
     if (state.currentModal && state.currentModal !== modalElement) {
         state.previousModal = state.currentModal;
@@ -1371,28 +1371,28 @@ function hideModal() {
 }
 
 
-// ===== DÉTAILS DU PROJET =====
+// ===== DETALLES DEL PROYECTO =====
 async function showProjectDetails(projectId) {
     try {
         showLoading();
 
         const project = [...state.projects, ...state.archivedProjects].find(p => p.id === projectId);
         if (!project) {
-            showAlert('Projet non trouvé', 'error');
+            showAlert('Proyecto no encontrado', 'error');
             return;
         }
 
         state.currentProject = project;
 
-        // Récupérer les données du projet
+        // Recuperar los datos del proyecto
         const projectData = await getProjectReservations(projectId);
         const projectHistory = await getProjectHistory(projectId);
 
-        const sorties = projectData.sorties || []; // ← AJOUT de "|| []"
-        const reservations = projectData.reservations || []; // ← AJOUT de "|| []"
+        const sorties = projectData.sorties || []; // ← AGREGADO de "|| []"
+        const reservations = projectData.reservations || []; // ← AGREGADO de "|| []"
 
-        // Calculer les statistiques SÉPARÉES
-        // 1. Articles SORTIS (déjà utilisés)
+        // Calcular las estadísticas SEPARADAS
+        // 1. Artículos SALIDOS (ya utilizados)
         const itemsSortis = sorties.reduce((sum, s) => sum + s.quantite, 0);
         const valeurSortis = sorties.reduce((sum, s) => {
             const article = s.article;
@@ -1402,7 +1402,7 @@ async function showProjectDetails(projectId) {
             return sum;
         }, 0);
 
-        // 2. Articles RÉSERVÉS (pas encore utilisés)
+        // 2. Artículos RESERVADOS (aún no utilizados)
         const itemsReserves = reservations.reduce((sum, r) => sum + r.quantite, 0);
         const valeurReserves = reservations.reduce((sum, r) => {
             const article = r.w_articles;
@@ -1412,76 +1412,76 @@ async function showProjectDetails(projectId) {
             return sum;
         }, 0);
 
-        // 3. Totaux généraux
+        // 3. Totales generales
         const itemsTotaux = itemsSortis + itemsReserves;
         const valeurTotale = valeurSortis + valeurReserves;
 
         const daysLeft = calculateDaysLeft(project.date_fin_prevue);
         const status = getProjectStatus(project);
 
-        // Mettre à jour l'en-tête avec les bonnes statistiques
+        // Actualizar la cabecera con las estadísticas correctas
         elements.projectDetailsName.textContent = project.nom;
-        elements.projectDetailsNumber.textContent = project.numero || 'Sans numéro';
-        elements.projectDetailsStatus.textContent = status === 'active' ? 'Actif' :
-                                                  status === 'ending' ? 'Bientôt terminé' :
-                                                  status === 'overdue' ? 'En retard' : 'Archivé';
+        elements.projectDetailsNumber.textContent = project.numero || 'Sin número';
+        elements.projectDetailsStatus.textContent = status === 'active' ? 'Activo' :
+                                                  status === 'ending' ? 'Próximo a terminar' :
+                                                  status === 'overdue' ? 'Atrasado' : 'Archivado';
         elements.projectDetailsStatus.className = `project-status ${status}`;
 
-        // Afficher seulement les SORTIES dans le compteur principal (ce qui est facturé)
+        // Mostrar solo las SALIDAS en el contador principal (lo que se factura)
         document.getElementById('projectDetailsItemsUsed').textContent = itemsSortis;
         document.getElementById('projectDetailsValueUsed').textContent = `${valeurSortis.toFixed(2)} €`;
         document.getElementById('projectDetailsItemsReserved').textContent = itemsReserves;
         document.getElementById('projectDetailsValueReserved').textContent = `${valeurReserves.toFixed(2)} €`;
         elements.projectDetailsDaysLeft.textContent = daysLeft;
 
-        // Mettre à jour les informations
-        elements.projectDetailsDescription.textContent = project.description || 'Pas de description';
+        // Actualizar la información
+        elements.projectDetailsDescription.textContent = project.description || 'Sin descripción';
         elements.projectDetailsCreatedAt.textContent = formatDateTime(project.created_at);
-        elements.projectDetailsEndDate.textContent = project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'Non définie';
-        elements.projectDetailsUpdatedAt.textContent = project.updated_at ? formatDateTime(project.updated_at) : 'Jamais';
-        elements.projectDetailsManager.textContent = project.responsable || 'Non défini';
-        elements.projectDetailsBudget.textContent = project.budget ? `${project.budget} €` : 'Non défini';
+        elements.projectDetailsEndDate.textContent = project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'No definida';
+        elements.projectDetailsUpdatedAt.textContent = project.updated_at ? formatDateTime(project.updated_at) : 'Nunca';
+        elements.projectDetailsManager.textContent = project.responsable || 'No definido';
+        elements.projectDetailsBudget.textContent = project.budget ? `${project.budget} €` : 'No definido';
 
-        // Mettre à jour l'affichage des articles
-        // Récupérer aussi les retours (mouvements de type 'retour_projet')
+        // Actualizar la visualización de los artículos
+        // Recuperar también las devoluciones (movimientos de tipo 'retour_projet')
         const retours = state.movements?.filter(m =>
             m.type === 'retour_projet' &&
             m.projet_id === projectId
         ) || [];
 
-        // Mettre à jour l'affichage des articles
+        // Actualizar la visualización de los artículos
         updateProjectReservations(sorties, retours, reservations);
         elements.projectReservationsCount.textContent = sorties.length + reservations.length;
 
-        // Mettre à jour l'historique
+        // Actualizar el historial
         updateProjectHistory(projectHistory);
 
-        // Mettre à jour les infos supplémentaires (à ajouter dans votre HTML)
+        // Actualizar la información adicional (a agregar en tu HTML)
         updateReservationStats(itemsReserves, valeurReserves, itemsSortis, valeurSortis);
 
-        // Configurer les boutons
+        // Configurar los botones
         elements.archiveProjectBtn.style.display = project.archived ? 'none' : 'block';
-        elements.archiveProjectBtn.textContent = project.archived ? 'Désarchiver' : 'Archiver';
+        elements.archiveProjectBtn.textContent = project.archived ? 'Desarchivar' : 'Archivar';
 
         showModal(elements.projectDetailsModal);
         switchProjectTab('reservations');
 
     } catch (error) {
-        console.error('Erreur affichage détails projet:', error);
-        showAlert('Erreur lors du chargement des détails', 'error');
+        console.error('Error al mostrar detalles del proyecto:', error);
+        showAlert('Error al cargar los detalles', 'error');
     } finally {
         hideLoading();
     }
 }
 
-// Fonction pour mettre à jour les statistiques supplémentaires
+// Función para actualizar las estadísticas adicionales
 function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, valeurSortis) {
-    // Créer ou mettre à jour un élément HTML pour afficher les stats détaillées
+    // Crear o actualizar un elemento HTML para mostrar las estadísticas detalladas
     const statsContainer = document.getElementById('projectDetailsStats') ||
                           document.querySelector('.project-stats-container');
 
     if (!statsContainer) {
-        // Si l'élément n'existe pas, le créer
+        // Si el elemento no existe, crearlo
         const detailsContent = document.querySelector('.project-details-content');
         if (detailsContent) {
             const statsHtml = `
@@ -1493,7 +1493,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">${itemsSortis}</div>
-                                <div class="stat-label">Articles utilisés</div>
+                                <div class="stat-label">Artículos utilizados</div>
                                 <div class="stat-amount">${valeurSortis.toFixed(2)} €</div>
                             </div>
                         </div>
@@ -1503,7 +1503,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">${itemsReserves}</div>
-                                <div class="stat-label">Articles réservés</div>
+                                <div class="stat-label">Artículos reservados</div>
                                 <div class="stat-amount">${valeurReserves.toFixed(2)} €</div>
                             </div>
                         </div>
@@ -1513,7 +1513,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">${itemsSortis + itemsReserves}</div>
-                                <div class="stat-label">Total articles</div>
+                                <div class="stat-label">Total de artículos</div>
                                 <div class="stat-amount">${(valeurSortis + valeurReserves).toFixed(2)} €</div>
                             </div>
                         </div>
@@ -1523,7 +1523,7 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
             detailsContent.insertAdjacentHTML('afterbegin', statsHtml);
         }
     } else {
-        // Mettre à jour les valeurs
+        // Actualizar los valores
         const sortieValue = statsContainer.querySelector('.stat-card.sortie .stat-value');
         const sortieAmount = statsContainer.querySelector('.stat-card.sortie .stat-amount');
         const reserveValue = statsContainer.querySelector('.stat-card.reservation .stat-value');
@@ -1540,14 +1540,14 @@ function updateReservationStats(itemsReserves, valeurReserves, itemsSortis, vale
     }
 }
 
-function updateProjectReservations(sorties, retours, reservations) { // ← CHANGÉ : ajout du paramètre retours
+function updateProjectReservations(sorties, retours, reservations) { // ← CAMBIADO: agregado el parámetro retours
     const allItems = [...sorties, ...reservations];
 
     if (allItems.length === 0) {
         elements.projectReservationsBody.innerHTML = `
             <tr>
                 <td colspan="7" class="loading-row">
-                    <i class="fas fa-info-circle"></i> Aucun article pour ce projet
+                    <i class="fas fa-info-circle"></i> Ningún artículo para este proyecto
                 </td>
             </tr>
         `;
@@ -1556,12 +1556,12 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
 
     let html = '';
 
-    // 1. AFFICHER LES SORTIES (déjà utilisées)
+    // 1. MOSTRAR LAS SALIDAS (ya utilizadas)
     if (sorties.length > 0) {
         html += `
             <tr>
                 <td colspan="7" class="section-header">
-                    <i class="fas fa-check-circle text-success"></i> Articles utilisés (sorties)
+                    <i class="fas fa-check-circle text-success"></i> Artículos utilizados (salidas)
                 </td>
             </tr>
         `;
@@ -1570,17 +1570,17 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
             const valeurTotale = sortie.article?.prix_unitaire ?
                 (sortie.article.prix_unitaire * sortie.quantite).toFixed(2) : '0.00';
 
-            // Vérifier si cette sortie a déjà un retour
+            // Verificar si esta salida ya tiene un retorno
             const hasReturn = retours?.some(retour =>
-                retour.mouvement_parent_id === sortie.id // ← UTILISER le paramètre retours
+                retour.mouvement_parent_id === sortie.id // ← USAR el parámetro retours
             );
 
             html += `
                 <tr data-id="${sortie.id}" class="sortie-row ${hasReturn ? 'already-returned' : ''}">
                     <td>
                         <div class="article-info">
-                            <strong>${sortie.article?.nom || 'Article inconnu'}</strong>
-                            ${hasReturn ? '<span class="badge badge-returned">Déjà retourné</span>' : ''}
+                            <strong>${sortie.article?.nom || 'Artículo desconocido'}</strong>
+                            ${hasReturn ? '<span class="badge badge-returned">Ya devuelto</span>' : ''}
                             <small>${sortie.article?.numero || ''}</small>
                         </div>
                     </td>
@@ -1600,13 +1600,13 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
                         <div class="price-info">
                             ${sortie.article?.prix_unitaire ?
                                 `${sortie.article.prix_unitaire.toFixed(2)} €` :
-                                'Prix N/A'}
+                                'Precio N/A'}
                             <small>Total: ${valeurTotale} €</small>
                         </div>
                     </td>
                     <td>
                         <div class="user-info">
-                            ${sortie.utilisateur?.username || 'Utilisateur inconnu'}
+                            ${sortie.utilisateur?.username || 'Usuario desconocido'}
                         </div>
                     </td>
                     <td>
@@ -1616,14 +1616,14 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
                                     data-id="${sortie.id}"
                                     data-article-id="${sortie.article_id}"
                                     data-quantity="${sortie.quantite}"
-                                    title="Retour au stock">
+                                    title="Devolver al stock">
                                 <i class="fas fa-arrow-left"></i>
                             </button>
                             `}
                             <button class="btn-action btn-small view-details"
                                     data-id="${sortie.id}"
                                     data-type="sortie"
-                                    title="Voir les détails">
+                                    title="Ver detalles">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
@@ -1633,26 +1633,26 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
         });
     }
 
-    // 2. AFFICHER LES RETOURS (utiliser le paramètre retours)
+    // 2. MOSTRAR LAS DEVOLUCIONES (usar el parámetro retours)
     if (retours && retours.length > 0) {
         html += `
             <tr>
                 <td colspan="7" class="section-header retour-header">
-                    <i class="fas fa-check-circle text-success"></i> Articles retournés au stock
+                    <i class="fas fa-check-circle text-success"></i> Artículos devueltos al stock
                 </td>
             </tr>
         `;
 
         retours.forEach(retourItem => {
-            // Trouver l'article correspondant
+            // Encontrar el artículo correspondiente
             let article = null;
 
-            // Chercher d'abord dans les sorties
+            // Buscar primero en las salidas
             const relatedSortie = sorties.find(s => s.id === retourItem.mouvement_parent_id);
             if (relatedSortie?.article) {
                 article = relatedSortie.article;
             } else {
-                // Sinon chercher dans les articles du state
+                // Si no, buscar en los artículos del state
                 article = state.articles.find(a => a.id === retourItem.article_id) || {};
             }
 
@@ -1663,7 +1663,7 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
                 <tr data-id="${retourItem.id}" class="returned-row">
                     <td>
                         <div class="article-info">
-                            <strong>${article?.nom || 'Article inconnu'}</strong>
+                            <strong>${article?.nom || 'Artículo desconocido'}</strong>
                             <small>${article?.numero || ''}</small>
                         </div>
                     </td>
@@ -1690,7 +1690,7 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
                         <div class="price-info">
                             ${article?.prix_unitaire ?
                                 `${article.prix_unitaire.toFixed(2)} €` :
-                                'Prix N/A'}
+                                'Precio N/A'}
                             <small>Total: ${valeurTotale} €</small>
                             ${retourItem.raison ? `
                             <div class="missing-info" style="color: #dc3545; margin-top: 5px;">
@@ -1702,7 +1702,7 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
                     </td>
                     <td>
                         <div class="user-info">
-                            ${retourItem.utilisateur || 'Utilisateur inconnu'}
+                            ${retourItem.utilisateur || 'Usuario desconocido'}
                         </div>
                     </td>
                     <td>
@@ -1710,7 +1710,7 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
                             <button class="btn-action btn-small view-details"
                                     data-id="${retourItem.id}"
                                     data-type="retour"
-                                    title="Voir les détails">
+                                    title="Ver detalles">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
@@ -1720,12 +1720,12 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
         });
     }
 
-    // 3. AFFICHER LES RÉSERVATIONS (pas encore utilisées)
+    // 3. MOSTRAR LAS RESERVAS (aún no utilizadas)
     if (reservations.length > 0) {
         html += `
             <tr>
                 <td colspan="7" class="section-header reservation-header">
-                    <i class="fas fa-clock text-warning"></i> Articles réservés (non utilisés)
+                    <i class="fas fa-clock text-warning"></i> Artículos reservados (no utilizados)
                 </td>
             </tr>
         `;
@@ -1740,7 +1740,7 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
                 <tr data-id="${reservation.id}" class="reservation-row">
                     <td>
                         <div class="article-info">
-                            <strong>${article?.nom || 'Article inconnu'}</strong>
+                            <strong>${article?.nom || 'Artículo desconocido'}</strong>
                             <small>${article?.numero || ''}</small>
                         </div>
                     </td>
@@ -1760,18 +1760,18 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
                         <div class="price-info">
                             ${article?.prix_unitaire ?
                                 `${article.prix_unitaire.toFixed(2)} €` :
-                                'Prix N/A'}
+                                'Precio N/A'}
                             <small>Total: ${valeurTotale} €</small>
                             <br>
                             <span class="badge ${daysLeft <= 0 ? 'danger' : daysLeft <= 7 ? 'warning' : 'info'}">
                                 ${formatDate(reservation.date_fin)}
-                                ${daysLeft <= 0 ? ' (Expiré)' : daysLeft <= 7 ? ` (${daysLeft}j)` : ''}
+                                ${daysLeft <= 0 ? ' (Expirado)' : daysLeft <= 7 ? ` (${daysLeft}d)` : ''}
                             </span>
                         </div>
                     </td>
                     <td>
                         <div class="user-info">
-                            ${reservation.w_users?.username || 'Utilisateur inconnu'}
+                            ${reservation.w_users?.username || 'Usuario desconocido'}
                         </div>
                     </td>
                     <td>
@@ -1780,18 +1780,18 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
                                     data-id="${reservation.id}"
                                     data-article-id="${reservation.article_id || ''}"
                                     data-quantity="${reservation.quantite}"
-                                    title="Marquer comme utilisé">
+                                    title="Marcar como utilizado">
                                 <i class="fas fa-check"></i>
                             </button>
                             <button class="btn-action btn-small view-details"
                                     data-id="${reservation.id}"
                                     data-type="reservation"
-                                    title="Voir les détails">
+                                    title="Ver detalles">
                                 <i class="fas fa-eye"></i>
                             </button>
                             <button class="btn-action btn-small release-reservation"
                                     data-id="${reservation.id}"
-                                    title="Libérer la réservation">
+                                    title="Liberar reserva">
                                 <i class="fas fa-unlock"></i>
                             </button>
                         </div>
@@ -1803,11 +1803,11 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
 
     elements.projectReservationsBody.innerHTML = html;
 
-    // Événement pour le bouton "Retour au stock"
+    // Evento para el botón "Devolver al stock"
     document.querySelectorAll('.return-to-stock').forEach(btn => {
         btn.addEventListener('click', function() {
-            console.log('=== CLICK RETOUR STOCK ===');
-            console.log('Bouton cliqué:', this);
+            console.log('=== CLICK DEVOLVER STOCK ===');
+            console.log('Botón clickeado:', this);
             console.log('Dataset:', this.dataset);
 
             const mouvementId = this.dataset.id;
@@ -1822,12 +1822,12 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
         });
     });
 
-    // Ajouter les événements pour les boutons
+    // Agregar los eventos para los botones
     document.querySelectorAll('.view-details').forEach(btn => {
         btn.addEventListener('click', function() {
             const itemId = this.dataset.id;
             const itemType = this.dataset.type;
-            showItemDetails(itemId, itemType, sorties, retours, reservations); // ← CHANGÉ : ajout de retours
+            showItemDetails(itemId, itemType, sorties, retours, reservations); // ← CAMBIADO: agregado retours
         });
     });
 
@@ -1838,22 +1838,22 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
 
             if (reservation) {
                 const article = reservation.w_articles;
-                const articleName = article?.nom || 'Article inconnu';
+                const articleName = article?.nom || 'Artículo desconocido';
 
-                if (confirm(`Libérer la réservation de ${reservation.quantite} ${articleName} ?`)) {
+                if (confirm(`¿Liberar la reserva de ${reservation.quantite} ${articleName} ?`)) {
                     try {
                         showLoading();
 
                         await releaseReservation(reservationId);
 
-                        showAlert('Réservation libérée avec succès', 'success');
+                        showAlert('Reserva liberada con éxito', 'success');
 
-                        // Recharger les détails du projet
+                        // Recargar los detalles del proyecto
                         await showProjectDetails(state.currentProject.id);
 
                     } catch (error) {
-                        console.error('Erreur libération réservation:', error);
-                        showAlert('Erreur lors de la libération de la réservation', 'error');
+                        console.error('Error liberación reserva:', error);
+                        showAlert('Error al liberar la reserva', 'error');
                     } finally {
                         hideLoading();
                     }
@@ -1862,7 +1862,7 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
         });
     });
 
-    // Événement pour le bouton "Utiliser"
+    // Evento para el botón "Usar"
     document.querySelectorAll('.use-reservation').forEach(btn => {
         btn.addEventListener('click', function() {
             const reservationId = this.dataset.id;
@@ -1873,7 +1873,7 @@ function updateProjectReservations(sorties, retours, reservations) { // ← CHAN
     });
 }
 
-// Fonction pour afficher les détails d'un item
+// Función para mostrar los detalles de un item
 function showItemDetails(itemId, itemType, sorties, reservations) {
     let item;
 
@@ -1893,57 +1893,57 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
         <div class="modal-overlay" style="display: flex;">
             <div class="modal" style="max-width: 600px;">
                 <div class="modal-header">
-                    <h3><i class="fas fa-info-circle"></i> Détails</h3>
+                    <h3><i class="fas fa-info-circle"></i> Detalles</h3>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="detail-section">
-                        <h4><i class="fas fa-box"></i> Article</h4>
+                        <h4><i class="fas fa-box"></i> Artículo</h4>
                         <div class="detail-item">
-                            <span class="detail-label">Nom :</span>
-                            <span class="detail-value">${article?.nom || 'Non spécifié'}</span>
+                            <span class="detail-label">Nombre :</span>
+                            <span class="detail-value">${article?.nom || 'No especificado'}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Numéro :</span>
-                            <span class="detail-value">${article?.numero || 'Non spécifié'}</span>
+                            <span class="detail-label">Número :</span>
+                            <span class="detail-value">${article?.numero || 'No especificado'}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Code-barre :</span>
-                            <span class="detail-value">${article?.code_barre || 'Non spécifié'}</span>
+                            <span class="detail-label">Código de barras :</span>
+                            <span class="detail-value">${article?.code_barre || 'No especificado'}</span>
                         </div>
                     </div>
 
                     <div class="detail-section">
-                        <h4><i class="fas ${isSortie ? 'fa-check-circle' : 'fa-clock'}"></i> ${isSortie ? 'Sortie' : 'Réservation'}</h4>
+                        <h4><i class="fas ${isSortie ? 'fa-check-circle' : 'fa-clock'}"></i> ${isSortie ? 'Salida' : 'Reserva'}</h4>
                         <div class="detail-item">
-                            <span class="detail-label">Type :</span>
+                            <span class="detail-label">Tipo :</span>
                             <span class="detail-value badge ${isSortie ? 'sortie' : 'reservation'}">
-                                ${isSortie ? 'Sortie effectuée' : 'Réservation active'}
+                                ${isSortie ? 'Salida efectuada' : 'Reserva activa'}
                             </span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Quantité :</span>
+                            <span class="detail-label">Cantidad :</span>
                             <span class="detail-value">${isSortie ? '-' : ''}${item.quantite}</span>
                         </div>
                         ${article?.prix_unitaire ? `
                         <div class="detail-item">
-                            <span class="detail-label">Prix unitaire :</span>
+                            <span class="detail-label">Precio unitario :</span>
                             <span class="detail-value">${article.prix_unitaire.toFixed(2)} €</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Valeur totale :</span>
+                            <span class="detail-label">Valor total :</span>
                             <span class="detail-value" style="font-weight: bold;">
                                 ${(article.prix_unitaire * item.quantite).toFixed(2)} €
                             </span>
                         </div>
                         ` : ''}
                         <div class="detail-item">
-                            <span class="detail-label">Date :</span>
+                            <span class="detail-label">Fecha :</span>
                             <span class="detail-value">${formatDateTime(item.created_at)}</span>
                         </div>
                         ${!isSortie ? `
                         <div class="detail-item">
-                            <span class="detail-label">Date de fin :</span>
+                            <span class="detail-label">Fecha de fin :</span>
                             <span class="detail-value">${formatDate(item.date_fin)}</span>
                         </div>
                         ` : ''}
@@ -1952,8 +1952,8 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
                     <div class="detail-section">
                         <h4><i class="fas fa-user"></i> Responsable</h4>
                         <div class="detail-item">
-                            <span class="detail-label">Utilisateur :</span>
-                            <span class="detail-value">${user?.username || 'Non spécifié'}</span>
+                            <span class="detail-label">Usuario :</span>
+                            <span class="detail-value">${user?.username || 'No especificado'}</span>
                         </div>
                         ${user?.email ? `
                         <div class="detail-item">
@@ -1965,7 +1965,7 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
 
                     ${item.commentaire ? `
                     <div class="detail-section">
-                        <h4><i class="fas fa-comment"></i> Commentaire</h4>
+                        <h4><i class="fas fa-comment"></i> Comentario</h4>
                         <div class="detail-comment">
                             ${item.commentaire}
                         </div>
@@ -1974,7 +1974,7 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
 
                     <div class="modal-actions">
                         <button type="button" class="btn btn-secondary close-details-modal">
-                            Fermer
+                            Cerrar
                         </button>
                     </div>
                 </div>
@@ -1988,7 +1988,7 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
 
     const modal = modalContainer.querySelector('.modal-overlay');
 
-    // Gérer la fermeture
+    // Manejar el cierre
     modal.querySelector('.close-modal').addEventListener('click', () => {
         modal.remove();
     });
@@ -2005,15 +2005,15 @@ function showItemDetails(itemId, itemType, sorties, reservations) {
 }
 
 async function openReturnToStockModal(mouvementId, articleId, originalQuantity) {
-    console.log('=== OPEN RETURN MODAL ===');
+    console.log('=== ABRIR MODAL DEVOLUCIÓN ===');
     console.log('mouvementId:', mouvementId);
     console.log('articleId:', articleId);
     console.log('originalQuantity:', originalQuantity);
 
     try {
-        console.log('=== DÉBUT TRY OPEN RETURN MODAL ===');
-        console.log('Current user:', state.user);
-        console.log('=== REQUÊTE ARTICLE ===');
+        console.log('=== INICIO TRY ABRIR MODAL DEVOLUCIÓN ===');
+        console.log('Usuario actual:', state.user);
+        console.log('=== CONSULTA ARTÍCULO ===');
         console.log('articleId:', articleId);
 
         const { data: article, error: articleError } = await supabase
@@ -2032,22 +2032,22 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
             .eq('id', articleId)
             .single();
 
-        console.log('Résultat requête:', { article, articleError });
+        console.log('Resultado consulta:', { article, articleError });
 
         if (articleError) {
-            console.error('Erreur requête article:', articleError);
+            console.error('Error consulta artículo:', articleError);
             throw articleError;
         }
 
-        console.log('Article trouvé:', article);
-        console.log('=== FIN REQUÊTE ===');
+        console.log('Artículo encontrado:', article);
+        console.log('=== FIN CONSULTA ===');
 
-        // Créer le modal
+        // Crear el modal
         const modalHTML = `
             <div class="modal-overlay return-stock-modal">
                 <div class="modal" style="max-width: 600px;">
                     <div class="modal-header">
-                        <h3><i class="fas fa-arrow-left"></i> Retour au stock</h3>
+                        <h3><i class="fas fa-arrow-left"></i> Devolver al stock</h3>
                         <button class="close-modal">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -2059,7 +2059,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                                              style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s ease;"
                                              onclick="const img = this;
                                                       if(img.style.position === 'fixed') {
-                                                          // Retour à la position originale
+                                                          // Volver a la posición original
                                                           img.style.position = '';
                                                           img.style.width = '';
                                                           img.style.height = '';
@@ -2074,12 +2074,12 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                                                           img.style.padding = '';
                                                           img.style.borderRadius = '8px';
                                                       } else {
-                                                          // Sauvegarder la position originale
+                                                          // Guardar la posición original
                                                           const rect = img.getBoundingClientRect();
                                                           img.dataset.originalTop = rect.top + 'px';
                                                           img.dataset.originalLeft = rect.left + 'px';
 
-                                                          // Agrandir en plein écran
+                                                          // Ampliar a pantalla completa
                                                           img.style.position = 'fixed';
                                                           img.style.width = '90vw';
                                                           img.style.height = '90vh';
@@ -2098,13 +2098,13 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
                                     ` : ''}
                                 <div class="article-info">
                                     <h4>${article.nom} (${article.numero})</h4>
-                                    <p>Sorti : ${originalQuantity} unité(s)</p>
+                                    <p>Salido: ${originalQuantity} unidad(es)</p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-boxes"></i> Quantité retournée *</label>
+                            <label><i class="fas fa-boxes"></i> Cantidad devuelta *</label>
                             <input type="number"
                                    id="returnQuantity"
                                    value="${originalQuantity}"
@@ -2115,45 +2115,45 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
                         <div id="missingQuantitySection" style="display: none;">
                             <div class="form-group">
-                                <label><i class="fas fa-exclamation-triangle"></i> Raison de la différence</label>
+                                <label><i class="fas fa-exclamation-triangle"></i> Razón de la diferencia</label>
                                 <select id="missingReason" class="form-select" required>
-                                    <option value="">Sélectionner une raison...</option>
-                                    <option value="perdu">Perdu(s)</option>
-                                    <option value="cassé">Cassé(s)</option>
-                                    <option value="vole">Volé(s)</option>
-                                    <option value="fin_vie">Fin de vie utile</option>
+                                    <option value="">Seleccionar una razón...</option>
+                                    <option value="perdu">Perdido(s)</option>
+                                    <option value="cassé">Roto(s)</option>
+                                    <option value="vole">Robado(s)</option>
+                                    <option value="fin_vie">Fin de vida útil</option>
                                 </select>
                                 <div class="form-error" id="missingReasonError" style="color: #dc3545; font-size: 0.85em; display: none;">
-                                    <i class="fas fa-exclamation-circle"></i> Ce champ est obligatoire
+                                    <i class="fas fa-exclamation-circle"></i> Este campo es obligatorio
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-map-marker-alt"></i> Emplacement de rangement</label>
+                            <label><i class="fas fa-map-marker-alt"></i> Ubicación de almacenamiento</label>
                             <div class="location-display" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border-left: 3px solid #28a745;">
-                                <div><strong>Rayon:</strong> ${article.rack?.display_name || article.rack?.rack_code || 'Non spécifié'}</div>
-                                <div><strong>Étage:</strong> ${article.level?.level_code || 'Non spécifié'}</div>
-                                <div><strong>Position:</strong> ${article.slot?.slot_code || 'Non spécifié'}</div>
+                                <div><strong>Estante:</strong> ${article.rack?.display_name || article.rack?.rack_code || 'No especificado'}</div>
+                                <div><strong>Nivel:</strong> ${article.level?.level_code || 'No especificado'}</div>
+                                <div><strong>Posición:</strong> ${article.slot?.slot_code || 'No especificado'}</div>
                             </div>
-                            <small><i class="fas fa-info-circle"></i> Rangez l'article à cet emplacement</small>
+                            <small><i class="fas fa-info-circle"></i> Almacene el artículo en esta ubicación</small>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-clipboard-check"></i> État des articles</label>
+                            <label><i class="fas fa-clipboard-check"></i> Estado de los artículos</label>
                             <select id="itemCondition" class="form-select">
-                                <option value="parfait">Condition 1 Parfait état</option>
-                                <option value="raye">Condition 2 Usé / Réparé</option>
-                                <option value="reparation">Condition 3 A réparer</option>
-                                <option value="casse">Condition 4 A remplacer</option>
+                                <option value="parfait">Condición 1 Estado perfecto</option>
+                                <option value="raye">Condición 2 Desgastado / Reparado</option>
+                                <option value="reparation">Condición 3 A reparar</option>
+                                <option value="casse">Condición 4 A reemplazar</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-comment"></i> Commentaire</label>
+                            <label><i class="fas fa-comment"></i> Comentario</label>
                             <textarea id="returnComment"
                                       rows="3"
-                                      placeholder="Détails du retour..."
+                                      placeholder="Detalles de la devolución..."
                                       class="form-textarea"></textarea>
                         </div>
 
@@ -2164,10 +2164,10 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
 
                         <div class="modal-actions">
                             <button id="confirmReturnBtn" class="btn-success">
-                                <i class="fas fa-check"></i> Confirmer le retour
+                                <i class="fas fa-check"></i> Confirmar devolución
                             </button>
                             <button type="button" class="btn-secondary cancel-edit-btn">
-                                Annuler
+                                Cancelar
                             </button>
                         </div>
                     </div>
@@ -2176,40 +2176,40 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
         `;
 
 
-        console.log('=== CRÉATION MODAL HTML ===');
-        console.log('Modal HTML créé, longueur:', modalHTML.length);
-        console.log('État de state.currentProject:', state.currentProject);
+        console.log('=== CREACIÓN MODAL HTML ===');
+        console.log('Modal HTML creado, longitud:', modalHTML.length);
+        console.log('Estado de state.currentProject:', state.currentProject);
 
-        // Ajouter le modal au DOM
+        // Agregar el modal al DOM
         const modalContainer = document.createElement('div');
         modalContainer.innerHTML = modalHTML;
-        console.log('Modal container créé:', modalContainer);
+        console.log('Contenedor modal creado:', modalContainer);
         document.body.appendChild(modalContainer);
 
         const modal = modalContainer.querySelector('.return-stock-modal');
-        console.log('Modal trouvé dans DOM:', modal);
-        console.log('Modal style:', modal?.style);
+        console.log('Modal encontrado en DOM:', modal);
+        console.log('Estilo del modal:', modal?.style);
 
         modal.style.display = 'flex';
-        console.log('Modal style après display:', modal.style.display);
+        console.log('Estilo del modal después de display:', modal.style.display);
         state.previousModal = state.currentModal;
         state.currentModal = modal;
 
-        // CLOSE BUTTON
+        // BOTÓN CERRAR
         modal.querySelector('.close-modal').addEventListener('click', () => {
             modal.remove();
             state.currentModal = state.previousModal;
             state.previousModal = null;
         });
 
-        // CANCEL BUTTON
+        // BOTÓN CANCELAR
         modal.querySelector('.cancel-edit-btn').addEventListener('click', () => {
             modal.remove();
             state.currentModal = state.previousModal;
             state.previousModal = null;
         });
 
-        // CLICK OVERLAY
+        // CLIC EN OVERLAY
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 modal.remove();
@@ -2219,7 +2219,7 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
         });
 
 
-        // Gérer l'affichage de la section "raison de la différence"
+        // Gestionar la visualización de la sección "razón de la diferencia"
         const returnQuantityInput = modal.querySelector('#returnQuantity');
         const missingSection = modal.querySelector('#missingQuantitySection');
 
@@ -2237,17 +2237,17 @@ async function openReturnToStockModal(mouvementId, articleId, originalQuantity) 
         });
 
 
-        // Gérer la confirmation du retour
+        // Gestionar la confirmación de la devolución
         modal.querySelector('#confirmReturnBtn').addEventListener('click', async () => {
             await processReturnToStock(mouvementId, articleId, originalQuantity, modalContainer);
         });
 
     } catch (error) {
-        console.error('=== ERREUR OPEN RETURN MODAL ===');
-        console.error('Erreur complète:', error);
+        console.error('=== ERROR ABRIR MODAL DEVOLUCIÓN ===');
+        console.error('Error completo:', error);
         console.error('Stack:', error.stack);
-        console.error('=== FIN ERREUR ===');
-        showAlert('Erreur lors de l\'ouverture du formulaire de retour', 'error');
+        console.error('=== FIN ERROR ===');
+        showAlert('Error al abrir el formulario de devolución', 'error');
     }
 }
 
@@ -2255,34 +2255,34 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, mo
     try {
         const modal = modalElement;
         const returnQuantity = parseInt(modal.querySelector('#returnQuantity').value);
-        const returnLocation = "Emplacement d'origine selon fiche article";
+        const returnLocation = "Ubicación original según ficha del artículo";
         const itemCondition = modal.querySelector('#itemCondition').value;
         const returnComment = modal.querySelector('#returnComment').value.trim();
         const missingReason = modal.querySelector('#missingReason')?.value || '';
         const missingQuantity = originalQuantity - returnQuantity;
 
-        // Validation de la raison si quantité manquante
+        // Validación de la razón si la cantidad es faltante
         if (missingQuantity > 0 && !missingReason) {
-            modal.querySelector('#returnErrorText').textContent = 'Veuillez indiquer la raison de la quantité manquante';
+            modal.querySelector('#returnErrorText').textContent = 'Por favor, indique la razón de la cantidad faltante';
             modal.querySelector('#returnError').style.display = 'flex';
             return;
         }
 
-        // Validation
+        // Validación
         if (!returnQuantity || returnQuantity < 0) {
-            modal.querySelector('#returnErrorText').textContent = 'La quantité retournée est invalide';
+            modal.querySelector('#returnErrorText').textContent = 'La cantidad devuelta es inválida';
             modal.querySelector('#returnError').style.display = 'flex';
             return;
         }
 
-        // Demander confirmation
-        if (!confirm(`Confirmer le retour de ${returnQuantity} unité(s) au stock ?`)) {
+        // Pedir confirmación
+        if (!confirm(`¿Confirmar la devolución de ${returnQuantity} unidad(es) al stock?`)) {
             return;
         }
 
         showLoading();
 
-        // 1. RÉCUPÉRER LE STOCK ACTUEL + stock_reserve
+        // 1. OBTENER EL STOCK ACTUAL + stock_reservado
         const { data: currentArticle, error: articleError } = await supabase
             .from('w_articles')
             .select('stock_actuel, stock_reserve')
@@ -2291,7 +2291,7 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, mo
 
         if (articleError) throw articleError;
 
-        // 2. CRÉER LE MOUVEMENT DE RETOUR
+        // 2. CREAR EL MOVIMIENTO DE DEVOLUCIÓN
         const { data: returnMovement, error: movementError } = await supabase
             .from('w_mouvements')
             .insert([{
@@ -2305,10 +2305,10 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, mo
                 utilisateur: state.user.username,
                 stock_avant: currentArticle.stock_actuel,
                 stock_apres: currentArticle.stock_actuel + returnQuantity,
-                motif: `Retour projet - État: ${itemCondition}`,
-                notes: `Emplacement: ${returnLocation} | État: ${itemCondition}`,
+                motif: `Devolución proyecto - Estado: ${itemCondition}`,
+                notes: `Ubicación: ${returnLocation} | Estado: ${itemCondition}`,
                 date_mouvement: new Date().toISOString().split('T')[0],
-                heure_mouvement: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
+                heure_mouvement: new Date().toLocaleTimeString('es-ES', { hour12: false }),
                 raison: missingReason && missingQuantity > 0 ? `${missingQuantity} ${missingReason}` : null,
                 mouvement_parent_id: mouvementId
             }])
@@ -2317,7 +2317,7 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, mo
 
         if (movementError) throw movementError;
 
-        // 3. METTRE À JOUR LE STOCK DE L'ARTICLE (avec stock_reserve)
+        // 3. ACTUALIZAR EL STOCK DEL ARTÍCULO (con stock_reservado)
         const { error: updateError } = await supabase
             .from('w_articles')
             .update({
@@ -2329,32 +2329,32 @@ async function processReturnToStock(mouvementId, articleId, originalQuantity, mo
 
         if (updateError) throw updateError;
 
-        // 4. METTRE À JOUR LES DONNÉES LOCALES
+        // 4. ACTUALIZAR LOS DATOS LOCALES
         await fetchMovements();
         await fetchArticles();
 
-        // 5. FERMER LE MODAL ET AFFICHER SUCCÈS
+        // 5. CERRAR EL MODAL Y MOSTRAR ÉXITO
         modal.remove();
-        showAlert(`${returnQuantity} unité(s) retournée(s) au stock avec succès`, 'success');
+        showAlert(`${returnQuantity} unidad(es) devuelta(s) al stock con éxito`, 'success');
 
-        // 6. RE-OUVRIR LES DÉTAILS DU PROJET SI NÉCESSAIRE
+        // 6. REABRIR LOS DETALLES DEL PROYECTO SI ES NECESARIO
         if (state.currentProject && elements.projectDetailsModal.style.display === 'flex') {
             await showProjectDetails(state.currentProject.id);
         }
 
     } catch (error) {
-        console.error('Erreur retour au stock:', error);
-        modalElement.querySelector('#returnErrorText').textContent = error.message || 'Erreur lors du retour au stock';
+        console.error('Error devolución al stock:', error);
+        modalElement.querySelector('#returnErrorText').textContent = error.message || 'Error al devolver al stock';
         modalElement.querySelector('#returnError').style.display = 'flex';
     } finally {
         hideLoading();
     }
 }
 
-// Fonction helper pour éditer une réservation
+// Función auxiliar para editar una reserva
 async function editReservation(reservationId) {
     try {
-        // Récupérer la réservation
+        // Recuperar la reserva
         const { data: reservation, error } = await supabase
             .from('w_reservations_actives')
             .select(`
@@ -2372,21 +2372,21 @@ async function editReservation(reservationId) {
         if (error) throw error;
 
         if (!reservation) {
-            showAlert('Réservation non trouvée', 'error');
+            showAlert('Reserva no encontrada', 'error');
             return;
         }
 
-        // Créer un modal d'édition
+        // Crear un modal de edición
         const modalHtml = `
             <div class="modal-overlay" id="editReservationModal" style="display: flex;">
                 <div class="modal">
                     <div class="modal-header">
-                        <h3><i class="fas fa-edit"></i> Modifier la réservation</h3>
+                        <h3><i class="fas fa-edit"></i> Editar reserva</h3>
                         <button class="close-modal">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
-                            <label>Article :</label>
+                            <label>Artículo :</label>
                             <input type="text"
                                    value="${reservation.w_articles?.nom || ''}"
                                    class="form-input"
@@ -2395,7 +2395,7 @@ async function editReservation(reservationId) {
 
                         <div class="form-group">
                             <label for="editQuantity">
-                                <i class="fas fa-boxes"></i> Quantité *
+                                <i class="fas fa-boxes"></i> Cantidad *
                             </label>
                             <div class="quantity-input-group">
                                 <button type="button" class="quantity-btn minus" id="editQuantityMinus">
@@ -2418,7 +2418,7 @@ async function editReservation(reservationId) {
 
                         <div class="form-group">
                             <label for="editDateFin">
-                                <i class="fas fa-calendar"></i> Date de fin *
+                                <i class="fas fa-calendar"></i> Fecha de fin *
                             </label>
                             <input type="date"
                                    id="editDateFin"
@@ -2429,7 +2429,7 @@ async function editReservation(reservationId) {
 
                         <div class="form-group">
                             <label for="editComment">
-                                <i class="fas fa-comment"></i> Commentaire
+                                <i class="fas fa-comment"></i> Comentario
                             </label>
                             <textarea id="editComment"
                                       rows="3"
@@ -2443,10 +2443,10 @@ async function editReservation(reservationId) {
 
                         <div class="modal-actions">
                             <button id="confirmEditReservationBtn" class="btn-primary">
-                                <i class="fas fa-save"></i> Enregistrer
+                                <i class="fas fa-save"></i> Guardar
                             </button>
                             <button type="button" class="btn-secondary cancel-edit-btn">
-                                Annuler
+                                Cancelar
                             </button>
                         </div>
                     </div>
@@ -2454,14 +2454,14 @@ async function editReservation(reservationId) {
             </div>
         `;
 
-        // Ajouter le modal au DOM
+        // Agregar el modal al DOM
         const modalContainer = document.createElement('div');
         modalContainer.innerHTML = modalHtml;
         document.body.appendChild(modalContainer);
 
         const modal = document.getElementById('editReservationModal');
 
-        // Gérer la fermeture
+        // Manejar el cierre
         modal.querySelector('.cancel-edit-btn').addEventListener('click', () => {
             modal.remove();
         });
@@ -2472,7 +2472,7 @@ async function editReservation(reservationId) {
             }
         });
 
-        // Gérer les boutons de quantité
+        // Gestionar los botones de cantidad
         modal.querySelector('#editQuantityMinus').addEventListener('click', () => {
             const input = modal.querySelector('#editQuantity');
             let value = parseInt(input.value) || 1;
@@ -2490,21 +2490,21 @@ async function editReservation(reservationId) {
             }
         });
 
-        // Gérer l'enregistrement
+        // Gestionar el guardado
         modal.querySelector('#confirmEditReservationBtn').addEventListener('click', async () => {
             const quantity = parseInt(modal.querySelector('#editQuantity').value);
             const dateFin = modal.querySelector('#editDateFin').value;
             const comment = modal.querySelector('#editComment').value.trim();
 
-            // Validation
+            // Validación
             if (!quantity || quantity < 1) {
-                modal.querySelector('#editReservationErrorText').textContent = 'La quantité doit être au moins de 1';
+                modal.querySelector('#editReservationErrorText').textContent = 'La cantidad debe ser al menos 1';
                 modal.querySelector('#editReservationError').style.display = 'flex';
                 return;
             }
 
             if (!dateFin) {
-                modal.querySelector('#editReservationErrorText').textContent = 'La date de fin est obligatoire';
+                modal.querySelector('#editReservationErrorText').textContent = 'La fecha de fin es obligatoria';
                 modal.querySelector('#editReservationError').style.display = 'flex';
                 return;
             }
@@ -2512,7 +2512,7 @@ async function editReservation(reservationId) {
             try {
                 showLoading();
 
-                // Mettre à jour la réservation
+                // Actualizar la reserva
                 const { error: updateError } = await supabase
                     .from('w_reservations_actives')
                     .update({
@@ -2525,22 +2525,22 @@ async function editReservation(reservationId) {
 
                 if (updateError) throw updateError;
 
-                showAlert('Réservation modifiée avec succès', 'success');
+                showAlert('Reserva modificada con éxito', 'success');
 
-                // Recharger les données
+                // Recargar los datos
                 await fetchReservations();
 
-                // Recharger les détails du projet si ouvert
+                // Recargar los detalles del proyecto si está abierto
                 if (state.currentProject) {
                     await showProjectDetails(state.currentProject.id);
                 }
 
-                // Fermer le modal
+                // Cerrar el modal
                 modal.remove();
 
             } catch (error) {
-                console.error('Erreur modification réservation:', error);
-                modal.querySelector('#editReservationErrorText').textContent = error.message || 'Erreur lors de la modification';
+                console.error('Error modificación reserva:', error);
+                modal.querySelector('#editReservationErrorText').textContent = error.message || 'Error al modificar la reserva';
                 modal.querySelector('#editReservationError').style.display = 'flex';
             } finally {
                 hideLoading();
@@ -2548,8 +2548,8 @@ async function editReservation(reservationId) {
         });
 
     } catch (error) {
-        console.error('Erreur préparation édition réservation:', error);
-        showAlert('Erreur lors de la préparation de l\'édition', 'error');
+        console.error('Error preparación edición reserva:', error);
+        showAlert('Error al preparar la edición', 'error');
     }
 }
 
@@ -2558,7 +2558,7 @@ function updateProjectHistory(historyItems) {
         elements.projectHistoryList.innerHTML = `
             <div class="empty-history">
                 <i class="fas fa-history"></i>
-                <p>Aucun historique disponible</p>
+                <p>No hay historial disponible</p>
             </div>
         `;
         return;
@@ -2566,32 +2566,32 @@ function updateProjectHistory(historyItems) {
 
     let html = '';
     historyItems.forEach(item => {
-        // Déterminer l'icône et le type d'action
+        // Determinar el icono y el tipo de acción
         let icon = 'history';
-        let actionType = 'Action';
+        let actionType = 'Acción';
         let details = '';
-        const articleName = item.article?.nom || 'Article';
+        const articleName = item.article?.nom || 'Artículo';
         const articleNum = item.article?.numero ? ` (${item.article.numero})` : '';
 
         if (item.type === 'sortie') {
             icon = 'arrow-up';
-            actionType = 'Sortie de stock';
-            details = `${item.quantite} × ${articleName}${articleNum} | Projet: ${item.projet || 'N/A'}`;
+            actionType = 'Salida de stock';
+            details = `${item.quantite} × ${articleName}${articleNum} | Proyecto: ${item.projet || 'N/A'}`;
         } else if (item.type === 'retour_projet') {
             icon = 'arrow-left';
-            actionType = 'Retour au stock';
-            details = `${item.quantite} × ${articleName}${articleNum} retourné(s)`;
+            actionType = 'Devolución al stock';
+            details = `${item.quantite} × ${articleName}${articleNum} devuelto(s)`;
             if (item.raison) {
                 details += ` | ${item.raison}`;
             }
         } else if (item.type === 'entree') {
             icon = 'arrow-down';
-            actionType = 'Entrée de stock';
-            details = `${item.quantite} × ${articleName}${articleNum} | ${item.fournisseur || 'Stock initial'}`;
+            actionType = 'Entrada de stock';
+            details = `${item.quantite} × ${articleName}${articleNum} | ${item.fournisseur || 'Stock inicial'}`;
         } else if (item.type === 'reservation') {
             icon = 'clock';
-            actionType = 'Réservation';
-            details = `${item.quantite} × ${articleName}${articleNum} réservé(s)`;
+            actionType = 'Reserva';
+            details = `${item.quantite} × ${articleName}${articleNum} reservado(s)`;
         }
 
         html += `
@@ -2609,7 +2609,7 @@ function updateProjectHistory(historyItems) {
                         ${item.commentaire ? `<div class="history-comment"><i class="fas fa-comment"></i> ${item.commentaire}</div>` : ''}
                     </div>
                     <div class="history-footer">
-                        <span class="history-user"><i class="fas fa-user"></i> ${item.utilisateur || 'Système'}</span>
+                        <span class="history-user"><i class="fas fa-user"></i> ${item.utilisateur || 'Sistema'}</span>
                     </div>
                 </div>
             </div>
@@ -2619,11 +2619,11 @@ function updateProjectHistory(historyItems) {
     elements.projectHistoryList.innerHTML = html;
 }
 
-// ===== GESTION DES ONGLETS =====
+// ===== GESTIÓN DE LAS PESTAÑAS =====
 function switchTab(tabName) {
     state.currentTab = tabName;
 
-    // Mettre à jour les boutons d'onglets
+    // Actualizar los botones de pestaña
     elements.tabBtns.forEach(btn => {
         if (btn.dataset.tab === tabName) {
             btn.classList.add('active');
@@ -2632,7 +2632,7 @@ function switchTab(tabName) {
         }
     });
 
-    // Mettre à jour les contenus d'onglets
+    // Actualizar los contenidos de las pestañas
     elements.tabContents.forEach(content => {
         if (content.id === tabName + 'Tab') {
             content.classList.add('active');
@@ -2641,14 +2641,14 @@ function switchTab(tabName) {
         }
     });
 
-    // Charger les statistiques si onglet analytics
+    // Cargar las estadísticas si es la pestaña de análisis
     if (tabName === 'analytics') {
         loadAnalytics();
     }
 }
 
 function switchProjectTab(tabName) {
-    // Mettre à jour les boutons d'onglets du projet
+    // Actualizar los botones de pestaña del proyecto
     elements.projectTabBtns.forEach(btn => {
         if (btn.dataset.tab === tabName) {
             btn.classList.add('active');
@@ -2657,7 +2657,7 @@ function switchProjectTab(tabName) {
         }
     });
 
-    // Mettre à jour les contenus d'onglets du projet
+    // Actualizar los contenidos de las pestañas del proyecto
     const tabs = ['info', 'reservations', 'history'];
     tabs.forEach(tab => {
         const element = document.getElementById(`project${tab.charAt(0).toUpperCase() + tab.slice(1)}Tab`);
@@ -2671,7 +2671,7 @@ function switchProjectTab(tabName) {
     });
 }
 
-// ===== GESTION DES FILTRES =====
+// ===== GESTIÓN DE FILTROS =====
 function applyFilters() {
     updateProjectsDisplay();
 }
@@ -2691,7 +2691,7 @@ function clearFilters() {
     applyFilters();
 }
 
-// ===== CRÉATION DE PROJET =====
+// ===== CREACIÓN DE PROYECTO =====
 async function createProjectAction() {
     try {
         const projectData = {
@@ -2703,17 +2703,17 @@ async function createProjectAction() {
             budget: elements.projectBudget.value ? parseFloat(elements.projectBudget.value) : null
         };
 
-        // Validation
+        // Validación
         if (!projectData.nom || !projectData.numero || !projectData.responsable) {
-            elements.projectErrorText.textContent = 'Veuillez remplir tous les champs obligatoires';
+            elements.projectErrorText.textContent = 'Por favor, rellene todos los campos obligatorios';
             elements.projectError.style.display = 'flex';
             return;
         }
 
-        // Vérifier si le numéro existe déjà
+        // Verificar si el número ya existe
         const existingProject = state.projects.find(p => p.numero === projectData.numero);
         if (existingProject) {
-            elements.projectErrorText.textContent = 'Ce numéro de projet existe déjà';
+            elements.projectErrorText.textContent = 'Este número de proyecto ya existe';
             elements.projectError.style.display = 'flex';
             return;
         }
@@ -2721,33 +2721,33 @@ async function createProjectAction() {
         showLoading();
         const newProject = await createProject(projectData);
 
-        // Ajouter aux projets
+        // Añadir a los proyectos
         state.projects.unshift(newProject);
 
-        // Mettre à jour l'affichage
+        // Actualizar la visualización
         updateProjectsDisplay();
         updateStatistics();
         populateManagerFilter();
 
-        // Fermer le modal et réinitialiser le formulaire
+        // Cerrar el modal y reiniciar el formulario
         hideModal();
         elements.newProjectForm.reset();
         elements.projectError.style.display = 'none';
 
-        showAlert('Projet créé avec succès', 'success');
+        showAlert('Proyecto creado con éxito', 'success');
 
     } catch (error) {
-        console.error('Erreur création projet:', error);
-        elements.projectErrorText.textContent = error.message || 'Erreur lors de la création du projet';
+        console.error('Error creación proyecto:', error);
+        elements.projectErrorText.textContent = error.message || 'Error al crear el proyecto';
         elements.projectError.style.display = 'flex';
     } finally {
         hideLoading();
     }
 }
 
-// ===== ARCHIVAGE/DÉSARCHIVAGE =====
+// ===== ARCHIVO/DESARCHIVO =====
 async function archiveProjectAction(projectId) {
-    if (!confirm('Archiver ce projet ? Le projet n\'apparaîtra plus dans les projets actifs.')) {
+    if (!confirm('¿Archivar este proyecto? El proyecto ya no aparecerá en los proyectos activos.')) {
         return;
     }
 
@@ -2755,35 +2755,35 @@ async function archiveProjectAction(projectId) {
         showLoading();
         const archivedProject = await archiveProject(projectId);
 
-        // Mettre à jour les listes
+        // Actualizar las listas
         const index = state.projects.findIndex(p => p.id === projectId);
         if (index !== -1) {
             state.projects.splice(index, 1);
             state.archivedProjects.unshift(archivedProject);
         }
 
-        // Mettre à jour l'affichage
+        // Actualizar la visualización
         updateProjectsDisplay();
         updateArchivedProjectsDisplay();
         updateStatistics();
 
-        // Si on est dans les détails, fermer le modal
+        // Si estamos en los detalles, cerrar el modal
         if (state.currentProject?.id === projectId) {
             hideModal();
         }
 
-        showAlert('Projet archivé avec succès', 'success');
+        showAlert('Proyecto archivado con éxito', 'success');
 
     } catch (error) {
-        console.error('Erreur archivage projet:', error);
-        showAlert('Erreur lors de l\'archivage du projet', 'error');
+        console.error('Error archivo proyecto:', error);
+        showAlert('Error al archivar el proyecto', 'error');
     } finally {
         hideLoading();
     }
 }
 
 async function unarchiveProjectAction(projectId) {
-    if (!confirm('Désarchiver ce projet ? Le projet réapparaîtra dans les projets actifs.')) {
+    if (!confirm('¿Desarchivar este proyecto? El proyecto volverá a aparecer en los proyectos activos.')) {
         return;
     }
 
@@ -2791,33 +2791,33 @@ async function unarchiveProjectAction(projectId) {
         showLoading();
         const unarchivedProject = await unarchiveProject(projectId);
 
-        // Mettre à jour les listes
+        // Actualizar las listas
         const index = state.archivedProjects.findIndex(p => p.id === projectId);
         if (index !== -1) {
             state.archivedProjects.splice(index, 1);
             state.projects.unshift(unarchivedProject);
         }
 
-        // Mettre à jour l'affichage
+        // Actualizar la visualización
         updateProjectsDisplay();
         updateArchivedProjectsDisplay();
         updateStatistics();
 
-        showAlert('Projet désarchivé avec succès', 'success');
+        showAlert('Proyecto desarchivado con éxito', 'success');
 
     } catch (error) {
-        console.error('Erreur désarchivage projet:', error);
-        showAlert('Erreur lors du désarchivage du projet', 'error');
+        console.error('Error desarchivo proyecto:', error);
+        showAlert('Error al desarchivar el proyecto', 'error');
     } finally {
         hideLoading();
     }
 }
 
-// ===== GESTION DES RÉSERVATIONS =====
+// ===== GESTIÓN DE RESERVAS =====
 async function addReservationToProject() {
     if (!state.currentProject) return;
 
-    // Réinitialiser le modal
+    // Reiniciar el modal
     elements.reservationArticle.value = '';
     elements.reservationQuantity.value = '1';
     elements.reservationComment.value = '';
@@ -2825,8 +2825,8 @@ async function addReservationToProject() {
     elements.reservationAvailableStock.textContent = '0';
     elements.reservationAlreadyReserved.textContent = '0';
 
-    // Stocker le modal précédent avant d'ouvrir le nouveau
-    console.log('addReservationToProject - Setting previousModal:', {
+    // Almacenar el modal anterior antes de abrir el nuevo
+    console.log('addReservationToProject - Estableciendo previousModal:', {
         before: state.previousModal?.id,
         currentModal: state.currentModal?.id
     });
@@ -2846,38 +2846,38 @@ async function updateReservationStockInfo(articleId) {
             const stockActuel = article.stock_actuel || 0;
             const stockDisponible = Math.max(0, stockActuel - stockReserve);
 
-            // Afficher le stock disponible réel
+            // Mostrar el stock disponible real
             elements.reservationAvailableStock.textContent = stockDisponible;
 
-            // Récupérer le nombre déjà réservé pour CE PROJET
+            // Recuperar la cantidad ya reservada para ESTE PROYECTO
             const projectReservations = state.reservations.filter(r =>
                 r.projet_id === state.currentProject.id && r.article_id === articleId
             );
             const alreadyReserved = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
             elements.reservationAlreadyReserved.textContent = alreadyReserved;
 
-            // Mettre à jour la quantité max avec le stock disponible
+            // Actualizar la cantidad máxima con el stock disponible
             const currentQuantity = parseInt(elements.reservationQuantity.value) || 1;
 
             if (currentQuantity > stockDisponible) {
                 elements.reservationQuantity.value = Math.max(1, stockDisponible);
             }
         }
-        // ← Plus de code en dehors du if(article), donc pas d'erreur si article est null
+        // ← Más código fuera del if(article), por lo tanto, no hay error si article es null
 
     } catch (error) {
-        console.error('Erreur mise à jour info stock:', error);
+        console.error('Error actualización info stock:', error);
     }
 }
 
 function refreshReservationModal() {
-    // Recalculer et réafficher les infos stock
+    // Recalcular y volver a mostrar la información de stock
     const articleId = elements.reservationArticle.value;
     if (articleId) {
         updateReservationStockInfo(articleId);
     }
 
-    // Repeupler la liste des articles (au cas où)
+    // Repoblar la lista de artículos (por si acaso)
     populateArticleSelect();
 }
 
@@ -2887,34 +2887,34 @@ async function confirmAddReservation() {
         const quantity = parseInt(elements.reservationQuantity.value);
         const comment = elements.reservationComment.value.trim();
 
-        // Validation
+        // Validación
         if (!articleId) {
-            elements.reservationErrorText.textContent = 'Veuillez sélectionner un article';
+            elements.reservationErrorText.textContent = 'Por favor, seleccione un artículo';
             elements.reservationError.style.display = 'flex';
             return;
         }
 
         if (!quantity || quantity < 1) {
-            elements.reservationErrorText.textContent = 'La quantité doit être au moins de 1';
+            elements.reservationErrorText.textContent = 'La cantidad debe ser al menos 1';
             elements.reservationError.style.display = 'flex';
             return;
         }
 
-        // Vérifier le stock disponible réel
+        // Verificar el stock disponible real
         const article = state.articles.find(a => a.id === articleId);
         if (!article) {
-            elements.reservationErrorText.textContent = 'Article non trouvé';
+            elements.reservationErrorText.textContent = 'Artículo no encontrado';
             elements.reservationError.style.display = 'flex';
             return;
         }
 
-        // Calculer le stock disponible réel
+        // Calcular el stock disponible real
         const stockReserve = article.stock_reserve || 0;
         const stockActuel = article.stock_actuel || 0;
         const stockDisponible = Math.max(0, stockActuel - stockReserve);
 
         if (stockDisponible < quantity) {
-            elements.reservationErrorText.textContent = `Stock insuffisant. Disponible: ${stockDisponible}`;
+            elements.reservationErrorText.textContent = `Stock insuficiente. Disponible: ${stockDisponible}`;
             elements.reservationError.style.display = 'flex';
             return;
         }
@@ -2930,28 +2930,28 @@ async function confirmAddReservation() {
 
         const newReservation = await createReservation(reservationData);
 
-        // Ajouter à la liste des réservations
+        // Añadir a la lista de reservas
         state.reservations.push(newReservation);
 
-        // Mettre à jour le stock_reserve dans l'article local
+        // Actualizar el stock_reserve en el artículo local
         if (article) {
             article.stock_reserve = (article.stock_reserve || 0) + quantity;
         }
 
-        // Recharger les détails du projet
+        // Recargar los detalles del proyecto
         await showProjectDetails(state.currentProject.id);
 
-        // Mettre à jour les statistiques
+        // Actualizar las estadísticas
         updateStatistics();
 
-        // Fermer le modal
+        // Cerrar el modal
         hideModal();
 
-        showAlert('Réservation ajoutée avec succès', 'success');
+        showAlert('Reserva añadida con éxito', 'success');
 
     } catch (error) {
-        console.error('Erreur ajout réservation:', error);
-        elements.reservationErrorText.textContent = error.message || 'Erreur lors de l\'ajout de la réservation';
+        console.error('Error al añadir reserva:', error);
+        elements.reservationErrorText.textContent = error.message || 'Error al añadir la reserva';
         elements.reservationError.style.display = 'flex';
     } finally {
         hideLoading();
@@ -2961,15 +2961,15 @@ async function confirmAddReservation() {
 async function releaseAllProjectItems() {
     if (!state.currentProject) return;
 
-    // Récupérer les réservations du projet
+    // Recuperar las reservas del proyecto
     const projectReservations = state.reservations.filter(r => r.id_projet === state.currentProject.id);
 
     if (projectReservations.length === 0) {
-        showAlert('Aucune réservation à libérer pour ce projet', 'info');
+        showAlert('No hay reservas para liberar en este proyecto', 'info');
         return;
     }
 
-    // Mettre à jour le compteur dans le modal
+    // Actualizar el contador en el modal
     elements.releaseItemsCount.textContent = projectReservations.length;
     elements.releaseReason.value = '';
     elements.releaseComment.value = '';
@@ -2984,59 +2984,59 @@ async function confirmReleaseAll() {
         const comment = elements.releaseComment.value.trim();
 
         if (!reason) {
-            elements.releaseErrorText.textContent = 'Veuillez sélectionner une raison';
+            elements.releaseErrorText.textContent = 'Por favor, seleccione una razón';
             elements.releaseError.style.display = 'flex';
             return;
         }
 
-        if (!confirm(`Êtes-vous sûr de vouloir libérer toutes les réservations de ce projet ? (${elements.releaseItemsCount.textContent} réservation(s))`)) {
+        if (!confirm(`¿Está seguro de que desea liberar todas las reservas de este proyecto? (${elements.releaseItemsCount.textContent} reserva(s))`)) {
             return;
         }
 
         showLoading();
 
-        // Récupérer les réservations du projet
+        // Recuperar las reservas del proyecto
         const projectReservations = state.reservations.filter(r => r.id_projet === state.currentProject.id);
 
-        // Libérer chaque réservation
+        // Liberar cada reserva
         for (const reservation of projectReservations) {
             try {
-                await releaseReservation(reservation.id, `Libération globale: ${reason} - ${comment}`);
+                await releaseReservation(reservation.id, `Liberación global: ${reason} - ${comment}`);
             } catch (error) {
-                console.error(`Erreur libération réservation ${reservation.id}:`, error);
+                console.error(`Error al liberar reserva ${reservation.id}:`, error);
             }
         }
 
-        // Mettre à jour les données
+        // Actualizar los datos
         await fetchReservations();
 
-        // Recharger les détails du projet
+        // Recargar los detalles del proyecto
         await showProjectDetails(state.currentProject.id);
 
-        // Mettre à jour les statistiques
+        // Actualizar las estadísticas
         updateStatistics();
 
-        // Fermer le modal
+        // Cerrar el modal
         hideModal();
 
-        showAlert('Toutes les réservations ont été libérées', 'success');
+        showAlert('Todas las reservas han sido liberadas', 'success');
 
     } catch (error) {
-        console.error('Erreur libération globale:', error);
-        elements.releaseErrorText.textContent = error.message || 'Erreur lors de la libération du stock';
+        console.error('Error liberación global:', error);
+        elements.releaseErrorText.textContent = error.message || 'Error al liberar el stock';
         elements.releaseError.style.display = 'flex';
     } finally {
         hideLoading();
     }
 }
 
-// ===== STATISTIQUES ET GRAPHIQUES =====
+// ===== ESTADÍSTICAS Y GRÁFICOS =====
 function loadAnalytics() {
-    // Mettre à jour les listes
+    // Actualizar las listas
     updateTopManagers();
     updateTopArticles();
 
-    // Créer les graphiques si nécessaire
+    // Crear los gráficos si es necesario
     if (!state.charts.reservationsChart) {
         createReservationsChart();
     }
@@ -3044,7 +3044,7 @@ function loadAnalytics() {
         createStatusChart();
     }
 
-    // Mettre à jour les graphiques
+    // Actualizar los gráficos
     updateCharts();
 }
 
@@ -3055,7 +3055,7 @@ function createReservationsChart() {
         data: {
             labels: [],
             datasets: [{
-                label: 'Nouvelles réservations',
+                label: 'Nuevas reservas',
                 data: [],
                 borderColor: 'rgb(75, 192, 192)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -3087,7 +3087,7 @@ function createStatusChart() {
     state.charts.statusChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Actifs', 'Bientôt terminé', 'En retard', 'Archivés'],
+            labels: ['Activos', 'Próximos a finalizar', 'Retrasados', 'Archivados'],
             datasets: [{
                 data: [0, 0, 0, 0],
                 backgroundColor: [
@@ -3114,7 +3114,7 @@ function createStatusChart() {
 function updateCharts() {
     if (!state.charts.reservationsChart || !state.charts.statusChart) return;
 
-    // Mettre à jour le graphique de statut
+    // Actualizar el gráfico de estado
     const activeCount = state.projects.filter(p => getProjectStatus(p) === 'active').length;
     const endingCount = state.projects.filter(p => getProjectStatus(p) === 'ending').length;
     const overdueCount = state.projects.filter(p => getProjectStatus(p) === 'overdue').length;
@@ -3123,18 +3123,18 @@ function updateCharts() {
     state.charts.statusChart.data.datasets[0].data = [activeCount, endingCount, overdueCount, archivedCount];
     state.charts.statusChart.update();
 
-    // Mettre à jour le graphique des réservations (données factices pour l'exemple)
+    // Actualizar el gráfico de reservas (datos de ejemplo para el ejemplo)
     const period = parseInt(elements.analyticsPeriod.value) || 30;
     const labels = [];
     const data = [];
 
-    // Générer des données pour les X derniers jours
+    // Generar datos para los X últimos días
     for (let i = period; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        labels.push(date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }));
+        labels.push(date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }));
 
-        // Données factices - à remplacer par des données réelles
+        // Datos de ejemplo - para reemplazar con datos reales
         data.push(Math.floor(Math.random() * 10) + 1);
     }
 
@@ -3156,7 +3156,7 @@ function updateTopManagers() {
             }
             managerStats[project.responsable].count++;
 
-            // Compter les articles du projet
+            // Contar los artículos del proyecto
             const projectItems = state.reservations.filter(r => r.id_projet === project.id)
                 .reduce((sum, r) => sum + r.quantite, 0);
             managerStats[project.responsable].items += projectItems;
@@ -3169,7 +3169,7 @@ function updateTopManagers() {
 
     let html = '';
     if (sortedManagers.length === 0) {
-        html = '<div class="empty-list">Aucun responsable</div>';
+        html = '<div class="empty-list">Ningún responsable</div>';
     } else {
         sortedManagers.forEach(([manager, stats], index) => {
             html += `
@@ -3179,8 +3179,8 @@ function updateTopManagers() {
                         <span class="top-item-name">${manager}</span>
                     </div>
                     <div class="top-item-stats">
-                        <span class="stat"><i class="fas fa-project-diagram"></i> ${stats.count} projet(s)</span>
-                        <span class="stat"><i class="fas fa-box"></i> ${stats.items} article(s)</span>
+                        <span class="stat"><i class="fas fa-project-diagram"></i> ${stats.count} proyecto(s)</span>
+                        <span class="stat"><i class="fas fa-box"></i> ${stats.items} artículo(s)</span>
                     </div>
                 </div>
             `;
@@ -3216,7 +3216,7 @@ function updateTopArticles() {
 
     let html = '';
     if (sortedArticles.length === 0) {
-        html = '<div class="empty-list">Aucune réservation</div>';
+        html = '<div class="empty-list">Ninguna reserva</div>';
     } else {
         sortedArticles.forEach((article, index) => {
             html += `
@@ -3227,8 +3227,8 @@ function updateTopArticles() {
                     </div>
                     <div class="top-item-stats">
                         <span class="stat"><i class="fas fa-hashtag"></i> ${article.code}</span>
-                        <span class="stat"><i class="fas fa-box"></i> ${article.quantity} unité(s)</span>
-                        <span class="stat"><i class="fas fa-sync-alt"></i> ${article.count} réservation(s)</span>
+                        <span class="stat"><i class="fas fa-box"></i> ${article.quantity} unidad(es)</span>
+                        <span class="stat"><i class="fas fa-sync-alt"></i> ${article.count} reserva(s)</span>
                     </div>
                 </div>
             `;
@@ -3238,12 +3238,12 @@ function updateTopArticles() {
     elements.topArticlesList.innerHTML = html;
 }
 
-// ===== ÉVÉNEMENTS =====
+// ===== EVENTOS =====
 function setupEventListeners() {
-    // Déconnexion
+    // Cierre de sesión
     elements.logoutBtn.addEventListener('click', logout);
 
-    // Onglets principaux
+    // Pestañas principales
     elements.tabBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const tab = this.dataset.tab;
@@ -3251,7 +3251,7 @@ function setupEventListeners() {
         });
     });
 
-    // Onglets détails projet
+    // Pestañas de detalles del proyecto
     elements.projectTabBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const tab = this.dataset.tab;
@@ -3259,30 +3259,30 @@ function setupEventListeners() {
         });
     });
 
-    // Fermeture des modals avec event delegation
+    // Cierre de modales con delegación de eventos
     document.addEventListener('click', function(e) {
         const closeBtn = e.target.closest('.close-modal');
         if (!closeBtn) return;
 
         e.preventDefault();
-        e.stopPropagation(); // ← IMPORTANT : empêche d'autres gestionnaires
+        e.stopPropagation(); // ← IMPORTANTE: evita otros manejadores
 
-        console.log('Close button clicked:', {
+        console.log('Botón de cierre presionado:', {
             currentModal: state.currentModal?.id,
             previousModal: state.previousModal?.id
         });
 
-        // Si on est dans un modal enfant et qu'il y a un modal précédent
+        // Si estamos en un modal hijo y hay un modal anterior
         if (state.currentModal && state.previousModal) {
-            console.log('Returning to previous modal');
+            console.log('Volviendo al modal anterior');
             hideModal(true);
         } else {
-            console.log('Normal close');
+            console.log('Cierre normal');
             hideModal();
         }
     });
 
-    // Clic en dehors des modals pour fermer
+    // Clic fuera de los modales para cerrar
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', function(e) {
             if (e.target === this) {
@@ -3291,7 +3291,7 @@ function setupEventListeners() {
         });
     });
 
-    // Boutons header
+    // Botones de cabecera
     elements.newProjectBtn.addEventListener('click', () => {
         showModal(elements.newProjectModal);
     });
@@ -3302,7 +3302,7 @@ function setupEventListeners() {
 
     elements.exportProjectsBtn.addEventListener('click', exportProjects);
 
-    // Filtres
+    // Filtros
     elements.filterStatus.addEventListener('change', function() {
         state.filters.status = this.value;
         applyFilters();
@@ -3323,13 +3323,13 @@ function setupEventListeners() {
 
     elements.clearFiltersBtn.addEventListener('click', clearFilters);
 
-    // Formulaire nouveau projet
+    // Formulario nuevo proyecto
     elements.newProjectForm.addEventListener('submit', function(e) {
         e.preventDefault();
         createProjectAction();
     });
 
-    // Boutons détails projet
+    // Botones de detalles del proyecto
     elements.addReservationToProjectBtn.addEventListener('click', addReservationToProject);
     elements.archiveProjectBtn.addEventListener('click', function() {
         if (state.currentProject) {
@@ -3344,7 +3344,7 @@ function setupEventListeners() {
     elements.editProjectBtn.addEventListener('click', editProject);
     elements.exportProjectBtn.addEventListener('click', exportProjectDetails);
 
-    // Modal réservation
+    // Modal de reserva
     elements.reservationArticle.addEventListener('change', function() {
         updateReservationStockInfo(this.value);
     });
@@ -3362,9 +3362,9 @@ function setupEventListeners() {
         }
     });
 
-    // Event delegation pour les boutons + et - du modal Réservation
+    // Delegación de eventos para los botones + y - del modal de Reserva
     document.addEventListener('click', function(e) {
-        // Bouton -
+        // Botón -
         if (e.target.closest('#reservationQuantityMinus') ||
             e.target.id === 'reservationQuantityMinus') {
             const input = document.getElementById('reservationQuantity');
@@ -3374,7 +3374,7 @@ function setupEventListeners() {
             }
         }
 
-        // Bouton +
+        // Botón +
         if (e.target.closest('#reservationQuantityPlus') ||
             e.target.id === 'reservationQuantityPlus') {
             const input = document.getElementById('reservationQuantity');
@@ -3383,7 +3383,7 @@ function setupEventListeners() {
 
             if (articleId) {
                 const article = state.articles.find(a => a.id === articleId);
-                // Calculer le stock disponible réel
+                // Calcular el stock disponible real
                 const stockReserve = article?.stock_reserve || 0;
                 const stockActuel = article?.stock_actuel || 0;
                 const stockDisponible = Math.max(0, stockActuel - stockReserve);
@@ -3399,13 +3399,13 @@ function setupEventListeners() {
 
     elements.confirmAddReservationBtn.addEventListener('click', confirmAddReservation);
 
-    // Modal libération stock
+    // Modal de liberación de stock
     elements.confirmReleaseBtn.addEventListener('click', confirmReleaseAll);
 
-    // Période statistiques
+    // Período de estadísticas
     elements.analyticsPeriod.addEventListener('change', updateCharts);
 
-    // Échappement pour fermer les modals
+    // Tecla Escape para cerrar modales
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && state.currentModal) {
             hideModal();
@@ -3413,12 +3413,12 @@ function setupEventListeners() {
     });
 }
 
-// ===== FONCTIONS D'EXPORT =====
+// ===== FUNCIONES DE EXPORTACIÓN =====
 async function exportProjects() {
     try {
         showLoading();
 
-        // Préparer les données
+        // Preparar los datos
         let data = [];
 
         if (state.currentTab === 'projects') {
@@ -3428,16 +3428,16 @@ async function exportProjects() {
                 const status = getProjectStatus(project);
 
                 return {
-                    'Nom': project.nom,
-                    'Numéro': project.numero || '',
-                    'Description': project.description || '',
+                    'Nombre': project.nom,
+                    'Número': project.numero || '',
+                    'Descripción': project.description || '',
                     'Responsable': project.responsable || '',
-                    'Date création': formatDate(project.created_at),
-                    'Date fin prévue': project.date_fin_prevue ? formatDate(project.date_fin_prevue) : '',
-                    'Budget': project.budget || '',
+                    'Fecha creación': formatDate(project.created_at),
+                    'Fecha fin prevista': project.date_fin_prevue ? formatDate(project.date_fin_prevue) : '',
+                    'Presupuesto': project.budget || '',
 
-                    'Articles réservés': itemsCount,
-                    'Nombre réservations': projectReservations.length
+                    'Artículos reservados': itemsCount,
+                    'Número de reservas': projectReservations.length
                 };
             });
         } else if (state.currentTab === 'archived') {
@@ -3446,20 +3446,20 @@ async function exportProjects() {
                 const itemsCount = projectReservations.reduce((sum, r) => sum + r.quantite, 0);
 
                 return {
-                    'Nom': project.nom,
-                    'Numéro': project.numero || '',
-                    'Description': project.description || '',
+                    'Nombre': project.nom,
+                    'Número': project.numero || '',
+                    'Descripción': project.description || '',
                     'Responsable': project.responsable || '',
-                    'Date création': formatDate(project.created_at),
-                    'Date archivage': project.archived_at ? formatDate(project.archived_at) : '',
-                    'Budget': project.budget || '',
-                    'Articles réservés': itemsCount,
-                    'Nombre réservations': projectReservations.length
+                    'Fecha creación': formatDate(project.created_at),
+                    'Fecha de archivo': project.archived_at ? formatDate(project.archived_at) : '',
+                    'Presupuesto': project.budget || '',
+                    'Artículos reservados': itemsCount,
+                    'Número de reservas': projectReservations.length
                 };
             });
         }
 
-        // Convertir en CSV
+        // Convertir a CSV
         const headers = Object.keys(data[0] || {});
         const csvContent = [
             headers.join(','),
@@ -3469,24 +3469,24 @@ async function exportProjects() {
             }).join(','))
         ].join('\n');
 
-        // Télécharger
+        // Descargar
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
 
         link.setAttribute('href', url);
-        link.setAttribute('download', `projets_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute('download', `proyectos_${new Date().toISOString().split('T')[0]}.csv`);
         link.style.visibility = 'hidden';
 
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        showAlert('Export réalisé avec succès', 'success');
+        showAlert('Exportación realizada con éxito', 'success');
 
     } catch (error) {
-        console.error('Erreur export:', error);
-        showAlert('Erreur lors de l\'export', 'error');
+        console.error('Error exportación:', error);
+        showAlert('Error durante la exportación', 'error');
     } finally {
         hideLoading();
     }
@@ -3498,10 +3498,10 @@ async function exportProjectDetails() {
     try {
         showLoading();
 
-        // Déterminer l'onglet actif
+        // Determinar la pestaña activa
         const activeTab = document.querySelector('.project-tab-btn.active')?.dataset.tab || 'reservations';
 
-        // Récupérer les données selon l'onglet
+        // Recuperar los datos según la pestaña
         if (activeTab === 'history') {
             await exportProjectHistory();
         } else {
@@ -3509,8 +3509,8 @@ async function exportProjectDetails() {
         }
 
     } catch (error) {
-        console.error('Erreur export projet:', error);
-        showAlert('Erreur lors de l\'export du projet', 'error');
+        console.error('Error exportación proyecto:', error);
+        showAlert('Error durante la exportación del proyecto', 'error');
     } finally {
         hideLoading();
     }
@@ -3534,36 +3534,36 @@ async function exportProjectReservations() {
         const pageWidth = doc.internal.pageSize.width;
         const margin = 15;
 
-        // ===== EN-TÊTE =====
+        // ===== ENCABEZADO =====
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
-        doc.text('DÉTAILS DU PROJET', pageWidth / 2, yPos, { align: 'center' });
+        doc.text('DETALLES DEL PROYECTO', pageWidth / 2, yPos, { align: 'center' });
         yPos += 10;
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Exporté le: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - margin, yPos, { align: 'right' });
+        doc.text(`Exportado el: ${new Date().toLocaleDateString('es-ES')}`, pageWidth - margin, yPos, { align: 'right' });
         yPos += 15;
 
-        // ===== INFORMATIONS PROJET =====
+        // ===== INFORMACIÓN DEL PROYECTO =====
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text('INFORMATIONS DU PROJET', margin, yPos);
+        doc.text('INFORMACIÓN DEL PROYECTO', margin, yPos);
         yPos += 8;
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
 
         const projectInfo = [
-            ['Nom:', project.nom],
-            ['Numéro:', project.numero || 'Non défini'],
-            ['Description:', project.description || 'Aucune description'],
-            ['Responsable:', project.responsable || 'Non défini'],
-            ['Date création:', formatDate(project.created_at)],
-            ['Date fin prévue:', project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'Non définie'],
-            ['Budget:', project.budget ? `${project.budget} €` : 'Non défini'],
-            ['Statut:', project.archived ? 'Archivé' : getProjectStatus(project) === 'active' ? 'Actif' :
-                         getProjectStatus(project) === 'ending' ? 'Bientôt terminé' : 'En retard']
+            ['Nombre:', project.nom],
+            ['Número:', project.numero || 'No definido'],
+            ['Descripción:', project.description || 'Sin descripción'],
+            ['Responsable:', project.responsable || 'No definido'],
+            ['Fecha creación:', formatDate(project.created_at)],
+            ['Fecha fin prevista:', project.date_fin_prevue ? formatDate(project.date_fin_prevue) : 'No definida'],
+            ['Presupuesto:', project.budget ? `${project.budget} €` : 'No definido'],
+            ['Estado:', project.archived ? 'Archivado' : getProjectStatus(project) === 'active' ? 'Activo' :
+                         getProjectStatus(project) === 'ending' ? 'Próximo a finalizar' : 'Retrasado']
         ];
 
         projectInfo.forEach(([label, value]) => {
@@ -3571,14 +3571,14 @@ async function exportProjectReservations() {
             doc.text(label, margin, yPos);
             doc.setFont('helvetica', 'normal');
 
-            // Gérer les textes longs avec retour à la ligne
+            // Gestionar textos largos con salto de línea
             const lines = doc.splitTextToSize(value.toString(), pageWidth - margin - 60);
             lines.forEach((line, index) => {
                 doc.text(line, margin + 40, yPos + (index * 5));
             });
             yPos += Math.max(lines.length * 5, 7);
 
-            // Vérifier si besoin d'une nouvelle page
+            // Verificar si se necesita una nueva página
             if (yPos > doc.internal.pageSize.height - 40) {
                 doc.addPage();
                 yPos = 20;
@@ -3587,17 +3587,17 @@ async function exportProjectReservations() {
 
         yPos += 5;
 
-        // ===== STATISTIQUES =====
+        // ===== ESTADÍSTICAS =====
         if (sorties.length > 0 || reservations.length > 0) {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('STATISTIQUES', margin, yPos);
+            doc.text('ESTADÍSTICAS', margin, yPos);
             yPos += 8;
 
             doc.setFontSize(11);
             doc.setFont('helvetica', 'normal');
 
-            // Calculs
+            // Cálculos
             const itemsSortis = sorties.reduce((sum, s) => sum + (s.quantite || 0), 0);
             const valeurSortis = sorties.reduce((sum, s) => {
                 const article = s.article;
@@ -3611,9 +3611,9 @@ async function exportProjectReservations() {
             }, 0);
 
             const stats = [
-                ['Articles utilisés:', `${itemsSortis} unité(s)`, `${valeurSortis.toFixed(2)} €`],
-                ['Articles réservés:', `${itemsReserves} unité(s)`, `${valeurReserves.toFixed(2)} €`],
-                ['Total articles:', `${itemsSortis + itemsReserves} unité(s)`, `${(valeurSortis + valeurReserves).toFixed(2)} €`]
+                ['Artículos usados:', `${itemsSortis} unidad(es)`, `${valeurSortis.toFixed(2)} €`],
+                ['Artículos reservados:', `${itemsReserves} unidad(es)`, `${valeurReserves.toFixed(2)} €`],
+                ['Total artículos:', `${itemsSortis + itemsReserves} unidad(es)`, `${(valeurSortis + valeurReserves).toFixed(2)} €`]
             ];
 
             stats.forEach(([label, qty, value]) => {
@@ -3628,20 +3628,20 @@ async function exportProjectReservations() {
             yPos += 5;
         }
 
-        // ===== SORTIES (ARTICLES UTILISÉS) =====
+        // ===== SALIDAS (ARTÍCULOS USADOS) =====
         if (sorties.length > 0) {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('ARTICLES UTILISÉS', margin, yPos);
+            doc.text('ARTÍCULOS USADOS', margin, yPos);
             yPos += 8;
 
-            // En-tête du tableau
+            // Encabezado de la tabla
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.text('Article', margin, yPos);
-            doc.text('Qté', margin + 80, yPos);
-            doc.text('Date', margin + 100, yPos);
-            doc.text('Prix unitaire', margin + 130, yPos);
+            doc.text('Artículo', margin, yPos);
+            doc.text('Cant.', margin + 80, yPos);
+            doc.text('Fecha', margin + 100, yPos);
+            doc.text('Precio unitario', margin + 130, yPos);
             doc.text('Total', margin + 170, yPos);
 
             doc.line(margin, yPos + 1, pageWidth - margin, yPos + 1);
@@ -3655,13 +3655,13 @@ async function exportProjectReservations() {
                 const prixUnitaire = article.prix_unitaire || 0;
                 const total = prixUnitaire * (item.quantite || 0);
 
-                // Vérifier nouvelle page
+                // Verificar nueva página
                 if (yPos > doc.internal.pageSize.height - 20) {
                     doc.addPage();
                     yPos = 20;
                 }
 
-                doc.text(article.nom?.substring(0, 30) || 'Article', margin, yPos);
+                doc.text(article.nom?.substring(0, 30) || 'Artículo', margin, yPos);
                 doc.text(item.quantite?.toString() || '0', margin + 80, yPos);
                 doc.text(formatDate(item.created_at), margin + 100, yPos);
                 doc.text(`${prixUnitaire.toFixed(2)} €`, margin + 130, yPos);
@@ -3673,21 +3673,21 @@ async function exportProjectReservations() {
             yPos += 10;
         }
 
-        // ===== RÉSERVATIONS =====
+        // ===== RESERVAS =====
         if (reservations.length > 0) {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('ARTICLES RÉSERVÉS', margin, yPos);
+            doc.text('ARTÍCULOS RESERVADOS', margin, yPos);
             yPos += 8;
 
-            // En-tête du tableau
+            // Encabezado de la tabla
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.text('Article', margin, yPos);
-            doc.text('Qté', margin + 80, yPos);
-            doc.text('Date fin', margin + 100, yPos);
-            doc.text('Utilisateur', margin + 130, yPos);
-            doc.text('Prix unitaire', margin + 170, yPos);
+            doc.text('Artículo', margin, yPos);
+            doc.text('Cant.', margin + 80, yPos);
+            doc.text('Fecha fin', margin + 100, yPos);
+            doc.text('Usuario', margin + 130, yPos);
+            doc.text('Precio unitario', margin + 170, yPos);
 
             doc.line(margin, yPos + 1, pageWidth - margin, yPos + 1);
             yPos += 6;
@@ -3699,34 +3699,34 @@ async function exportProjectReservations() {
                 const article = res.w_articles || {};
                 const prixUnitaire = article.prix_unitaire || 0;
 
-                // Vérifier nouvelle page
+                // Verificar nueva página
                 if (yPos > doc.internal.pageSize.height - 20) {
                     doc.addPage();
                     yPos = 20;
                 }
 
-                doc.text(article.nom?.substring(0, 30) || 'Article', margin, yPos);
+                doc.text(article.nom?.substring(0, 30) || 'Artículo', margin, yPos);
                 doc.text(res.quantite?.toString() || '0', margin + 80, yPos);
                 doc.text(formatDate(res.date_fin), margin + 100, yPos);
-                doc.text(res.w_users?.username?.substring(0, 15) || 'Utilisateur', margin + 130, yPos);
+                doc.text(res.w_users?.username?.substring(0, 15) || 'Usuario', margin + 130, yPos);
                 doc.text(`${prixUnitaire.toFixed(2)} €`, margin + 170, yPos);
 
                 yPos += 6;
             });
         }
 
-        // Pied de page
+        // Pie de página
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
-        doc.text('Document généré automatiquement - Système de gestion de stock',
+        doc.text('Documento generado automáticamente - Sistema de gestión de stock',
                 pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
 
-        // Télécharger
-        doc.save(`projet_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
-        showAlert('PDF exporté avec succès', 'success');
+        // Descargar
+        doc.save(`proyecto_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showAlert('PDF exportado con éxito', 'success');
 
     } catch (error) {
-        console.error('Erreur export PDF:', error);
+        console.error('Error exportación PDF:', error);
         throw error;
     }
 }
@@ -3747,54 +3747,54 @@ async function exportProjectHistory() {
         const pageWidth = doc.internal.pageSize.width;
         const margin = 15;
 
-        // ===== EN-TÊTE =====
+        // ===== ENCABEZADO =====
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
-        doc.text('HISTORIQUE DU PROJET', pageWidth / 2, yPos, { align: 'center' });
+        doc.text('HISTORIAL DEL PROYECTO', pageWidth / 2, yPos, { align: 'center' });
         yPos += 10;
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Projet: ${project.nom} (${project.numero || 'Sans numéro'})`, margin, yPos);
+        doc.text(`Proyecto: ${project.nom} (${project.numero || 'Sin número'})`, margin, yPos);
         yPos += 5;
-        doc.text(`Exporté le: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - margin, yPos, { align: 'right' });
+        doc.text(`Exportado el: ${new Date().toLocaleDateString('es-ES')}`, pageWidth - margin, yPos, { align: 'right' });
         yPos += 10;
 
         if (history.length === 0) {
             doc.setFontSize(12);
-            doc.text('Aucun historique disponible', pageWidth / 2, yPos, { align: 'center' });
+            doc.text('No hay historial disponible', pageWidth / 2, yPos, { align: 'center' });
         } else {
-            // ===== LISTE HISTORIQUE =====
+            // ===== LISTA DE HISTORIAL =====
             doc.setFontSize(10);
             history.forEach((item, index) => {
-                // Vérifier nouvelle page
+                // Verificar nueva página
                 if (yPos > doc.internal.pageSize.height - 30) {
                     doc.addPage();
                     yPos = 20;
                 }
 
-                // Type d'action avec icône
+                // Tipo de acción con icono
                 let actionType = '';
-                let color = [0, 0, 0]; // Noir par défaut
+                let color = [0, 0, 0]; // Negro por defecto
 
                 switch(item.type) {
                     case 'sortie':
-                        actionType = 'Sortie de stock';
-                        color = [220, 53, 69]; // Rouge
+                        actionType = 'Salida de stock';
+                        color = [220, 53, 69]; // Rojo
                         break;
                     case 'retour_projet':
-                        actionType = 'Retour au stock';
-                        color = [40, 167, 69]; // Vert
+                        actionType = 'Retorno a stock';
+                        color = [40, 167, 69]; // Verde
                         break;
                     case 'entree':
-                        actionType = 'Entrée de stock';
-                        color = [0, 123, 255]; // Bleu
+                        actionType = 'Entrada de stock';
+                        color = [0, 123, 255]; // Azul
                         break;
                     default:
-                        actionType = item.type || 'Action';
+                        actionType = item.type || 'Acción';
                 }
 
-                // Date et heure
+                // Fecha y hora
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(...color);
                 doc.text(actionType, margin, yPos);
@@ -3805,22 +3805,22 @@ async function exportProjectHistory() {
 
                 yPos += 4;
 
-                // Détails
+                // Detalles
                 doc.setFontSize(9);
                 doc.setTextColor(0, 0, 0);
 
                 const details = [];
                 if (item.article?.nom) {
-                    details.push(`Article: ${item.article.nom}${item.article.numero ? ` (${item.article.numero})` : ''}`);
+                    details.push(`Artículo: ${item.article.nom}${item.article.numero ? ` (${item.article.numero})` : ''}`);
                 }
                 if (item.quantite) {
-                    details.push(`Quantité: ${item.quantite}`);
+                    details.push(`Cantidad: ${item.quantite}`);
                 }
                 if (item.projet) {
-                    details.push(`Projet: ${item.projet}`);
+                    details.push(`Proyecto: ${item.projet}`);
                 }
                 if (item.utilisateur) {
-                    details.push(`Utilisateur: ${item.utilisateur}`);
+                    details.push(`Usuario: ${item.utilisateur}`);
                 }
 
                 details.forEach(detail => {
@@ -3828,7 +3828,7 @@ async function exportProjectHistory() {
                     yPos += 4;
                 });
 
-                // Commentaire
+                // Comentario
                 if (item.commentaire) {
                     doc.setFont('helvetica', 'italic');
                     doc.setTextColor(120, 120, 120);
@@ -3837,7 +3837,7 @@ async function exportProjectHistory() {
                     doc.setFont('helvetica', 'normal');
                 }
 
-                // Séparateur
+                // Separador
                 if (index < history.length - 1) {
                     doc.setDrawColor(200, 200, 200);
                     doc.line(margin, yPos + 2, pageWidth - margin, yPos + 2);
@@ -3846,33 +3846,33 @@ async function exportProjectHistory() {
                     yPos += 4;
                 }
 
-                // Réinitialiser la couleur
+                // Restablecer el color
                 doc.setTextColor(0, 0, 0);
             });
         }
 
-        // Pied de page
+        // Pie de página
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
-        doc.text('Document de projet - Système de gestion de stock',
+        doc.text('Documento de proyecto - Sistema de gestión de stock',
                 pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
 
-        // Télécharger
-        doc.save(`historique_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
-        showAlert('Historique exporté en PDF', 'success');
+        // Descargar
+        doc.save(`historial_${project.numero || project.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showAlert('Historial exportado en PDF', 'success');
 
     } catch (error) {
-        console.error('Erreur export historique:', error);
+        console.error('Error exportación historial:', error);
         throw error;
     }
 }
 
-// ===== ÉDITION DE PROJET =====
+// ===== EDICIÓN DE PROYECTO =====
 async function editProject() {
     if (!state.currentProject) return;
 
     try {
-        // Pré-remplir le formulaire
+        // Pre-rellenar el formulario
         elements.projectName.value = state.currentProject.nom;
         elements.projectNumber.value = state.currentProject.numero || '';
         elements.projectDescription.value = state.currentProject.description || '';
@@ -3881,22 +3881,22 @@ async function editProject() {
             state.currentProject.date_fin_prevue.split('T')[0] : '';
         elements.projectBudget.value = state.currentProject.budget || '';
 
-        // Changer le titre et le bouton
+        // Cambiar el título y el botón
         const modal = elements.newProjectModal;
         const header = modal.querySelector('.modal-header h3');
         const submitBtn = modal.querySelector('.btn-primary');
 
-        header.innerHTML = '<i class="fas fa-edit"></i> Modifier le projet';
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> Enregistrer les modifications';
+        header.innerHTML = '<i class="fas fa-edit"></i> Modificar proyecto';
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar cambios';
 
-        // Changer l'événement
+        // Cambiar el evento
         modal.querySelector('form').onsubmit = async function(e) {
             e.preventDefault();
             await updateProjectAction();
         };
 
-        // ← AJOUTEZ CETTE LIGNE IMPORTANTE AVEC DEBUG
-        console.log('editProject - Setting previousModal:', {
+        // ← AÑADE ESTA LÍNEA IMPORTANTE CON DEBUG
+        console.log('editProject - Estableciendo previousModal:', {
             before: state.previousModal?.id,
             currentModal: state.currentModal?.id,
             currentModalElement: state.currentModal
@@ -3904,8 +3904,8 @@ async function editProject() {
 
         showModal(modal);
     } catch (error) {
-        console.error('Erreur préparation édition:', error);
-        showAlert('Erreur lors de la préparation de l\'édition', 'error');
+        console.error('Error al preparar la edición:', error);
+        showAlert('Error al preparar la edición', 'error');
     }
 }
 
@@ -3920,19 +3920,19 @@ async function updateProjectAction() {
             budget: elements.projectBudget.value ? parseFloat(elements.projectBudget.value) : null
         };
 
-        // Validation
+        // Validación
         if (!projectData.nom || !projectData.numero || !projectData.responsable) {
-            elements.projectErrorText.textContent = 'Veuillez remplir tous les champs obligatoires';
+            elements.projectErrorText.textContent = 'Por favor, rellena todos los campos obligatorios';
             elements.projectError.style.display = 'flex';
             return;
         }
 
-        // Vérifier si le numéro existe déjà (sauf pour le projet en cours)
+        // Verificar si el número ya existe (excepto para el proyecto actual)
         const existingProject = state.projects.find(p =>
             p.numero === projectData.numero && p.id !== state.currentProject.id
         );
         if (existingProject) {
-            elements.projectErrorText.textContent = 'Ce numéro de projet existe déjà';
+            elements.projectErrorText.textContent = 'Este número de proyecto ya existe';
             elements.projectError.style.display = 'flex';
             return;
         }
@@ -3940,14 +3940,14 @@ async function updateProjectAction() {
         showLoading();
         const updatedProject = await updateProject(state.currentProject.id, projectData);
 
-        // Mettre à jour les listes
+        // Actualizar las listas
         const allProjects = [...state.projects, ...state.archivedProjects];
         const projectIndex = allProjects.findIndex(p => p.id === state.currentProject.id);
 
         if (projectIndex !== -1) {
             allProjects[projectIndex] = updatedProject;
 
-            // Re-trier dans les bonnes listes
+            // Reordenar en las listas correctas
             if (updatedProject.archived) {
                 state.archivedProjects = allProjects.filter(p => p.archived);
                 state.projects = allProjects.filter(p => !p.archived);
@@ -3957,80 +3957,80 @@ async function updateProjectAction() {
             }
         }
 
-        // Mettre à jour l'affichage
+        // Actualizar la visualización
         updateProjectsDisplay();
         updateArchivedProjectsDisplay();
         populateManagerFilter();
 
-        // Recharger les détails si ouvert
+        // Recargar detalles si está abierto
         if (elements.projectDetailsModal.style.display === 'flex') {
             await showProjectDetails(updatedProject.id);
         }
 
-        // Fermer le modal et réinitialiser
+        // Cerrar el modal y reiniciar
         hideModal();
         elements.newProjectForm.reset();
         elements.projectError.style.display = 'none';
 
-        // Restaurer le formulaire original
+        // Restaurar el formulario original
         const modal = elements.newProjectModal;
         const header = modal.querySelector('.modal-header h3');
         const submitBtn = modal.querySelector('.btn-primary');
 
-        header.innerHTML = '<i class="fas fa-plus-circle"></i> Nouveau projet';
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> Créer le projet';
+        header.innerHTML = '<i class="fas fa-plus-circle"></i> Nuevo proyecto';
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Crear proyecto';
 
-        // Restaurer l'événement original
+        // Restaurar el evento original
         modal.querySelector('form').onsubmit = function(e) {
             e.preventDefault();
             createProjectAction();
         };
 
-        showAlert('Projet modifié avec succès', 'success');
+        showAlert('Proyecto modificado con éxito', 'success');
 
     } catch (error) {
-        console.error('Erreur modification projet:', error);
-        elements.projectErrorText.textContent = error.message || 'Erreur lors de la modification du projet';
+        console.error('Error al modificar proyecto:', error);
+        elements.projectErrorText.textContent = error.message || 'Error al modificar el proyecto';
         elements.projectError.style.display = 'flex';
     } finally {
         hideLoading();
     }
 }
 
-// ===== INITIALISATION =====
+// ===== INICIALIZACIÓN =====
 async function init() {
     try {
-        // Vérifier l'authentification
+        // Verificar autenticación
         const isAuthenticated = await checkAuth();
         if (!isAuthenticated) return;
 
-        // Initialiser les événements
+        // Inicializar eventos
         setupEventListeners();
 
-        // Charger les données initiales dans l'ordre
-        await fetchProjects();  // D'abord les projets
-        await Promise.all([     // Puis les autres données en parallèle
+        // Cargar datos iniciales en orden
+        await fetchProjects();  // Primero los proyectos
+        await Promise.all([     // Luego los demás datos en paralelo
             fetchArticles(),
             fetchReservations(),
             fetchUsers(),
             fetchMovements()
         ]);
 
-        // MAINTENANT que toutes les données sont chargées, mettre à jour l'affichage
+        // AHORA que todos los datos están cargados, actualizar la visualización
         updateStatistics();
         updateProjectsDisplay();
         updateArchivedProjectsDisplay();
         populateManagerFilter();
 
-        // Masquer l'overlay de chargement
+        // Ocultar la superposición de carga
         hideLoading();
 
     } catch (error) {
-        console.error('Erreur initialisation:', error);
-        showAlert('Erreur lors du chargement de l\'application', 'error');
+        console.error('Error de inicialización:', error);
+        showAlert('Error al cargar la aplicación', 'error');
         hideLoading();
     }
 }
 
-// Démarrer l'application
+// Iniciar la aplicación
 document.addEventListener('DOMContentLoaded', init);

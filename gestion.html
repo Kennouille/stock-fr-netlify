@@ -1,31 +1,31 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des articles - Gestion Stock</title>
+    <title>Gestión de Artículos - Gestión de Stock</title>
     <link rel="stylesheet" href="gestion.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 </head>
 <body>
-    <!-- Overlay de chargement -->
+    <!-- Overlay de carga -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
-            <p>Chargement des articles...</p>
+            <p>Cargando artículos...</p>
         </div>
     </div>
 
     <div class="container">
-        <!-- Header -->
+        <!-- Encabezado -->
         <header class="header">
             <div class="header-left">
-                <h1><i class="fas fa-box-open"></i> Gestion des articles</h1>
+                <h1><i class="fas fa-box-open"></i> Gestión de Artículos</h1>
                 <div class="header-info">
                     <span class="back-link">
                         <a href="accueil.html">
-                            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                            <i class="fas fa-arrow-left"></i> Volver al inicio
                         </a>
                     </span>
                 </div>
@@ -36,90 +36,90 @@
                     <span id="usernameDisplay">...</span>
                 </span>
                 <button id="logoutBtn" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    <i class="fas fa-sign-out-alt"></i> Cerrar sesión
                 </button>
             </div>
         </header>
 
-        <!-- Contenu principal -->
+        <!-- Contenido principal -->
         <main class="main-content">
-            <!-- Barre d'outils -->
+            <!-- Barra de herramientas -->
             <section class="toolbar-section">
                 <div class="toolbar-header">
-                    <h2><i class="fas fa-tools"></i> Outils de gestion</h2>
+                    <h2><i class="fas fa-tools"></i> Herramientas de gestión</h2>
                     <div class="stats-badge">
-                        <span id="articlesCount">0</span> articles
+                        <span id="articlesCount">0</span> artículos
                     </div>
                 </div>
 
                 <div class="toolbar-grid">
-                    <!-- Recherche -->
+                    <!-- Búsqueda -->
                     <div class="toolbar-card">
-                        <h3><i class="fas fa-search"></i> Recherche avancée</h3>
+                        <h3><i class="fas fa-search"></i> Búsqueda avanzada</h3>
                         <div class="search-filters">
                             <div class="filter-group">
                                 <input type="text"
                                        id="searchGlobal"
-                                       placeholder="Rechercher par nom, numéro, référence..."
+                                       placeholder="Buscar por nombre, número, referencia..."
                                        class="search-input">
                             </div>
                             <div class="filter-row">
                                 <select id="filterCategory" class="filter-select">
-                                    <option value="">Toutes les catégories</option>
-                                    <option value="actif">Actifs</option>
-                                    <option value="inactif">Inactifs</option>
-                                    <option value="stock_bas">Stock bas</option>
-                                    <option value="rupture">Rupture</option>
+                                    <option value="">Todas las categorías</option>
+                                    <option value="actif">Activos</option>
+                                    <option value="inactif">Inactivos</option>
+                                    <option value="stock_bas">Stock bajo</option>
+                                    <option value="rupture">Agotado</option>
                                 </select>
 
                                 <select id="filterSort" class="filter-select">
-                                    <option value="nom_asc">Nom (A-Z)</option>
-                                    <option value="nom_desc">Nom (Z-A)</option>
-                                    <option value="stock_asc">Stock (croissant)</option>
-                                    <option value="stock_desc">Stock (décroissant)</option>
-                                    <option value="prix_asc">Prix (croissant)</option>
-                                    <option value="prix_desc">Prix (décroissant)</option>
-                                    <option value="recent">Plus récents</option>
-                                    <option value="ancien">Plus anciens</option>
+                                    <option value="nom_asc">Nombre (A-Z)</option>
+                                    <option value="nom_desc">Nombre (Z-A)</option>
+                                    <option value="stock_asc">Stock (creciente)</option>
+                                    <option value="stock_desc">Stock (decreciente)</option>
+                                    <option value="prix_asc">Precio (creciente)</option>
+                                    <option value="prix_desc">Precio (decreciente)</option>
+                                    <option value="recent">Más recientes</option>
+                                    <option value="ancien">Más antiguos</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Actions rapides -->
+                    <!-- Acciones rápidas -->
                     <div class="toolbar-card">
-                        <h3><i class="fas fa-bolt"></i> Actions rapides</h3>
+                        <h3><i class="fas fa-bolt"></i> Acciones rápidas</h3>
                         <div class="quick-actions">
                             <button id="exportPdfBtn" class="btn-action">
-                                <i class="fas fa-file-pdf"></i> Exporter PDF
+                                <i class="fas fa-file-pdf"></i> Exportar PDF
                             </button>
                             <button id="printListBtn" class="btn-action">
-                                <i class="fas fa-print"></i> Imprimer la liste
+                                <i class="fas fa-print"></i> Imprimir lista
                             </button>
                             <button id="massEditBtn" class="btn-action" disabled>
-                                <i class="fas fa-edit"></i> Modifier en masse
+                                <i class="fas fa-edit"></i> Editar masivamente
                             </button>
                             <button id="massArchiveBtn" class="btn-action" disabled>
-                                <i class="fas fa-archive"></i> Archiver sélection
+                                <i class="fas fa-archive"></i> Archivar selección
                             </button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Tableau des articles -->
+            <!-- Tabla de artículos -->
             <section class="table-section">
                 <div class="table-header">
-                    <h3><i class="fas fa-list"></i> Liste des articles</h3>
+                    <h3><i class="fas fa-list"></i> Lista de artículos</h3>
                     <div class="table-actions">
                         <div class="selection-info" id="selectionInfo" style="display: none;">
-                            <span id="selectedCount">0</span> article(s) sélectionné(s)
+                            <span id="selectedCount">0</span> artículo(s) seleccionado(s)
                         </div>
                         <button id="selectAllBtn" class="btn-select">
-                            <i class="far fa-square"></i> Tout sélectionner
+                            <i class="far fa-square"></i> Seleccionar todo
                         </button>
                         <button id="deselectAllBtn" class="btn-select">
-                            <i class="far fa-check-square"></i> Tout désélectionner
+                            <i class="far fa-check-square"></i> Deseleccionar todo
                         </button>
                         <button id="refreshBtn" class="btn-icon">
                             <i class="fas fa-sync-alt"></i>
@@ -134,18 +134,18 @@
                                 <th class="select-column">
                                     <input type="checkbox" id="selectAllCheckbox">
                                 </th>
-                                <th>Photo</th>
-                                <th>Article</th>
+                                <th>Foto</th>
+                                <th>Artículo</th>
                                 <th>Stock</th>
-                                <th>Prix</th>
-                                <th>Valeur</th>
-                                <th>Statut</th>
-                                <th>Dernière modification</th>
-                                <th>Actions</th>
+                                <th>Precio</th>
+                                <th>Valor</th>
+                                <th>Estado</th>
+                                <th>Última modificación</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="articlesTableBody">
-                            <!-- Rempli dynamiquement -->
+                            <!-- Relleno dinámico -->
                         </tbody>
                     </table>
                 </div>
@@ -159,7 +159,7 @@
                             <i class="fas fa-angle-left"></i>
                         </button>
                         <span class="page-info">
-                            Page <span id="currentPage">1</span> sur <span id="totalPages">1</span>
+                            Página <span id="currentPage">1</span> de <span id="totalPages">1</span>
                         </span>
                         <button id="nextPageBtn" class="btn-pagination" disabled>
                             <i class="fas fa-angle-right"></i>
@@ -170,7 +170,7 @@
                     </div>
 
                     <div class="rows-per-page">
-                        <label for="rowsPerPage">Lignes par page :</label>
+                        <label for="rowsPerPage">Filas por página:</label>
                         <select id="rowsPerPage" class="form-select-small">
                             <option value="10">10</option>
                             <option value="25" selected>25</option>
@@ -181,10 +181,10 @@
                 </div>
             </section>
 
-            <!-- Panneau latéral de détails -->
+            <!-- Panel lateral de detalles -->
             <aside class="details-sidebar" id="detailsSidebar">
                 <div class="sidebar-header">
-                    <h3><i class="fas fa-info-circle"></i> Détails de l'article</h3>
+                    <h3><i class="fas fa-info-circle"></i> Detalles del artículo</h3>
                     <button id="closeSidebarBtn" class="btn-close-sidebar">
                         <i class="fas fa-times"></i>
                     </button>
@@ -192,36 +192,36 @@
 
                 <div class="sidebar-content">
                     <div class="article-details" id="articleDetails">
-                        <!-- Rempli dynamiquement -->
+                        <!-- Relleno dinámico -->
                         <div class="details-placeholder">
                             <i class="fas fa-box"></i>
-                            <p>Sélectionnez un article pour voir ses détails</p>
+                            <p>Selecciona un artículo para ver sus detalles</p>
                         </div>
                     </div>
                 </div>
             </aside>
         </main>
 
-        <!-- Footer -->
+        <!-- Pie de página -->
         <footer class="footer">
-            <p>Système de gestion de stock • Gestion des articles</p>
+            <p>Sistema de gestión de stock • Gestión de artículos</p>
         </footer>
     </div>
 
-    <!-- Modal de modification -->
+    <!-- Modal de edición -->
     <div id="editModal" class="modal-overlay" style="display: none;">
         <div class="modal modal-large">
             <div class="modal-header">
-                <h3><i class="fas fa-edit"></i> Modifier l'article</h3>
+                <h3><i class="fas fa-edit"></i> Editar artículo</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="editArticleForm">
                     <input type="hidden" id="editArticleId">
 
-                    <!-- Formulaire de modification -->
+                    <!-- Formulario de edición -->
                     <div class="edit-form" id="editFormContent">
-                        <!-- Rempli dynamiquement -->
+                        <!-- Relleno dinámico -->
                     </div>
 
                     <div id="editError" class="error-message" style="display: none;">
@@ -231,13 +231,13 @@
 
                     <div class="modal-actions">
                         <button type="submit" class="btn-primary">
-                            <i class="fas fa-save"></i> Enregistrer
+                            <i class="fas fa-save"></i> Guardar
                         </button>
                         <button type="button" class="btn-secondary close-modal">
-                            Annuler
+                            Cancelar
                         </button>
                         <button type="button" id="deleteArticleBtn" class="btn-danger">
-                            <i class="fas fa-trash"></i> Supprimer
+                            <i class="fas fa-trash"></i> Eliminar
                         </button>
                     </div>
                 </form>
@@ -245,24 +245,24 @@
         </div>
     </div>
 
-    <!-- Modal de confirmation -->
+    <!-- Modal de confirmación -->
     <div id="confirmModal" class="modal-overlay" style="display: none;">
         <div class="modal modal-small">
             <div class="modal-header">
-                <h3><i class="fas fa-exclamation-triangle"></i> Confirmation</h3>
+                <h3><i class="fas fa-exclamation-triangle"></i> Confirmación</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <p id="confirmMessage"></p>
                 <div class="modal-actions">
-                    <button id="confirmYesBtn" class="btn-danger">Confirmer</button>
-                    <button id="confirmNoBtn" class="btn-secondary">Annuler</button>
+                    <button id="confirmYesBtn" class="btn-danger">Confirmar</button>
+                    <button id="confirmNoBtn" class="btn-secondary">Cancelar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Import des scripts -->
+    <!-- Importación de scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>

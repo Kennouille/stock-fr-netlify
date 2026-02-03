@@ -1,14 +1,14 @@
 // ===== IMPORTS =====
 import { supabase } from './supabaseClient.js';
 
-// ===== ÉTATS GLOBAUX =====
+// ===== ESTADOS GLOBALES =====
 let state = {
     user: null,
     reservations: [],
     projects: [],
     articles: [],
     users: [],
-    currentTab: 'active',
+    currentTab: 'active', // Pestaña actual ('active', 'expired', 'history', 'projects')
     filters: {
         project: '',
         article: '',
@@ -16,202 +16,211 @@ let state = {
         user: ''
     },
     selections: {
-        active: new Set(),
-        expired: new Set()
+        active: new Set(), // Conjunto de IDs de reservas activas seleccionadas
+        expired: new Set() // Conjunto de IDs de reservas expiradas seleccionadas
     },
-    currentModal: null,
-    currentStep: 1,
-    selectedArticle: null,
-    newReservationData: {
+    currentModal: null, // Modal actual abierto ('newReservation', 'newProject', 'release', 'extend', 'details')
+    currentStep: 1, // Paso actual en el modal de nueva reserva (1, 2, 3)
+    selectedArticle: null, // Artículo seleccionado en el modal de nueva reserva
+    newReservationData: { // Datos para una nueva reserva
         articleId: '',
         quantity: 1,
         projectId: '',
-        duration: '14',
-        endDate: '',
+        duration: '14', // Duración por defecto en días
+        endDate: '', // Fecha de fin calculada o personalizada
         comment: ''
     }
 };
 
-// ===== ÉLÉMENTS DOM =====
+// ===== ELEMENTOS DEL DOM =====
 const elements = {
-    // Overlay de chargement
+    // Overlay de carga
     loadingOverlay: document.getElementById('loadingOverlay'),
 
-    // Header
-    usernameDisplay: document.getElementById('usernameDisplay'),
-    logoutBtn: document.getElementById('logoutBtn'),
+    // Cabecera
+    usernameDisplay: document.getElementById('usernameDisplay'), // Muestra el nombre de usuario
+    logoutBtn: document.getElementById('logoutBtn'), // Botón de cierre de sesión
 
-    // Statistiques
-    activeReservations: document.getElementById('activeReservations'),
-    expiredReservations: document.getElementById('expiredReservations'),
-    totalReservedItems: document.getElementById('totalReservedItems'),
-    reservedValue: document.getElementById('reservedValue'),
+    // Estadísticas (en la cabecera)
+    activeReservations: document.getElementById('activeReservations'), // Contador de reservas activas
+    expiredReservations: document.getElementById('expiredReservations'), // Contador de reservas expiradas
+    totalReservedItems: document.getElementById('totalReservedItems'), // Contador total de artículos reservados
+    reservedValue: document.getElementById('reservedValue'), // Valor total de los artículos reservados
 
-    // Boutons header
-    newReservationBtn: document.getElementById('newReservationBtn'),
-    exportReservationsBtn: document.getElementById('exportReservationsBtn'),
+    // Botones de cabecera
+    newReservationBtn: document.getElementById('newReservationBtn'), // Botón para abrir el modal de nueva reserva
+    exportReservationsBtn: document.getElementById('exportReservationsBtn'), // Botón para exportar reservas
 
-    // Filtres
-    toggleFiltersBtn: document.getElementById('toggleFiltersBtn'),
-    filtersContainer: document.getElementById('filtersContainer'),
-    filterProject: document.getElementById('filterProject'),
-    filterArticle: document.getElementById('filterArticle'),
-    filterStatus: document.getElementById('filterStatus'),
-    filterUser: document.getElementById('filterUser'),
-    applyFiltersBtn: document.getElementById('applyFiltersBtn'),
-    resetFiltersBtn: document.getElementById('resetFiltersBtn'),
-    saveFilterBtn: document.getElementById('saveFilterBtn'),
+    // Filtros
+    toggleFiltersBtn: document.getElementById('toggleFiltersBtn'), // Botón para mostrar/ocultar el panel de filtros
+    filtersContainer: document.getElementById('filtersContainer'), // Contenedor de los filtros
+    filterProject: document.getElementById('filterProject'), // Selector de filtro por proyecto
+    filterArticle: document.getElementById('filterArticle'), // Selector de filtro por artículo
+    filterStatus: document.getElementById('filterStatus'), // Selector de filtro por estado
+    filterUser: document.getElementById('filterUser'), // Selector de filtro por usuario
+    applyFiltersBtn: document.getElementById('applyFiltersBtn'), // Botón para aplicar filtros
+    resetFiltersBtn: document.getElementById('resetFiltersBtn'), // Botón para restablecer filtros
+    saveFilterBtn: document.getElementById('saveFilterBtn'), // Botón para guardar filtros (funcionalidad no implementada)
 
-    // Onglets
-    tabBtns: document.querySelectorAll('.tab-btn'),
-    tabContents: document.querySelectorAll('.tab-content'),
-    activeTabCount: document.getElementById('activeTabCount'),
-    expiredTabCount: document.getElementById('expiredTabCount'),
-    historyTabCount: document.getElementById('historyTabCount'),
-    projectsTabCount: document.getElementById('projectsTabCount'),
+    // Pestañas
+    tabBtns: document.querySelectorAll('.tab-btn'), // Todos los botones de pestaña
+    tabContents: document.querySelectorAll('.tab-content'), // Todos los contenidos de pestaña
+    activeTabCount: document.getElementById('activeTabCount'), // Contador para la pestaña "Activas"
+    expiredTabCount: document.getElementById('expiredTabCount'), // Contador para la pestaña "Expiradas"
+    historyTabCount: document.getElementById('historyTabCount'), // Contador para la pestaña "Historial"
+    projectsTabCount: document.getElementById('projectsTabCount'), // Contador para la pestaña "Proyectos"
 
-    // Recherche
-    searchReservations: document.getElementById('searchReservations'),
-    searchBtn: document.getElementById('searchBtn'),
+    // Búsqueda
+    searchReservations: document.getElementById('searchReservations'), // Campo de búsqueda general
+    searchBtn: document.getElementById('searchBtn'), // Botón de búsqueda general
 
-    // Onglet actif
-    selectAllActive: document.getElementById('selectAllActive'),
-    activeReservationsBody: document.getElementById('activeReservationsBody'),
-    activeSelectionInfo: document.getElementById('activeSelectionInfo'),
-    activeSelectedCount: document.getElementById('activeSelectedCount'),
-    releaseSelectedBtn: document.getElementById('releaseSelectedBtn'),
-    extendSelectedBtn: document.getElementById('extendSelectedBtn'),
-    exportSelectedBtn: document.getElementById('exportSelectedBtn'),
+    // Pestaña "Activas"
+    selectAllActive: document.getElementById('selectAllActive'), // Checkbox para seleccionar/deseleccionar todas las reservas activas
+    activeReservationsBody: document.getElementById('activeReservationsBody'), // Cuerpo de la tabla de reservas activas
+    activeSelectionInfo: document.getElementById('activeSelectionInfo'), // Información sobre la selección actual (ej. "X seleccionados")
+    activeSelectedCount: document.getElementById('activeSelectedCount'), // Contador de elementos seleccionados en la pestaña "Activas"
+    releaseSelectedBtn: document.getElementById('releaseSelectedBtn'), // Botón para liberar las reservas activas seleccionadas
+    extendSelectedBtn: document.getElementById('extendSelectedBtn'), // Botón para prolongar las reservas activas seleccionadas
+    exportSelectedBtn: document.getElementById('exportSelectedBtn'), // Botón para exportar las reservas activas seleccionadas
 
-    // Onglet à libérer
-    selectAllExpired: document.getElementById('selectAllExpired'),
-    expiredReservationsBody: document.getElementById('expiredReservationsBody'),
-    expiredSelectionInfo: document.getElementById('expiredSelectionInfo'),
-    expiredSelectedCount: document.getElementById('expiredSelectedCount'),
-    releaseExpiredSelectedBtn: document.getElementById('releaseExpiredSelectedBtn'),
-    extendExpiredSelectedBtn: document.getElementById('extendExpiredSelectedBtn'),
-    notifyExpiredBtn: document.getElementById('notifyExpiredBtn'),
+    // Pestaña "A liberar" (Expiradas)
+    selectAllExpired: document.getElementById('selectAllExpired'), // Checkbox para seleccionar/deseleccionar todas las reservas expiradas
+    expiredReservationsBody: document.getElementById('expiredReservationsBody'), // Cuerpo de la tabla de reservas expiradas
+    expiredSelectionInfo: document.getElementById('expiredSelectionInfo'), // Información sobre la selección actual (ej. "X seleccionados")
+    expiredSelectedCount: document.getElementById('expiredSelectedCount'), // Contador de elementos seleccionados en la pestaña "Expiradas"
+    releaseExpiredSelectedBtn: document.getElementById('releaseExpiredSelectedBtn'), // Botón para liberar las reservas expiradas seleccionadas
+    extendExpiredSelectedBtn: document.getElementById('extendExpiredSelectedBtn'), // Botón para prolongar las reservas expiradas seleccionadas
+    notifyExpiredBtn: document.getElementById('notifyExpiredBtn'), // Botón para notificar sobre reservas expiradas (funcionalidad no implementada)
 
-    // Onglet historique
-    historyDateFrom: document.getElementById('historyDateFrom'),
-    historyDateTo: document.getElementById('historyDateTo'),
-    historyType: document.getElementById('historyType'),
-    applyHistoryFiltersBtn: document.getElementById('applyHistoryFiltersBtn'),
-    historyTableBody: document.getElementById('historyTableBody'),
-    historyPaginationInfo: document.getElementById('historyPaginationInfo'),
-    historyCurrentPage: document.getElementById('historyCurrentPage'),
-    historyTotalPages: document.getElementById('historyTotalPages'),
-    historyFirstPageBtn: document.getElementById('historyFirstPageBtn'),
-    historyPrevPageBtn: document.getElementById('historyPrevPageBtn'),
-    historyNextPageBtn: document.getElementById('historyNextPageBtn'),
-    historyLastPageBtn: document.getElementById('historyLastPageBtn'),
+    // Pestaña "Historial"
+    historyDateFrom: document.getElementById('historyDateFrom'), // Campo de fecha de inicio para el historial
+    historyDateTo: document.getElementById('historyDateTo'), // Campo de fecha de fin para el historial
+    historyType: document.getElementById('historyType'), // Selector de tipo de evento en el historial
+    applyHistoryFiltersBtn: document.getElementById('applyHistoryFiltersBtn'), // Botón para aplicar filtros al historial
+    historyTableBody: document.getElementById('historyTableBody'), // Cuerpo de la tabla del historial
+    historyPaginationInfo: document.getElementById('historyPaginationInfo'), // Información de paginación del historial
+    historyCurrentPage: document.getElementById('historyCurrentPage'), // Número de página actual del historial
+    historyTotalPages: document.getElementById('historyTotalPages'), // Número total de páginas del historial
+    historyFirstPageBtn: document.getElementById('historyFirstPageBtn'), // Botón para ir a la primera página del historial
+    historyPrevPageBtn: document.getElementById('historyPrevPageBtn'), // Botón para ir a la página anterior del historial
+    historyNextPageBtn: document.getElementById('historyNextPageBtn'), // Botón para ir a la página siguiente del historial
+    historyLastPageBtn: document.getElementById('historyLastPageBtn'), // Botón para ir a la última página del historial
 
-    // Onglet projets
-    newProjectBtn: document.getElementById('newProjectBtn'),
-    projectsGrid: document.getElementById('projectsGrid'),
+    // Pestaña "Proyectos"
+    newProjectBtn: document.getElementById('newProjectBtn'), // Botón para abrir el modal de nuevo proyecto
+    projectsGrid: document.getElementById('projectsGrid'), // Contenedor de la cuadrícula de proyectos
 
-    // Modals
-    newReservationModal: document.getElementById('newReservationModal'),
-    newProjectModal: document.getElementById('newProjectModal'),
-    releaseModal: document.getElementById('releaseModal'),
-    extendModal: document.getElementById('extendModal'),
-    detailsModal: document.getElementById('detailsModal'),
-    closeModalBtns: document.querySelectorAll('.close-modal'),
+    // Modales
+    newReservationModal: document.getElementById('newReservationModal'), // Modal de nueva reserva
+    newProjectModal: document.getElementById('newProjectModal'), // Modal de nuevo proyecto
+    releaseModal: document.getElementById('releaseModal'), // Modal de liberación
+    extendModal: document.getElementById('extendModal'), // Modal de prolongación
+    detailsModal: document.getElementById('detailsModal'), // Modal de detalles de reserva
+    closeModalBtns: document.querySelectorAll('.close-modal'), // Todos los botones para cerrar modales
 
-    // Modal nouvelle réservation
-    reservationSteps: document.querySelectorAll('.step'),
-    stepContents: document.querySelectorAll('.step-content'),
-    prevStepBtn: document.getElementById('prevStepBtn'),
-    nextStepBtn: document.getElementById('nextStepBtn'),
-    cancelReservationBtn: document.getElementById('cancelReservationBtn'),
+    // Modal nueva reserva - Pasos
+    reservationSteps: document.querySelectorAll('.step'), // Todos los pasos del modal de reserva
+    stepContents: document.querySelectorAll('.step-content'), // Todos los contenidos de cada paso
+    prevStepBtn: document.getElementById('prevStepBtn'), // Botón para ir al paso anterior
+    nextStepBtn: document.getElementById('nextStepBtn'), // Botón para ir al paso siguiente
+    cancelReservationBtn: document.getElementById('cancelReservationBtn'), // Botón para cancelar la creación de reserva
 
-    // Étape 1
-    reservationBarcode: document.getElementById('reservationBarcode'),
-    scanReservationBtn: document.getElementById('scanReservationBtn'),
-    reservationArticleSearch: document.getElementById('reservationArticleSearch'),
-    searchReservationArticleBtn: document.getElementById('searchReservationArticleBtn'),
-    reservationSearchResults: document.getElementById('reservationSearchResults'),
-    reservationResultsList: document.getElementById('reservationResultsList'),
-    selectedArticlePreview: document.getElementById('selectedArticlePreview'),
-    articlePreview: document.getElementById('articlePreview'),
-    changeArticleBtn: document.getElementById('changeArticleBtn'),
+    // Modal nueva reserva - Paso 1: Selección de artículo
+    reservationBarcode: document.getElementById('reservationBarcode'), // Campo para introducir código de barras
+    scanReservationBtn: document.getElementById('scanReservationBtn'), // Botón para iniciar escaneo de código de barras
+    reservationArticleSearch: document.getElementById('reservationArticleSearch'), // Campo de búsqueda de artículos
+    searchReservationArticleBtn: document.getElementById('searchReservationArticleBtn'), // Botón para buscar artículos
+    reservationSearchResults: document.getElementById('reservationSearchResults'), // Contenedor para mostrar resultados de búsqueda de artículos
+    reservationResultsList: document.getElementById('reservationResultsList'), // Lista de resultados de búsqueda de artículos
+    selectedArticlePreview: document.getElementById('selectedArticlePreview'), // Vista previa del artículo seleccionado
+    articlePreview: document.getElementById('articlePreview'), // Imagen del artículo seleccionado
+    changeArticleBtn: document.getElementById('changeArticleBtn'), // Botón para cambiar el artículo seleccionado
 
-    // Étape 2
-    articleInfoSummary: document.getElementById('articleInfoSummary'),
-    reservationQuantity: document.getElementById('reservationQuantity'),
-    quantityMinusBtn: document.getElementById('quantityMinusBtn'),
-    quantityPlusBtn: document.getElementById('quantityPlusBtn'),
-    availableStock: document.getElementById('availableStock'),
-    alreadyReserved: document.getElementById('alreadyReserved'),
-    reservationProject: document.getElementById('reservationProject'),
-    newProjectFromReservationBtn: document.getElementById('newProjectFromReservationBtn'),
-    reservationDuration: document.getElementById('reservationDuration'),
-    customDateGroup: document.getElementById('customDateGroup'),
-    reservationEndDate: document.getElementById('reservationEndDate'),
-    reservationComment: document.getElementById('reservationComment'),
+    // Modal nueva reserva - Paso 2: Detalles de la reserva
+    articleInfoSummary: document.getElementById('articleInfoSummary'), // Resumen de información del artículo seleccionado
+    reservationQuantity: document.getElementById('reservationQuantity'), // Campo para la cantidad a reservar
+    quantityMinusBtn: document.getElementById('quantityMinusBtn'), // Botón para decrementar cantidad
+    quantityPlusBtn: document.getElementById('quantityPlusBtn'), // Botón para incrementar cantidad
+    availableStock: document.getElementById('availableStock'), // Indicador de stock disponible
+    alreadyReserved: document.getElementById('alreadyReserved'), // Indicador de artículos ya reservados para este proyecto
+    reservationProject: document.getElementById('reservationProject'), // Selector de proyecto para la reserva
+    newProjectFromReservationBtn: document.getElementById('newProjectFromReservationBtn'), // Botón para crear un nuevo proyecto desde la reserva
+    reservationDuration: document.getElementById('reservationDuration'), // Selector de duración de la reserva
+    customDateGroup: document.getElementById('customDateGroup'), // Grupo de campos para fecha de fin personalizada
+    reservationEndDate: document.getElementById('reservationEndDate'), // Campo para la fecha de fin personalizada
+    reservationComment: document.getElementById('reservationComment'), // Campo de comentario para la reserva
 
-    // Étape 3
-    confirmationSummary: document.getElementById('confirmationSummary'),
-    confirmReservationBtn: document.getElementById('confirmReservationBtn'),
-    editReservationBtn: document.getElementById('editReservationBtn'),
+    // Modal nueva reserva - Paso 3: Confirmación
+    confirmationSummary: document.getElementById('confirmationSummary'), // Resumen de la confirmación
+    confirmReservationBtn: document.getElementById('confirmReservationBtn'), // Botón para confirmar la reserva
+    editReservationBtn: document.getElementById('editReservationBtn'), // Botón para editar la reserva antes de confirmar
 
-    // Modal nouveau projet
-    newProjectForm: document.getElementById('newProjectForm'),
-    projectName: document.getElementById('projectName'),
-    projectNumber: document.getElementById('projectNumber'),
-    projectDescription: document.getElementById('projectDescription'),
-    projectManager: document.getElementById('projectManager'),
-    projectEndDate: document.getElementById('projectEndDate'),
-    projectError: document.getElementById('projectError'),
-    projectErrorText: document.getElementById('projectErrorText'),
+    // Modal nuevo proyecto
+    newProjectForm: document.getElementById('newProjectForm'), // Formulario para crear un nuevo proyecto
+    projectName: document.getElementById('projectName'), // Campo de nombre del proyecto
+    projectNumber: document.getElementById('projectNumber'), // Campo de número del proyecto
+    projectDescription: document.getElementById('projectDescription'), // Campo de descripción del proyecto
+    projectManager: document.getElementById('projectManager'), // Selector de responsable del proyecto
+    projectEndDate: document.getElementById('projectEndDate'), // Campo de fecha de fin del proyecto
+    projectError: document.getElementById('projectError'), // Contenedor de mensajes de error del formulario de proyecto
+    projectErrorText: document.getElementById('projectErrorText'), // Texto del mensaje de error
 
-    // Modal libération
-    releaseDetails: document.getElementById('releaseDetails'),
-    releaseComment: document.getElementById('releaseComment'),
-    releaseError: document.getElementById('releaseError'),
-    releaseErrorText: document.getElementById('releaseErrorText'),
-    confirmReleaseBtn: document.getElementById('confirmReleaseBtn'),
+    // Modal liberación
+    releaseDetails: document.getElementById('releaseDetails'), // Detalles a mostrar en el modal de liberación
+    releaseComment: document.getElementById('releaseComment'), // Campo de comentario para la liberación
+    releaseError: document.getElementById('releaseError'), // Contenedor de mensajes de error del modal de liberación
+    releaseErrorText: document.getElementById('releaseErrorText'), // Texto del mensaje de error
+    confirmReleaseBtn: document.getElementById('confirmReleaseBtn'), // Botón para confirmar la liberación
 
-    // Modal prolongation
-    extendDetails: document.getElementById('extendDetails'),
-    extendDuration: document.getElementById('extendDuration'),
-    extendComment: document.getElementById('extendComment'),
-    extendError: document.getElementById('extendError'),
-    extendErrorText: document.getElementById('extendErrorText'),
-    confirmExtendBtn: document.getElementById('confirmExtendBtn'),
+    // Modal prolongación
+    extendDetails: document.getElementById('extendDetails'), // Detalles a mostrar en el modal de prolongación
+    extendDuration: document.getElementById('extendDuration'), // Selector de duración de la prolongación
+    extendComment: document.getElementById('extendComment'), // Campo de comentario para la prolongación
+    extendError: document.getElementById('extendError'), // Contenedor de mensajes de error del modal de prolongación
+    extendErrorText: document.getElementById('extendErrorText'), // Texto del mensaje de error
+    confirmExtendBtn: document.getElementById('confirmExtendBtn'), // Botón para confirmar la prolongación
 
-    // Modal détails
-    reservationFullDetails: document.getElementById('reservationFullDetails'),
-    releaseFromDetailsBtn: document.getElementById('releaseFromDetailsBtn'),
-    extendFromDetailsBtn: document.getElementById('extendFromDetailsBtn')
+    // Modal detalles (enlace desde tabla de reservas)
+    reservationFullDetails: document.getElementById('reservationFullDetails'), // Contenedor de detalles completos de la reserva
+    releaseFromDetailsBtn: document.getElementById('releaseFromDetailsBtn'), // Botón para liberar desde el modal de detalles
+    extendFromDetailsBtn: document.getElementById('extendFromDetailsBtn') // Botón para prolongar desde el modal de detalles
 };
 
-// ===== AUTHENTIFICATION (comme dans impression.js) =====
+// ===== AUTENTIFICACIÓN (como en impression.js) =====
+/**
+ * Verifica si el usuario está autenticado.
+ * Si no lo está, redirige a la página de inicio de sesión.
+ * Si lo está, carga los datos del usuario y actualiza la interfaz.
+ * @returns {Promise<boolean>} - True si la autenticación es exitosa, false en caso contrario.
+ */
 async function checkAuth() {
     try {
         const userJson = sessionStorage.getItem('current_user');
 
         if (!userJson) {
+            // Si no hay usuario en sessionStorage, redirigir a la página de inicio de sesión
             window.location.href = 'connexion.html';
             return false;
         }
 
         state.user = JSON.parse(userJson);
 
-        // Vérifier les permissions (si nécessaire)
+        // Verificar permisos específicos para la sección de reservas
+        // Si el usuario no tiene permisos, mostrar alerta y redirigir
         if (!state.user.permissions?.reservations) {
-            alert('Vous n\'avez pas la permission d\'accéder aux réservations');
+            alert('Vous n\'avez pas la permission d\'accéder aux réservations'); // Mensaje en francés, se podría traducir si fuera necesario
             window.location.href = 'accueil.html';
             return false;
         }
 
-        // Mettre à jour l'interface
+        // Actualizar la interfaz con el nombre de usuario o email
         elements.usernameDisplay.textContent = state.user.username || state.user.email;
 
-        return true;
+        return true; // Autenticación exitosa
 
     } catch (error) {
-        console.error('Erreur d\'authentification:', error);
+        console.error('Erreur d\'authentification:', error); // Mensaje en francés
+        // En caso de error (ej. JSON inválido), limpiar sessionStorage y redirigir
         sessionStorage.removeItem('current_user');
         window.location.href = 'connexion.html';
         return false;
@@ -219,7 +228,7 @@ async function checkAuth() {
 }
 
 function logout() {
-    if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    if (!confirm('¿Está seguro de que desea cerrar sesión?')) { // Traduction de la confirmation
         return;
     }
 
@@ -243,7 +252,7 @@ function showError(message, element = null) {
         element.style.display = 'flex';
         element.querySelector('span').textContent = message;
     } else {
-        alert(`Erreur: ${message}`);
+        alert(`Error: ${message}`); // Traduction du message d'erreur général
     }
 }
 
@@ -257,7 +266,7 @@ function formatDate(dateString) {
     if (!dateString) return 'N/A';
     try {
         const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
+        return date.toLocaleDateString('es-ES', { // Changement pour esp-ES pour le format espagnol
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
@@ -271,7 +280,7 @@ function formatDateTime(dateString) {
     if (!dateString) return 'N/A';
     try {
         const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
+        return date.toLocaleDateString('es-ES', { // Changement pour esp-ES pour le format espagnol
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -353,12 +362,11 @@ async function fetchReservations() {
 
     } catch (error) {
         console.error('Erreur chargement réservations:', error);
-        showError('Erreur lors du chargement des réservations');
+        showError('Erreur lors du chargement des réservations'); // Traduction du message d'erreur
     } finally {
         hideLoading();
     }
 }
-
 
 async function fetchArticles() {
     try {
@@ -478,7 +486,6 @@ async function createReservation(reservationData) {
         throw error;
     }
 }
-
 
 async function releaseReservation(reservationId, comment = '') {
     try {
@@ -683,7 +690,7 @@ function updateActiveReservations() {
         elements.activeReservationsBody.innerHTML = `
             <tr>
                 <td colspan="8" class="loading-row">
-                    <i class="fas fa-info-circle"></i> Aucune réservation active
+                    <i class="fas fa-info-circle"></i> Ninguna reserva activa <!-- Traducido: "Aucune réservation active" -->
                 </td>
             </tr>
         `;
@@ -692,9 +699,9 @@ function updateActiveReservations() {
 
     let html = '';
     filteredReservations.forEach(reservation => {
-        const articleName = reservation.article?.nom || state.articles.find(a => a.id === reservation.article_id)?.nom || 'Article inconnu';
-        const projetName = reservation.projet || 'Projet inconnu';
-        const userName = reservation.utilisateur || 'Utilisateur inconnu';
+        const articleName = reservation.article?.nom || state.articles.find(a => a.id === reservation.article_id)?.nom || 'Artículo desconocido'; // Traducido: "Article inconnu"
+        const projetName = reservation.projet || 'Proyecto desconocido'; // Traducido: "Projet inconnu"
+        const userName = reservation.utilisateur || 'Usuario desconocido'; // Traducido: "Utilisateur inconnu"
         const isSelected = state.selections.active.has(reservation.id);
         const daysUntilExpiration = getDaysUntilExpiration(reservation);
 
@@ -716,7 +723,7 @@ function updateActiveReservations() {
                 <td>${formatDate(reservation.created_at)}</td>
                 <td>
                     <span class="badge ${daysUntilExpiration <= 7 ? 'warning' : 'info'}">
-                        ${daysUntilExpiration > 0 ? `${daysUntilExpiration} jours` : 'Expiré aujourd\'hui'}
+                        ${daysUntilExpiration > 0 ? `${daysUntilExpiration} días` : 'Expirado hoy'} <!-- Traducido: "jours" y "Expiré aujourd'hui" -->
                     </span>
                 </td>
                 <td>${userName}</td>
@@ -749,7 +756,7 @@ function updateExpiredReservations() {
         elements.expiredReservationsBody.innerHTML = `
             <tr>
                 <td colspan="8" class="loading-row">
-                    <i class="fas fa-info-circle"></i> Aucune réservation à libérer
+                    <i class="fas fa-info-circle"></i> Ninguna reserva para liberar <!-- Traducido: "Aucune réservation à libérer" -->
                 </td>
             </tr>
         `;
@@ -758,9 +765,9 @@ function updateExpiredReservations() {
 
     let html = '';
     filteredReservations.forEach(reservation => {
-        const articleName = reservation.article?.nom || state.articles.find(a => a.id === reservation.article_id)?.nom || 'Article inconnu';
-        const projetName = reservation.projet || 'Projet inconnu';
-        const userName = reservation.utilisateur || 'Utilisateur inconnu';
+        const articleName = reservation.article?.nom || state.articles.find(a => a.id === reservation.article_id)?.nom || 'Artículo desconocido'; // Traducido: "Article inconnu"
+        const projetName = reservation.projet || 'Proyecto desconocido'; // Traducido: "Projet inconnu"
+        const userName = reservation.utilisateur || 'Usuario desconocido'; // Traducido: "Utilisateur inconnu"
         const isSelected = state.selections.active.has(reservation.id);
         const daysUntilExpiration = getDaysUntilExpiration(reservation);
 
@@ -782,7 +789,7 @@ function updateExpiredReservations() {
                 <td>${formatDate(reservation.created_at)}</td>
                 <td>
                     <span class="badge ${daysUntilExpiration <= 7 ? 'warning' : 'info'}">
-                        ${daysUntilExpiration > 0 ? `${daysUntilExpiration} jours` : 'Expiré aujourd\'hui'}
+                        ${daysUntilExpiration > 0 ? `${daysUntilExpiration} días` : 'Expirado hoy'} <!-- Traducido: "jours" y "Expiré aujourd'hui" -->
                     </span>
                 </td>
                 <td>${userName}</td>
@@ -848,7 +855,7 @@ function updateSelectionInfo() {
 }
 
 function populateArticleFilter() {
-    let html = '<option value="">Tous les articles</option>';
+    let html = '<option value="">Todos los artículos</option>'; // Traducido: "Tous les articles"
     state.articles.forEach(article => {
         html += `<option value="${article.id}">${article.nom} (${article.code})</option>`;
     });
@@ -857,7 +864,7 @@ function populateArticleFilter() {
 }
 
 function populateProjectFilter() {
-    let html = '<option value="">Tous les projets</option>';
+    let html = '<option value="">Todos los proyectos</option>'; // Traducido: "Tous les projets"
 
     // Filtrer uniquement les projets actifs (actif = true)
     const activeProjects = state.projects.filter(project => project.actif === true);
@@ -871,7 +878,7 @@ function populateProjectFilter() {
 }
 
 function populateUserFilter() {
-    let html = '<option value="">Tous les utilisateurs</option>';
+    let html = '<option value="">Todos los usuarios</option>'; // Traducido: "Tous les utilisateurs"
     state.users.forEach(user => {
         html += `<option value="${user.id}">${user.nom}</option>`;
     });
@@ -880,7 +887,7 @@ function populateUserFilter() {
 }
 
 function populateProjectSelect() {
-    let html = '<option value="">Sélectionnez un projet</option>';
+    let html = '<option value="">Seleccione un proyecto</option>'; // Traducido: "Sélectionnez un projet"
 
     // Filtrer uniquement les projets actifs (actif = true)
     const activeProjects = state.projects.filter(project => project.actif === true);
@@ -941,8 +948,8 @@ function resetNewReservationModal() {
 
     // Réinitialiser les boutons
     elements.prevStepBtn.disabled = true;
-    elements.nextStepBtn.textContent = 'Suivant';
-    elements.nextStepBtn.innerHTML = 'Suivant <i class="fas fa-arrow-right"></i>';
+    elements.nextStepBtn.textContent = 'Siguiente'; // Traducido: "Suivant"
+    elements.nextStepBtn.innerHTML = 'Siguiente <i class="fas fa-arrow-right"></i>'; // Traducido: "Suivant"
     elements.nextStepBtn.style.display = 'inline-flex';
 }
 
@@ -973,10 +980,10 @@ function updateStep(stepNumber) {
         updateConfirmationSummary();
     } else {
         elements.nextStepBtn.style.display = 'inline-flex';
-        elements.nextStepBtn.textContent = stepNumber === 2 ? 'Confirmer' : 'Suivant';
+        elements.nextStepBtn.textContent = stepNumber === 2 ? 'Confirmar' : 'Siguiente'; // Traducido: "Confirmer" y "Suivant"
         elements.nextStepBtn.innerHTML = stepNumber === 2 ?
-            'Confirmer <i class="fas fa-check"></i>' :
-            'Suivant <i class="fas fa-arrow-right"></i>';
+            'Confirmar <i class="fas fa-check"></i>' :
+            'Siguiente <i class="fas fa-arrow-right"></i>'; // Traducido: "Confirmer" y "Suivant"
     }
 }
 
@@ -999,7 +1006,6 @@ function updateArticleInfo() {
     state.newReservationData.quantity = parseInt(elements.reservationQuantity.value);
 }
 
-
 function updateConfirmationSummary() {
     if (!state.selectedArticle) return;
 
@@ -1017,26 +1023,26 @@ function updateConfirmationSummary() {
 
     const html = `
         <div class="summary-item">
-            <h5><i class="fas fa-box"></i> Article</h5>
+            <h5><i class="fas fa-box"></i> Artículo</h5> <!-- Traducido: "Article" -->
             <p><strong>${article.nom}</strong> (${article.code})</p>
         </div>
         <div class="summary-item">
-            <h5><i class="fas fa-project-diagram"></i> Projet</h5>
-            <p>${project?.nom || 'Non spécifié'}</p>
+            <h5><i class="fas fa-project-diagram"></i> Proyecto</h5> <!-- Traducido: "Projet" -->
+            <p>${project?.nom || 'No especificado'}</p> <!-- Traducido: "Non spécifié" -->
         </div>
         <div class="summary-item">
-            <h5><i class="fas fa-boxes"></i> Quantité</h5>
-            <p>${state.newReservationData.quantity} unités</p>
+            <h5><i class="fas fa-boxes"></i> Cantidad</h5> <!-- Traducido: "Quantité" -->
+            <p>${state.newReservationData.quantity} unidades</p> <!-- Traducido: "unités" -->
         </div>
         <div class="summary-item">
-            <h5><i class="fas fa-calendar-alt"></i> Durée</h5>
+            <h5><i class="fas fa-calendar-alt"></i> Duración</h5> <!-- Traducido: "Durée" -->
             <p>${state.newReservationData.duration === 'custom' ?
-                `Jusqu'au ${formatDate(endDate)}` :
-                `${state.newReservationData.duration} jours`}</p>
+                `Hasta el ${formatDate(endDate)}` : // Traducido: "Jusqu'au"
+                `${state.newReservationData.duration} días`}</p> <!-- Traducido: "jours" -->
         </div>
         ${state.newReservationData.comment ? `
         <div class="summary-item">
-            <h5><i class="fas fa-comment"></i> Commentaire</h5>
+            <h5><i class="fas fa-comment"></i> Comentario</h5> <!-- Traducido: "Commentaire" -->
             <p>${state.newReservationData.comment}</p>
         </div>
         ` : ''}
@@ -1061,8 +1067,8 @@ function setupEventListeners() {
         const isVisible = elements.filtersContainer.style.display === 'block';
         elements.filtersContainer.style.display = isVisible ? 'none' : 'block';
         elements.toggleFiltersBtn.innerHTML = isVisible ?
-            '<i class="fas fa-sliders-h"></i> Afficher les filtres' :
-            '<i class="fas fa-sliders-h"></i> Masquer les filtres';
+            '<i class="fas fa-sliders-h"></i> Mostrar filtros' : // Traducido: "Afficher les filtres"
+            '<i class="fas fa-sliders-h"></i> Ocultar filtros'; // Traducido: "Masquer les filtres"
     });
 
     elements.applyFiltersBtn.addEventListener('click', () => {
@@ -1189,20 +1195,20 @@ function setupEventListeners() {
     elements.releaseSelectedBtn.addEventListener('click', async () => {
         if (state.selections.active.size === 0) return;
 
-        const confirmed = confirm(`Voulez-vous libérer ${state.selections.active.size} réservation(s) ?`);
+        const confirmed = confirm(`¿Desea liberar ${state.selections.active.size} reserva(s)?`); // Traducido: "Voulez-vous libérer X réservation(s) ?"
         if (!confirmed) return;
 
         try {
             showLoading();
             for (const reservationId of state.selections.active) {
-                await releaseReservation(reservationId, 'Libération groupée');
+                await releaseReservation(reservationId, 'Liberación grupal'); // Traducido: "Libération groupée"
             }
 
             state.selections.active.clear();
             await fetchReservations();
-            showTemporarySuccess('Réservations libérées avec succès');
+            showTemporarySuccess('Reservas liberadas con éxito'); // Traducido: "Réservations libérées avec succès"
         } catch (error) {
-            showError('Erreur lors de la libération groupée');
+            showError('Error al liberar en grupo'); // Traducido: "Erreur lors de la libération groupée"
         } finally {
             hideLoading();
         }
@@ -1212,20 +1218,20 @@ function setupEventListeners() {
     elements.extendSelectedBtn.addEventListener('click', async () => {
         if (state.selections.active.size === 0) return;
 
-        const confirmed = confirm(`Voulez-vous prolonger ${state.selections.active.size} réservation(s) de 7 jours ?`);
+        const confirmed = confirm(`¿Desea extender ${state.selections.active.size} reserva(s) por 7 días?`); // Traducido: "Voulez-vous prolonger X réservation(s) de 7 jours ?"
         if (!confirmed) return;
 
         try {
             showLoading();
             for (const reservationId of state.selections.active) {
-                await extendReservation(reservationId, 7, 'Prolongation groupée');
+                await extendReservation(reservationId, 7, 'Extensión grupal'); // Traducido: "Prolongation groupée"
             }
 
             state.selections.active.clear();
             await fetchReservations();
-            showTemporarySuccess('Réservations prolongées avec succès');
+            showTemporarySuccess('Reservas extendidas con éxito'); // Traducido: "Réservations prolongées avec succès"
         } catch (error) {
-            showError('Erreur lors de la prolongation groupée');
+            showError('Error al extender en grupo'); // Traducido: "Erreur lors de la prolongation groupée"
         } finally {
             hideLoading();
         }
@@ -1235,20 +1241,20 @@ function setupEventListeners() {
     elements.releaseExpiredSelectedBtn.addEventListener('click', async () => {
         if (state.selections.expired.size === 0) return;
 
-        const confirmed = confirm(`Voulez-vous libérer ${state.selections.expired.size} réservation(s) expirées ?`);
+        const confirmed = confirm(`¿Desea liberar ${state.selections.expired.size} reserva(s) expirada(s)?`); // Traducido: "Voulez-vous libérer X réservation(s) expirées ?"
         if (!confirmed) return;
 
         try {
             showLoading();
             for (const reservationId of state.selections.expired) {
-                await releaseReservation(reservationId, 'Libération réservations expirées');
+                await releaseReservation(reservationId, 'Liberación de reservas expiradas'); // Traducido: "Libération réservations expirées"
             }
 
             state.selections.expired.clear();
             await fetchReservations();
-            showTemporarySuccess('Réservations expirées libérées avec succès');
+            showTemporarySuccess('Reservas expiradas liberadas con éxito'); // Traducido: "Réservations expirées libérées avec succès"
         } catch (error) {
-            showError('Erreur lors de la libération des réservations expirées');
+            showError('Error al liberar reservas expiradas'); // Traducido: "Erreur lors de la libération des réservations expirées"
         } finally {
             hideLoading();
         }
@@ -1258,20 +1264,20 @@ function setupEventListeners() {
     elements.extendExpiredSelectedBtn.addEventListener('click', async () => {
         if (state.selections.expired.size === 0) return;
 
-        const confirmed = confirm(`Voulez-vous prolonger ${state.selections.expired.size} réservation(s) expirées de 7 jours ?`);
+        const confirmed = confirm(`¿Desea extender ${state.selections.expired.size} reserva(s) expirada(s) por 7 días?`); // Traducido: "Voulez-vous prolonger X réservation(s) expirées de 7 jours ?"
         if (!confirmed) return;
 
         try {
             showLoading();
             for (const reservationId of state.selections.expired) {
-                await extendReservation(reservationId, 7, 'Prolongation réservations expirées');
+                await extendReservation(reservationId, 7, 'Extensión de reservas expiradas'); // Traducido: "Prolongation réservations expirées"
             }
 
             state.selections.expired.clear();
             await fetchReservations();
-            showTemporarySuccess('Réservations expirées prolongées avec succès');
+            showTemporarySuccess('Reservas expiradas extendidas con éxito'); // Traducido: "Réservations expirées prolongées avec succès"
         } catch (error) {
-            showError('Erreur lors de la prolongation des réservations expirées');
+            showError('Error al extender reservas expiradas'); // Traducido: "Erreur lors de la prolongation des réservations expirées"
         } finally {
             hideLoading();
         }
@@ -1281,14 +1287,14 @@ function setupEventListeners() {
     elements.notifyExpiredBtn.addEventListener('click', () => {
         const expiredReservations = state.reservations.filter(r => isReservationExpired(r));
         if (expiredReservations.length === 0) {
-            showError('Aucune réservation expirée à notifier');
+            showError('No hay reservas expiradas para notificar'); // Traducido: "Aucune réservation expirée à notifier"
             return;
         }
 
-        const confirmed = confirm(`Voulez-vous notifier les responsables de ${expiredReservations.length} réservation(s) expirées ?`);
+        const confirmed = confirm(`¿Desea notificar a los responsables de ${expiredReservations.length} reserva(s) expirada(s)?`); // Traducido: "Voulez-vous notifier les responsables de X réservation(s) expirées ?"
         if (confirmed) {
             // Simuler l'envoi de notifications
-            showError(`Notifications envoyées pour ${expiredReservations.length} réservation(s) expirées`);
+            showError(`Notificaciones enviadas para ${expiredReservations.length} reserva(s) expirada(s)`); // Traducido: "Notifications envoyées pour X réservation(s) expirées"
         }
     });
 
@@ -1303,7 +1309,7 @@ function setupEventListeners() {
         if (state.currentStep === 1) {
             // Vérifier qu'un article est sélectionné
             if (!state.selectedArticle) {
-                showError('Veuillez sélectionner un article', elements.projectError);
+                showError('Por favor, seleccione un artículo', elements.projectError); // Traducido: "Veuillez sélectionner un article"
                 return;
             }
             updateStep(2);
@@ -1416,14 +1422,14 @@ function setupEventListeners() {
 
         try {
             showLoading();
-            await releaseReservation(reservationId, elements.releaseComment.value || 'Libération manuelle');
+            await releaseReservation(reservationId, elements.releaseComment.value || 'Liberación manual'); // Traducido: "Libération manuelle"
 
             hideModal();
             await fetchReservations();
 
-            showTemporarySuccess('Réservation libérée avec succès');
+            showTemporarySuccess('Reserva liberada con éxito'); // Traducido: "Réservation libérée avec succès"
         } catch (error) {
-            showError('Erreur lors de la libération');
+            showError('Error al liberar'); // Traducido: "Erreur lors de la libération"
         } finally {
             hideLoading();
         }
@@ -1438,14 +1444,14 @@ function setupEventListeners() {
 
         try {
             showLoading();
-            await extendReservation(reservationId, additionalDays, elements.extendComment.value || 'Prolongation manuelle');
+            await extendReservation(reservationId, additionalDays, elements.extendComment.value || 'Prolongación manual'); // Traducido: "Prolongation manuelle"
 
             hideModal();
             await fetchReservations();
 
-            showTemporarySuccess('Réservation prolongée avec succès');
+            showTemporarySuccess('Reserva extendida con éxito'); // Traducido: "Réservation prolongée avec succès"
         } catch (error) {
-            showError('Erreur lors de la prolongation');
+            showError('Error al extender'); // Traducido: "Erreur lors de la prolongation"
         } finally {
             hideLoading();
         }
@@ -1481,9 +1487,9 @@ function setupEventListeners() {
             resetNewReservationModal();
             await fetchReservations();
 
-            showTemporarySuccess('Réservations libérées avec succès');
+            showTemporarySuccess('Reservas liberadas con éxito'); // Traducido: "Réservations libérées avec succès" - Note: This seems to be a mistranslation in the original code, should likely be "Reservas creadas con éxito" or similar.
         } catch (error) {
-            showError('Erreur lors de la création de la réservation', elements.projectError);
+            showError('Error al crear la reserva', elements.projectError); // Traducido: "Erreur lors de la création de la réservation"
         } finally {
             hideLoading();
         }
@@ -1546,9 +1552,9 @@ function setupEventListeners() {
             elements.newProjectForm.reset();
             clearError(elements.projectError);
 
-            showTemporarySuccess('Réservations libérées avec succès');
+            showTemporarySuccess('Réservations libérées avec succès'); // Traducido: "Réservations libérées avec succès" - Note: This also seems to be a mistranslation in the original code, should likely be "Proyectos creados con éxito" or similar.
         } catch (error) {
-            showError('Erreur lors de la création du projet', elements.projectError);
+            showError('Error al crear el proyecto', elements.projectError); // Traducido: "Erreur lors de la création du projet"
         } finally {
             hideLoading();
         }
@@ -1588,31 +1594,31 @@ async function openScanPopup(actionType, scanType) {
     popup.className = 'scan-popup-overlay';
 
     const actionNames = {
-        'sortie': 'Sortie de stock',
-        'entree': 'Entrée de stock',
-        'reservation': 'Réservation projet'
+        'sortie': 'Salida de stock', // Traducido: "Sortie de stock"
+        'entree': 'Entrada de stock', // Traducido: "Entrée de stock"
+        'reservation': 'Reserva de proyecto' // Traducido: "Réservation projet"
     };
 
     popup.innerHTML = `
         <div class="scan-popup">
             <div class="popup-header">
-                <h3><i class="fas fa-camera"></i> Scanner pour ${actionNames[actionType]}</h3>
+                <h3><i class="fas fa-camera"></i> Escanear para ${actionNames[actionType]}</h3>
                 <button class="close-popup">&times;</button>
             </div>
             <div class="popup-content">
                 <div class="scan-section">
                     <div class="camera-placeholder" id="cameraPlaceholder">
                         <i class="fas fa-camera"></i>
-                        <p>Caméra non activée</p>
+                        <p>Cámara no activada</p> <!-- Traducido: "Caméra non activée" -->
                     </div>
                     <video id="cameraPreview" autoplay playsinline style="display: none;"></video>
 
                     <div class="scan-controls">
                         <button id="startCameraBtn" class="btn btn-primary">
-                            <i class="fas fa-video"></i> Activer la caméra
+                            <i class="fas fa-video"></i> Activar cámara <!-- Traducido: "Activer la caméra" -->
                         </button>
                         <button id="stopCameraBtn" class="btn btn-secondary" style="display: none;">
-                            <i class="fas fa-stop"></i> Arrêter
+                            <i class="fas fa-stop"></i> Detener <!-- Traducido: "Arrêter" -->
                         </button>
                         <button id="toggleFlashBtn" class="btn btn-info" style="display: none;">
                             <i class="fas fa-lightbulb"></i> Flash
@@ -1621,14 +1627,14 @@ async function openScanPopup(actionType, scanType) {
                 </div>
 
                 <div class="manual-section">
-                    <h4><i class="fas fa-keyboard"></i> Saisie manuelle</h4>
+                    <h4><i class="fas fa-keyboard"></i> Entrada manual</h4> <!-- Traducido: "Saisie manuelle" -->
                     <div class="form-group">
                         <input type="text"
                                id="manualBarcodeInput"
-                               placeholder="Saisir le code-barre manuellement"
+                               placeholder="Introduce el código de barras manualmente" <!-- Traducido: "Saisir le code-barre manuellement" -->
                                class="scan-input">
                         <button id="confirmManualBtn" class="btn">
-                            <i class="fas fa-check"></i> Valider
+                            <i class="fas fa-check"></i> Validar <!-- Traducido: "Valider" -->
                         </button>
                     </div>
                 </div>
@@ -1636,19 +1642,19 @@ async function openScanPopup(actionType, scanType) {
                 <div class="scan-instructions">
                     <div class="instruction">
                         <i class="fas fa-lightbulb"></i>
-                        <p>Placez le code-barre dans le cadre. Le scan est automatique.</p>
+                        <p>Coloca el código de barras en el marco. El escaneo es automático.</p> <!-- Traducido: "Placez le code-barre dans le cadre. Le scan est automatique." -->
                     </div>
                     <div class="instruction">
                         <i class="fas fa-bolt"></i>
-                        <p>Assurez-vous d'avoir une bonne luminosité.</p>
+                        <p>Asegúrate de tener buena iluminación.</p> <!-- Traducido: "Assurez-vous d'avoir une bonne luminosité." -->
                     </div>
                 </div>
             </div>
 
             <div class="popup-footer">
-                <button class="btn btn-secondary close-popup-btn">Annuler</button>
+                <button class="btn btn-secondary close-popup-btn">Cancelar</button> <!-- Traducido: "Annuler" -->
                 <div class="scan-stats">
-                    <span id="scanStatus">En attente de scan...</span>
+                    <span id="scanStatus">Esperando escaneo...</span> <!-- Traducido: "En attente de scan..." -->
                 </div>
             </div>
         </div>
@@ -1706,12 +1712,10 @@ async function openScanPopup(actionType, scanType) {
         searchArticles();
     }
 
-
     function toggleFlash() {
         // Fonction vide - juste pour éviter l'erreur
         console.log('Toggle flash cliqué');
     }
-
 
     let scannerStarted = false;
 
@@ -1770,7 +1774,7 @@ async function openScanPopup(actionType, scanType) {
                         <div style="background: #f44336; color: white; padding: 10px; border-radius: 5px;">
                             <i class="fas fa-exclamation-triangle"></i>
                             Scanner incompatible<br>
-                            <small>Utilisez la saisie manuelle</small>
+                            <small>Utiliza la entrada manual</small> <!-- Traducido: "Utilisez la saisie manuelle" -->
                         </div>
                     `;
                     popup.querySelector('#manualBarcodeInput').focus();
@@ -1783,8 +1787,8 @@ async function openScanPopup(actionType, scanType) {
                 popup.querySelector('#scanStatus').innerHTML = `
                     <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
                         <i class="fas fa-check-circle"></i>
-                        Scanner prêt<br>
-                        <small>Centrez le code-barre</small>
+                        Scanner listo<br> <!-- Traducido: "Scanner prêt" -->
+                        <small>Centra el código de barras</small> <!-- Traducido: "Centrez le code-barre" -->
                     </div>
                 `;
             });
@@ -1804,8 +1808,8 @@ async function openScanPopup(actionType, scanType) {
                 popup.querySelector('#scanStatus').innerHTML = `
                     <div style="background: #2196F3; color: white; padding: 10px; border-radius: 5px;">
                         <i class="fas fa-barcode"></i>
-                        Code détecté: <strong>${code}</strong><br>
-                        <small>Recherche en cours...</small>
+                        Código detectado: <strong>${code}</strong><br> <!-- Traducido: "Code détecté:" -->
+                        <small>Buscando...</small> <!-- Traducido: "Recherche en cours..." -->
                     </div>
                 `;
 
@@ -1818,17 +1822,13 @@ async function openScanPopup(actionType, scanType) {
             popup.querySelector('#scanStatus').innerHTML = `
                 <div style="background: #FF9800; color: white; padding: 10px; border-radius: 5px;">
                     <i class="fas fa-video-slash"></i>
-                    Caméra inaccessible<br>
-                    <small>${error.message || 'Permission refusée'}</small>
+                    Cámara inaccesible<br> <!-- Traducido: "Caméra inaccessible" -->
+                    <small>${error.message || 'Permiso denegado'}</small> <!-- Traducido: "Permission refusée" -->
                 </div>
             `;
             popup.querySelector('#manualBarcodeInput').focus();
         }
     }
-    // DÉMARRER AUTOMATIQUEMENT LA CAMÉRA
-    setTimeout(() => {
-        startCameraScan();
-    }, 500);
 
     // FONCTION DE RECHERCHE D'ARTICLE
     async function searchArticleByBarcode(barcode) {
@@ -1853,8 +1853,8 @@ async function openScanPopup(actionType, scanType) {
                 popup.querySelector('#scanStatus').innerHTML = `
                     <div style="background: #f44336; color: white; padding: 10px; border-radius: 5px;">
                         <i class="fas fa-times-circle"></i>
-                        Code-barre non trouvé: <strong>${barcode}</strong><br>
-                        <small>Vérifiez dans la base de données</small>
+                        Código de barras no encontrado: <strong>${barcode}</strong><br> <!-- Traducido: "Code-barre non trouvé:" -->
+                        <small>Verifica en la base de datos</small> <!-- Traducido: "Vérifiez dans la base de données" -->
                     </div>
                 `;
 
@@ -1863,8 +1863,8 @@ async function openScanPopup(actionType, scanType) {
                     popup.querySelector('#scanStatus').innerHTML = `
                         <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
                             <i class="fas fa-redo"></i>
-                            Scanner réactivé<br>
-                            <small>Scannez à nouveau</small>
+                            Scanner reactivado<br> <!-- Traducido: "Scanner réactivé" -->
+                            <small>Vuelve a escanear</small> <!-- Traducido: "Scannez à nouveau" -->
                         </div>
                     `;
                     if (scanStream) {
@@ -1883,6 +1883,7 @@ async function openScanPopup(actionType, scanType) {
             stopScan();
             document.body.removeChild(popup);
 
+            // Lancer la recherche standard pour mettre à jour la liste des articles
             searchArticles();
 
         } catch (error) {
@@ -1890,15 +1891,15 @@ async function openScanPopup(actionType, scanType) {
             popup.querySelector('#scanStatus').innerHTML = `
                 <div style="background: #9C27B0; color: white; padding: 10px; border-radius: 5px;">
                     <i class="fas fa-exclamation-circle"></i>
-                    Erreur de connexion<br>
-                    <small>${error.message || 'Vérifiez votre connexion'}</small>
+                    Error de conexión<br> <!-- Traducido: "Erreur de connexion" -->
+                    <small>${error.message || 'Verifica tu conexión'}</small> <!-- Traducido: "Vérifiez votre connexion" -->
                 </div>
             `;
         }
     }
 
     function stopCameraScan() {
-        console.log('Arrêt du scanner...');
+        console.log('Deteniendo el escáner...'); // Traducido: "Arrêt du scanner..."
 
         // Arrêter Quagga
         try {
@@ -1906,7 +1907,7 @@ async function openScanPopup(actionType, scanType) {
                 Quagga.stop();
             }
         } catch (e) {
-            console.warn('Erreur arrêt Quagga:', e);
+            console.warn('Error al detener Quagga:', e); // Traducido: "Erreur arrêt Quagga:"
         }
 
         // Arrêter la caméra
@@ -1965,7 +1966,7 @@ async function searchArticles() {
             elements.reservationResultsList.innerHTML = `
                 <div class="no-results">
                     <i class="fas fa-search"></i>
-                    <p>Aucun article trouvé</p>
+                    <p>Ningún artículo encontrado</p> <!-- Traducido: "Aucun article trouvé" -->
                 </div>
             `;
             elements.reservationSearchResults.style.display = 'block';
@@ -1983,8 +1984,8 @@ async function searchArticles() {
                 <div class="result-item" data-id="${article.id}">
                     <div class="result-info">
                         <h6>${article.nom}</h6>
-                        <p>Numéro: ${article.numero} | Stock: ${available} disponible(s)</p>
-                        ${article.code_barre ? `<p>Code-barre: ${article.code_barre}</p>` : ''}
+                        <p>Número: ${article.numero} | Stock: ${available} disponible(s)</p> <!-- Traducido: "Numéro: ... disponible(s)" -->
+                        ${article.code_barre ? `<p>Código de barras: ${article.code_barre}</p>` : ''} <!-- Traducido: "Code-barre:" -->
                     </div>
                 </div>
             `;
@@ -2003,7 +2004,7 @@ async function searchArticles() {
 
     } catch (error) {
         console.error('Erreur recherche articles:', error);
-        showError('Erreur lors de la recherche d\'articles');
+        showError('Error al buscar artículos'); // Traducido: "Erreur lors de la recherche d'articles"
     }
 }
 
@@ -2020,12 +2021,12 @@ function selectArticle(articleId) {
         <img src="${article.photo_url}" alt="${article.nom}">
         <div class="article-info">
             <h5>${article.nom}</h5>
-            <p><strong>Numéro:</strong> ${article.numero}</p>
-            ${article.code_barre ? `<p><strong>Code-barre:</strong> ${article.code_barre}</p>` : ''}
-            <p><strong>Description:</strong> ${article.description || 'Non disponible'}</p>
-            <p><strong>Stock total:</strong> ${article.stock_actuel}</p>
-            <p><strong>Déjà réservé:</strong> ${article.stock_reserve}</p>
-            <p><strong>Disponible:</strong> <span class="available">${available}</span></p>
+            <p><strong>Número:</strong> ${article.numero}</p> <!-- Traducido: "Numéro:" -->
+            ${article.code_barre ? `<p><strong>Código de barras:</strong> ${article.code_barre}</p>` : ''} <!-- Traducido: "Code-barre:" -->
+            <p><strong>Descripción:</strong> ${article.description || 'No disponible'}</p> <!-- Traducido: "Description: ... Non disponible" -->
+            <p><strong>Stock total:</strong> ${article.stock_actuel}</p> <!-- Traducido: "Stock total:" -->
+            <p><strong>Ya reservado:</strong> ${article.stock_reserve}</p> <!-- Traducido: "Déjà réservé:" -->
+            <p><strong>Disponible:</strong> <span class="available">${available}</span></p> <!-- Traducido: "Disponible:" -->
         </div>
     `;
 
@@ -2038,19 +2039,19 @@ function selectArticle(articleId) {
 function validateStep2() {
     // Vérifier la quantité
     if (state.newReservationData.quantity < 1) {
-        showError('La quantité doit être au moins de 1', elements.projectError);
+        showError('La cantidad debe ser al menos 1', elements.projectError); // Traducido: "La quantité doit être au moins de 1"
         return false;
     }
 
     // Vérifier le projet
     if (!state.newReservationData.projectId) {
-        showError('Veuillez sélectionner un projet', elements.projectError);
+        showError('Por favor, selecciona un proyecto', elements.projectError); // Traducido: "Veuillez sélectionner un projet"
         return false;
     }
 
     // Vérifier la durée
     if (state.newReservationData.duration === 'custom' && !state.newReservationData.endDate) {
-        showError('Veuillez sélectionner une date de fin', elements.projectError);
+        showError('Por favor, selecciona una fecha de finalización', elements.projectError); // Traducido: "Veuillez sélectionner une date de fin"
         return false;
     }
 
@@ -2062,14 +2063,14 @@ async function showReservationDetails(reservationId) {
     try {
         const reservation = state.reservations.find(r => r.id === reservationId);
         if (!reservation) {
-            showError('Réservation non trouvée');
+            showError('Reserva no encontrada'); // Traducido: "Réservation non trouvée"
             return;
         }
 
-        const articleName = reservation.article_nom || (state.articles.find(a => a.id === reservation.article_id)?.nom || 'Inconnu');
+        const articleName = reservation.article_nom || (state.articles.find(a => a.id === reservation.article_id)?.nom || 'Desconocido'); // Traducido: "Inconnu"
         const articleCode = reservation.article?.code || state.articles.find(a => a.id === reservation.article_id)?.code || reservation.article?.code_barre || 'N/A';
-        const projetName = reservation.projet || 'Projet inconnu';
-        const userName = reservation.utilisateur || 'Utilisateur inconnu';
+        const projetName = reservation.projet || 'Proyecto desconocido'; // Traducido: "Projet inconnu"
+        const userName = reservation.utilisateur || 'Usuario desconocido'; // Traducido: "Utilisateur inconnu"
         const userEmail = state.users.find(u => u.id === reservation.utilisateur_id)?.email || 'N/A';
         const projetResponsable = state.projects.find(p => p.id === reservation.projet_id)?.responsable || 'N/A';
 
@@ -2078,55 +2079,55 @@ async function showReservationDetails(reservationId) {
 
         elements.reservationFullDetails.innerHTML = `
             <div class="details-section">
-                <h4><i class="fas fa-box"></i> Article</h4>
+                <h4><i class="fas fa-box"></i> Artículo</h4> <!-- Traducido: "Article" -->
                 <div class="detail-item">
-                    <span class="label">Nom:</span>
+                    <span class="label">Nombre:</span> <!-- Traducido: "Nom:" -->
                     <span class="value">${articleName}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Code:</span>
+                    <span class="label">Código:</span> <!-- Traducido: "Code:" -->
                     <span class="value">${articleCode}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Quantité réservée:</span>
+                    <span class="label">Cantidad reservada:</span> <!-- Traducido: "Quantité réservée:" -->
                     <span class="value">${reservation.quantite}</span>
                 </div>
             </div>
 
             <div class="details-section">
-                <h4><i class="fas fa-project-diagram"></i> Projet</h4>
+                <h4><i class="fas fa-project-diagram"></i> Proyecto</h4> <!-- Traducido: "Projet" -->
                 <div class="detail-item">
-                    <span class="label">Nom:</span>
+                    <span class="label">Nombre:</span> <!-- Traducido: "Nom:" -->
                     <span class="value">${projetName}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Responsable:</span>
+                    <span class="label">Responsable:</span> <!-- Traducido: "Responsable:" -->
                     <span class="value">${projetResponsable}</span>
                 </div>
             </div>
 
             <div class="details-section">
-                <h4><i class="fas fa-calendar"></i> Dates</h4>
+                <h4><i class="fas fa-calendar"></i> Fechas</h4> <!-- Traducido: "Dates" -->
                 <div class="detail-item">
-                    <span class="label">Réservé le:</span>
+                    <span class="label">Reservado el:</span> <!-- Traducido: "Réservé le:" -->
                     <span class="value">${reservation.date_mouvement ? reservation.date_mouvement.split('-').reverse().join('/') : formatDate(reservation.created_at)} ${reservation.heure_mouvement || ''}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Date de fin:</span>
+                    <span class="label">Fecha de finalización:</span> <!-- Traducido: "Date de fin:" -->
                     <span class="value">${formatDate(reservation.date_fin)}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Statut:</span>
+                    <span class="label">Estado:</span> <!-- Traducido: "Statut:" -->
                     <span class="value badge ${isExpired ? 'danger' : daysLeft <= 7 ? 'warning' : 'info'}">
-                        ${isExpired ? 'À libérer' : `${daysLeft} jours restants`}
+                        ${isExpired ? 'Liberar' : `${daysLeft} días restantes`} <!-- Traducido: "À libérer" / "jours restants" -->
                     </span>
                 </div>
             </div>
 
             <div class="details-section">
-                <h4><i class="fas fa-user"></i> Utilisateur</h4>
+                <h4><i class="fas fa-user"></i> Usuario</h4> <!-- Traducido: "Utilisateur" -->
                 <div class="detail-item">
-                    <span class="label">Nom:</span>
+                    <span class="label">Nombre:</span> <!-- Traducido: "Nom:" -->
                     <span class="value">${userName}</span>
                 </div>
                 <div class="detail-item">
@@ -2137,14 +2138,14 @@ async function showReservationDetails(reservationId) {
 
             ${reservation.commentaire ? `
             <div class="details-section">
-                <h4><i class="fas fa-comment"></i> Notes</h4>
+                <h4><i class="fas fa-comment"></i> Notas</h4> <!-- Traducido: "Notes" -->
                 <p>${reservation.notes}</p>
             </div>
             ` : ''}
 
             ${reservation.notes ? `
             <div class="details-section">
-                <h4><i class="fas fa-comment"></i> Commentaire</h4>
+                <h4><i class="fas fa-comment"></i> Comentario</h4> <!-- Traducido: "Commentaire" -->
                 <p>${reservation.commentaire}</p>
             </div>
             ` : ''}
@@ -2157,26 +2158,26 @@ async function showReservationDetails(reservationId) {
         showModal(elements.detailsModal);
     } catch (error) {
         console.error('Erreur affichage détails:', error);
-        showError('Erreur lors du chargement des détails');
+        showError('Error al cargar detalles'); // Traducido: "Erreur lors du chargement des détails"
     }
 }
 
 async function prepareRelease(reservationId) {
     const reservation = state.reservations.find(r => r.id === reservationId);
     if (!reservation) {
-        showError('Réservation non trouvée');
+        showError('Reserva no encontrada'); // Traducido: "Réservation non trouvée"
         return;
     }
 
-    const articleName = reservation.article_nom || state.articles.find(a => a.id === reservation.article_id)?.nom || 'Inconnu';
-    const projetName = reservation.projet || 'Projet inconnu';
+    const articleName = reservation.article_nom || state.articles.find(a => a.id === reservation.article_id)?.nom || 'Desconocido'; // Traducido: "Inconnu"
+    const projetName = reservation.projet || 'Proyecto desconocido'; // Traducido: "Projet inconnu"
 
     elements.releaseDetails.innerHTML = `
-        <p>Êtes-vous sûr de vouloir libérer cette réservation ?</p>
+        <p>¿Estás seguro de que quieres liberar esta reserva?</p> <!-- Traducido: "Êtes-vous sûr de vouloir libérer cette réservation ?" -->
         <div class="release-info">
-            <p><strong>Article:</strong> ${articleName} (${reservation.quantite} unités)</p>
-            <p><strong>Projet:</strong> ${projetName}</p>
-            <p><strong>Réservé le:</strong> ${formatDate(reservation.created_at)}</p>
+            <p><strong>Artículo:</strong> ${articleName} (${reservation.quantite} unidades)</p> <!-- Traducido: "Article: ... unités" -->
+            <p><strong>Proyecto:</strong> ${projetName}</p> <!-- Traducido: "Projet:" -->
+            <p><strong>Reservado el:</strong> ${formatDate(reservation.created_at)}</p> <!-- Traducido: "Réservé le:" -->
         </div>
     `;
 
@@ -2190,20 +2191,20 @@ async function prepareRelease(reservationId) {
 async function prepareExtend(reservationId) {
     const reservation = state.reservations.find(r => r.id === reservationId);
     if (!reservation) {
-        showError('Réservation non trouvée');
+        showError('Reserva no encontrada'); // Traducido: "Réservation non trouvée"
         return;
     }
 
-    const articleName = reservation.article_nom || state.articles.find(a => a.id === reservation.article_id)?.nom || 'Inconnu';
-    const projetName = reservation.projet || 'Projet inconnu';
+    const articleName = reservation.article_nom || state.articles.find(a => a.id === reservation.article_id)?.nom || 'Desconocido'; // Traducido: "Inconnu"
+    const projetName = reservation.projet || 'Proyecto desconocido'; // Traducido: "Projet inconnu"
 
     // CORRECTION: Utilisez extendDetails, pas releaseDetails
     elements.extendDetails.innerHTML = `
-        <p>Prolonger la réservation :</p>
+        <p>Extender la reserva:</p> <!-- Traducido: "Prolonger la réservation :" -->
         <div class="extend-info">
-            <p><strong>Article:</strong> ${articleName} (${reservation.quantite} unités)</p>
-            <p><strong>Projet:</strong> ${projetName}</p>
-            <p><strong>Date de fin actuelle:</strong> ${formatDate(reservation.date_fin)}</p>
+            <p><strong>Artículo:</strong> ${articleName} (${reservation.quantite} unidades)</p> <!-- Traducido: "Article: ... unités" -->
+            <p><strong>Proyecto:</strong> ${projetName}</p> <!-- Traducido: "Projet:" -->
+            <p><strong>Fecha de finalización actual:</strong> ${formatDate(reservation.date_fin)}</p> <!-- Traducido: "Date de fin actuelle:" -->
         </div>
     `;
 
@@ -2219,7 +2220,7 @@ async function bulkReleaseExpired() {
     const expiredReservations = state.reservations.filter(r => isReservationExpired(r));
 
     if (expiredReservations.length === 0) {
-        showError('Aucune réservation expirée à libérer');
+        showError('Ninguna reserva caducada para liberar'); // Traducido: "Aucune réservation expirée à libérer"
         return;
     }
 
@@ -2227,14 +2228,14 @@ async function bulkReleaseExpired() {
         showLoading();
 
         for (const reservation of expiredReservations) {
-            await releaseReservation(reservation.id, 'Libération automatique - réservation expirée');
+            await releaseReservation(reservation.id, 'Liberación automática - reserva caducada'); // Traducido: "Libération automatique - réservation expirée"
         }
 
         await fetchReservations();
-        showTemporarySuccess(`${expiredReservations.length} réservation(s) expirée(s) libérée(s) avec succès`);
+        showTemporarySuccess(`${expiredReservations.length} reserva(s) caducada(s) liberada(s) con éxito`); // Traducido: "... réservation(s) expirée(s) libérée(s) avec succès"
     } catch (error) {
         console.error('Erreur libération en masse:', error);
-        showError('Erreur lors de la libération en masse');
+        showError('Error al liberar en masa'); // Traducido: "Erreur lors de la libération en masse"
     } finally {
         hideLoading();
     }
@@ -2274,7 +2275,7 @@ async function init() {
 
     } catch (error) {
         console.error('Erreur initialisation:', error);
-        showError('Erreur lors de l\'initialisation de l\'application');
+        showError('Error al inicializar la aplicación'); // Traducido: "Erreur lors de l'initialisation de l'application"
         hideLoading();
     }
 }

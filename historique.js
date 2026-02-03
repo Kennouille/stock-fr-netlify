@@ -56,7 +56,7 @@ async function checkAuth() {
 
         // Vérifier les permissions
         if (!currentUser.permissions?.historique) {
-            alert('Vous n\'avez pas la permission d\'accéder à l\'historique');
+            alert('No tiene permiso para acceder al historial'); // TRADUIT
             window.location.href = 'accueil.html';
             return;
         }
@@ -97,7 +97,7 @@ async function loadAllData() {
         ]);
     } catch (error) {
         console.error('Erreur lors du chargement des données:', error);
-        alert('Erreur lors du chargement des données initiales');
+        alert('Error al cargar los datos iniciales'); // TRADUIT
     }
 }
 
@@ -114,7 +114,7 @@ async function loadUsers() {
 
         // Remplir le select des utilisateurs
         const userSelect = document.getElementById('filterUser');
-        userSelect.innerHTML = '<option value="">Tous les utilisateurs</option>';
+        userSelect.innerHTML = '<option value="">Todos los usuarios</option>'; // TRADUIT
 
         allUsers.forEach(user => {
             const option = document.createElement('option');
@@ -141,7 +141,7 @@ async function loadArticles() {
 
         // Remplir le select des articles
         const articleSelect = document.getElementById('filterArticle');
-        articleSelect.innerHTML = '<option value="">Tous les articles</option>';
+        articleSelect.innerHTML = '<option value="">Todos los artículos</option>'; // TRADUIT
 
         allArticles.forEach(article => {
             const option = document.createElement('option');
@@ -173,7 +173,7 @@ async function loadProjects() {
 
         // Remplir le select des projets
         const projectSelect = document.getElementById('filterProject');
-        projectSelect.innerHTML = '<option value="">Tous les projets</option><option value="none">Sans projet</option>';
+        projectSelect.innerHTML = '<option value="">Todos los proyectos</option><option value="none">Sin proyecto</option>'; // TRADUIT
 
         uniqueProjects.forEach(project => {
             const option = document.createElement('option');
@@ -228,7 +228,7 @@ async function loadHistory() {
 
     } catch (error) {
         console.error('Erreur lors du chargement de l\'historique:', error);
-        alert('Erreur lors du chargement de l\'historique');
+        alert('Error al cargar el historial'); // TRADUIT
     }
 }
 
@@ -304,7 +304,7 @@ function applySearchFilter() {
         return true;
     });
 
-    console.log(`Mouvements après filtrage: ${filteredMovements.length} sur ${allMovements.length}`);
+    console.log(`Movimientos después del filtrado: ${filteredMovements.length} de ${allMovements.length}`);
 
     // Mettre à jour la pagination
     totalPages = Math.ceil(filteredMovements.length / rowsPerPage);
@@ -344,15 +344,15 @@ function updateTableView() {
 
     // Mettre à jour le texte de pagination
     document.getElementById('paginationText').textContent =
-        `Affichage ${startIndex + 1}-${endIndex} sur ${filteredMovements.length}`;
+        `Mostrando ${startIndex + 1}-${endIndex} de ${filteredMovements.length}`; // TRADUIT
 
     if (pageMovements.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="9" style="text-align: center; padding: 3rem;">
                     <i class="fas fa-search" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
-                    <p>Aucun mouvement trouvé</p>
-                    <small class="text-secondary">Essayez de modifier vos filtres</small>
+                    <p>No se encontraron movimientos</p> <!-- TRADUIT -->
+                    <small class="text-secondary">Intente modificar sus filtros</small> <!-- TRADUIT -->
                 </td>
             </tr>
         `;
@@ -367,11 +367,11 @@ function updateTableView() {
         // Formater la date
         const dateStr = movement.date_mouvement ?
             movement.date_mouvement.split('-').reverse().join('/') : // Convertir 2024-01-15 en 15/01/2024
-            new Date(movement.created_at).toLocaleDateString('fr-FR');
+            new Date(movement.created_at).toLocaleDateString('es-ES'); // TRADUIT locale
 
         const timeStr = movement.heure_mouvement ?
             movement.heure_mouvement.substring(0, 5) : // Garder HH:MM seulement
-            new Date(movement.created_at).toLocaleTimeString('fr-FR', {
+            new Date(movement.created_at).toLocaleTimeString('es-ES', { // TRADUIT locale
                 hour: '2-digit',
                 minute: '2-digit'
             });
@@ -384,32 +384,32 @@ function updateTableView() {
         switch(movement.type) {
             case 'entree':
                 typeClass = 'type-entree';
-                typeText = 'Entrée';
+                typeText = 'Entrada'; // TRADUIT
                 quantityClass = 'quantity-positive';
                 break;
             case 'sortie':
                 typeClass = 'type-sortie';
-                typeText = 'Sortie';
+                typeText = 'Salida'; // TRADUIT
                 quantityClass = 'quantity-negative';
                 break;
             case 'reservation':
                 typeClass = 'type-reservation';
-                typeText = 'Réservation';
+                typeText = 'Reserva'; // TRADUIT
                 quantityClass = 'quantity-negative';
                 break;
             case 'liberation':
                 typeClass = 'type-liberation';
-                typeText = 'Libération';
+                typeText = 'Liberación'; // TRADUIT
                 quantityClass = 'quantity-positive';
                 break;
             case 'ajustement':
                 typeClass = 'type-ajustement';
-                typeText = 'Ajustement';
+                typeText = 'Ajuste'; // TRADUIT
                 quantityClass = 'quantity-neutral';
                 break;
             default:
                 typeClass = 'type-ajustement';
-                typeText = 'Autre';
+                typeText = 'Otro'; // TRADUIT
                 quantityClass = 'quantity-neutral';
         }
 
@@ -426,7 +426,7 @@ function updateTableView() {
                 <span class="movement-type ${typeClass}">${typeText}</span>
             </td>
             <td class="article-cell">
-                <div class="article-name">${movement.article?.nom || 'Article inconnu'}</div>
+                <div class="article-name">${movement.article?.nom || 'Artículo desconocido'}</div> <!-- TRADUIT -->
                 <div class="article-details">
                     ${movement.article?.numero ? `<span>${movement.article.numero}</span>` : ''}
                 </div>
@@ -449,8 +449,8 @@ function updateTableView() {
                 ${movement.commentaire || '<span class="text-secondary">-</span>'}
             </td>
             <td class="actions-cell">
-                <button class="btn-details" data-id="${movement.id}" title="Voir détails">
-                    <i class="fas fa-eye"></i> Détails
+                <button class="btn-details" data-id="${movement.id}" title="Ver detalles"> <!-- TRADUIT -->
+                    <i class="fas fa-eye"></i> Detalles <!-- TRADUIT -->
                 </button>
             </td>
         `;
@@ -478,8 +478,8 @@ function updateTimelineView() {
         timeline.innerHTML = `
             <div class="timeline-placeholder">
                 <i class="fas fa-stream"></i>
-                <p>Aucun mouvement trouvé pour cette période</p>
-                <small class="text-secondary">Essayez de modifier vos filtres</small>
+                <p>No se encontraron movimientos para este período</p> <!-- TRADUIT -->
+                <small class="text-secondary">Intente modificar sus filtros</small> <!-- TRADUIT -->
             </div>
         `;
         return;
@@ -492,7 +492,7 @@ function updateTimelineView() {
 
     filteredMovements.forEach(movement => {
         const date = new Date(movement.created_at);
-        const dateKey = date.toLocaleDateString('fr-FR');
+        const dateKey = date.toLocaleDateString('es-ES'); // TRADUIT locale
 
         if (!movementsByDay[dateKey]) {
             movementsByDay[dateKey] = [];
@@ -522,7 +522,7 @@ function createTimelineEvent(movement) {
     event.className = `timeline-event ${movement.type}`;
 
     const movementDate = new Date(movement.created_at);
-    const timeStr = movementDate.toLocaleTimeString('fr-FR', {
+    const timeStr = movementDate.toLocaleTimeString('es-ES', { // TRADUIT locale
         hour: '2-digit',
         minute: '2-digit'
     });
@@ -533,27 +533,27 @@ function createTimelineEvent(movement) {
 
     switch(movement.type) {
         case 'entree':
-            typeText = 'Entrée stock';
+            typeText = 'Entrada stock'; // TRADUIT
             quantitySign = '+';
             break;
         case 'sortie':
-            typeText = 'Sortie stock';
+            typeText = 'Salida stock'; // TRADUIT
             quantitySign = '-';
             break;
         case 'reservation':
-            typeText = 'Réservation';
+            typeText = 'Reserva'; // TRADUIT
             quantitySign = '-';
             break;
         case 'liberation':
-            typeText = 'Libération';
+            typeText = 'Liberación'; // TRADUIT
             quantitySign = '+';
             break;
         case 'ajustement':
-            typeText = 'Ajustement';
+            typeText = 'Ajuste'; // TRADUIT
             quantitySign = '±';
             break;
         default:
-            typeText = 'Mouvement';
+            typeText = 'Movimiento'; // TRADUIT
             quantitySign = '';
     }
 
@@ -564,9 +564,9 @@ function createTimelineEvent(movement) {
         </div>
         <div class="event-content">
             <div>
-                <div class="event-article">${movement.article?.nom || 'Article inconnu'}</div>
+                <div class="event-article">${movement.article?.nom || 'Artículo desconocido'}</div> <!-- TRADUIT -->
                 <div class="event-user">
-                    <i class="fas fa-user"></i> ${movement.utilisateur?.username || 'Utilisateur inconnu'}
+                    <i class="fas fa-user"></i> ${movement.utilisateur?.username || 'Usuario desconocido'} <!-- TRADUIT -->
                 </div>
             </div>
             <div class="event-quantity">
@@ -612,7 +612,7 @@ function displayRecentExits(exits) {
     if (!exits || exits.length === 0) {
         container.innerHTML = `
             <div class="loading-recent">
-                <i class="fas fa-info-circle"></i> Aucune sortie récente
+                <i class="fas fa-info-circle"></i> Ninguna salida reciente <!-- TRADUIT -->
             </div>
         `;
         return;
@@ -622,8 +622,8 @@ function displayRecentExits(exits) {
 
     exits.forEach(exit => {
         const exitDate = new Date(exit.created_at);
-        const dateStr = exitDate.toLocaleDateString('fr-FR');
-        const timeStr = exitDate.toLocaleTimeString('fr-FR', {
+        const dateStr = exitDate.toLocaleDateString('es-ES'); // TRADUIT locale
+        const timeStr = exitDate.toLocaleTimeString('es-ES', { // TRADUIT locale
             hour: '2-digit',
             minute: '2-digit'
         });
@@ -636,10 +636,10 @@ function displayRecentExits(exits) {
                 <span class="recent-exit-time">${dateStr} ${timeStr}</span>
                 <span class="recent-exit-quantity">-${exit.quantite}</span>
             </div>
-            <div class="recent-exit-article">${exit.article?.nom || 'Article inconnu'}</div>
-            <div class="recent-exit-project">${exit.projet || 'Sans projet'}</div>
+            <div class="recent-exit-article">${exit.article?.nom || 'Artículo desconocido'}</div> <!-- TRADUIT -->
+            <div class="recent-exit-project">${exit.projet || 'Sin proyecto'}</div> <!-- TRADUIT -->
             <div class="recent-exit-user">
-                <i class="fas fa-user"></i> ${exit.utilisateur?.username || 'Utilisateur inconnu'}
+                <i class="fas fa-user"></i> ${exit.utilisateur?.username || 'Usuario desconocido'} <!-- TRADUIT -->
             </div>
         `;
 
@@ -671,7 +671,7 @@ async function showMovementDetails(movementId) {
 
     } catch (error) {
         console.error('Erreur lors du chargement des détails:', error);
-        alert('Erreur lors du chargement des détails du mouvement');
+        alert('Error al cargar los detalles del movimiento'); // TRADUIT
     }
 }
 
@@ -681,11 +681,11 @@ function displayMovementDetails(movement) {
     // Utiliser les nouvelles colonnes si disponibles, sinon l'ancienne
     const dateStr = movement.date_mouvement ?
         movement.date_mouvement.split('-').reverse().join('/') : // Convertir 2024-01-15 en 15/01/2024
-        new Date(movement.created_at).toLocaleDateString('fr-FR');
+        new Date(movement.created_at).toLocaleDateString('es-ES'); // TRADUIT locale
 
     const timeStr = movement.heure_mouvement ?
         movement.heure_mouvement.substring(0, 5) : // Garder HH:MM seulement
-        new Date(movement.created_at).toLocaleTimeString('fr-FR', {
+        new Date(movement.created_at).toLocaleTimeString('es-ES', { // TRADUIT locale
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit'
@@ -699,68 +699,68 @@ function displayMovementDetails(movement) {
     switch(movement.type) {
         case 'entree':
             typeClass = 'type-entree';
-            typeText = 'Entrée de stock';
+            typeText = 'Entrada de stock'; // TRADUIT
             quantityDisplay = `+${movement.quantite}`;
             break;
         case 'sortie':
             typeClass = 'type-sortie';
-            typeText = 'Sortie de stock';
+            typeText = 'Salida de stock'; // TRADUIT
             quantityDisplay = `-${movement.quantite}`;
             break;
         case 'reservation':
             typeClass = 'type-reservation';
-            typeText = 'Réservation pour projet';
+            typeText = 'Reserva para proyecto'; // TRADUIT
             quantityDisplay = `-${movement.quantite}`;
             break;
         case 'liberation':
             typeClass = 'type-liberation';
-            typeText = 'Libération de réservation';
+            typeText = 'Liberación de reserva'; // TRADUIT
             quantityDisplay = `+${movement.quantite}`;
             break;
         case 'ajustement':
             typeClass = 'type-ajustement';
-            typeText = 'Ajustement de stock';
+            typeText = 'Ajuste de stock'; // TRADUIT
             quantityDisplay = `±${Math.abs(movement.quantite)}`;
             break;
         default:
             typeClass = 'type-ajustement';
-            typeText = 'Mouvement';
+            typeText = 'Movimiento'; // TRADUIT
             quantityDisplay = movement.quantite;
     }
 
     detailsContainer.innerHTML = `
         <div class="detail-section">
-            <h4><i class="fas fa-info-circle"></i> Informations générales</h4>
+            <h4><i class="fas fa-info-circle"></i> Información general</h4> <!-- TRADUIT -->
             <div class="detail-item">
-                <span class="detail-label">Type :</span>
+                <span class="detail-label">Tipo:</span> <!-- TRADUIT -->
                 <span class="detail-value badge ${typeClass}">${typeText}</span>
             </div>
             <div class="detail-item">
-                <span class="detail-label">Date :</span>
-                <span class="detail-value">${dateStr} à ${timeStr}</span>
+                <span class="detail-label">Fecha:</span> <!-- TRADUIT -->
+                <span class="detail-value">${dateStr} a las ${timeStr}</span> <!-- TRADUIT -->
             </div>
             <div class="detail-item">
-                <span class="detail-label">Quantité :</span>
+                <span class="detail-label">Cantidad:</span> <!-- TRADUIT -->
                 <span class="detail-value" style="font-weight: 600; font-size: 1.1rem;">${quantityDisplay}</span>
             </div>
             <div class="detail-item">
-                <span class="detail-label">Projet :</span>
-                <span class="detail-value">${movement.projet || '<span class="text-secondary">Aucun</span>'}</span>
+                <span class="detail-label">Proyecto:</span> <!-- TRADUIT -->
+                <span class="detail-value">${movement.projet || '<span class="text-secondary">Ninguno</span>'}</span> <!-- TRADUIT -->
             </div>
         </div>
 
         <div class="detail-section">
-            <h4><i class="fas fa-box"></i> Article concerné</h4>
+            <h4><i class="fas fa-box"></i> Artículo afectado</h4> <!-- TRADUIT -->
             <div class="detail-item">
-                <span class="detail-label">Nom :</span>
-                <span class="detail-value">${movement.article?.nom || 'Article inconnu'}</span>
+                <span class="detail-label">Nombre:</span> <!-- TRADUIT -->
+                <span class="detail-value">${movement.article?.nom || 'Artículo desconocido'}</span> <!-- TRADUIT -->
             </div>
             <div class="detail-item">
-                <span class="detail-label">Numéro :</span>
+                <span class="detail-label">Número:</span> <!-- TRADUIT -->
                 <span class="detail-value">${movement.article?.numero || 'N/A'}</span>
             </div>
             <div class="detail-item">
-                <span class="detail-label">Code-barre :</span>
+                <span class="detail-label">Código de barras:</span> <!-- TRADUIT -->
                 <span class="detail-value">${movement.article?.code_barre || 'N/A'}</span>
             </div>
         </div>
@@ -768,14 +768,14 @@ function displayMovementDetails(movement) {
         <div class="detail-section">
             <h4><i class="fas fa-user"></i> Responsable</h4>
             <div class="detail-item">
-                <span class="detail-label">Utilisateur :</span>
-                <span class="detail-value">${movement.utilisateur?.username || 'Utilisateur inconnu'}</span>
+                <span class="detail-label">Usuario:</span> <!-- TRADUIT -->
+                <span class="detail-value">${movement.utilisateur?.username || 'Usuario desconocido'}</span> <!-- TRADUIT -->
             </div>
         </div>
 
         ${movement.commentaire ? `
         <div class="detail-section">
-            <h4><i class="fas fa-comment"></i> Commentaire</h4>
+            <h4><i class="fas fa-comment"></i> Comentario</h4> <!-- TRADUIT -->
             <div class="detail-comment">
                 ${movement.commentaire}
             </div>
@@ -843,15 +843,15 @@ function updateFilters() {
 }
 
 function applyPeriodFilter(period) {
-    const today = new Date(); // Heure locale de la machine
+    const today = new Date(); // Hora local de la máquina
 
     let startDate = new Date(today);
 
     switch(period) {
         case 'today':
-            // Aujourd'hui à minuit
+            // Hoy a medianoche
             startDate.setHours(0, 0, 0, 0);
-            // Aujourd'hui à 23:59:59
+            // Hoy a las 23:59:59
             const endDate = new Date(today);
             endDate.setHours(23, 59, 59, 999);
 
@@ -892,18 +892,18 @@ function applyPeriodFilter(period) {
 
     currentFilters.period = period;
 
-    // Mettre à jour les champs date
+    // Actualizar los campos de fecha
     if (period !== 'all') {
         document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
         document.getElementById('endDate').value = today.toISOString().split('T')[0];
     }
 
-    console.log("Période:", period, "Début:", currentFilters.startDate?.toString(), "Fin:", currentFilters.endDate?.toString());
+    console.log("Período:", period, "Inicio:", currentFilters.startDate?.toString(), "Fin:", currentFilters.endDate?.toString());
 
-    // Appliquer le filtre
+    // Aplicar el filtro
     applySearchFilter();
 
-    // Mettre à jour l'affichage
+    // Actualizar la visualización
     if (currentView === 'table') {
         updateTableView();
     } else {
@@ -919,43 +919,43 @@ function applyCustomPeriod() {
         return;
     }
 
-    // Utilisez directement les valeurs du datepicker
+    // Utilizar directamente los valores del datepicker
     const startValue = startInput.value; // "2025-12-26"
     const endValue = endInput.value; // "2025-12-27"
 
-    console.log("=== Dates sélectionnées ===");
-    console.log("Début:", startValue);
+    console.log("=== Fechas seleccionadas ===");
+    console.log("Inicio:", startValue);
     console.log("Fin:", endValue);
 
-    // Créer les dates en local time SANS décalage
-    // Méthode simple : créer à minuit local
+    // Crear las fechas en hora local SIN desfase
+    // Método simple: crear a medianoche local
     const startDate = new Date(startValue + 'T00:00:00');
     const endDate = new Date(endValue + 'T23:59:59.999');
 
-    console.log("Date début locale:", startDate.toString());
-    console.log("Date fin locale:", endDate.toString());
-    console.log("Jour début:", startDate.getDate());
-    console.log("Jour fin:", endDate.getDate());
+    console.log("Fecha inicio local:", startDate.toString());
+    console.log("Fecha fin local:", endDate.toString());
+    console.log("Día inicio:", startDate.getDate());
+    console.log("Día fin:", endDate.getDate());
 
     if (startDate > endDate) {
-        alert('La date de début doit être antérieure à la date de fin');
+        alert('La fecha de inicio debe ser anterior a la fecha de fin'); // TRADUIT
         return;
     }
 
-    // Mettre à jour currentFilters
+    // Actualizar currentFilters
     currentFilters.startDate = startDate;
     currentFilters.endDate = endDate;
     currentFilters.period = 'custom';
 
-    // Désactiver les autres boutons de période
+    // Desactivar los otros botones de período
     document.querySelectorAll('.period-btn').forEach(btn => {
         btn.classList.remove('active');
     });
 
-    // Appliquer le filtre
+    // Aplicar el filtro
     applySearchFilter();
 
-    // Mettre à jour l'affichage
+    // Actualizar la visualización
     if (currentView === 'table') {
         updateTableView();
     } else {
@@ -964,16 +964,16 @@ function applyCustomPeriod() {
 }
 
 function resetFilters() {
-    console.log("Réinitialisation des filtres");
+    console.log("Reinicio de filtros");
 
-    // Réinitialiser les valeurs des inputs
+    // Reiniciar los valores de los inputs
     document.getElementById('quickSearch').value = '';
     document.getElementById('filterType').value = '';
     document.getElementById('filterUser').value = '';
     document.getElementById('filterArticle').value = '';
     document.getElementById('filterProject').value = '';
 
-    // Réinitialiser les dates
+    // Reiniciar las fechas
     const today = new Date();
     const startOfToday = new Date(today);
     startOfToday.setHours(0, 0, 0, 0);
@@ -981,14 +981,14 @@ function resetFilters() {
     document.getElementById('startDate').value = startOfToday.toISOString().split('T')[0];
     document.getElementById('endDate').value = today.toISOString().split('T')[0];
 
-    // Réinitialiser les boutons de période
+    // Reiniciar los botones de período
     document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
     const todayBtn = document.querySelector('.period-btn[data-period="today"]');
     if (todayBtn) {
         todayBtn.classList.add('active');
     }
 
-    // Réinitialiser les filtres
+    // Reiniciar los filtros
     currentFilters = {
         search: '',
         type: '',
@@ -1000,9 +1000,9 @@ function resetFilters() {
         period: 'today'
     };
 
-    console.log("Filtres réinitialisés:", currentFilters);
+    console.log("Filtros reiniciados:", currentFilters);
 
-    // Appliquer les filtres et mettre à jour l'affichage
+    // Aplicar los filtros y actualizar la visualización
     applySearchFilter();
 
     if (currentView === 'table') {
@@ -1012,12 +1012,12 @@ function resetFilters() {
     }
 }
 
-// ===== ÉVÉNEMENTS =====
+// ===== EVENTOS =====
 function setupEventListeners() {
-    // Déconnexion
+    // Desconexión
     document.getElementById('logoutBtn').addEventListener('click', logout);
 
-    // Recherche
+    // Búsqueda
     document.getElementById('quickSearch').addEventListener('input', function() {
         updateFilters();
         applySearchFilter();
@@ -1041,17 +1041,17 @@ function setupEventListeners() {
         }
     });
 
-    // Périodes
+    // Períodos
     document.querySelectorAll('.period-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            // Activer le bouton cliqué
+            // Activar el botón clicado
             document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
 
             const period = this.dataset.period;
-            applyPeriodFilter(period); // Ceci met à jour currentFilters
+            applyPeriodFilter(period); // Esto actualiza currentFilters
 
-            // FILTRER LES DONNÉES EXISTANTES au lieu de recharger
+            // FILTRAR LOS DATOS EXISTENTES en lugar de recargar
             applySearchFilter();
 
             if (currentView === 'table') {
@@ -1062,12 +1062,10 @@ function setupEventListeners() {
         });
     });
 
-
-
-    // Export
+    // Exportación
     document.getElementById('exportHistoryBtn').addEventListener('click', exportHistory);
 
-    // Changement de vue
+    // Cambio de vista
     document.getElementById('tableViewBtn').addEventListener('click', function() {
         document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
         this.classList.add('active');
@@ -1094,13 +1092,13 @@ function setupEventListeners() {
         updateTimelineView();
     });
 
-    // Pagination
+    // Paginación
     document.getElementById('firstPageBtn').addEventListener('click', () => goToPage(1));
     document.getElementById('prevPageBtn').addEventListener('click', () => goToPage(currentPage - 1));
     document.getElementById('nextPageBtn').addEventListener('click', () => goToPage(currentPage + 1));
     document.getElementById('lastPageBtn').addEventListener('click', () => goToPage(totalPages));
 
-    // Modals
+    // Modales
     document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', function() {
             this.closest('.modal-overlay').style.display = 'none';
@@ -1115,7 +1113,7 @@ function setupEventListeners() {
         });
     });
 
-    // Filtres instantanés (pas besoin de recharger)
+    // Filtros instantáneos (sin necesidad de recargar)
     document.getElementById('filterType').addEventListener('change', function() {
         updateFilters();
         applySearchFilter();
@@ -1156,7 +1154,7 @@ function setupEventListeners() {
         }
     });
 
-    // Filtres de date instantanés
+    // Filtros de fecha instantáneos
     document.getElementById('startDate').addEventListener('change', function() {
         console.log("Start date changed:", this.value);
         const endDate = document.getElementById('endDate').value;
@@ -1180,12 +1178,12 @@ function setupEventListeners() {
 async function exportHistory() {
     try {
         if (filteredMovements.length === 0) {
-            alert('Aucun mouvement à exporter');
+            alert('No hay movimientos para exportar'); // TRADUIT
             return;
         }
 
         // Demander confirmation
-        const confirmExport = confirm(`Exporter ${filteredMovements.length} mouvements au format PDF ?\n\nLe fichier sera téléchargé automatiquement.`);
+        const confirmExport = confirm(`¿Exportar ${filteredMovements.length} movimientos en formato PDF?\n\nEl archivo se descargará automáticamente.`); // TRADUIT
 
         if (!confirmExport) {
             return;
@@ -1198,14 +1196,14 @@ async function exportHistory() {
 
     } catch (error) {
         console.error('Erreur lors de l\'export PDF:', error);
-        alert('Erreur lors de l\'export PDF : ' + error.message);
+        alert('Error durante la exportación a PDF: ' + error.message); // TRADUIT
     }
 }
 
 async function generatePDF(movements) {
     // Vérifier que jsPDF est chargé
     if (typeof window.jspdf === 'undefined') {
-        alert('Bibliothèque PDF non chargée. Veuillez recharger la page.');
+        alert('Biblioteca PDF no cargada. Por favor, recargue la página.'); // TRADUIT
         return;
     }
 
@@ -1222,14 +1220,14 @@ async function generatePDF(movements) {
     // Titre principal
     doc.setFontSize(20);
     doc.setTextColor(40, 40, 40);
-    doc.text('HISTORIQUE DES MOUVEMENTS DE STOCK', 105, 20, { align: 'center' });
+    doc.text('HISTORIAL DE MOVIMIENTOS DE STOCK', 105, 20, { align: 'center' }); // TRADUIT
 
     // Sous-titre
     doc.setFontSize(12);
     doc.setTextColor(100, 100, 100);
     const today = new Date();
-    const dateStr = today.toLocaleDateString('fr-FR');
-    doc.text(`Export du ${dateStr} - ${movements.length} mouvements`, 105, 28, { align: 'center' });
+    const dateStr = today.toLocaleDateString('es-ES'); // TRADUIT locale
+    doc.text(`Exportado el ${dateStr} - ${movements.length} movimientos`, 105, 28, { align: 'center' }); // TRADUIT
 
     // Informations de filtre
     doc.setFontSize(10);
@@ -1237,19 +1235,19 @@ async function generatePDF(movements) {
 
     const filterInfo = [];
     if (currentFilters.startDate && currentFilters.endDate) {
-        const startStr = currentFilters.startDate.toLocaleDateString('fr-FR');
-        const endStr = currentFilters.endDate.toLocaleDateString('fr-FR');
-        filterInfo.push(`Période: ${startStr} au ${endStr}`);
+        const startStr = currentFilters.startDate.toLocaleDateString('es-ES'); // TRADUIT locale
+        const endStr = currentFilters.endDate.toLocaleDateString('es-ES'); // TRADUIT locale
+        filterInfo.push(`Período: ${startStr} al ${endStr}`); // TRADUIT
     }
     if (currentFilters.type) {
-        filterInfo.push(`Type: ${getTypeText(currentFilters.type)}`);
+        filterInfo.push(`Tipo: ${getTypeText(currentFilters.type)}`); // TRADUIT
     }
     if (currentFilters.project) {
-        filterInfo.push(`Projet: ${currentFilters.project === 'none' ? 'Sans projet' : currentFilters.project}`);
+        filterInfo.push(`Proyecto: ${currentFilters.project === 'none' ? 'Sin proyecto' : currentFilters.project}`); // TRADUIT
     }
 
     if (filterInfo.length > 0) {
-        doc.text(`Filtres appliqués: ${filterInfo.join(' | ')}`, 105, 35, { align: 'center' });
+        doc.text(`Filtros aplicados: ${filterInfo.join(' | ')}`, 105, 35, { align: 'center' }); // TRADUIT
     }
 
     // Ligne de séparation
@@ -1261,8 +1259,8 @@ async function generatePDF(movements) {
         const date = new Date(movement.created_at);
 
         return [
-            date.toLocaleDateString('fr-FR'),
-            date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            date.toLocaleDateString('es-ES'), // TRADUIT locale
+            date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }), // TRADUIT locale
             getTypeText(movement.type),
             movement.article?.nom || 'N/A',
             movement.article?.numero || 'N/A',
@@ -1278,7 +1276,7 @@ async function generatePDF(movements) {
     doc.autoTable({
         startY: 45,
         head: [
-            ['Date', 'Heure', 'Type', 'Article', 'N° Article', 'Quantité', 'Stock après', 'Projet', 'Utilisateur', 'Commentaire']
+            ['Fecha', 'Hora', 'Tipo', 'Artículo', 'N° Artículo', 'Cant.', 'Stock final', 'Proyecto', 'Usuario', 'Comentario'] // TRADUIT
         ],
         body: tableData,
         theme: 'grid',
@@ -1312,7 +1310,7 @@ async function generatePDF(movements) {
             doc.setFontSize(8);
             doc.setTextColor(150, 150, 150);
             doc.text(
-                `Page ${data.pageNumber} sur ${data.pageCount} - Système de Gestion de Stock`,
+                `Página ${data.pageNumber} de ${data.pageCount} - Sistema de Gestión de Stock`, // TRADUIT
                 105,
                 doc.internal.pageSize.height - 10,
                 { align: 'center' }
@@ -1329,7 +1327,7 @@ async function generatePDF(movements) {
 
     doc.setFontSize(10);
     doc.setTextColor(60, 60, 60);
-    doc.text('RÉCAPITULATIF', 15, finalY + 10);
+    doc.text('RESUMEN', 15, finalY + 10); // TRADUIT
 
     // Ligne de séparation
     doc.setDrawColor(200, 200, 200);
@@ -1339,19 +1337,19 @@ async function generatePDF(movements) {
     doc.setFontSize(9);
     let statsY = finalY + 20;
 
-    doc.text(`Total mouvements: ${stats.total}`, 15, statsY);
-    doc.text(`Entrées: ${stats.entries}`, 60, statsY);
-    doc.text(`Sorties: ${stats.exits}`, 95, statsY);
-    doc.text(`Réservations: ${stats.reservations}`, 130, statsY);
+    doc.text(`Total movimientos: ${stats.total}`, 15, statsY); // TRADUIT
+    doc.text(`Entradas: ${stats.entries}`, 60, statsY); // TRADUIT
+    doc.text(`Salidas: ${stats.exits}`, 95, statsY); // TRADUIT
+    doc.text(`Reservas: ${stats.reservations}`, 130, statsY); // TRADUIT
 
     statsY += 8;
 
     if (stats.topArticles.length > 0) {
-        doc.text(`Articles les plus actifs: ${stats.topArticles.join(', ')}`, 15, statsY);
+        doc.text(`Artículos más activos: ${stats.topArticles.join(', ')}`, 15, statsY); // TRADUIT
     }
 
     // === NOM DU FICHIER ===
-    const fileName = `Historique_Mouvements_${today.toISOString().split('T')[0]}.pdf`;
+    const fileName = `Historial_Movimientos_${today.toISOString().split('T')[0]}.pdf`; // TRADUIT
 
     // === TÉLÉCHARGEMENT ===
     doc.save(fileName);
@@ -1436,8 +1434,8 @@ function showExportSuccess(filename) {
         ">
             <i class="fas fa-check-circle" style="font-size: 1.2rem;"></i>
             <div>
-                <div style="font-weight: bold; margin-bottom: 4px;">Export réussi</div>
-                <div style="font-size: 0.9rem; opacity: 0.9;">${filename} téléchargé</div>
+                <div style="font-weight: bold; margin-bottom: 4px;">Exportación exitosa</div> <!-- TRADUIT -->
+                <div style="font-size: 0.9rem; opacity: 0.9;">${filename} descargado</div> <!-- TRADUIT -->
             </div>
         </div>
     `;
@@ -1474,11 +1472,11 @@ function showExportSuccess(filename) {
 
 function getTypeText(type) {
     const types = {
-        'entree': 'Entrée',
-        'sortie': 'Sortie',
-        'reservation': 'Réservation',
-        'liberation': 'Libération',
-        'ajustement': 'Ajustement'
+        'entree': 'Entrada',      // TRADUIT
+        'sortie': 'Salida',       // TRADUIT
+        'reservation': 'Reserva', // TRADUIT
+        'liberation': 'Liberación',// TRADUIT
+        'ajustement': 'Ajuste'    // TRADUIT
     };
     return types[type] || type;
 }
@@ -1519,7 +1517,7 @@ function downloadCSV(csv, filename) {
         z-index: 1000;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     `;
-    exportMessage.textContent = `Export réussi : ${filename}`;
+    exportMessage.textContent = `Exportación exitosa: ${filename}`; // TRADUIT
 
     document.body.appendChild(exportMessage);
 
@@ -1531,11 +1529,11 @@ function downloadCSV(csv, filename) {
 
 // ===== UTILITAIRES =====
 function logout() {
-    if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    if (!confirm('¿Está seguro de que desea cerrar sesión?')) { // TRADUIT
         return;
     }
 
     sessionStorage.removeItem('current_user');
     sessionStorage.removeItem('supabase_token');
-    window.location.href = 'connexion.html';
+    window.location.href = 'connexion.html'; // Si cambiaste el nombre del archivo HTML, actualízalo aquí (ej: index.html o login.html)
 }

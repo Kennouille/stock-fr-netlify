@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Projets - Gestion Stock</title>
+    <title>Gestión de Proyectos - Gestión de Stock</title>
     <link rel="stylesheet" href="reservations.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -12,7 +12,7 @@
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
-            <p>Chargement des projets...</p>
+            <p>Cargando proyectos...</p>
         </div>
     </div>
 
@@ -20,17 +20,17 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <h1><i class="fas fa-project-diagram"></i> Gestion des Projets</h1>
+                <h1><i class="fas fa-project-diagram"></i> Gestión de Proyectos</h1>
                 <div class="header-info">
                     <span class="back-link">
                         <a href="accueil.html">
-                            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                            <i class="fas fa-arrow-left"></i> Volver al inicio
                         </a>
                     </span>
                     <span class="divider">•</span>
                     <span class="back-link">
                         <a href="reservations.html">
-                            <i class="fas fa-clipboard-list"></i> Voir les réservations
+                            <i class="fas fa-clipboard-list"></i> Ver las reservas
                         </a>
                     </span>
                 </div>
@@ -41,7 +41,7 @@
                     <span id="usernameDisplay">...</span>
                 </span>
                 <button id="logoutBtn" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    <i class="fas fa-sign-out-alt"></i> Cerrar sesión
                 </button>
             </div>
         </header>
@@ -56,7 +56,7 @@
                             <i class="fas fa-project-diagram"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Projets actifs</h3>
+                            <h3>Proyectos activos</h3>
                             <p class="stat-value" id="activeProjectsCount">0</p>
                         </div>
                     </div>
@@ -66,7 +66,7 @@
                             <i class="fas fa-boxes"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Articles réservés</h3>
+                            <h3>Artículos reservados</h3>
                             <p class="stat-value" id="totalReservedItems">0</p>
                         </div>
                     </div>
@@ -76,7 +76,7 @@
                             <i class="fas fa-euro-sign"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Valeur réservée</h3>
+                            <h3>Valor reservado</h3>
                             <p class="stat-value" id="reservedValue">0 €</p>
                         </div>
                     </div>
@@ -86,7 +86,7 @@
                             <i class="fas fa-users"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Utilisateurs actifs</h3>
+                            <h3>Usuarios activos</h3>
                             <p class="stat-value" id="activeUsersCount">0</p>
                         </div>
                     </div>
@@ -94,13 +94,13 @@
 
                 <div class="header-actions">
                     <button id="newProjectBtn" class="btn-primary">
-                        <i class="fas fa-plus-circle"></i> Nouveau projet
+                        <i class="fas fa-plus-circle"></i> Nuevo proyecto
                     </button>
                     <button id="exportProjectsBtn" class="btn-secondary">
-                        <i class="fas fa-file-export"></i> Exporter
+                        <i class="fas fa-file-export"></i> Exportar
                     </button>
                     <button id="showArchivedBtn" class="btn-export">
-                        <i class="fas fa-archive"></i> Voir archivés
+                        <i class="fas fa-archive"></i> Ver archivados
                     </button>
                 </div>
             </section>
@@ -110,21 +110,21 @@
                 <div class="tabs-header">
                     <div class="tabs">
                         <button class="tab-btn active" data-tab="projects">
-                            <i class="fas fa-project-diagram"></i> Projets actifs
+                            <i class="fas fa-project-diagram"></i> Proyectos activos
                         </button>
                         <button class="tab-btn" data-tab="archived">
-                            <i class="fas fa-archive"></i> Projets archivés
+                            <i class="fas fa-archive"></i> Proyectos archivados
                             <span class="tab-badge" id="archivedTabCount">0</span>
                         </button>
                         <button class="tab-btn" data-tab="analytics">
-                            <i class="fas fa-chart-bar"></i> Statistiques
+                            <i class="fas fa-chart-bar"></i> Estadísticas
                         </button>
                     </div>
 
                     <div class="search-box">
                         <input type="text"
                                id="searchProjects"
-                               placeholder="Rechercher un projet..."
+                               placeholder="Buscar un proyecto..."
                                class="search-input">
                         <button id="searchBtn" class="btn-search">
                             <i class="fas fa-search"></i>
@@ -137,13 +137,13 @@
                     <div class="filters-row">
                         <div class="filter-group">
                             <label for="filterStatus">
-                                <i class="fas fa-filter"></i> Statut
+                                <i class="fas fa-filter"></i> Estado
                             </label>
                             <select id="filterStatus" class="filter-select">
-                                <option value="">Tous les statuts</option>
-                                <option value="active">Actifs</option>
-                                <option value="ending">Se terminant bientôt</option>
-                                <option value="overdue">En retard</option>
+                                <option value="">Todos los estados</option>
+                                <option value="active">Activos</option>
+                                <option value="ending">Finalizando pronto</option>
+                                <option value="overdue">Atrasados</option>
                             </select>
                         </div>
                         <div class="filter-group">
@@ -151,29 +151,29 @@
                                 <i class="fas fa-user-tie"></i> Responsable
                             </label>
                             <select id="filterManager" class="filter-select">
-                                <option value="">Tous les responsables</option>
+                                <option value="">Todos los responsables</option>
                                 <!-- Rempli dynamiquement -->
                             </select>
                         </div>
                         <div class="filter-group">
                             <label for="sortBy">
-                                <i class="fas fa-sort"></i> Trier par
+                                <i class="fas fa-sort"></i> Ordenar por
                             </label>
                             <select id="sortBy" class="filter-select">
-                                <option value="created_at">Date de création</option>
-                                <option value="name">Nom</option>
-                                <option value="end_date">Date de fin</option>
-                                <option value="items_count">Nombre d'articles</option>
+                                <option value="created_at">Fecha de creación</option>
+                                <option value="name">Nombre</option>
+                                <option value="end_date">Fecha de fin</option>
+                                <option value="items_count">Número de artículos</option>
                             </select>
                         </div>
                         <button id="clearFiltersBtn" class="btn-secondary">
-                            <i class="fas fa-redo"></i> Réinitialiser
+                            <i class="fas fa-redo"></i> Restablecer
                         </button>
                     </div>
 
                     <div class="projects-grid" id="projectsGrid">
                         <div class="loading-projects">
-                            <i class="fas fa-spinner fa-spin"></i> Chargement des projets...
+                            <i class="fas fa-spinner fa-spin"></i> Cargando proyectos...
                         </div>
                     </div>
                 </div>
@@ -183,13 +183,13 @@
                     <div class="archived-header">
                         <div class="archived-info">
                             <i class="fas fa-info-circle"></i>
-                            <p>Les projets archivés ne sont plus actifs mais restent consultables pour l'historique.</p>
+                            <p>Los proyectos archivados ya no están activos, pero siguen estando disponibles para consulta histórica.</p>
                         </div>
                     </div>
 
                     <div class="projects-grid" id="archivedProjectsGrid">
                         <div class="loading-projects">
-                            <i class="fas fa-spinner fa-spin"></i> Chargement des projets archivés...
+                            <i class="fas fa-spinner fa-spin"></i> Cargando proyectos archivados...
                         </div>
                     </div>
                 </div>
@@ -198,47 +198,47 @@
                 <div id="analyticsTab" class="tab-content">
                     <div class="analytics-container">
                         <div class="analytics-header">
-                            <h3><i class="fas fa-chart-line"></i> Statistiques des projets</h3>
+                            <h3><i class="fas fa-chart-line"></i> Estadísticas de los proyectos</h3>
                             <div class="analytics-period">
                                 <select id="analyticsPeriod" class="filter-select">
-                                    <option value="7">7 derniers jours</option>
-                                    <option value="30">30 derniers jours</option>
-                                    <option value="90">90 derniers jours</option>
-                                    <option value="365">Année en cours</option>
-                                    <option value="all">Tout l'historique</option>
+                                    <option value="7">Últimos 7 días</option>
+                                    <option value="30">Últimos 30 días</option>
+                                    <option value="90">Últimos 90 días</option>
+                                    <option value="365">Año en curso</option>
+                                    <option value="all">Todo el historial</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="analytics-grid">
                             <div class="analytics-card large">
-                                <h4><i class="fas fa-chart-bar"></i> Évolution des réservations</h4>
+                                <h4><i class="fas fa-chart-bar"></i> Evolución de las reservas</h4>
                                 <div class="chart-container">
                                     <canvas id="reservationsChart"></canvas>
                                 </div>
                             </div>
 
                             <div class="analytics-card">
-                                <h4><i class="fas fa-project-diagram"></i> Répartition par statut</h4>
+                                <h4><i class="fas fa-project-diagram"></i> Distribución por estado</h4>
                                 <div class="chart-container">
                                     <canvas id="statusChart"></canvas>
                                 </div>
                             </div>
 
                             <div class="analytics-card">
-                                <h4><i class="fas fa-users"></i> Top responsables</h4>
+                                <h4><i class="fas fa-users"></i> Principales responsables</h4>
                                 <div class="top-list" id="topManagersList">
                                     <div class="loading-row">
-                                        <i class="fas fa-spinner fa-spin"></i> Chargement...
+                                        <i class="fas fa-spinner fa-spin"></i> Cargando...
                                     </div>
                                 </div>
                             </div>
 
                             <div class="analytics-card">
-                                <h4><i class="fas fa-box"></i> Articles les plus réservés</h4>
+                                <h4><i class="fas fa-box"></i> Artículos más reservados</h4>
                                 <div class="top-list" id="topArticlesList">
                                     <div class="loading-row">
-                                        <i class="fas fa-spinner fa-spin"></i> Chargement...
+                                        <i class="fas fa-spinner fa-spin"></i> Cargando...
                                     </div>
                                 </div>
                             </div>
@@ -250,7 +250,7 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Système de gestion de stock • Gestion des projets</p>
+            <p>Sistema de gestión de stock • Gestión de proyectos</p>
         </footer>
     </div>
 
@@ -258,7 +258,7 @@
     <div id="newProjectModal" class="modal-overlay" style="display: none;">
         <div class="modal modal-large">
             <div class="modal-header">
-                <h3><i class="fas fa-plus-circle"></i> Nouveau projet</h3>
+                <h3><i class="fas fa-plus-circle"></i> Nuevo proyecto</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
@@ -266,35 +266,35 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="projectName">
-                                <i class="fas fa-tag"></i> Nom du projet *
+                                <i class="fas fa-tag"></i> Nombre del proyecto *
                             </label>
                             <input type="text"
                                    id="projectName"
-                                   placeholder="Ex: Construction bureau, Rénovation salle..."
+                                   placeholder="Ej: Construcción oficina, Renovación sala..."
                                    class="form-input"
                                    required>
                         </div>
 
                         <div class="form-group">
                             <label for="projectNumber">
-                                <i class="fas fa-hashtag"></i> Numéro de projet *
+                                <i class="fas fa-hashtag"></i> Número de proyecto *
                             </label>
                             <input type="text"
                                    id="projectNumber"
-                                   placeholder="Ex: PROJ-2024-001"
+                                   placeholder="Ej: PROJ-2024-001"
                                    class="form-input"
                                    required>
-                            <small class="help-text">Doit être unique</small>
+                            <small class="help-text">Debe ser único</small>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="projectDescription">
-                            <i class="fas fa-align-left"></i> Description
+                            <i class="fas fa-align-left"></i> Descripción
                         </label>
                         <textarea id="projectDescription"
                                   rows="3"
-                                  placeholder="Description du projet, objectifs, contexte..."
+                                  placeholder="Descripción del proyecto, objetivos, contexto..."
                                   class="form-textarea"></textarea>
                     </div>
 
@@ -305,14 +305,14 @@
                             </label>
                             <input type="text"
                                    id="projectManager"
-                                   placeholder="Nom du responsable"
+                                   placeholder="Nombre del responsable"
                                    class="form-input"
                                    required>
                         </div>
 
                         <div class="form-group">
                             <label for="projectEndDate">
-                                <i class="fas fa-calendar-check"></i> Date de fin prévue
+                                <i class="fas fa-calendar-check"></i> Fecha de fin prevista
                             </label>
                             <input type="date"
                                    id="projectEndDate"
@@ -322,7 +322,7 @@
 
                     <div class="form-group">
                         <label for="projectBudget">
-                            <i class="fas fa-euro-sign"></i> Budget estimé (optionnel)
+                            <i class="fas fa-euro-sign"></i> Presupuesto estimado (opcional)
                         </label>
                         <div class="input-with-unit">
                             <input type="number"
@@ -342,10 +342,10 @@
 
                     <div class="modal-actions">
                         <button type="submit" class="btn-primary">
-                            <i class="fas fa-save"></i> Créer le projet
+                            <i class="fas fa-save"></i> Crear el proyecto
                         </button>
                         <button type="button" class="btn-secondary close-modal">
-                            Annuler
+                            Cancelar
                         </button>
                     </div>
                 </form>
@@ -357,7 +357,7 @@
     <div id="projectDetailsModal" class="modal-overlay" style="display: none;">
         <div class="modal modal-large">
             <div class="modal-header">
-                <h3><i class="fas fa-info-circle"></i> Détails du projet</h3>
+                <h3><i class="fas fa-info-circle"></i> Detalles del proyecto</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
@@ -372,33 +372,33 @@
                     <div class="project-header-stats">
                         <!-- Colonne gauche -->
                         <div class="stats-column">
-                            <div class="column-label">Articles utilisés</div>
+                            <div class="column-label">Artículos utilizados</div>
                             <div class="project-stat">
-                                <div class="stat-label">Quantité</div>
+                                <div class="stat-label">Cantidad</div>
                                 <div class="stat-value" id="projectDetailsItemsUsed">0</div>
                             </div>
                             <div class="project-stat">
-                                <div class="stat-label">Valeur</div>
+                                <div class="stat-label">Valor</div>
                                 <div class="stat-value" id="projectDetailsValueUsed">0 €</div>
                             </div>
                         </div>
 
-                        <!-- Colonne droite -->
+                        <!-- Columna derecha -->
                         <div class="stats-column">
-                            <div class="column-label">Articles réservés</div>
+                            <div class="column-label">Artículos reservados</div>
                             <div class="project-stat">
-                                <div class="stat-label">Quantité</div>
+                                <div class="stat-label">Cantidad</div>
                                 <div class="stat-value" id="projectDetailsItemsReserved">0</div>
                             </div>
                             <div class="project-stat">
-                                <div class="stat-label">Valeur</div>
+                                <div class="stat-label">Valor</div>
                                 <div class="stat-value" id="projectDetailsValueReserved">0 €</div>
                             </div>
                         </div>
 
-                        <!-- Jours restants (centré en bas) -->
+                        <!-- Días restantes (centrado abajo) -->
                         <div class="project-stat-full">
-                            <div class="stat-label">Jours restants</div>
+                            <div class="stat-label">Días restantes</div>
                             <div class="stat-value" id="projectDetailsDaysLeft">0</div>
                         </div>
                     </div>
@@ -407,48 +407,48 @@
                 <div class="project-tabs">
                     <div class="project-tab-buttons">
                         <button class="project-tab-btn" data-tab="reservations">
-                            <i class="fas fa-boxes"></i> Réservations
+                            <i class="fas fa-boxes"></i> Reservas
                             <span class="tab-badge" id="projectReservationsCount">0</span>
                         </button>
                         <button class="project-tab-btn active" data-tab="info">
-                            <i class="fas fa-info-circle"></i> Informations
+                            <i class="fas fa-info-circle"></i> Información
                         </button>
                         <button class="project-tab-btn" data-tab="history">
-                            <i class="fas fa-history"></i> Historique
+                            <i class="fas fa-history"></i> Historial
                         </button>
                     </div>
 
                     <div class="project-tab-content active" id="projectInfoTab">
                         <div class="project-info-grid">
                             <div class="info-section">
-                                <h5><i class="fas fa-align-left"></i> Description</h5>
-                                <p id="projectDetailsDescription">Pas de description</p>
+                                <h5><i class="fas fa-align-left"></i> Descripción</h5>
+                                <p id="projectDetailsDescription">Sin descripción</p>
                             </div>
 
                             <div class="info-section">
-                                <h5><i class="fas fa-calendar"></i> Dates</h5>
+                                <h5><i class="fas fa-calendar"></i> Fechas</h5>
                                 <div class="info-item">
-                                    <span class="label">Créé le :</span>
+                                    <span class="label">Creado el:</span>
                                     <span class="value" id="projectDetailsCreatedAt"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Date de fin :</span>
+                                    <span class="label">Fecha de fin:</span>
                                     <span class="value" id="projectDetailsEndDate"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Dernière mise à jour :</span>
+                                    <span class="label">Última actualización:</span>
                                     <span class="value" id="projectDetailsUpdatedAt"></span>
                                 </div>
                             </div>
 
                             <div class="info-section">
-                                <h5><i class="fas fa-users"></i> Équipe</h5>
+                                <h5><i class="fas fa-users"></i> Equipo</h5>
                                 <div class="info-item">
-                                    <span class="label">Responsable :</span>
+                                    <span class="label">Responsable:</span>
                                     <span class="value" id="projectDetailsManager"></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">Budget :</span>
+                                    <span class="label">Presupuesto:</span>
                                     <span class="value" id="projectDetailsBudget"></span>
                                 </div>
                             </div>
@@ -458,7 +458,7 @@
                     <div class="project-tab-content" id="projectReservationsTab">
                         <div class="reservations-actions">
                             <button id="addReservationToProjectBtn" class="btn-primary">
-                                <i class="fas fa-plus"></i> Ajouter une réservation
+                                <i class="fas fa-plus"></i> Añadir una reserva
                             </button>
                         </div>
 
@@ -466,19 +466,19 @@
                             <table class="project-reservations-table">
                                 <thead>
                                     <tr>
-                                        <th>Article</th>
-                                        <th>Code</th>
-                                        <th>Quantité</th>
-                                        <th>Utilisé le</th>
-                                        <th>Date de fin</th>
-                                        <th>Utilisateur</th>
-                                        <th>Actions</th>
+                                        <th>Artículo</th>
+                                        <th>Código</th>
+                                        <th>Cantidad</th>
+                                        <th>Usado el</th>
+                                        <th>Fecha de fin</th>
+                                        <th>Usuario</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="projectReservationsBody">
                                     <tr>
                                         <td colspan="7" class="loading-row">
-                                            <i class="fas fa-spinner fa-spin"></i> Chargement des réservations...
+                                            <i class="fas fa-spinner fa-spin"></i> Cargando las reservas...
                                         </td>
                                     </tr>
                                 </tbody>
@@ -489,7 +489,7 @@
                     <div class="project-tab-content" id="projectHistoryTab">
                         <div class="history-list" id="projectHistoryList">
                             <div class="loading-row">
-                                <i class="fas fa-spinner fa-spin"></i> Chargement de l'historique...
+                                <i class="fas fa-spinner fa-spin"></i> Cargando el historial...
                             </div>
                         </div>
                     </div>
@@ -497,16 +497,16 @@
 
                 <div class="modal-actions">
                     <button id="archiveProjectBtn" class="btn-secondary">
-                        <i class="fas fa-archive"></i> Archiver le projet
+                        <i class="fas fa-archive"></i> Archivar el proyecto
                     </button>
                     <button id="editProjectBtn" class="btn-secondary">
-                        <i class="fas fa-edit"></i> Modifier
+                        <i class="fas fa-edit"></i> Modificar
                     </button>
                     <button id="exportProjectBtn" class="btn-export">
-                        <i class="fas fa-file-export"></i> Exporter
+                        <i class="fas fa-file-export"></i> Exportar
                     </button>
                     <button type="button" class="btn-secondary close-modal">
-                        Fermer
+                        Cerrar
                     </button>
                 </div>
             </div>
@@ -517,23 +517,23 @@
     <div id="addReservationModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-plus"></i> Ajouter une réservation</h3>
+                <h3><i class="fas fa-plus"></i> Añadir una reserva</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label for="reservationArticle">
-                        <i class="fas fa-box"></i> Article *
+                        <i class="fas fa-box"></i> Artículo *
                     </label>
                     <select id="reservationArticle" class="form-select">
-                        <option value="">Sélectionnez un article</option>
+                        <option value="">Seleccione un artículo</option>
                         <!-- Rempli dynamiquement -->
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="reservationQuantity">
-                        <i class="fas fa-boxes"></i> Quantité *
+                        <i class="fas fa-boxes"></i> Cantidad *
                     </label>
                     <div class="quantity-input-group">
                         <button type="button" class="quantity-btn minus" id="reservationQuantityMinus">
@@ -549,18 +549,18 @@
                         </button>
                     </div>
                     <div class="quantity-info">
-                        <span>Stock disponible : <strong id="reservationAvailableStock">0</strong></span>
-                        <span>Déjà réservé : <strong id="reservationAlreadyReserved">0</strong></span>
+                        <span>Stock disponible: <strong id="reservationAvailableStock">0</strong></span>
+                        <span>Ya reservado: <strong id="reservationAlreadyReserved">0</strong></span>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="reservationComment">
-                        <i class="fas fa-comment"></i> Commentaire (optionnel)
+                        <i class="fas fa-comment"></i> Comentario (opcional)
                     </label>
                     <textarea id="reservationComment"
                               rows="2"
-                              placeholder="Motif de la réservation..."
+                              placeholder="Motivo de la reserva..."
                               class="form-textarea"></textarea>
                 </div>
 
@@ -571,10 +571,10 @@
 
                 <div class="modal-actions">
                     <button id="confirmAddReservationBtn" class="btn-primary">
-                        <i class="fas fa-check"></i> Ajouter la réservation
+                        <i class="fas fa-check"></i> Añadir la reserva
                     </button>
                     <button type="button" class="btn-secondary close-modal">
-                        Annuler
+                        Cancelar
                     </button>
                 </div>
             </div>
@@ -585,40 +585,40 @@
     <div id="releaseStockModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-unlock"></i> Libération du stock</h3>
+                <h3><i class="fas fa-unlock"></i> Liberación de stock</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="warning-message">
                     <i class="fas fa-exclamation-triangle"></i>
                     <div class="warning-content">
-                        <h4>Attention !</h4>
-                        <p>Vous êtes sur le point de libérer tout le stock associé à ce projet.</p>
-                        <p><strong id="releaseItemsCount">0</strong> article(s) seront libérés.</p>
-                        <p>Cette action est irréversible.</p>
+                        <h4>¡Atención!</h4>
+                        <p>Está a punto de liberar todo el stock asociado a este proyecto.</p>
+                        <p>Se liberarán <strong id="releaseItemsCount">0</strong> artículo(s).</p>
+                        <p>Esta acción es irreversible.</p>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="releaseReason">
-                        <i class="fas fa-comment"></i> Raison de la libération
+                        <i class="fas fa-comment"></i> Motivo de la liberación
                     </label>
                     <select id="releaseReason" class="form-select">
-                        <option value="">Sélectionnez une raison</option>
-                        <option value="project_completed">Projet terminé</option>
-                        <option value="project_cancelled">Projet annulé</option>
-                        <option value="stock_return">Retour de stock</option>
-                        <option value="other">Autre</option>
+                        <option value="">Seleccione un motivo</option>
+                        <option value="project_completed">Proyecto finalizado</option>
+                        <option value="project_cancelled">Proyecto cancelado</option>
+                        <option value="stock_return">Devolución de stock</option>
+                        <option value="other">Otro</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="releaseComment">
-                        <i class="fas fa-comment-dots"></i> Commentaire
+                        <i class="fas fa-comment-dots"></i> Comentario
                     </label>
                     <textarea id="releaseComment"
                               rows="3"
-                              placeholder="Détails supplémentaires..."
+                              placeholder="Detalles adicionales..."
                               class="form-textarea"></textarea>
                 </div>
 
@@ -629,10 +629,10 @@
 
                 <div class="modal-actions">
                     <button id="confirmReleaseBtn" class="btn-primary">
-                        <i class="fas fa-check"></i> Confirmer la libération
+                        <i class="fas fa-check"></i> Confirmar la liberación
                     </button>
                     <button type="button" class="btn-secondary close-modal">
-                        Annuler
+                        Cancelar
                     </button>
                 </div>
             </div>

@@ -1,36 +1,36 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - Gestion Stock</title>
+    <title>Inicio de Sesión - Gestión de Stock</title>
     <link rel="stylesheet" href="connexion.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Splash screen -->
+    <!-- Pantalla de bienvenida -->
     <div id="splashScreen" class="splash-screen"></div>
 
     <div class="login-container">
         <div class="login-box">
-            <!-- Logo / Titre -->
+            <!-- Logo / Título -->
             <div class="logo">
                 <i class="fas fa-boxes"></i>
                 <h1>NeXeN Store Manager</h1>
-                <p>Gestion de stock simplifiée</p>
+                <p>Gestión de stock simplificada</p>
             </div>
 
-            <!-- Formulaire de connexion -->
+            <!-- Formulario de inicio de sesión -->
             <form id="loginForm">
                 <div class="input-group">
                     <label for="username">
-                        <i class="fas fa-user"></i> Nom d'utilisateur
+                        <i class="fas fa-user"></i> Nombre de usuario
                     </label>
                     <input
                         type="text"
                         id="username"
                         name="username"
-                        placeholder="Entrez votre nom d'utilisateur"
+                        placeholder="Introduce tu nombre de usuario"
                         required
                         autofocus
                     >
@@ -38,45 +38,45 @@
 
                 <div class="input-group">
                     <label for="password">
-                        <i class="fas fa-lock"></i> Mot de passe
+                        <i class="fas fa-lock"></i> Contraseña
                     </label>
                     <input
                         type="password"
                         id="password"
                         name="password"
-                        placeholder="Entrez votre mot de passe"
+                        placeholder="Introduce tu contraseña"
                         required
                     >
                 </div>
 
-                <!-- Message d'erreur -->
+                <!-- Mensaje de error -->
                 <div id="errorMessage" class="error-message" style="display: none;">
                     <i class="fas fa-exclamation-circle"></i>
-                    <span id="errorText">Identifiants incorrects</span>
+                    <span id="errorText">Identificadores incorrectos</span>
                 </div>
 
-                <!-- Bouton de connexion -->
+                <!-- Botón de inicio de sesión -->
                 <button type="submit" class="login-btn">
                     <i class="fas fa-sign-in-alt"></i>
-                    Se connecter
+                    Iniciar sesión
                 </button>
 
-                <!-- Note admin -->
+                <!-- Nota para administradores -->
                 <div class="admin-note">
                     <p><i class="fas fa-info-circle"></i>
-                        Les comptes sont créés par les administrateurs.
-                        Contactez votre administrateur si vous n'avez pas de compte.
+                        Las cuentas son creadas por los administradores.
+                        Contacta a tu administrador si no tienes una cuenta.
                     </p>
                 </div>
             </form>
         </div>
 
         <div class="footer">
-            <p>© 2025 NeXeN Store Manager - Version 1.2</p>
+            <p>© 2025 NeXeN Store Manager - Versión 1.2</p>
         </div>
     </div>
 
-    <!-- Utilise ta configuration Supabase -->
+    <!-- Utiliza tu configuración de Supabase -->
     <script type="module" src="connexion.js"></script>
 </body>
 </html>

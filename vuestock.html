@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VueStock - Visualisation 3D du Stock</title>
+    <title>VueStock - Visualización 3D del Stock</title>
     <link rel="stylesheet" href="vuestock.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,27 +13,27 @@
         <div class="header-left">
             <h1><i class="fas fa-warehouse"></i> VueStock</h1>
             <div class="breadcrumb" id="breadcrumb">
-                <span class="breadcrumb-item active" data-view="plan">Plan du stock</span>
+                <span class="breadcrumb-item active" data-view="plan">Plano del stock</span>
             </div>
         </div>
 
         <div class="header-center">
             <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="searchArticle" placeholder="Rechercher un article...">
-                <button id="btnSearch" class="btn-search">Rechercher</button>
+                <input type="text" id="searchArticle" placeholder="Buscar un artículo...">
+                <button id="btnSearch" class="btn-search">Buscar</button>
             </div>
         </div>
 
         <div class="header-right">
             <button id="btnView3D" class="btn btn-secondary">
-                <i class="fas fa-cube"></i> Vue 3D
+                <i class="fas fa-cube"></i> Vista 3D
             </button>
             <button id="btnSave" class="btn btn-primary">
-                <i class="fas fa-save"></i> Sauvegarder
+                <i class="fas fa-save"></i> Guardar
             </button>
             <button id="btnAddRack" class="btn btn-success">
-                <i class="fas fa-plus"></i> Ajouter étagère
+                <i class="fas fa-plus"></i> Añadir estantería
             </button>
         </div>
     </header>
@@ -43,27 +43,27 @@
         <!-- Barre latérale gauche - Outils -->
         <aside class="sidebar-left" id="sidebarTools">
             <div class="sidebar-section">
-                <h3><i class="fas fa-tools"></i> Outils</h3>
+                <h3><i class="fas fa-tools"></i> Herramientas</h3>
                 <div class="toolbox">
-                    <button class="tool-btn active" data-tool="select" title="Sélectionner">
+                    <button class="tool-btn active" data-tool="select" title="Seleccionar">
                         <i class="fas fa-mouse-pointer"></i>
                     </button>
-                    <button class="tool-btn" data-tool="rack" title="Ajouter une étagère">
+                    <button class="tool-btn" data-tool="rack" title="Añadir estantería">
                         <i class="fas fa-th-large"></i>
                     </button>
-                    <button class="tool-btn" data-tool="move" title="Déplacer">
+                    <button class="tool-btn" data-tool="move" title="Mover">
                         <i class="fas fa-arrows-alt"></i>
                     </button>
-                    <button class="tool-btn" data-tool="delete" title="Supprimer">
+                    <button class="tool-btn" data-tool="delete" title="Eliminar">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </div>
 
             <div class="sidebar-section">
-                <h3><i class="fas fa-info-circle"></i> Propriétés</h3>
+                <h3><i class="fas fa-info-circle"></i> Propiedades</h3>
                 <div class="properties-panel" id="propertiesPanel">
-                    <p class="no-selection">Sélectionnez un élément pour voir ses propriétés</p>
+                    <p class="no-selection">Seleccione un elemento para ver sus propiedades</p>
                 </div>
             </div>
         </aside>
@@ -73,10 +73,10 @@
             <!-- Remplacez la section <div class="view active" id="viewPlan"> -->
             <div class="view active" id="viewPlan">
                 <div class="view-header">
-                    <h2><i class="fas fa-map"></i> Plan du stock - Vue Quad</h2>
+                    <h2><i class="fas fa-map"></i> Plano del Stock - Vista Cuádruple</h2>
                     <div class="view-switch-container">
                         <button class="view-switch-btn active" data-view="quad">
-                            <i class="fas fa-th-large"></i> Vue Quad
+                            <i class="fas fa-th-large"></i> Vista Cuádruple
                         </button>
                     </div>
                 </div>
@@ -86,8 +86,8 @@
                     <!-- Haut-Gauche : Vue du dessus -->
                     <div class="quad-view view-top">
                         <div class="quad-view-header">
-                            <span><i class="fas fa-dharmachakra"></i> Vue du dessus</span>
-                            <span class="quad-rack-count" id="quadRackCount">0 racks</span>
+                            <span><i class="fas fa-dharmachakra"></i> Vista superior</span>
+                            <span class="quad-rack-count" id="quadRackCount">0 estanterías</span>
                         </div>
                         <div class="quad-view-content">
                             <canvas id="canvasTop" class="quad-canvas"></canvas>
@@ -98,8 +98,8 @@
                     <!-- Haut-Droite : Vue de face -->
                     <div class="quad-view view-front">
                         <div class="quad-view-header">
-                            <span><i class="fas fa-arrows-alt-h"></i> Vue de face</span>
-                            <span class="quad-selected-rack" id="quadSelectedRack">Aucun rack sélectionné</span>
+                            <span><i class="fas fa-arrows-alt-h"></i> Vista frontal</span>
+                            <span class="quad-selected-rack" id="quadSelectedRack">Ninguna estantería seleccionada</span>
                         </div>
                         <div class="quad-view-content">
                             <canvas id="canvasFront" class="quad-canvas"></canvas>
@@ -110,9 +110,9 @@
                     <!-- Bas-Gauche : Vue 3D isométrique -->
                     <div class="quad-view view-3d">
                         <div class="quad-view-header">
-                            <span><i class="fas fa-cube"></i> Vue 3D</span>
+                            <span><i class="fas fa-cube"></i> Vista 3D</span>
                             <button class="btn btn-sm" id="quad3DReset">
-                                <i class="fas fa-sync-alt"></i> Réinitialiser
+                                <i class="fas fa-sync-alt"></i> Reiniciar
                             </button>
                         </div>
                         <div class="quad-view-content">
@@ -123,8 +123,8 @@
                     <!-- Bas-Droite : Vue étage -->
                     <div class="quad-view view-level">
                         <div class="quad-view-header">
-                            <span><i class="fas fa-layer-group"></i> Détail étage</span>
-                            <span class="quad-level-info" id="quadLevelInfo">Aucun étage</span>
+                            <span><i class="fas fa-layer-group"></i> Detalle de nivel</span>
+                            <span class="quad-level-info" id="quadLevelInfo">Ningún nivel</span>
                         </div>
                         <!-- CHANGEMENT ICI : Remplacer le contenu actuel -->
                         <div class="quad-view-content" id="quadLevelSlots">
@@ -132,7 +132,7 @@
                             <div class="empty-drawer-state">
                                 <div class="drawer-front-placeholder">
                                     <i class="fas fa-drawer fa-3x"></i>
-                                    <p>Sélectionnez un étage pour ouvrir le tiroir</p>
+                                    <p>Seleccione un nivel para abrir el cajón</p>
                                 </div>
                             </div>
                         </div>
@@ -149,12 +149,12 @@
 
                 <div class="view-footer">
                     <div class="coord-display">
-                        Mode: <span id="viewMode">Quad</span> |
-                        Racks: <span id="racksCount">0</span> |
-                        Sélection: <span id="selectedElement">Aucun</span>
+                        Modo: <span id="viewMode">Cuádruple</span> |
+                        Estanterías: <span id="racksCount">0</span> |
+                        Selección: <span id="selectedElement">Ninguno</span>
                     </div>
                     <div class="scale-display">
-                        Échelle: <span id="scaleDisplay">100%</span>
+                        Escala: <span id="scaleDisplay">100%</span>
                     </div>
                 </div>
             </div>
@@ -164,12 +164,12 @@
                 <div class="view-header">
                     <h2>
                         <i class="fas fa-chevron-left back-btn" id="backToPlan"></i>
-                        <i class="fas fa-th-large"></i> Étagère
+                        <i class="fas fa-th-large"></i> Estantería
                         <span id="rackTitle">A</span>
                     </h2>
                     <div class="view-actions">
                         <button class="btn btn-sm btn-success" id="btnAddLevel">
-                            <i class="fas fa-plus"></i> Ajouter un étage
+                            <i class="fas fa-plus"></i> Añadir nivel
                         </button>
                     </div>
                 </div>
@@ -178,22 +178,22 @@
                     <!-- Les étages seront générés ici dynamiquement -->
                     <div class="empty-state">
                         <i class="fas fa-th-large fa-3x"></i>
-                        <p>Aucun étage configuré</p>
+                        <p>Ningún nivel configurado</p>
                         <button class="btn btn-primary" id="btnAddFirstLevel">
-                            Ajouter le premier étage
+                            Añadir el primer nivel
                         </button>
                     </div>
                 </div>
 
                 <div class="rack-controls">
                     <div class="control-group">
-                        <label>Code étagère:</label>
+                        <label>Código de estantería:</label>
                         <input type="text" id="rackCodeInput" value="A" class="form-control">
                     </div>
                     <div class="control-group">
-                        <label>Génération automatique:</label>
+                        <label>Generación automática:</label>
                         <button class="btn btn-sm" id="btnAutoLevels">
-                            Étages 10 à 50 (pas de 10)
+                            Niveles 10 a 50 (paso de 10)
                         </button>
                     </div>
                 </div>
@@ -204,13 +204,13 @@
                 <div class="view-header">
                     <h2>
                         <i class="fas fa-chevron-left back-btn" id="backToRack"></i>
-                        <i class="fas fa-layer-group"></i> Étage
-                        <span id="levelTitle">10</span> - Étagère
+                        <i class="fas fa-layer-group"></i> Nivel
+                        <span id="levelTitle">10</span> - Estante
                         <span id="levelRackTitle">A</span>
                     </h2>
                     <div class="view-actions">
                         <button class="btn btn-sm btn-success" id="btnAddSlot">
-                            <i class="fas fa-plus"></i> Ajouter emplacement
+                            <i class="fas fa-plus"></i> Agregar ubicación
                         </button>
                     </div>
                 </div>
@@ -219,28 +219,28 @@
                     <!-- Les emplacements seront générés ici -->
                     <div class="empty-state">
                         <i class="fas fa-box-open fa-3x"></i>
-                        <p>Aucun emplacement configuré</p>
+                        <p>Ninguna ubicación configurada</p>
                         <button class="btn btn-primary" id="btnAddFirstSlot">
-                            Ajouter le premier emplacement
+                            Agregar la primera ubicación
                         </button>
                     </div>
                 </div>
 
                 <div class="level-controls">
                     <div class="control-group">
-                        <label>Code étage:</label>
+                        <label>Código nivel:</label>
                         <input type="text" id="levelCodeInput" value="10" class="form-control">
                     </div>
                     <div class="control-group">
-                        <label>Génération automatique:</label>
+                        <label>Generación automática:</label>
                         <button class="btn btn-sm" id="btnAutoSlots">
-                            Emplacements 10 à 100 (pas de 10)
+                            Ubicaciones 10 a 100 (paso de 10)
                         </button>
                     </div>
                     <div class="control-group">
-                        <label>Nombre d'emplacements:</label>
+                        <label>Cantidad de ubicaciones:</label>
                         <input type="number" id="slotCount" value="5" min="1" max="50" class="form-control">
-                        <button class="btn btn-sm" id="btnGenerateSlots">Générer</button>
+                        <button class="btn btn-sm" id="btnGenerateSlots">Generar</button>
                     </div>
                 </div>
             </div>
@@ -249,29 +249,29 @@
         <!-- Barre latérale droite - Articles/Stock -->
         <aside class="sidebar-right" id="sidebarStock">
             <div class="sidebar-section">
-                <h3><i class="fas fa-boxes"></i> Articles dans l'emplacement</h3>
+                <h3><i class="fas fa-boxes"></i> Artículos en la ubicación</h3>
                 <div class="slot-contents" id="slotContents">
-                    <p class="no-selection">Sélectionnez un emplacement</p>
+                    <p class="no-selection">Seleccione una ubicación</p>
                 </div>
             </div>
 
             <div class="sidebar-section">
-                <h3><i class="fas fa-chart-bar"></i> Statistiques</h3>
+                <h3><i class="fas fa-chart-bar"></i> Estadísticas</h3>
                 <div class="stats-panel">
                     <div class="stat-item">
-                        <span class="stat-label">Étagères:</span>
+                        <span class="stat-label">Estantes:</span>
                         <span class="stat-value" id="statRacks">0</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Étages total:</span>
+                        <span class="stat-label">Niveles totales:</span>
                         <span class="stat-value" id="statLevels">0</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Emplacements:</span>
+                        <span class="stat-label">Ubicaciones:</span>
                         <span class="stat-value" id="statSlots">0</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Taux occupation:</span>
+                        <span class="stat-label">Tasa de ocupación:</span>
                         <span class="stat-value" id="statOccupation">0%</span>
                     </div>
                 </div>
@@ -283,38 +283,38 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal" id="rackModal">
             <div class="modal-header">
-                <h3><i class="fas fa-th-large"></i> Configuration étagère</h3>
+                <h3><i class="fas fa-th-large"></i> Configuración del estante</h3>
                 <button class="modal-close" id="closeRackModal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="rackForm">
                     <div class="form-group">
-                        <label for="modalRackCode">Code étagère *</label>
+                        <label for="modalRackCode">Código estante *</label>
                         <input type="text" id="modalRackCode" required class="form-control" placeholder="A, B, C...">
                     </div>
                     <div class="form-group">
-                        <label for="modalRackName">Nom d'affichage</label>
-                        <input type="text" id="modalRackName" class="form-control" placeholder="Étagère principale">
+                        <label for="modalRackName">Nombre para mostrar</label>
+                        <input type="text" id="modalRackName" class="form-control" placeholder="Estante principal">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="modalRackWidth">Largeur (cases)</label>
+                            <label for="modalRackWidth">Ancho (celdas)</label>
                             <input type="number" id="modalRackWidth" value="3" min="1" max="10" class="form-control">
                         </div>
                         <div class="form-group">
-                            <label for="modalRackDepth">Profondeur (cases)</label>
+                            <label for="modalRackDepth">Profundidad (celdas)</label>
                             <input type="number" id="modalRackDepth" value="2" min="1" max="10" class="form-control">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="modalRackColor">Couleur</label>
+                        <label for="modalRackColor">Color</label>
                         <input type="color" id="modalRackColor" value="#4a90e2" class="form-control">
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" id="cancelRackModal">Annuler</button>
-                <button class="btn btn-primary" id="saveRackModal">Enregistrer</button>
+                <button class="btn btn-secondary" id="cancelRackModal">Cancelar</button>
+                <button class="btn btn-primary" id="saveRackModal">Guardar</button>
             </div>
         </div>
     </div>
@@ -322,20 +322,20 @@
     <!-- Notification système -->
     <div class="notification" id="notification">
         <i class="fas fa-check-circle"></i>
-        <span id="notificationText">Sauvegarde réussie</span>
+        <span id="notificationText">Guardado exitoso</span>
     </div>
 
     <!-- Loader global -->
     <div class="loader-overlay" id="loaderOverlay">
         <div class="loader">
             <div class="loader-spinner"></div>
-            <p>Chargement...</p>
+            <p>Cargando...</p>
         </div>
     </div>
 
     <!-- Modal Vue 3D -->
     <button id="open-warehouse" class="btn btn-secondary">
-        <i class="fas fa-cube"></i> Voir l'entrepôt 3D
+        <i class="fas fa-cube"></i> Ver almacén 3D
     </button>
 
     <div id="warehouse-modal" class="modal-overlay hidden">
@@ -349,38 +349,38 @@
     <div class="modal-overlay" id="stockModalOverlay">
         <div class="modal" id="stockModal" style="max-width: 500px;">
             <div class="modal-header">
-                <h3><i class="fas fa-edit"></i> Éditer le stock</h3>
+                <h3><i class="fas fa-edit"></i> Editar stock</h3>
                 <button class="modal-close" id="closeStockModal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="stock-edit-container">
                     <div class="article-photo-large">
-                        <img id="modalArticlePhoto" src="" alt="Article">
+                        <img id="modalArticlePhoto" src="" alt="Artículo">
                     </div>
 
                     <div class="article-info">
                         <h4 id="modalArticleName"></h4>
                         <div class="article-details">
                             <div class="detail-item">
-                                <span class="detail-label">Emplacement:</span>
+                                <span class="detail-label">Ubicación:</span>
                                 <span id="modalSlotCode" class="detail-value"></span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">Code-barres:</span>
+                                <span class="detail-label">Código de barras:</span>
                                 <span id="modalBarcode" class="detail-value"></span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">Stock actuel:</span>
+                                <span class="detail-label">Stock actual:</span>
                                 <span id="modalCurrentStock" class="detail-value"></span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">Stock minimum:</span>
+                                <span class="detail-label">Stock mínimo:</span>
                                 <span id="modalMinStock" class="detail-value"></span>
                             </div>
                         </div>
 
                         <div class="stock-edit-controls">
-                            <label>Nouvelle quantité:</label>
+                            <label>Nueva cantidad:</label>
                             <div class="quantity-controls">
                                 <button class="btn btn-sm" id="btnDecrease">
                                     <i class="fas fa-minus"></i>
@@ -394,23 +394,19 @@
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </div>
-                            <small class="text-muted">Entrez la quantité réelle après inventaire</small>
+                            <small class="text-muted">Ingrese la cantidad real después del inventario</small>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" id="cancelStockModal">Annuler</button>
+                <button class="btn btn-secondary" id="cancelStockModal">Cancelar</button>
                 <button class="btn btn-primary" id="saveStockModal">
-                    <i class="fas fa-save"></i> Enregistrer
+                    <i class="fas fa-save"></i> Guardar
                 </button>
             </div>
         </div>
     </div>
-
-
-
-
 
     <!-- Scripts -->
     <script src="vuestock.js"></script>

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impression d'étiquettes - Gestion Stock</title>
+    <title>Impresión de etiquetas - Gestión Stock</title>
     <link rel="stylesheet" href="impression.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
@@ -13,7 +13,7 @@
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
-            <p>Chargement...</p>
+            <p>Cargando...</p>
         </div>
     </div>
 
@@ -21,11 +21,11 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <h1><i class="fas fa-print"></i> Impression d'étiquettes</h1>
+                <h1><i class="fas fa-print"></i> Impresión de etiquetas</h1>
                 <div class="header-info">
                     <span class="back-link">
                         <a href="accueil.html">
-                            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                            <i class="fas fa-arrow-left"></i> Volver al inicio
                         </a>
                     </span>
                 </div>
@@ -36,11 +36,11 @@
                     <span id="usernameDisplay">...</span>
                 </span>
                 <button id="logoutBtn" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    <i class="fas fa-sign-out-alt"></i> Cerrar sesión
                 </button>
             </div>
             <button id="resetAppBtn" class="btn-reset" style="margin-left: 10px;">
-                <i class="fas fa-redo"></i> Tout réinitialiser
+                <i class="fas fa-redo"></i> Restablecer todo
             </button>
         </header>
 
@@ -49,15 +49,15 @@
             <!-- Section recherche -->
             <section class="search-section">
                 <div class="section-header">
-                    <h2><i class="fas fa-search"></i> Rechercher un article</h2>
+                    <h2><i class="fas fa-search"></i> Buscar un artículo</h2>
                     <div class="search-methods">
                         <!-- Exemple dans impression.html -->
                         <div class="search-methods">
                             <button id="scanEtiquetteBtn" class="btn" onclick="openScanModal('etiquette')">
-                                <i class="fas fa-camera"></i> Scanner étiquette
+                                <i class="fas fa-camera"></i> Escanear etiqueta
                             </button>
                             <button id="scanInventaireBtn" class="btn" onclick="openScanModal('inventaire')">
-                                <i class="fas fa-camera"></i> Scanner inventaire
+                                <i class="fas fa-camera"></i> Escanear inventario
                             </button>
                         </div>
                     </div>
@@ -65,19 +65,19 @@
 
                 <div class="search-container">
                     <div class="search-tabs">
-                        <button class="tab-btn active" data-tab="single">Étiquette unique</button>
-                        <button class="tab-btn" data-tab="multiple">Impression multiple</button>
+                        <button class="tab-btn active" data-tab="single">Etiqueta única</button>
+                        <button class="tab-btn" data-tab="multiple">Impresión múltiple</button>
                     </div>
 
                     <!-- Onglet étiquette unique -->
                     <div id="singleTab" class="tab-content active">
                         <div class="search-grid">
                             <div class="search-method">
-                                <h3><i class="fas fa-barcode"></i> Par code-barre</h3>
+                                <h3><i class="fas fa-barcode"></i> Por código de barras</h3>
                                 <div class="input-group">
                                     <input type="text"
                                            id="barcodeSearch"
-                                           placeholder="Scanner ou saisir le code-barre"
+                                           placeholder="Escanear o introducir el código de barras"
                                            class="search-input">
                                     <button id="scanBarcodeBtn" class="btn-action" onclick="openScanModal('single')">
                                         <i class="fas fa-camera"></i>
@@ -86,11 +86,11 @@
                             </div>
 
                             <div class="search-method">
-                                <h3><i class="fas fa-hashtag"></i> Par numéro d'article</h3>
+                                <h3><i class="fas fa-hashtag"></i> Por número de artículo</h3>
                                 <div class="input-group">
                                     <input type="text"
                                            id="articleNumberSearch"
-                                           placeholder="Ex: ART-001"
+                                           placeholder="Ej: ART-001"
                                            class="search-input">
                                     <button id="searchNumberBtn" class="btn-action">
                                         <i class="fas fa-search"></i>
@@ -99,11 +99,11 @@
                             </div>
 
                             <div class="search-method">
-                                <h3><i class="fas fa-tag"></i> Par nom d'article</h3>
+                                <h3><i class="fas fa-tag"></i> Por nombre de artículo</h3>
                                 <div class="input-group">
                                     <input type="text"
                                            id="articleNameSearch"
-                                           placeholder="Nom de l'article..."
+                                           placeholder="Nombre del artículo..."
                                            class="search-input">
                                     <button id="searchNameBtn" class="btn-action">
                                         <i class="fas fa-search"></i>
@@ -114,7 +114,7 @@
 
                         <!-- Résultats de recherche -->
                         <div class="search-results" id="searchResults" style="display: none;">
-                            <h3><i class="fas fa-list"></i> Résultats</h3>
+                            <h3><i class="fas fa-list"></i> Resultados</h3>
                             <div class="results-container" id="resultsContainer">
                                 <!-- Rempli dynamiquement -->
                             </div>
@@ -125,53 +125,51 @@
                     <div id="multipleTab" class="tab-content">
                         <div class="multiple-instructions">
                             <p><i class="fas fa-info-circle"></i>
-                                Sélectionnez plusieurs articles pour imprimer leurs étiquettes en une fois.
+                                Seleccione varios artículos para imprimir sus etiquetas de una vez.
                             </p>
                         </div>
 
                         <div class="multiple-search">
                             <input type="text"
                                    id="multipleSearch"
-                                   placeholder="Rechercher des articles..."
+                                   placeholder="Buscar artículos..."
                                    class="search-input-large">
                             <button id="addToPrintListBtn" class="btn-primary">
-                                <i class="fas fa-plus"></i> Ajouter à la liste
+                                <i class="fas fa-plus"></i> Añadir a la lista
                             </button>
                         </div>
 
                         <div class="print-list-container">
-                            <h3><i class="fas fa-clipboard-list"></i> Liste d'impression</h3>
+                            <h3><i class="fas fa-clipboard-list"></i> Lista de impresión</h3>
                             <div class="print-list" id="printList">
                                 <div class="empty-list">
                                     <i class="fas fa-tags"></i>
-                                    <p>Aucun article sélectionné</p>
-                                    <small>Ajoutez des articles à partir des résultats de recherche</small>
+                                    <p>Ningún artículo seleccionado</p>
+                                    <small>Añada artículos desde los resultados de búsqueda</small>
                                 </div>
                             </div>
 
                             <div class="list-actions">
                                 <button id="clearListBtn" class="btn-secondary">
-                                    <i class="fas fa-trash"></i> Vider la liste
+                                    <i class="fas fa-trash"></i> Vaciar la lista
                                 </button>
                                 <button id="printListBtn" class="btn-primary">
-                                    <i class="fas fa-print"></i> Imprimer la liste
+                                    <i class="fas fa-print"></i> Imprimir la lista
                                 </button>
-                                <span class="list-count" id="listCount">0 articles</span>
+                                <span class="list-count" id="listCount">0 artículos</span>
                             </div>
                         </div>
                     </div>
-
-
                 </div>
             </section>
 
             <!-- Section paramètres d'impression -->
             <section class="settings-section">
                 <div class="section-header">
-                    <h2><i class="fas fa-cog"></i> Paramètres d'impression</h2>
+                    <h2><i class="fas fa-cog"></i> Configuración de impresión</h2>
                     <div class="preview-toggle">
                         <button id="togglePreviewBtn" class="btn-secondary">
-                            <i class="fas fa-eye"></i> Aperçu
+                            <i class="fas fa-eye"></i> Vista previa
                         </button>
                     </div>
                 </div>
@@ -179,7 +177,7 @@
                 <div class="settings-grid">
                     <!-- Format étiquette -->
                     <div class="settings-card">
-                        <h3><i class="fas fa-ruler"></i> Format d'étiquette</h3>
+                        <h3><i class="fas fa-ruler"></i> Formato de etiqueta</h3>
                         <div class="format-options">
                             <div class="format-option" data-format="small">
                                 <input type="radio"
@@ -191,11 +189,11 @@
                                     <div class="format-preview small">
                                         <div class="preview-content">
                                             <div class="preview-barcode"></div>
-                                            <div class="preview-text">Petite</div>
+                                            <div class="preview-text">Pequeña</div>
                                         </div>
                                     </div>
-                                    <span>Petite (40x20mm)</span>
-                                    <small>Code-barre + nom</small>
+                                    <span>Pequeña (40x20mm)</span>
+                                    <small>Código de barras + nombre</small>
                                 </label>
                             </div>
 
@@ -208,12 +206,12 @@
                                     <div class="format-preview medium">
                                         <div class="preview-content">
                                             <div class="preview-barcode"></div>
-                                            <div class="preview-text">Moyenne</div>
+                                            <div class="preview-text">Mediana</div>
                                             <div class="preview-details"></div>
                                         </div>
                                     </div>
-                                    <span>Moyenne (60x40mm)</span>
-                                    <small>Code-barre + détails</small>
+                                    <span>Mediana (60x40mm)</span>
+                                    <small>Código de barras + detalles</small>
                                 </label>
                             </div>
 
@@ -232,7 +230,7 @@
                                         </div>
                                     </div>
                                     <span>Grande (100x70mm)</span>
-                                    <small>Toutes infos + prix</small>
+                                    <small>Toda la info + precio</small>
                                 </label>
                             </div>
                         </div>
@@ -240,14 +238,14 @@
 
                     <!-- Options d'impression -->
                     <div class="settings-card">
-                        <h3><i class="fas fa-sliders-h"></i> Options d'impression</h3>
+                        <h3><i class="fas fa-sliders-h"></i> Opciones de impresión</h3>
                         <div class="print-options">
                             <div class="option-group">
                                 <div class="option-item">
                                     <input type="checkbox" id="optionShowPrice" checked>
                                     <label for="optionShowPrice">
                                         <i class="fas fa-euro-sign"></i>
-                                        <span>Afficher le prix</span>
+                                        <span>Mostrar el precio</span>
                                     </label>
                                 </div>
 
@@ -255,7 +253,7 @@
                                     <input type="checkbox" id="optionShowStock" checked>
                                     <label for="optionShowStock">
                                         <i class="fas fa-boxes"></i>
-                                        <span>Afficher le stock</span>
+                                        <span>Mostrar el stock</span>
                                     </label>
                                 </div>
 
@@ -263,7 +261,7 @@
                                     <input type="checkbox" id="optionShowDate">
                                     <label for="optionShowDate">
                                         <i class="fas fa-calendar"></i>
-                                        <span>Afficher la date</span>
+                                        <span>Mostrar la fecha</span>
                                     </label>
                                 </div>
 
@@ -271,7 +269,7 @@
                                     <input type="checkbox" id="optionShowLocation">
                                     <label for="optionShowLocation">
                                         <i class="fas fa-map-marker-alt"></i>
-                                        <span>Afficher l'emplacement</span>
+                                        <span>Mostrar la ubicación</span>
                                     </label>
                                 </div>
                             </div>
@@ -280,7 +278,7 @@
                                 <div class="option-item">
                                     <label for="copiesPerLabel">
                                         <i class="fas fa-copy"></i>
-                                        <span>Exemplaires par étiquette</span>
+                                        <span>Copias por etiqueta</span>
                                     </label>
                                     <input type="number"
                                            id="copiesPerLabel"
@@ -293,11 +291,11 @@
                                 <div class="option-item">
                                     <label for="labelOrientation">
                                         <i class="fas fa-sync-alt"></i>
-                                        <span>Orientation</span>
+                                        <span>Orientación</span>
                                     </label>
                                     <select id="labelOrientation" class="form-select-small">
-                                        <option value="portrait">Portrait</option>
-                                        <option value="landscape">Paysage</option>
+                                        <option value="portrait">Vertical</option>
+                                        <option value="landscape">Horizontal</option>
                                     </select>
                                 </div>
                             </div>
@@ -306,12 +304,12 @@
 
                     <!-- Paramètres avancés -->
                     <div class="settings-card">
-                        <h3><i class="fas fa-tools"></i> Paramètres avancés</h3>
+                        <h3><i class="fas fa-tools"></i> Configuración avanzada</h3>
                         <div class="advanced-settings">
                             <div class="advanced-group">
                                 <label for="barcodeHeight">
                                     <i class="fas fa-arrows-alt-v"></i>
-                                    Hauteur code-barre (mm)
+                                    Altura código de barras (mm)
                                 </label>
                                 <input type="range"
                                        id="barcodeHeight"
@@ -325,11 +323,11 @@
                             <div class="advanced-group">
                                 <label for="fontSize">
                                     <i class="fas fa-font"></i>
-                                    Taille de police
+                                    Tamaño de fuente
                                 </label>
                                 <select id="fontSize" class="form-select-small">
-                                    <option value="small">Petite</option>
-                                    <option value="medium" selected>Moyenne</option>
+                                    <option value="small">Pequeña</option>
+                                    <option value="medium" selected>Mediana</option>
                                     <option value="large">Grande</option>
                                 </select>
                             </div>
@@ -337,7 +335,7 @@
                             <div class="advanced-group">
                                 <label for="marginSize">
                                     <i class="fas fa-border-all"></i>
-                                    Marge (mm)
+                                    Margen (mm)
                                 </label>
                                 <input type="range"
                                        id="marginSize"
@@ -349,7 +347,7 @@
                             </div>
 
                             <button id="resetSettingsBtn" class="btn-secondary btn-small">
-                                <i class="fas fa-redo"></i> Réinitialiser
+                                <i class="fas fa-redo"></i> Restablecer
                             </button>
                         </div>
                     </div>
@@ -359,13 +357,13 @@
             <!-- Section aperçu -->
             <section class="preview-section" id="previewSection" style="display: none;">
                 <div class="section-header">
-                    <h2><i class="fas fa-eye"></i> Aperçu des étiquettes</h2>
+                    <h2><i class="fas fa-eye"></i> Vista previa de etiquetas</h2>
                     <div class="preview-controls">
                         <button id="previousLabelBtn" class="btn-pagination" disabled>
                             <i class="fas fa-chevron-left"></i>
                         </button>
                         <span class="preview-counter">
-                            Étiquette <span id="currentPreview">1</span> sur <span id="totalPreviews">1</span>
+                            Etiqueta <span id="currentPreview">1</span> de <span id="totalPreviews">1</span>
                         </span>
                         <button id="nextLabelBtn" class="btn-pagination">
                             <i class="fas fa-chevron-right"></i>
@@ -379,7 +377,7 @@
                             <div class="label-content">
                                 <div class="label-barcode" id="previewBarcode"></div>
                                 <div class="label-text">
-                                    <div class="label-title" id="previewTitle">Nom de l'article</div>
+                                    <div class="label-title" id="previewTitle">Nombre del artículo</div>
                                     <div class="label-details" id="previewDetails">
                                         <span class="detail-item" id="previewNumber">ART-001</span>
                                         <span class="detail-item" id="previewStock">Stock: 50</span>
@@ -387,7 +385,7 @@
                                     </div>
                                     <div class="label-footer" id="previewFooter">
                                         <span id="previewDate">01/01/2024</span>
-                                        <span id="previewLocation">Zone A</span>
+                                        <span id="previewLocation">Zona A</span>
                                     </div>
                                 </div>
                             </div>
@@ -396,18 +394,18 @@
 
                     <div class="preview-info">
                         <div class="info-card">
-                            <h3><i class="fas fa-info-circle"></i> Informations</h3>
+                            <h3><i class="fas fa-info-circle"></i> Información</h3>
                             <div class="info-item">
-                                <span class="info-label">Format :</span>
-                                <span class="info-value" id="previewFormat">Moyenne (60x40mm)</span>
+                                <span class="info-label">Formato :</span>
+                                <span class="info-value" id="previewFormat">Mediano (60x40mm)</span>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">Orientation :</span>
-                                <span class="info-value" id="previewOrientation">Portrait</span>
+                                <span class="info-label">Orientación :</span>
+                                <span class="info-value" id="previewOrientation">Vertical</span>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">Papier estimé :</span>
-                                <span class="info-value" id="previewPaper">1 feuille A4</span>
+                                <span class="info-label">Papel estimado :</span>
+                                <span class="info-value" id="previewPaper">1 hoja A4</span>
                             </div>
                         </div>
                     </div>
@@ -422,32 +420,32 @@
                             <i class="fas fa-file-pdf"></i>
                         </div>
                         <div class="action-content">
-                            <h3>Générer PDF</h3>
-                            <p>Crée un fichier PDF pour impression ultérieure</p>
+                            <h3>Generar PDF</h3>
+                            <p>Crea un archivo PDF para impresión posterior</p>
                             <button id="generatePdfBtn" class="btn-secondary btn-large" disabled>
-                                <i class="fas fa-file-pdf"></i> Générer PDF
+                                <i class="fas fa-file-pdf"></i> Generar PDF
                             </button>
                         </div>
                     </div>
                 </div>
 
                 <div class="print-summary" id="printSummary" style="display: none;">
-                    <h3><i class="fas fa-clipboard-check"></i> Récapitulatif d'impression</h3>
+                    <h3><i class="fas fa-clipboard-check"></i> Resumen de impresión</h3>
                     <div class="summary-content">
                         <div class="summary-item">
-                            <span class="summary-label">Nombre d'étiquettes :</span>
+                            <span class="summary-label">Número de etiquetas :</span>
                             <span class="summary-value" id="summaryCount">0</span>
                         </div>
                         <div class="summary-item">
-                            <span class="summary-label">Nombre d'articles :</span>
+                            <span class="summary-label">Número de artículos :</span>
                             <span class="summary-value" id="summaryArticles">0</span>
                         </div>
                         <div class="summary-item">
-                            <span class="summary-label">Feuilles estimées :</span>
+                            <span class="summary-label">Hojas estimadas :</span>
                             <span class="summary-value" id="summarySheets">0</span>
                         </div>
                         <div class="summary-item">
-                            <span class="summary-label">Coût estimé :</span>
+                            <span class="summary-label">Costo estimado :</span>
                             <span class="summary-value" id="summaryCost">0.00 €</span>
                         </div>
                     </div>
@@ -457,7 +455,7 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Système de gestion de stock • Impression d'étiquettes</p>
+            <p>Sistema de gestión de stock • Impresión de etiquetas</p>
         </footer>
     </div>
 
@@ -465,7 +463,7 @@
     <div id="scanModal" class="modal-overlay" style="display: none;">
         <div class="modal modal-scan">
             <div class="modal-header">
-                <h3><i class="fas fa-camera"></i> Scanner un code-barre</h3>
+                <h3><i class="fas fa-camera"></i> Escanear código de barras</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
@@ -473,7 +471,7 @@
                     <div class="camera-view" id="cameraView">
                         <div class="camera-placeholder">
                             <i class="fas fa-camera"></i>
-                            <p>Initialisation de la caméra...</p>
+                            <p>Inicializando cámara...</p>
                         </div>
                         <video id="cameraPreview" autoplay playsinline style="display: none;"></video>
                         <div class="scan-frame"></div>
@@ -481,10 +479,10 @@
 
                     <div class="scan-controls">
                         <button id="startCameraBtn" class="btn-primary">
-                            <i class="fas fa-play"></i> Démarrer la caméra
+                            <i class="fas fa-play"></i> Iniciar cámara
                         </button>
                         <button id="stopCameraBtn" class="btn-secondary" style="display: none;">
-                            <i class="fas fa-stop"></i> Arrêter
+                            <i class="fas fa-stop"></i> Detener
                         </button>
                         <button id="toggleFlashBtn" class="btn-secondary">
                             <i class="fas fa-bolt"></i> Flash
@@ -492,13 +490,13 @@
                     </div>
 
                     <div class="scan-manual">
-                        <h4><i class="fas fa-keyboard"></i> Saisie manuelle</h4>
+                        <h4><i class="fas fa-keyboard"></i> Entrada manual</h4>
                         <input type="text"
                                id="manualBarcodeInput"
-                               placeholder="Entrez le code-barre manuellement"
+                               placeholder="Introduzca el código de barras manualmente"
                                class="search-input">
                         <button id="confirmManualBarcodeBtn" class="btn-primary">
-                            <i class="fas fa-check"></i> Valider
+                            <i class="fas fa-check"></i> Validar
                         </button>
                     </div>
                 </div>
