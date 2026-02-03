@@ -7317,7 +7317,7 @@ class AccueilQuadManager {
         ctx.textBaseline = 'middle';
 
         // Utiliser display_name depuis l'objet rack
-        const displayText = rack.display_name ? `RACK ${rack.display_name}` : `RACK ${rack.code}`;
+        const displayText = rack.display_name ? `${rack.display_name}` : `RACK ${rack.code}`;
         const textX = x + w/2;
         const textY = y + h/2;
 
