@@ -7286,7 +7286,6 @@ class AccueilQuadManager {
         // Afficher dans l'interface si nécessaire
     }
 
-    // Affiche UN SEUL rack (pas tous)
     drawSingleRack(rack) {
         if (!this.ctxTop) return;
 
@@ -7312,12 +7311,15 @@ class AccueilQuadManager {
         ctx.lineWidth = 4;
         ctx.strokeRect(x, y, w, h);
 
-        // Code du rack
+        // Code du rack - AVEC display_name
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`RACK ${display_name}`, x + w/2, y + h/2);
+
+        // Utiliser display_name depuis l'objet rack
+        const displayText = rack.display_name ? `RACK ${rack.display_name}` : `RACK ${rack.code}`;
+        ctx.fillText(displayText, x + w/2, y + h/2);
 
         // Légende
         ctx.fillStyle = '#333';
