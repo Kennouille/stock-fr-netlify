@@ -7417,17 +7417,31 @@ class AccueilQuadManager {
         ctx.lineWidth = 3;
         ctx.strokeRect(x, y, levelWidth, levelHeight);
 
-        // Texte
-        ctx.fillStyle = '#fff';
+        // Texte NIVEL avec display_name
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`NIVEL ${level.code}`, x + levelWidth/2, y + levelHeight/2);
 
-        // Info rack
+        // Utiliser display_name du niveau si disponible
+        const displayText = level.display_name ? `${level.display_name}` : `NIVEL ${level.code}`;
+        const textX = x + levelWidth/2;
+        const textY = y + levelHeight/2;
+
+        // 1. Dessiner le contour blanc
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.strokeText(displayText, textX, textY);
+
+        // 2. Dessiner le texte noir par dessus
+        ctx.fillStyle = '#000000';
+        ctx.fillText(displayText, textX, textY);
+
+        // Info rack avec display_name du rack
+        const rackDisplayText = rack.display_name ? `${rack.display_name}` : `Rack: ${rack.code}`;
+
         ctx.fillStyle = '#666';
         ctx.font = '11px Arial';
-        ctx.fillText(`Rack: ${rack.code}`, width/2, y + levelHeight + 15);
+        ctx.fillText(rackDisplayText, width/2, y + levelHeight + 15);
     }
 
     // Affiche UN SEUL slot avec la photo
