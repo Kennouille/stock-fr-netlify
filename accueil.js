@@ -7311,15 +7311,24 @@ class AccueilQuadManager {
         ctx.lineWidth = 4;
         ctx.strokeRect(x, y, w, h);
 
-        // Code du rack - AVEC display_name
-        ctx.fillStyle = '#fff';
+        // Code du rack avec display_name
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
         // Utiliser display_name depuis l'objet rack
         const displayText = rack.display_name ? `RACK ${rack.display_name}` : `RACK ${rack.code}`;
-        ctx.fillText(displayText, x + w/2, y + h/2);
+        const textX = x + w/2;
+        const textY = y + h/2;
+
+        // 1. Dessiner le contour blanc
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.strokeText(displayText, textX, textY);
+
+        // 2. Dessiner le texte noir par dessus
+        ctx.fillStyle = '#000000';
+        ctx.fillText(displayText, textX, textY);
 
         // Légende
         ctx.fillStyle = '#333';
