@@ -1168,6 +1168,13 @@ class QuadViewManager {
         this.controls3D = null;
         this.cube3D = null;
 
+        // Gestion des clics 3D
+        this.raycaster3D = new THREE.Raycaster();
+        this.mouse3D = new THREE.Vector2();
+        this.interactiveObjects3D = [];
+        this.selectedObject3D = null;
+
+
         // Dimensions existantes
         this.rackHeightPerLevel = 40;
         this.slotSize = 60;
@@ -1295,14 +1302,116 @@ class QuadViewManager {
         this.cube3D.castShadow = true;
         this.cube3D.receiveShadow = true;
 
+        // Identifiant qui sera remplacé plus tard par l'identifiant du rack
+        this.cube3D.userData = {
+            type: 'demo-rack',
+            id: 'demo-rack-1'
+        };
+
         this.scene3D.add(this.cube3D);
+
+        // Liste des objets qui peuvent recevoir un clic
+        this.interactiveObjects3D.push(this.cube3D);
+
+        // Gestion du clic dans la scène 3D
+        this.webglCanvas3D.addEventListener(
+            'click',
+            event => this.handleReal3DClick(event)
+        );
 
         this.resizeReal3D();
         this.animateReal3D();
 
+
         window.addEventListener('resize', () => {
             this.resizeReal3D();
         });
+    }
+
+    handleReal3DClick(event) {
+        if (
+            !this.webglCanvas3D ||
+            !this.camera3D ||
+            !this.raycaster3D
+        ) {
+            return;
+        }
+
+        const rectangle =
+            this.webglCanvas3D.getBoundingClientRect();
+
+        // Coordonnées de la souris normalisées entre -1 et +1
+        this.mouse3D.x =
+            ((event.clientX - rectangle.left) / rectangle.width) * 2 - 1;
+
+        this.mouse3D.y =
+            -((event.clientY - rectangle.top) / rectangle.height) * 2 + 1;
+
+        // Créer un rayon depuis la caméra vers la position cliquée
+        this.raycaster3D.setFromCamera(
+            this.mouse3D,
+            this.camera3D
+        );
+
+        const intersections =
+            this.raycaster3D.intersectObjects(
+                this.interactiveObjects3D,
+                true
+            );
+
+        if (intersections.length === 0) {
+            this.clearReal3DSelection();
+            return;
+        }
+
+        const clickedObject = intersections[0].object;
+
+        this.selectReal3DObject(clickedObject);
+    }
+
+    selectReal3DObject(object) {
+        if (this.selectedObject3D === object) {
+            return;
+        }
+
+        this.clearReal3DSelection();
+
+        this.selectedObject3D = object;
+
+        if (object.material && object.material.emissive) {
+            object.userData.originalEmissive =
+                object.material.emissive.getHex();
+
+            object.material.emissive.setHex(0x224466);
+        }
+
+        const objectData = object.userData || {};
+
+        console.log('Objet 3D sélectionné :', {
+            type: objectData.type,
+            id: objectData.id,
+            object
+        });
+    }
+
+    clearReal3DSelection() {
+        if (!this.selectedObject3D) {
+            return;
+        }
+
+        const material = this.selectedObject3D.material;
+
+        if (
+            material &&
+            material.emissive &&
+            this.selectedObject3D.userData.originalEmissive !== undefined
+        ) {
+            material.emissive.setHex(
+                this.selectedObject3D.userData.originalEmissive
+            );
+        }
+
+        this.selectedObject3D = null;
     }
 
     resizeReal3D() {
@@ -1322,6 +1431,7 @@ class QuadViewManager {
 
         this.renderer3D.setSize(width, height, false);
     }
+
 
     animateReal3D() {
         requestAnimationFrame(() => this.animateReal3D());
