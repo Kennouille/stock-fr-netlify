@@ -1668,31 +1668,24 @@ class QuadViewManager {
             return;
         }
 
-
-        const material = this.selectedObject3D.material;        const rackId =
-            objectData.rackId ||
-            objectData.id;
-
-        const rackGroup =
-            this.rackGroups3D.get(rackId);
-
-        if (rackGroup) {
-            this.focusCameraOnRack3D(rackGroup);
-        }
-
+        const selectedObject = this.selectedObject3D;
+        const material = selectedObject.material;
 
         if (
             material &&
             material.emissive &&
-            this.selectedObject3D.userData.originalEmissive !== undefined
+            selectedObject.userData.originalEmissive !== undefined
         ) {
             material.emissive.setHex(
-                this.selectedObject3D.userData.originalEmissive
+                selectedObject.userData.originalEmissive
             );
+
+            delete selectedObject.userData.originalEmissive;
         }
 
         this.selectedObject3D = null;
     }
+
 
     resizeReal3D() {
         if (!this.renderer3D || !this.camera3D || !this.webglCanvas3D) {
