@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient.js';
-import * as THREE from 'https://unpkg.com/three@0.180.0/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.180.0/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'https://esm.sh/three@0.180.0';
+import { OrbitControls } from 'https://esm.sh/three@0.180.0/examples/jsm/controls/OrbitControls.js';
 
 
 // TEMPORAL: verificar que la sesión de Supabase persiste entre páginas
