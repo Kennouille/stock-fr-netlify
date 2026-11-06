@@ -1,3 +1,10 @@
+import { supabase } from './supabaseClient.js';
+
+// TEMPORAL: verificar que la sesión de Supabase persiste entre páginas
+supabase.auth.getSession().then(({ data }) => {
+    console.log('Sesión Supabase:', data.session ? 'ACTIVA' : 'NINGUNA');
+});
+
 // ===== CONFIGURACIÓN DEBUG =====
 const DEBUG = {
     enabled: true,
