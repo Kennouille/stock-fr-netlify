@@ -116,43 +116,94 @@ class ApiManager {
         const slots = slotsRes.data || [];
         const articles = articlesRes.data || [];
 
-        const data = racks.map(rack => ({
-            id: rack.id,
-            code: rack.rack_code,
-            name: rack.display_name,
-            position_x: rack.position_x || 100,
-            position_y: rack.position_y || 100,
-            rotation: rack.rotation || 0,
-            width: rack.width || 3,
-            depth: rack.depth || 2,
-            color: rack.color || '#4a90e2',
-            levels: levels.filter(l => l.rack_id === rack.id).map(level => ({
-                id: level.id,
-                code: level.level_code,
-                display_order: level.display_order,
-                slots: slots.filter(s => s.level_id === level.id).map(slot => ({
-                    id: slot.id,
-                    code: slot.slot_code,
-                    full_code: slot.full_code,
-                    capacity: slot.capacity || 100,
-                    display_order: slot.display_order,
-                    status: articles.some(a =>
-                        a.rack_id === rack.id && a.level_id === level.id && a.slot_id === slot.id
-                    ) ? 'occupied' : 'free',
-                    articles: articles
-                        .filter(a => a.rack_id === rack.id && a.level_id === level.id && a.slot_id === slot.id)
-                        .map(a => ({
-                            id: a.id,
-                            name: a.nom,
-                            barcode: a.code_barre,
-                            photo: a.photo_url,
-                            quantity: parseInt(a.stock_actuel) || 0,
-                            reserved: parseInt(a.stock_reserve) || 0,
-                            price: parseFloat(a.prix_unitaire) || 0
-                        }))
-                }))
-            }))
-        }));
+        const data = racks.map(rack => {
+            const rackLevels = levels
+                .filter(level => level.rack_id === rack.id)
+                .map(level => {
+                    const levelSlots = slots
+                        .filter(slot => slot.level_id === level.id)
+                        .map(slot => ({
+                            id: slot.id,
+                            code: slot.slot_code,
+                            full_code: slot.full_code,
+                            capacity: slot.capacity || 100,
+                            display_order: slot.display_order,
+
+                            status: articles.some(article =>
+                                article.rack_id === rack.id &&
+                                article.level_id === level.id &&
+                                article.slot_id === slot.id
+                            )
+                                ? 'occupied'
+                                : 'free',
+
+                            articles: articles
+                                .filter(article =>
+                                    article.rack_id === rack.id &&
+                                    article.level_id === level.id &&
+                                    article.slot_id === slot.id
+                                )
+                                .map(article => ({
+                                    id: article.id,
+                                    name: article.nom,
+                                    barcode: article.code_barre,
+                                    photo: article.photo_url,
+                                    quantity: parseInt(article.stock_actuel) || 0,
+                                    reserved: parseInt(article.stock_reserve) || 0,
+                                    price: parseFloat(article.prix_unitaire) || 0
+                                }))
+                        }));
+
+                    return {
+                        id: level.id,
+                        code: level.level_code,
+                        display_order: level.display_order,
+                        slots: levelSlots
+                    };
+                });
+
+            const positionX = Number(rack.position_x) || 100;
+            const positionZ = Number(rack.position_y) || 100;
+            const rackWidth = Number(rack.width) || 3;
+            const rackDepth = Number(rack.depth) || 2;
+            const rackRotation = Number(rack.rotation) || 0;
+
+            return {
+                // Anciennes propriétés conservées pour la vue 2D
+                id: rack.id,
+                code: rack.rack_code,
+                name: rack.display_name,
+                position_x: positionX,
+                position_y: positionZ,
+                rotation: rackRotation,
+                width: rackWidth,
+                depth: rackDepth,
+                color: rack.color || '#4a90e2',
+                levels: rackLevels,
+
+                // Nouvelle structure destinée à la future vue 3D
+                world3D: {
+                    position: {
+                        x: positionX,
+                        y: 0,
+                        z: positionZ
+                    },
+
+                    rotation: {
+                        x: 0,
+                        y: rackRotation * Math.PI / 180,
+                        z: 0
+                    },
+
+                    dimensions: {
+                        width: rackWidth,
+                        depth: rackDepth,
+                        height: Math.max(rackLevels.length, 1)
+                    }
+                }
+            };
+        });
+
 
         return { success: true, data, count: data.length };
     }
