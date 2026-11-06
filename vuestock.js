@@ -1176,6 +1176,10 @@ class QuadViewManager {
         this.interactiveObjects3D = [];
         this.selectedObject3D = null;
 
+        // Animation de déplacement de la caméra
+        this.cameraFocusAnimation3D = null;
+
+
 
 
         // Dimensions existantes
@@ -1258,7 +1262,29 @@ class QuadViewManager {
 
         this.controls3D.target.set(0, 1, 0);
         this.controls3D.enableDamping = true;
+
+        // Navigation dans l'entrepôt
+        this.controls3D.enablePan = true;
+        this.controls3D.screenSpacePanning = true;
+
+        // Zoom avant/arrière
+        this.controls3D.enableZoom = true;
+        this.controls3D.minDistance = 1.5;
+        this.controls3D.maxDistance = 80;
+
+        // Limites verticales raisonnables
+        this.controls3D.maxPolarAngle = Math.PI * 0.49;
+        this.controls3D.minPolarAngle = 0.15;
+
+        // Boutons de souris
+        this.controls3D.mouseButtons = {
+            LEFT: THREE.MOUSE.ROTATE,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.PAN
+        };
+
         this.controls3D.update();
+
 
         // Lumière principale
         const mainLight = new THREE.DirectionalLight(0xffffff, 3);
@@ -1465,10 +1491,16 @@ class QuadViewManager {
             type: 'rack',
             id: rack.id,
             code: rack.code,
-            rack
+            rack,
+
+            // Informations utilisées pour positionner la caméra
+            focusHeight: totalHeight,
+            focusDepth: depth,
+            focusWidth: width
         };
 
         return group;
+
     }
 
     handleReal3DClick(event) {
@@ -1531,11 +1563,104 @@ class QuadViewManager {
 
         const objectData = object.userData || {};
 
-        console.log('Objet 3D sélectionné :', {
-            type: objectData.type,
-            id: objectData.id,
-            object
-        });
+        const rackId =
+            objectData.rackId ||
+            objectData.id;
+
+        const rackGroup =
+            this.rackGroups3D.get(rackId);
+
+        if (rackGroup) {
+            this.focusCameraOnRack3D(rackGroup);
+        }
+
+    }
+
+    focusCameraOnRack3D(rackGroup) {
+        if (
+            !rackGroup ||
+            !this.camera3D ||
+            !this.controls3D
+        ) {
+            return;
+        }
+
+        if (this.cameraFocusAnimation3D) {
+            cancelAnimationFrame(
+                this.cameraFocusAnimation3D
+            );
+        }
+
+        rackGroup.updateMatrixWorld(true);
+
+        const focusHeight =
+            rackGroup.userData.focusHeight || 3;
+
+        const focusDepth =
+            rackGroup.userData.focusDepth || 2;
+
+        // Centre visuel du rack
+        const targetPosition = new THREE.Vector3(
+            0,
+            focusHeight * 0.55,
+            0
+        );
+
+        rackGroup.localToWorld(targetPosition);
+
+        // Position de départ devant le rack.
+        // Le côté +Z représente ici la face avant.
+        const cameraPosition = new THREE.Vector3(
+            0,
+            focusHeight * 0.6,
+            Math.max(focusDepth * 3.2, 5)
+        );
+
+        rackGroup.localToWorld(cameraPosition);
+
+        const startCameraPosition =
+            this.camera3D.position.clone();
+
+        const startTarget =
+            this.controls3D.target.clone();
+
+        const startTime = performance.now();
+        const duration = 700;
+
+        const animateFocus = currentTime => {
+            const progress = Math.min(
+                (currentTime - startTime) / duration,
+                1
+            );
+
+            // Animation douce
+            const easedProgress =
+                1 - Math.pow(1 - progress, 3);
+
+            this.camera3D.position.lerpVectors(
+                startCameraPosition,
+                cameraPosition,
+                easedProgress
+            );
+
+            this.controls3D.target.lerpVectors(
+                startTarget,
+                targetPosition,
+                easedProgress
+            );
+
+            this.controls3D.update();
+
+            if (progress < 1) {
+                this.cameraFocusAnimation3D =
+                    requestAnimationFrame(animateFocus);
+            } else {
+                this.cameraFocusAnimation3D = null;
+            }
+        };
+
+        this.cameraFocusAnimation3D =
+            requestAnimationFrame(animateFocus);
     }
 
     clearReal3DSelection() {
@@ -1543,7 +1668,18 @@ class QuadViewManager {
             return;
         }
 
-        const material = this.selectedObject3D.material;
+
+        const material = this.selectedObject3D.material;        const rackId =
+            objectData.rackId ||
+            objectData.id;
+
+        const rackGroup =
+            this.rackGroups3D.get(rackId);
+
+        if (rackGroup) {
+            this.focusCameraOnRack3D(rackGroup);
+        }
+
 
         if (
             material &&
