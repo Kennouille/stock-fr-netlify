@@ -286,13 +286,21 @@
             <div class="modal-body">
                 <form id="rackForm">
                     <div class="form-group">
-                        <label for="modalRackCode">Código estante *</label>
-                        <input type="text" id="modalRackCode" required class="form-control" placeholder="A, B, C...">
+                        <label for="modalObjectType">Tipo de ubicación *</label>
+                        <select id="modalObjectType" required class="form-control">
+                            <option value="rack">Estantería</option>
+                            <option value="pallet">Paleta</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalRackCode">Código de ubicación *</label>
+                        <input type="text" id="modalRackCode" required class="form-control" placeholder="A, B, C o P-01...">
                     </div>
                     <div class="form-group">
                         <label for="modalRackName">Nombre para mostrar</label>
-                        <input type="text" id="modalRackName" class="form-control" placeholder="Estante principal">
+                        <input type="text" id="modalRackName" class="form-control" placeholder="Estantería principal o Paleta P-01">
                     </div>
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="modalRackWidth">Ancho (celdas)</label>
