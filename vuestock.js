@@ -5289,15 +5289,28 @@ class VueStock {
 
         try {
             const payload = {
+                object_type: rackData.type || 'rack',
+
                 code: rackData.code,
-                name: rackData.name || `Estantería ${rackData.code}`,
-                position_x: rackData.x || rackData.position_x,
-                position_y: rackData.y || rackData.position_y,
+                name: rackData.name ||
+                    (
+                        rackData.type === 'pallet'
+                            ? `Palette ${rackData.code}`
+                            : `Étagère ${rackData.code}`
+                    ),
+
+                position_x: rackData.x ||
+                    rackData.position_x,
+
+                position_y: rackData.y ||
+                    rackData.position_y,
+
                 rotation: rackData.rotation || 0,
                 width: rackData.width,
                 depth: rackData.depth,
                 color: rackData.color
             };
+
 
             console.log('🟢 Payload para API:', payload);
 
@@ -5306,16 +5319,28 @@ class VueStock {
             if (result.success && result.data) {
                 const newRack = {
                     id: result.data.id,
-                    code: result.data.rack_code || result.data.code,
-                    name: result.data.display_name || result.data.name,
+
+                    type:
+                        result.data.object_type ||
+                        rackData.type ||
+                        'rack',
+
+                    code: result.data.rack_code ||
+                        result.data.code,
+
+                    name: result.data.display_name ||
+                        result.data.name,
+
                     position_x: result.data.position_x,
                     position_y: result.data.position_y,
                     rotation: result.data.rotation,
                     width: result.data.width,
                     depth: result.data.depth,
                     color: result.data.color,
+
                     levels: []
                 };
+
 
                 // CORRECCIÓN: Verificar si la estantería ya existe
                 const existingIndex = this.racks.findIndex(r => r.id === newRack.id);
@@ -6123,19 +6148,38 @@ class VueStock {
         // CORRECCIÓN: Definir openRackModal como método de VueStock
         this.openRackModal = (rack = null) => {
             if (rack) {
-                // Modo edición
-                document.getElementById('modalRackCode').value = rack.code;
-                document.getElementById('modalRackName').value = rack.name;
-                document.getElementById('modalRackWidth').value = rack.width;
-                document.getElementById('modalRackDepth').value = rack.depth;
-                document.getElementById('modalRackColor').value = rack.color;
+                // Mode édition
+                document.getElementById('modalRackCode').value =
+                    rack.code;
+
+                document.getElementById('modalRackName').value =
+                    rack.name;
+
+                document.getElementById('modalRackWidth').value =
+                    rack.width;
+
+                document.getElementById('modalRackDepth').value =
+                    rack.depth;
+
+                document.getElementById('modalRackColor').value =
+                    rack.color;
+
+                document.getElementById('modalObjectType').value =
+                    rack.type || 'rack';
             } else {
-                // Modo creación
+                // Mode création
                 document.getElementById('rackForm').reset();
-                // Sugerir un código de estantería
-                const nextCode = String.fromCharCode(65 + this.racks.length); // A, B, C...
-                document.getElementById('modalRackCode').value = nextCode;
+
+                const nextCode =
+                    String.fromCharCode(65 + this.racks.length);
+
+                document.getElementById('modalRackCode').value =
+                    nextCode;
+
+                document.getElementById('modalObjectType').value =
+                    'rack';
             }
+
 
             overlay.classList.add('active');
         };
@@ -6171,11 +6215,32 @@ class VueStock {
             }
 
             try {
-                const code = document.getElementById('modalRackCode').value.trim();
-                const name = document.getElementById('modalRackName').value.trim();
-                const width = parseInt(document.getElementById('modalRackWidth').value);
-                const depth = parseInt(document.getElementById('modalRackDepth').value);
-                const color = document.getElementById('modalRackColor').value;
+                const type =
+                    document.getElementById('modalObjectType').value;
+
+                const code =
+                    document.getElementById('modalRackCode')
+                        .value
+                        .trim();
+
+                const name =
+                    document.getElementById('modalRackName')
+                        .value
+                        .trim();
+
+                const width =
+                    parseInt(
+                        document.getElementById('modalRackWidth').value
+                    );
+
+                const depth =
+                    parseInt(
+                        document.getElementById('modalRackDepth').value
+                    );
+
+                const color =
+                    document.getElementById('modalRackColor').value;
+
 
                 if (!code) {
                     this.showNotification('El código de estantería es requerido', 'error');
@@ -6190,14 +6255,22 @@ class VueStock {
 
                 // Creación de la estantería
                 const newRack = await this.addRack({
+                    type,
+
                     code,
-                    name: name || `Estantería ${code}`,
+                    name: name ||
+                        (type === 'pallet'
+                            ? `Palette ${code}`
+                            : `Étagère ${code}`),
+
                     x: 100 + (this.racks.length * 150),
                     y: 100,
+
                     width: width || 3,
                     depth: depth || 2,
                     color: color || '#4a90e2'
                 });
+
 
                 // Cerrar el modal solo si éxito
                 if (newRack) {
