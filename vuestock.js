@@ -99,7 +99,62 @@ class ApiManager {
 
     // Métodos específicos
     async getFullConfig() {
-        return await this.request(this.endpoints.getConfig);
+        const [racksRes, levelsRes, slotsRes, articlesRes] = await Promise.all([
+            supabase.from('w_vuestock_racks').select('*').order('rack_code', { ascending: true }),
+            supabase.from('w_vuestock_levels').select('*').order('display_order', { ascending: true }),
+            supabase.from('w_vuestock_slots').select('*').order('display_order', { ascending: true }),
+            supabase.from('w_articles').select('*').eq('actif', true)
+        ]);
+
+        if (racksRes.error) throw racksRes.error;
+        if (levelsRes.error) throw levelsRes.error;
+        if (slotsRes.error) throw slotsRes.error;
+        if (articlesRes.error) throw articlesRes.error;
+
+        const racks = racksRes.data || [];
+        const levels = levelsRes.data || [];
+        const slots = slotsRes.data || [];
+        const articles = articlesRes.data || [];
+
+        const data = racks.map(rack => ({
+            id: rack.id,
+            code: rack.rack_code,
+            name: rack.display_name,
+            position_x: rack.position_x || 100,
+            position_y: rack.position_y || 100,
+            rotation: rack.rotation || 0,
+            width: rack.width || 3,
+            depth: rack.depth || 2,
+            color: rack.color || '#4a90e2',
+            levels: levels.filter(l => l.rack_id === rack.id).map(level => ({
+                id: level.id,
+                code: level.level_code,
+                display_order: level.display_order,
+                slots: slots.filter(s => s.level_id === level.id).map(slot => ({
+                    id: slot.id,
+                    code: slot.slot_code,
+                    full_code: slot.full_code,
+                    capacity: slot.capacity || 100,
+                    display_order: slot.display_order,
+                    status: articles.some(a =>
+                        a.rack_id === rack.id && a.level_id === level.id && a.slot_id === slot.id
+                    ) ? 'occupied' : 'free',
+                    articles: articles
+                        .filter(a => a.rack_id === rack.id && a.level_id === level.id && a.slot_id === slot.id)
+                        .map(a => ({
+                            id: a.id,
+                            name: a.nom,
+                            barcode: a.code_barre,
+                            photo: a.photo_url,
+                            quantity: parseInt(a.stock_actuel) || 0,
+                            reserved: parseInt(a.stock_reserve) || 0,
+                            price: parseFloat(a.prix_unitaire) || 0
+                        }))
+                }))
+            }))
+        }));
+
+        return { success: true, data, count: data.length };
     }
 
     async saveRack(rackData) {
