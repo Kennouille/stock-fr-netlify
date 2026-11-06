@@ -178,8 +178,15 @@ class ApiManager {
         return await this.request(`${this.endpoints.searchArticle}&q=${encodeURIComponent(searchTerm)}`);
     }
 
-    async updateStock(stockData) {
-        return await this.request(this.endpoints.updateStock, 'POST', stockData);
+    async updateStock({ article_id, new_quantity }) {
+        const { data, error } = await supabase.rpc('ajustar_stock', {
+            p_article_id: article_id,
+            p_nueva_cantidad: new_quantity,
+            p_comentario: 'Ajuste de inventario desde VueStock'
+        });
+
+        if (error) throw error;
+        return data;
     }
 }
 
