@@ -1,4 +1,7 @@
 import { supabase } from './supabaseClient.js';
+import * as THREE from 'https://unpkg.com/three@0.180.0/build/three.module.js';
+import { OrbitControls } from 'https://unpkg.com/three@0.180.0/examples/jsm/controls/OrbitControls.js';
+
 
 // TEMPORAL: verificar que la sesión de Supabase persiste entre páginas
 supabase.auth.getSession().then(({ data }) => {
@@ -1148,21 +1151,193 @@ class QuadViewManager {
         this.selectedRackAnimProgress = 0; // Progresión de la animación
 
 
-        // Canvases
+        // Canvases existants
         this.canvasTop = document.getElementById('canvasTop');
         this.canvasFront = document.getElementById('canvasFront');
         this.canvas3D = document.getElementById('canvas3D');
 
-        // Contexts
+        // Contextes 2D conservés pour les anciennes vues
         this.ctxTop = this.canvasTop?.getContext('2d');
         this.ctxFront = this.canvasFront?.getContext('2d');
         this.ctx3D = this.canvas3D?.getContext('2d');
 
-        // Dimensiones por defecto (serán ajustadas)
-        this.rackHeightPerLevel = 40; // px por nivel
-        this.slotSize = 60; // px por hueco
+        // Nouvelle scène 3D réelle
+        this.scene3D = null;
+        this.camera3D = null;
+        this.renderer3D = null;
+        this.controls3D = null;
+        this.cube3D = null;
+
+        // Dimensions existantes
+        this.rackHeightPerLevel = 40;
+        this.slotSize = 60;
 
         this.init();
+        this.initReal3D();
+
+    }
+
+    initReal3D() {
+        if (!this.canvas3D) {
+            return;
+        }
+
+        const oldCanvas = this.canvas3D;
+
+        // Créer un nouveau canvas WebGL sans supprimer l'ancien Canvas 2D
+        const webglCanvas = document.createElement('canvas');
+        webglCanvas.id = 'canvasWebGL3D';
+        webglCanvas.className = oldCanvas.className;
+
+        webglCanvas.style.position = 'absolute';
+        webglCanvas.style.inset = '0';
+        webglCanvas.style.width = '100%';
+        webglCanvas.style.height = '100%';
+        webglCanvas.style.zIndex = '2';
+        webglCanvas.style.cursor = 'grab';
+
+        // Le canvas 2D reste présent derrière la vraie scène 3D
+        oldCanvas.style.position = 'absolute';
+        oldCanvas.style.inset = '0';
+        oldCanvas.style.zIndex = '1';
+
+        const parent = oldCanvas.parentElement;
+
+        if (!parent) {
+            return;
+        }
+
+        if (getComputedStyle(parent).position === 'static') {
+            parent.style.position = 'relative';
+        }
+
+        parent.appendChild(webglCanvas);
+
+        this.webglCanvas3D = webglCanvas;
+
+        // Scène
+        this.scene3D = new THREE.Scene();
+        this.scene3D.background = new THREE.Color(0x202735);
+
+        // Caméra
+        this.camera3D = new THREE.PerspectiveCamera(
+            45,
+            1,
+            0.1,
+            1000
+        );
+
+        this.camera3D.position.set(6, 5, 8);
+        this.camera3D.lookAt(0, 1, 0);
+
+        // Rendu WebGL
+        this.renderer3D = new THREE.WebGLRenderer({
+            canvas: webglCanvas,
+            antialias: true,
+            alpha: true
+        });
+
+        this.renderer3D.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer3D.shadowMap.enabled = true;
+
+        // Contrôles de caméra
+        this.controls3D = new OrbitControls(
+            this.camera3D,
+            webglCanvas
+        );
+
+        this.controls3D.target.set(0, 1, 0);
+        this.controls3D.enableDamping = true;
+        this.controls3D.update();
+
+        // Lumière principale
+        const mainLight = new THREE.DirectionalLight(0xffffff, 3);
+        mainLight.position.set(5, 10, 5);
+        mainLight.castShadow = true;
+        this.scene3D.add(mainLight);
+
+        // Lumière générale
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+        this.scene3D.add(ambientLight);
+
+        // Sol
+        const floorGeometry = new THREE.PlaneGeometry(20, 20);
+        const floorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x3b4658,
+            roughness: 0.8,
+            metalness: 0.1
+        });
+
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        this.scene3D.add(floor);
+
+        // Grille 3D
+        const grid = new THREE.GridHelper(20, 20, 0x8899aa, 0x4f5c6d);
+        grid.position.y = 0.01;
+        this.scene3D.add(grid);
+
+        // Premier objet réellement 3D
+        const cubeGeometry = new THREE.BoxGeometry(2, 2, 2);
+        const cubeMaterial = new THREE.MeshStandardMaterial({
+            color: 0x4a90e2,
+            roughness: 0.55,
+            metalness: 0.15
+        });
+
+        this.cube3D = new THREE.Mesh(
+            cubeGeometry,
+            cubeMaterial
+        );
+
+        this.cube3D.position.y = 1;
+        this.cube3D.castShadow = true;
+        this.cube3D.receiveShadow = true;
+
+        this.scene3D.add(this.cube3D);
+
+        this.resizeReal3D();
+        this.animateReal3D();
+
+        window.addEventListener('resize', () => {
+            this.resizeReal3D();
+        });
+    }
+
+    resizeReal3D() {
+        if (!this.renderer3D || !this.camera3D || !this.webglCanvas3D) {
+            return;
+        }
+
+        const width = this.webglCanvas3D.clientWidth;
+        const height = this.webglCanvas3D.clientHeight;
+
+        if (width === 0 || height === 0) {
+            return;
+        }
+
+        this.camera3D.aspect = width / height;
+        this.camera3D.updateProjectionMatrix();
+
+        this.renderer3D.setSize(width, height, false);
+    }
+
+    animateReal3D() {
+        requestAnimationFrame(() => this.animateReal3D());
+
+        if (!this.renderer3D || !this.scene3D || !this.camera3D) {
+            return;
+        }
+
+        if (this.controls3D) {
+            this.controls3D.update();
+        }
+
+        this.renderer3D.render(
+            this.scene3D,
+            this.camera3D
+        );
     }
 
     init() {
@@ -1173,14 +1348,12 @@ class QuadViewManager {
         console.log('Canvas Front:', this.canvasFront, 'Context:', this.ctxFront);
         console.log('Canvas 3D:', this.canvas3D, 'Context:', this.ctx3D);
 
-        // Dibujar un estado inicial vacío
         this.drawEmptyState();
 
-        // Ajustar dimensiones de los canvas
         this.resizeCanvases();
 
-        // Eventos de redimensionamiento
         window.addEventListener('resize', () => this.resizeCanvases());
+
 
         // AÑADIDO IMPORTANTE: Evento clic en el canvas superior-izquierdo
         if (this.canvasTop) {
