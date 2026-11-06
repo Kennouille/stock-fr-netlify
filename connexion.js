@@ -79,36 +79,41 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     loginBtn.disabled = true;
 
     try {
-        // Buscar el usuario en la tabla 'w_users'
-        const { data: userData, error: userError } = await supabase
-            .from('w_users')
-            .select('*')
-            .eq('username', username)
-            .single();
+        // 1. Iniciar sesión con Supabase Auth
+        const email = `${username.toLowerCase()}@bodega.bombasalmo.mx`;
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
 
-        if (userError || !userData) {
-            showError('Nombre de usuario incorrecto');
+        if (authError || !authData?.user) {
+            showError('Usuario o contraseña incorrectos');
             return;
         }
 
-        // Verificar la contraseña
-        if (password === userData.password) {
-            // ACTUALIZAR EL ÚLTIMO LOGIN EN LA BASE DE DATOS
-            await updateLastLogin(userData.id);
+        // 2. Leer el perfil en w_users (sin traer la contraseña)
+        const { data: userData, error: userError } = await supabase
+            .from('w_users')
+            .select('id, username, permissions')
+            .eq('auth_id', authData.user.id)
+            .single();
 
-            // Conexión exitosa - almacenar la información del usuario
-            sessionStorage.setItem('current_user', JSON.stringify({
-                id: userData.id,
-                username: userData.username,
-                permissions: userData.permissions || {},
-                isAdmin: userData.permissions?.config || false
-            }));
-
-            // Redirigir al inicio
-            window.location.href = 'accueil.html';
-        } else {
-            showError('Contraseña incorrecta');
+        if (userError || !userData) {
+            await supabase.auth.signOut();
+            showError('Tu cuenta no tiene acceso a la bodega');
+            return;
         }
+
+        // 3. Guardar la info del usuario (mismo formato que antes)
+        sessionStorage.setItem('current_user', JSON.stringify({
+            id: userData.id,
+            username: userData.username,
+            permissions: userData.permissions || {},
+            isAdmin: userData.permissions?.config || false
+        }));
+
+        // 4. Redirigir al inicio
+        window.location.href = 'accueil.html';
 
     } catch (error) {
         console.error('Error de conexión:', error);
