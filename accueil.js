@@ -8,10 +8,6 @@ let selectedArticle = null;
 // Objet pour stocker les éléments DOM
 const elements = {};
 
-const now = new Date();
-const dateFr = now.toISOString().split('T')[0]; // Format YYYY-MM-DD
-const timeFr = now.toTimeString().split(' ')[0]; // Format HH:MM:SS
-
 // Éléments du modal Détails du projet
 let projectDetailsModal = null;
 let archiveProjectBtn = null;
@@ -1025,7 +1021,7 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
         // Récupérer le stock actuel
         const { data: article, error: articleError } = await supabase
             .from('w_articles')
-            .select('stock_actuel')
+            .select('stock_actuel, stock_reserve')
             .eq('id', articleId)
             .single();
 
@@ -1097,6 +1093,7 @@ async function useReservation(reservationId, articleId, originalQuantity, quanti
             .from('w_articles')
             .update({
                 stock_actuel: article.stock_actuel - quantityToUse,
+                stock_reserve: Math.max(0, (article.stock_reserve || 0) - quantityToUse),
                 updated_at: new Date().toISOString()
             })
             .eq('id', articleId);
@@ -5877,6 +5874,9 @@ async function loadEmployeesForSelect(selectId, defaultValue = null) {
 }
 
 async function handleStockAction(type, popup, initialData) {
+    let stockModificado = false;
+    let mouvementId = null;
+    let datosPrevios = null;
     try {
         // Récupérer les données du formulaire
         const articleId = initialData?.articleId || null;
@@ -5939,8 +5939,8 @@ async function handleStockAction(type, popup, initialData) {
             stock_reserve_apres: reserveApres,
             utilisateur: currentUser.username || currentUser.email,
             utilisateur_id: currentUser.id,
-            date_mouvement: dateFr,
-            heure_mouvement: timeFr,
+            date_mouvement: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' }),
+            heure_mouvement: new Date().toLocaleTimeString('en-GB', { timeZone: 'America/Mexico_City' }),
             created_at: new Date().toISOString()
         };
 
@@ -6000,21 +6000,50 @@ async function handleStockAction(type, popup, initialData) {
                 break;
         }
 
-        // 5. VALIDATIONS SUPPLÉMENTAIRES
-        if (type === 'out' && quantity > stockAvant) {
-            alert(`Stock insuficiente (disponible: ${stockAvant})`);
+        // 5. VALIDACIONES: no se puede sacar ni reservar stock ya reservado
+        const disponible = stockAvant - reserveAvant;
+        if ((type === 'out' || type === 'res') && quantity > disponible) {
+            alert(`Stock insuficiente (disponible: ${disponible}, reservado: ${reserveAvant})`);
             return;
         }
 
-        // 6. ENREGISTRER LE MOUVEMENT
+        // 6. ACTUALIZAR EL STOCK (solo si nadie lo cambió mientras tanto)
+        const cambiosArticulo = { updated_at: new Date().toISOString() };
+        if (type === 'out' || type === 'in') cambiosArticulo.stock_actuel = stockApres;
+        if (type === 'res') cambiosArticulo.stock_reserve = reserveApres;
+        if (type === 'in') {
+            const precioNuevo = document.getElementById('inUnitPrice')?.value;
+            if (precioNuevo) cambiosArticulo.prix_unitaire = parseFloat(precioNuevo);
+        }
+
+        const { data: filasActualizadas, error: updateError } = await supabase
+            .from('w_articles')
+            .update(cambiosArticulo)
+            .eq('id', articleId)
+            .eq('stock_actuel', stockAvant)
+            .eq('stock_reserve', reserveAvant)
+            .select('id');
+
+        if (updateError) throw updateError;
+        if (!filasActualizadas || filasActualizadas.length === 0) {
+            alert('El stock de este artículo cambió mientras operabas. Cierra la ventana y vuelve a intentarlo.');
+            return;
+        }
+        stockModificado = true;
+        datosPrevios = { articleId, stock_actuel: stockAvant, stock_reserve: reserveAvant };
+
+        // 6b. REGISTRAR EL MOVIMIENTO
         const { data: mouvement, error: mouvementError } = await supabase
             .from('w_mouvements')
-            .insert([mouvementData]);
+            .insert([mouvementData])
+            .select('id')
+            .single();
 
         if (mouvementError) {
             console.error('Erreur insertion mouvement:', mouvementError);
             throw new Error(`Error al registrar: ${mouvementError.message}`);
         }
+        mouvementId = mouvement.id;
 
         // 7. SI C'EST UNE RÉSERVATION, FAIRE UN UPSERT DANS w_reservations_actives
         if (type === 'res') {
@@ -6146,30 +6175,6 @@ async function handleStockAction(type, popup, initialData) {
             }
         }
 
-        // 8. METTRE À JOUR LE STOCK DE L'ARTICLE
-        let updates = {};
-
-        if (type === 'out') {
-            updates.stock_actuel = stockApres;
-        } else if (type === 'in') {
-            updates.stock_actuel = stockApres;
-
-            // Mettre à jour le prix unitaire si fourni
-            const prixUnitaireInput = document.getElementById('inUnitPrice');
-            if (prixUnitaireInput?.value) {
-                updates.prix_unitaire = parseFloat(prixUnitaireInput.value);
-            }
-        } else if (type === 'res') {
-            updates.stock_reserve = reserveApres;
-        }
-
-        const { error: updateError } = await supabase
-            .from('w_articles')
-            .update(updates)
-            .eq('id', articleId);
-
-        if (updateError) throw updateError;
-
         // 9. SUCCÈS
         const actionName = type === 'out' ? 'Salida' : type === 'in' ? 'Entrada' : 'Reserva';
         showTemporarySuccess(`${actionName} registrada correctamente`);
@@ -6180,6 +6185,17 @@ async function handleStockAction(type, popup, initialData) {
 
     } catch (error) {
         console.error(`Erreur ${type} stock:`, error);
+
+        // Deshacer lo ya escrito para no dejar el stock a medias
+        if (stockModificado && datosPrevios) {
+            await supabase.from('w_articles')
+                .update({ stock_actuel: datosPrevios.stock_actuel, stock_reserve: datosPrevios.stock_reserve })
+                .eq('id', datosPrevios.articleId);
+        }
+        if (mouvementId) {
+            await supabase.from('w_mouvements').delete().eq('id', mouvementId);
+        }
+
         alert(`Error al registrar: ${error.message || 'Error desconocido'}`);
     }
 }
