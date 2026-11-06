@@ -1166,13 +1166,16 @@ class QuadViewManager {
         this.camera3D = null;
         this.renderer3D = null;
         this.controls3D = null;
-        this.cube3D = null;
+
+        // Racks affichés dans la vraie scène 3D
+        this.rackGroups3D = new Map();
 
         // Gestion des clics 3D
         this.raycaster3D = new THREE.Raycaster();
         this.mouse3D = new THREE.Vector2();
         this.interactiveObjects3D = [];
         this.selectedObject3D = null;
+
 
 
         // Dimensions existantes
@@ -1285,33 +1288,8 @@ class QuadViewManager {
         grid.position.y = 0.01;
         this.scene3D.add(grid);
 
-        // Premier objet réellement 3D
-        const cubeGeometry = new THREE.BoxGeometry(2, 2, 2);
-        const cubeMaterial = new THREE.MeshStandardMaterial({
-            color: 0x4a90e2,
-            roughness: 0.55,
-            metalness: 0.15
-        });
-
-        this.cube3D = new THREE.Mesh(
-            cubeGeometry,
-            cubeMaterial
-        );
-
-        this.cube3D.position.y = 1;
-        this.cube3D.castShadow = true;
-        this.cube3D.receiveShadow = true;
-
-        // Identifiant qui sera remplacé plus tard par l'identifiant du rack
-        this.cube3D.userData = {
-            type: 'demo-rack',
-            id: 'demo-rack-1'
-        };
-
-        this.scene3D.add(this.cube3D);
-
-        // Liste des objets qui peuvent recevoir un clic
-        this.interactiveObjects3D.push(this.cube3D);
+        // Afficher les racks réellement reçus depuis les données
+        this.updateReal3DRacks(this.currentRacks || []);
 
         // Gestion du clic dans la scène 3D
         this.webglCanvas3D.addEventListener(
@@ -1323,9 +1301,174 @@ class QuadViewManager {
         this.animateReal3D();
 
 
+
         window.addEventListener('resize', () => {
             this.resizeReal3D();
         });
+    }
+
+    updateReal3DRacks(racks) {
+        if (!this.scene3D) {
+            return;
+        }
+
+        // Retirer les anciens racks de la scène
+        this.rackGroups3D.forEach(group => {
+            this.scene3D.remove(group);
+        });
+
+        this.rackGroups3D.clear();
+        this.interactiveObjects3D = [];
+
+        if (!racks || !racks.length) {
+            return;
+        }
+
+        racks.forEach(rack => {
+            const rackGroup = this.createRack3D(rack);
+
+            this.scene3D.add(rackGroup);
+            this.rackGroups3D.set(rack.id, rackGroup);
+        });
+    }
+
+    createRack3D(rack) {
+        const group = new THREE.Group();
+
+        const width = Math.max(Number(rack.width) || 3, 1);
+        const depth = Math.max(Number(rack.depth) || 2, 1);
+        const levelCount = Math.max(
+            rack.levels?.length || 1,
+            1
+        );
+
+        const levelHeight = 1.2;
+        const totalHeight = levelCount * levelHeight;
+        const postSize = 0.12;
+        const shelfThickness = 0.12;
+
+        const color = new THREE.Color(
+            rack.color || '#4a90e2'
+        );
+
+        const material = new THREE.MeshStandardMaterial({
+            color,
+            roughness: 0.55,
+            metalness: 0.15
+        });
+
+        const postGeometry = new THREE.BoxGeometry(
+            postSize,
+            totalHeight,
+            postSize
+        );
+
+        const shelfGeometry = new THREE.BoxGeometry(
+            width,
+            shelfThickness,
+            depth
+        );
+
+        const postPositions = [
+            {
+                x: -width / 2 + postSize / 2,
+                z: -depth / 2 + postSize / 2
+            },
+            {
+                x: width / 2 - postSize / 2,
+                z: -depth / 2 + postSize / 2
+            },
+            {
+                x: -width / 2 + postSize / 2,
+                z: depth / 2 - postSize / 2
+            },
+            {
+                x: width / 2 - postSize / 2,
+                z: depth / 2 - postSize / 2
+            }
+        ];
+
+        // Montants verticaux
+        postPositions.forEach(position => {
+            const post = new THREE.Mesh(
+                postGeometry,
+                material
+            );
+
+            post.position.set(
+                position.x,
+                totalHeight / 2,
+                position.z
+            );
+
+            post.castShadow = true;
+            post.receiveShadow = true;
+
+            post.userData = {
+                type: 'rack',
+                id: rack.id,
+                code: rack.code,
+                rack
+            };
+
+            group.add(post);
+            this.interactiveObjects3D.push(post);
+        });
+
+        // Plateaux correspondant aux niveaux du rack
+        for (let index = 0; index < levelCount; index++) {
+            const shelf = new THREE.Mesh(
+                shelfGeometry,
+                material
+            );
+
+            shelf.position.y = (index + 1) * levelHeight;
+            shelf.castShadow = true;
+            shelf.receiveShadow = true;
+
+            const level = rack.levels?.[index];
+
+            shelf.userData = {
+                type: 'rack-level',
+                id: level?.id || `${rack.id}-level-${index}`,
+                rackId: rack.id,
+                rackCode: rack.code,
+                level
+            };
+
+            group.add(shelf);
+            this.interactiveObjects3D.push(shelf);
+        }
+
+        // Position : X = horizontal, Z = profondeur
+        const positionX =
+            Number(rack.world3D?.position?.x) ||
+            (Number(rack.position_x) || 0) * 0.05;
+
+        const positionZ =
+            Number(rack.world3D?.position?.z) ||
+            (Number(rack.position_y) || 0) * 0.05;
+
+        group.position.set(
+            positionX,
+            0,
+            positionZ
+        );
+
+        const rotationY =
+            Number(rack.world3D?.rotation?.y) ||
+            (Number(rack.rotation) || 0) * Math.PI / 180;
+
+        group.rotation.y = rotationY;
+
+        group.userData = {
+            type: 'rack',
+            id: rack.id,
+            code: rack.code,
+            rack
+        };
+
+        return group;
     }
 
     handleReal3DClick(event) {
@@ -1336,6 +1479,7 @@ class QuadViewManager {
         ) {
             return;
         }
+
 
         const rectangle =
             this.webglCanvas3D.getBoundingClientRect();
@@ -1961,15 +2105,24 @@ class QuadViewManager {
     updateAllViews(racks) {
         console.log('QuadView.updateAllViews llamado con', racks ? racks.length : 0, 'estanterías');
 
-        this.currentRacks = racks;
+        this.currentRacks = racks || [];
 
-        if (!racks || !racks.length) {
+        // Actualiser la scène WebGL avec les données actuelles
+        this.updateReal3DRacks(this.currentRacks);
+
+        if (!this.currentRacks.length) {
             debugLog('quadView', 'Sin datos, dibujando estado vacío');
             this.drawEmptyState();
             return;
         }
 
-        debugLog('quadView', 'Dibujando', racks.length, 'estanterías');
+        debugLog(
+            'quadView',
+            'Dibujando',
+            this.currentRacks.length,
+            'estanterías'
+        );
+
 
         try {
             // 1. Vista superior
