@@ -3638,7 +3638,8 @@ async function loadStats() {
 
             document.getElementById('articlesEnStock').textContent = totalEnStock;
             document.getElementById('articlesReserves').textContent = totalReserves;
-            document.getElementById('valeurStock').textContent = valeurTotale.toFixed(2) + ' €';
+            document.getElementById('valeurStock').textContent =
+                valeurTotale.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
         }
 
     } catch (error) {
