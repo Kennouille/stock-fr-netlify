@@ -8,6 +8,17 @@ let selectedArticle = null;
 // Objet pour stocker les éléments DOM
 const elements = {};
 
+// ===== ÉCHAPPEMENT HTML =====
+function esc(value) {
+    if (value == null) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // Éléments du modal Détails du projet
 let projectDetailsModal = null;
 let archiveProjectBtn = null;

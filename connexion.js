@@ -24,7 +24,6 @@ async function updateLastLogin(userId) {
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
-    const splash = document.getElementById('splashScreen');
     const loginContainer = document.querySelector('.login-container');
 
     // El login está oculto al principio (gracias al CSS)
