@@ -63,12 +63,13 @@ class ApiManager {
         const url = `${this.baseUrl}${endpoint}`;
         console.log('📡 Llamada API (Netlify):', url, method, data);
 
-        console.log('Prueba esta URL:', url);
+        const { data: { session } } = await supabase.auth.getSession();
 
         const options = {
             method: method,
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': session ? `Bearer ${session.access_token}` : '',
             },
         };
 
