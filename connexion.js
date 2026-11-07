@@ -26,28 +26,7 @@ async function updateLastLogin(userId) {
 document.addEventListener('DOMContentLoaded', async function() {
     const loginContainer = document.querySelector('.login-container');
 
-    // El login está oculto al principio (gracias al CSS)
-
-    try {
-        // Cargamos el contenido HTML de nexen-suite.html
-        const response = await fetch('nexen-suite.html');
-        const html = await response.text();
-        splash.innerHTML = html;
-    } catch (err) {
-        console.error("Error al cargar nexen-suite.html", err);
-        splash.innerHTML = "<h2>Cargando...</h2>";
-    }
-
-    // Después de 6 segundos, hacemos desaparecer el splash
-    setTimeout(() => {
-        splash.classList.add('fade-out');
-
-        // Después de la transición del splash, mostramos el login
-        setTimeout(() => {
-            splash.remove();
-            loginContainer.classList.add('show');
-        }, 1000); // Corresponde a la duración de la transición fade-out
-    }, 4000); // 6 segundos de visualización del splash
+    
 
     // Verificar si el usuario ya está conectado
     const user = sessionStorage.getItem('current_user');
