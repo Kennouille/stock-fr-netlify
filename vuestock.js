@@ -230,7 +230,7 @@ class ApiManager {
 
     async searchArticles(searchTerm) {
         const term = (searchTerm || '').trim();
-        if (!term) return { success: true, data: [] };
+        if (!term) return [];
 
         const { data, error } = await supabase
             .from('w_articles')
@@ -239,7 +239,7 @@ class ApiManager {
             .limit(20);
 
         if (error) throw error;
-        return { success: true, data: data || [] };
+        return data || [];
     }
 
     async updateStock({ article_id, new_quantity }) {
