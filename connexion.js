@@ -23,15 +23,19 @@ async function updateLastLogin(userId) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
     const loginContainer = document.querySelector('.login-container');
-
-    
 
     // Verificar si el usuario ya está conectado
     const user = sessionStorage.getItem('current_user');
     if (user) {
         window.location.href = 'accueil.html';
+        return;
+    }
+
+    // Mostrar el login
+    if (loginContainer) {
+        loginContainer.classList.add('show');
     }
 });
 
