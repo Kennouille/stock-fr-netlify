@@ -234,12 +234,16 @@ class ApiManager {
 
         const { data, error } = await supabase
             .from('w_articles')
-            .select('id, nom, numero, code_barre, stock_actuel, stock_reserve, prix_unitaire, photo_url, rack_id, level_id, slot_id')
+            .select('id, nom, numero, code_barre, stock_actuel, stock_reserve, prix_unitaire, photo_url, rack_id, level_id, slot_id, w_vuestock_slots(full_code)')
             .or(`nom.ilike.%${term}%,numero.ilike.%${term}%,code_barre.ilike.%${term}%`)
             .limit(20);
 
         if (error) throw error;
-        return data || [];
+
+        return (data || []).map(a => ({
+            ...a,
+            full_code: a.w_vuestock_slots?.full_code || null
+        }));
     }
 
     async updateStock({ article_id, new_quantity }) {
