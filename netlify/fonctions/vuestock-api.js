@@ -29,6 +29,43 @@ exports.handler = async (event, context) => {
     'Authorization': `Bearer ${supabaseKey}`
   };
 
+  // ===== VÉRIFICATION DU TOKEN =====
+  const WRITE_ACTIONS = ['save-rack', 'save-level', 'save-slot', 'delete-rack', 'update-stock'];
+
+  if (WRITE_ACTIONS.includes(action)) {
+    const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
+    if (!token) {
+      return {
+        statusCode: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ success: false, error: 'Token manquant' })
+      };
+    }
+
+    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!userRes.ok) {
+      return {
+        statusCode: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ success: false, error: 'Token invalide ou expiré' })
+      };
+    }
+  }
+
   // Gérer les différentes actions
   if (action === 'ping') {
     return {
