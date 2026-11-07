@@ -6339,22 +6339,7 @@ class VueStock {
                 const article = results[0];
 
                 if (article.full_code) {
-                    // ✅ NUEVO: Proponer abrir la vista 3D
-                    const open3D = confirm(`Artículo encontrado en ${article.full_code}\n\n¿Abrir la vista 3D para localizar el artículo?`);
-
-                    if (open3D) {
-                        // Abrir la vista 3D (función global)
-                        await open3DView();
-
-                        // Si quieres localizar el artículo, añade esto:
-                        // if (window.vueStock3D?.locateArticle) {
-                        //     window.vueStock3D.locateArticle(article.full_code);
-                        // }
-                    } else {
-                        // Comportamiento clásico (2D)
-                        this.highlightSlotByFullCode(article.full_code);
-                    }
-
+                    this.highlightSlotByFullCode(article.full_code);
                     this.showNotification(`Artículo encontrado en ${article.full_code}`);
                 } else {
                     this.showNotification('Artículo encontrado pero no almacenado', 'warning');
