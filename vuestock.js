@@ -229,7 +229,17 @@ class ApiManager {
     }
 
     async searchArticles(searchTerm) {
-        return await this.request(`${this.endpoints.searchArticle}&q=${encodeURIComponent(searchTerm)}`);
+        const term = (searchTerm || '').trim();
+        if (!term) return { success: true, data: [] };
+
+        const { data, error } = await supabase
+            .from('w_articles')
+            .select('id, nom, numero, code_barre, stock_actuel, stock_reserve, prix_unitaire, photo_url, rack_id, level_id, slot_id')
+            .or(`nom.ilike.%${term}%,numero.ilike.%${term}%,code_barre.ilike.%${term}%`)
+            .limit(20);
+
+        if (error) throw error;
+        return { success: true, data: data || [] };
     }
 
     async updateStock({ article_id, new_quantity }) {
